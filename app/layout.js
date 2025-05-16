@@ -20,6 +20,9 @@ import './globals.css';
                    <Link href="/cart" className="hover:text-indigo-200">
                      Cart
                    </Link>
+                    <Link href="/track" className="hover:text-indigo-200">
+                     Track Order
+                   </Link>
                  </div>
                </div>
              </nav>

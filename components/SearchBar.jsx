@@ -1,5 +1,5 @@
 'use client';
-     import { useState } from 'react';
+     import { useState, useEffect } from 'react';
      import { Input } from '@/components/ui/input';
      import { Button } from '@/components/ui/button';
      import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,10 +8,26 @@
        const [searchTerm, setSearchTerm] = useState('');
        const [results, setResults] = useState([]);
        const [error, setError] = useState(null);
+       const [cartItems, setCartItems] = useState([]);
        const guestId = typeof window !== 'undefined' ? localStorage.getItem('guestId') || uuidv4() : uuidv4();
        if (typeof window !== 'undefined' && !localStorage.getItem('guestId')) {
          localStorage.setItem('guestId', guestId);
        }
+          const fetchCart = async () => {
+         try {
+           const response = await fetch('http://localhost:5000/api/cart', {
+             headers: { 'x-guest-id': guestId },
+           });
+           if (!response.ok) throw new Error('Failed to fetch cart');
+           const data = await response.json();
+           setCartItems(data.items || []);
+         } catch (err) {
+           console.error('Fetch cart error:', err);
+         }
+       };
+       useEffect(() => {
+         fetchCart();
+       }, []);
        const handleSearch = async () => {
          try {
            setError(null);
@@ -21,6 +37,7 @@
            }
            const data = await response.json();
            setResults(data);
+           await fetchCart();
          } catch (err) {
            setError(err.message);
            setResults([]);
@@ -45,9 +62,17 @@
              throw new Error(errorData.message || 'Failed to add to cart');
            }
            alert('Added to cart!');
+           await fetchCart();
          } catch (err) {
            alert(`Error: ${err.message}`);
          }
+       };
+       const isInCart = (medicationId, pharmacyId) => {
+         return cartItems.some(
+           item =>
+             item.pharmacyMedicationMedicationId === medicationId &&
+             item.pharmacyMedicationPharmacyId === pharmacyId
+         );
        };
        return (
          <div className="space-y-4">
@@ -85,11 +110,16 @@
                        med.availability.map((avail, index) => (
                          <li key={index} className="flex justify-between items-center">
                            <span>{avail.pharmacyName}: {avail.stock} in stock, ₦{avail.price}</span>
-                           <Button
-                             className="bg-green-600 hover:bg-green-700 text-white text-sm py-1 px-2"
+                        <Button
+                             className={`text-sm py-1 px-2 ${
+                               isInCart(med.id, avail.pharmacyId)
+                                 ? 'bg-gray-400 cursor-not-allowed'
+                                 : 'bg-green-600 hover:bg-green-700 text-white'
+                             }`}
+                             disabled={isInCart(med.id, avail.pharmacyId)}
                              onClick={() => handleAddToCart(med.id, avail.pharmacyId)}
                            >
-                             Add to Cart
+                             {isInCart(med.id, avail.pharmacyId) ? 'Added' : 'Add to Cart'}
                            </Button>
                          </li>
                        ))
