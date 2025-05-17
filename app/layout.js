@@ -23,6 +23,9 @@ import './globals.css';
                     <Link href="/track" className="hover:text-indigo-200">
                      Track Order
                    </Link>
+                   <Link href="/pharmacy/dashboard">
+                      Pharmacy Dashboard
+                  </Link>
                  </div>
                </div>
              </nav>
