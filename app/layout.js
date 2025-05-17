@@ -1,5 +1,6 @@
 import './globals.css';
      import Link from 'next/link';
+     import { Button } from '@/components/ui/button';
      export const metadata = {
        title: 'New Medication App',
        description: 'Digital pharmacy platform',
@@ -26,6 +27,16 @@ import './globals.css';
                    <Link href="/pharmacy/dashboard">
                       Pharmacy Dashboard
                   </Link>
+                   <Link href="/pharmacy/register">
+             <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
+               Register Pharmacy
+             </Button>
+           </Link>
+           <Link href="/pharmacy/login">
+             <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
+               Pharmacy Login
+             </Button>
+           </Link>
                  </div>
                </div>
              </nav>

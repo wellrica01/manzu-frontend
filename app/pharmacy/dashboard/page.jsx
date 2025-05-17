@@ -1,19 +1,67 @@
 'use client';
    import { useState, useEffect } from 'react';
    import { useRouter } from 'next/navigation';
+   import { jwtDecode } from 'jwt-decode';
+   import { useForm } from 'react-hook-form';
+   import { zodResolver } from '@hookform/resolvers/zod';
+   import * as z from 'zod';
    import { Button } from '@/components/ui/button';
    import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
    import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
    import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+   import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+   import { Input } from '@/components/ui/input';
+   const addUserSchema = z.object({
+     name: z.string().min(1, 'Name is required'),
+     email: z.string().email('Invalid email'),
+     password: z.string().min(8, 'Password must be at least 8 characters'),
+     role: z.literal('pharmacist', { errorMap: () => ({ message: 'Role must be pharmacist' }) }),
+   });
+   const editUserSchema = z.object({
+     name: z.string().min(1, 'Name is required'),
+     email: z.string().email('Invalid email'),
+   });
    export default function PharmacyDashboard() {
      const [orders, setOrders] = useState([]);
+     const [users, setUsers] = useState([]);
      const [error, setError] = useState(null);
-     const [pharmacyId, setPharmacyId] = useState(2); // Temporary: hardcoded
+     const [userError, setUserError] = useState(null);
+     const [pharmacyId, setPharmacyId] = useState(null);
+     const [userRole, setUserRole] = useState(null);
+     const [editingUserId, setEditingUserId] = useState(null);
      const router = useRouter();
+     const addForm = useForm({
+       resolver: zodResolver(addUserSchema),
+       defaultValues: { name: '', email: '', password: '', role: 'pharmacist' },
+     });
+     const editForm = useForm({
+       resolver: zodResolver(editUserSchema),
+       defaultValues: { name: '', email: '' },
+     });
+     useEffect(() => {
+       const token = localStorage.getItem('token');
+       if (!token) {
+         router.push('/pharmacy/login');
+         return;
+       }
+       try {
+         const decoded = jwtDecode(token);
+         setPharmacyId(decoded.pharmacyId);
+         setUserRole(decoded.role);
+       } catch (err) {
+         console.error('Invalid token:', err);
+         localStorage.removeItem('token');
+         router.push('/pharmacy/login');
+       }
+     }, [router]);
      const fetchOrders = async () => {
+       if (!pharmacyId) return;
        try {
          setError(null);
-         const response = await fetch(`http://localhost:5000/api/pharmacy/orders?pharmacyId=${pharmacyId}`);
+         const token = localStorage.getItem('token');
+         const response = await fetch(`http://localhost:5000/api/pharmacy/orders`, {
+           headers: { Authorization: `Bearer ${token}` },
+         });
          if (!response.ok) {
            const errorData = await response.json();
            throw new Error(errorData.message || 'Failed to fetch orders');
@@ -24,16 +72,51 @@
        } catch (err) {
          console.error('Fetch orders error:', err);
          setError(err.message);
+         if (err.message.includes('Invalid token')) {
+           localStorage.removeItem('token');
+           router.push('/pharmacy/login');
+         }
+       }
+     };
+     const fetchUsers = async () => {
+       if (!pharmacyId) return;
+       try {
+         setUserError(null);
+         const token = localStorage.getItem('token');
+         const response = await fetch(`http://localhost:5000/api/pharmacy/users`, {
+           headers: { Authorization: `Bearer ${token}` },
+         });
+         if (!response.ok) {
+           const errorData = await response.json();
+           throw new Error(errorData.message || 'Failed to fetch users');
+         }
+         const data = await response.json();
+         console.log('Pharmacy users:', data);
+         setUsers(data.users);
+       } catch (err) {
+         console.error('Fetch users error:', err);
+         setUserError(err.message);
+         if (err.message.includes('Invalid token')) {
+           localStorage.removeItem('token');
+           router.push('/pharmacy/login');
+         }
        }
      };
      useEffect(() => {
        fetchOrders();
-     }, [pharmacyId]);
+       if (userRole === 'manager') {
+         fetchUsers();
+       }
+     }, [pharmacyId, userRole]);
      const updateOrderStatus = async (orderId, status) => {
        try {
-         const response = await fetch(`http://localhost:5000/api/pharmacy/orders/${orderId}?pharmacyId=${pharmacyId}`, {
+         const token = localStorage.getItem('token');
+         const response = await fetch(`http://localhost:5000/api/pharmacy/orders/${orderId}`, {
            method: 'PATCH',
-           headers: { 'Content-Type': 'application/json' },
+           headers: {
+             'Content-Type': 'application/json',
+             Authorization: `Bearer ${token}`,
+           },
            body: JSON.stringify({ status }),
          });
          if (!response.ok) {
@@ -41,11 +124,94 @@
            throw new Error(errorData.message || 'Failed to update status');
          }
          console.log('Order status updated:', { orderId, status });
-         fetchOrders(); // Refresh orders
+         fetchOrders();
        } catch (err) {
          console.error('Update status error:', err);
          setError(err.message);
+         if (err.message.includes('Invalid token')) {
+           localStorage.removeItem('token');
+           router.push('/pharmacy/login');
+         }
        }
+     };
+     const handleAddUser = async (values) => {
+       try {
+         setUserError(null);
+         const token = localStorage.getItem('token');
+         const response = await fetch('http://localhost:5000/api/auth/add-user', {
+           method: 'POST',
+           headers: {
+             'Content-Type': 'application/json',
+             Authorization: `Bearer ${token}`,
+           },
+           body: JSON.stringify(values),
+         });
+         const data = await response.json();
+         if (!response.ok) {
+           throw new Error(data.message || 'Failed to add user');
+         }
+         console.log('User added:', data);
+         addForm.reset();
+         fetchUsers();
+       } catch (err) {
+         console.error('Add user error:', err);
+         setUserError(err.message);
+       }
+     };
+     const handleEditUser = async (values, userId) => {
+       try {
+         setUserError(null);
+         const token = localStorage.getItem('token');
+         const response = await fetch(`http://localhost:5000/api/auth/users/${userId}`, {
+           method: 'PATCH',
+           headers: {
+             'Content-Type': 'application/json',
+             Authorization: `Bearer ${token}`,
+           },
+           body: JSON.stringify(values),
+         });
+         const data = await response.json();
+         if (!response.ok) {
+           throw new Error(data.message || 'Failed to update user');
+         }
+         console.log('User updated:', data);
+         setEditingUserId(null);
+         editForm.reset();
+         fetchUsers();
+       } catch (err) {
+         console.error('Edit user error:', err);
+         setUserError(err.message);
+       }
+     };
+     const handleDeleteUser = async (userId) => {
+       if (!confirm('Are you sure you want to delete this user?')) return;
+       try {
+         setUserError(null);
+         const token = localStorage.getItem('token');
+         const response = await fetch(`http://localhost:5000/api/auth/users/${userId}`, {
+           method: 'DELETE',
+           headers: {
+             Authorization: `Bearer ${token}`,
+           },
+         });
+         const data = await response.json();
+         if (!response.ok) {
+           throw new Error(data.message || 'Failed to delete user');
+         }
+         console.log('User deleted:', { userId });
+         fetchUsers();
+       } catch (err) {
+         console.error('Delete user error:', err);
+         setUserError(err.message);
+       }
+     };
+     const startEditing = (user) => {
+       setEditingUserId(user.id);
+       editForm.reset({ name: user.name, email: user.email });
+     };
+     const cancelEditing = () => {
+       setEditingUserId(null);
+       editForm.reset();
      };
      const getNextStatuses = (status, deliveryMethod) => {
        const nextStatuses = {
@@ -64,10 +230,183 @@
        }
        return order.address || 'N/A';
      };
+     const handleLogout = () => {
+       localStorage.removeItem('token');
+       router.push('/pharmacy/login');
+     };
      return (
        <div className="container mx-auto p-4">
-         <h1 className="text-2xl font-bold text-indigo-800 mb-4">Pharmacy Dashboard</h1>
+         <div className="flex justify-between items-center mb-4">
+           <h1 className="text-2xl font-bold text-indigo-800">Pharmacy Dashboard</h1>
+           <Button
+             onClick={() => router.push('/pharmacy/profile')}
+             className="bg-indigo-600 hover:bg-indigo-700 text-white"
+           >
+             Profile
+           </Button>
+         </div>
          {error && <p className="text-red-600 font-medium mb-4">{error}</p>}
+         {userRole === 'manager' && (
+           <Card className="border-indigo-100 shadow-md mb-6">
+             <CardHeader>
+               <CardTitle className="text-indigo-800">Manage Users</CardTitle>
+             </CardHeader>
+             <CardContent>
+               {userError && <p className="text-red-600 font-medium mb-4">{userError}</p>}
+               <Form {...addForm}>
+                 <form onSubmit={addForm.handleSubmit(handleAddUser)} className="space-y-4 mb-6">
+                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                     <FormField
+                       control={addForm.control}
+                       name="name"
+                       render={({ field }) => (
+                         <FormItem>
+                           <FormLabel>Name</FormLabel>
+                           <FormControl>
+                             <Input className="border-indigo-300" {...field} />
+                           </FormControl>
+                           <FormMessage />
+                         </FormItem>
+                       )}
+                     />
+                     <FormField
+                       control={addForm.control}
+                       name="email"
+                       render={({ field }) => (
+                         <FormItem>
+                           <FormLabel>Email</FormLabel>
+                           <FormControl>
+                             <Input className="border-indigo-300" {...field} />
+                           </FormControl>
+                           <FormMessage />
+                         </FormItem>
+                       )}
+                     />
+                     <FormField
+                       control={addForm.control}
+                       name="password"
+                       render={({ field }) => (
+                         <FormItem>
+                           <FormLabel>Password</FormLabel>
+                           <FormControl>
+                             <Input type="password" className="border-indigo-300" {...field} />
+                           </FormControl>
+                           <FormMessage />
+                         </FormItem>
+                       )}
+                     />
+                   </div>
+                   <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                     Add User
+                   </Button>
+                 </form>
+               </Form>
+               <h3 className="text-lg font-semibold text-gray-700 mb-2">Current Users</h3>
+               <Table>
+                 <TableHeader>
+                   <TableRow>
+                     <TableHead className="text-indigo-800">Name</TableHead>
+                     <TableHead className="text-indigo-800">Email</TableHead>
+                     <TableHead className="text-indigo-800">Role</TableHead>
+                     <TableHead className="text-indigo-800">Actions</TableHead>
+                   </TableRow>
+                 </TableHeader>
+                 <TableBody>
+                   {users.length === 0 ? (
+                     <TableRow>
+                       <TableCell colSpan={4} className="text-gray-600 text-center">
+                         No users found.
+                       </TableCell>
+                     </TableRow>
+                   ) : (
+                     users.map((user) => (
+                       <TableRow key={user.id}>
+                         {editingUserId === user.id ? (
+                           <TableCell colSpan={4}>
+                             <Form {...editForm}>
+                               <form
+                                 id={`edit-form-${user.id}`}
+                                 onSubmit={editForm.handleSubmit((values) => handleEditUser(values, user.id))}
+                                 className="space-y-2"
+                               >
+                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                   <FormField
+                                     control={editForm.control}
+                                     name="name"
+                                     render={({ field }) => (
+                                       <FormItem>
+                                         <FormLabel>Name</FormLabel>
+                                         <FormControl>
+                                           <Input className="border-indigo-300" {...field} />
+                                         </FormControl>
+                                         <FormMessage />
+                                       </FormItem>
+                                     )}
+                                   />
+                                   <FormField
+                                     control={editForm.control}
+                                     name="email"
+                                     render={({ field }) => (
+                                       <FormItem>
+                                         <FormLabel>Email</FormLabel>
+                                         <FormControl>
+                                           <Input className="border-indigo-300" {...field} />
+                                         </FormControl>
+                                         <FormMessage />
+                                       </FormItem>
+                                     )}
+                                   />
+                                 </div>
+                                 <div className="flex space-x-2 mt-2">
+                                   <Button
+                                     type="submit"
+                                     className="bg-green-600 hover:bg-green-700 text-white"
+                                   >
+                                     Save
+                                   </Button>
+                                   <Button
+                                     type="button"
+                                     variant="outline"
+                                     className="border-indigo-300 text-indigo-600 hover:bg-indigo-100"
+                                     onClick={cancelEditing}
+                                   >
+                                     Cancel
+                                   </Button>
+                                 </div>
+                               </form>
+                             </Form>
+                           </TableCell>
+                         ) : (
+                           <>
+                             <TableCell>{user.name}</TableCell>
+                             <TableCell>{user.email}</TableCell>
+                             <TableCell>{user.role.charAt(0).toUpperCase() + user.role.slice(1)}</TableCell>
+                             <TableCell>
+                               <div className="flex space-x-2">
+                                 <Button
+                                   className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                                   onClick={() => startEditing(user)}
+                                 >
+                                   Edit
+                                 </Button>
+                                 <Button
+                                   className="bg-red-600 hover:bg-red-700 text-white"
+                                   onClick={() => handleDeleteUser(user.id)}
+                                 >
+                                   Delete
+                                 </Button>
+                               </div>
+                             </TableCell>
+                           </>
+                         )}
+                       </TableRow>
+                     ))
+                   )}
+                 </TableBody>
+               </Table>
+             </CardContent>
+           </Card>
+         )}
          <Card className="border-indigo-100 shadow-md">
            <CardHeader>
              <CardTitle className="text-indigo-800">Orders</CardTitle>
@@ -129,7 +468,7 @@
                  )}
                </TableBody>
              </Table>
-                <div className="mt-4 space-x-4">
+             <div className="mt-4 space-x-4">
                <Button
                  className="bg-green-600 hover:bg-green-700 text-white"
                  onClick={() => router.push('/')}
@@ -141,6 +480,12 @@
                  onClick={() => router.push('/pharmacy/inventory')}
                >
                  Manage Inventory
+               </Button>
+                  <Button
+                 onClick={handleLogout}
+                 className="bg-red-600 hover:bg-red-700 text-white"
+               >
+                 Logout
                </Button>
              </div>
            </CardContent>

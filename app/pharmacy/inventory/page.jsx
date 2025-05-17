@@ -1,6 +1,7 @@
 'use client';
    import { useState, useEffect } from 'react';
    import { useRouter } from 'next/navigation';
+   import { jwtDecode } from 'jwt-decode';
    import { Button } from '@/components/ui/button';
    import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
    import { Input } from '@/components/ui/input';
@@ -14,12 +15,31 @@
      const [editingKey, setEditingKey] = useState(null);
      const [editForm, setEditForm] = useState({ stock: '', price: '' });
      const [error, setError] = useState(null);
-     const [pharmacyId, setPharmacyId] = useState(1); // Temporary: hardcoded
+     const [pharmacyId, setPharmacyId] = useState(null);
      const router = useRouter();
+     useEffect(() => {
+       const token = localStorage.getItem('token');
+       if (!token) {
+         router.push('/pharmacy/login');
+         return;
+       }
+       try {
+         const decoded = jwtDecode(token);
+         setPharmacyId(decoded.pharmacyId);
+       } catch (err) {
+         console.error('Invalid token:', err);
+         localStorage.removeItem('token');
+         router.push('/pharmacy/login');
+       }
+     }, [router]);
      const fetchMedications = async () => {
+       if (!pharmacyId) return;
        try {
          setError(null);
-         const response = await fetch(`http://localhost:5000/api/pharmacy/medications?pharmacyId=${pharmacyId}`);
+         const token = localStorage.getItem('token');
+         const response = await fetch(`http://localhost:5000/api/pharmacy/medications`, {
+           headers: { Authorization: `Bearer ${token}` },
+         });
          if (!response.ok) {
            const errorData = await response.json();
            throw new Error(errorData.message || 'Failed to fetch medications');
@@ -32,6 +52,10 @@
        } catch (err) {
          console.error('Fetch medications error:', err);
          setError(err.message);
+         if (err.message.includes('Invalid token')) {
+           localStorage.removeItem('token');
+           router.push('/pharmacy/login');
+         }
        }
      };
      useEffect(() => {
@@ -47,9 +71,13 @@
        e.preventDefault();
        try {
          setError(null);
+         const token = localStorage.getItem('token');
          const response = await fetch(`http://localhost:5000/api/pharmacy/medications`, {
            method: 'POST',
-           headers: { 'Content-Type': 'application/json' },
+           headers: {
+             'Content-Type': 'application/json',
+             Authorization: `Bearer ${token}`,
+           },
            body: JSON.stringify({ ...form, pharmacyId }),
          });
          if (!response.ok) {
@@ -62,14 +90,22 @@
        } catch (err) {
          console.error('Add medication error:', err);
          setError(err.message);
+         if (err.message.includes('Invalid token')) {
+           localStorage.removeItem('token');
+           router.push('/pharmacy/login');
+         }
        }
      };
      const handleEditMedication = async (med) => {
        try {
          setError(null);
+         const token = localStorage.getItem('token');
          const response = await fetch(`http://localhost:5000/api/pharmacy/medications`, {
            method: 'PATCH',
-           headers: { 'Content-Type': 'application/json' },
+           headers: {
+             'Content-Type': 'application/json',
+             Authorization: `Bearer ${token}`,
+           },
            body: JSON.stringify({ pharmacyId, medicationId: med.medicationId, ...editForm }),
          });
          if (!response.ok) {
@@ -83,14 +119,19 @@
        } catch (err) {
          console.error('Update medication error:', err);
          setError(err.message);
+         if (err.message.includes('Invalid token')) {
+           localStorage.removeItem('token');
+           router.push('/pharmacy/login');
+         }
        }
      };
      const handleDeleteMedication = async (med) => {
        try {
          setError(null);
-         const response = await fetch(`http://localhost:5000/api/pharmacy/medications?pharmacyId=${pharmacyId}&medicationId=${med.medicationId}`, {
+         const token = localStorage.getItem('token');
+         const response = await fetch(`http://localhost:5000/api/pharmacy/medications?medicationId=${med.medicationId}`, {
            method: 'DELETE',
-           headers: { 'Content-Type': 'application/json' },
+           headers: { Authorization: `Bearer ${token}` },
          });
          if (!response.ok) {
            const errorData = await response.json();
@@ -101,15 +142,31 @@
        } catch (err) {
          console.error('Delete medication error:', err);
          setError(err.message);
+         if (err.message.includes('Invalid token')) {
+           localStorage.removeItem('token');
+           router.push('/pharmacy/login');
+         }
        }
      };
      const startEditing = (med) => {
        setEditingKey(`${med.pharmacyId}-${med.medicationId}`);
        setEditForm({ stock: med.stock.toString(), price: med.price.toString() });
      };
+     const handleLogout = () => {
+       localStorage.removeItem('token');
+       router.push('/pharmacy/login');
+     };
      return (
        <div className="container mx-auto p-4">
-         <h1 className="text-2xl font-bold text-indigo-800 mb-4">Pharmacy Inventory</h1>
+         <div className="flex justify-between items-center mb-4">
+           <h1 className="text-2xl font-bold text-indigo-800">Pharmacy Inventory</h1>
+           <Button
+             onClick={handleLogout}
+             className="bg-red-600 hover:bg-red-700 text-white"
+           >
+             Logout
+           </Button>
+         </div>
          {error && <p className="text-red-600 font-medium mb-4">{error}</p>}
          <Card className="border-indigo-100 shadow-md mb-6">
            <CardHeader>
