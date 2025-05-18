@@ -9,6 +9,7 @@
      const [trackingCode, setTrackingCode] = useState('');
      const [order, setOrder] = useState(null);
      const [error, setError] = useState(null);
+     const [loading, setLoading] = useState(false);
      const router = useRouter();
      const handleTrack = async (e) => {
        e.preventDefault();
@@ -19,6 +20,7 @@
        try {
          setError(null);
          setOrder(null);
+         setLoading(true);
          const response = await fetch(`http://localhost:5000/api/track?trackingCode=${trackingCode}`);
          if (!response.ok) {
            const errorData = await response.json();
@@ -31,21 +33,19 @@
          console.error('Track error:', err);
          setError(err.message === 'Order not found' ? 'Order not found. Please check your tracking code.' : err.message);
        }
+        finally {
+      setLoading(false);
+    }
      };
      const calculateItemPrice = (item) => item.quantity * item.price;
-     const getUniquePharmacyAddresses = () => {
-       const addresses = [];
-       const seen = new Set();
-       order?.items.forEach(item => {
-         const address = item.pharmacy?.address;
-         const pharmacyName = item.pharmacy?.name;
-         if (address && pharmacyName && !seen.has(address)) {
-           addresses.push({ name: pharmacyName, address });
-           seen.add(address);
-         }
-       });
-       return addresses;
-     };
+
+    const getUniquePharmacyAddresses = () => {
+    if (order?.pharmacy && order.deliveryMethod === 'pickup') {
+      return [{ name: order.pharmacy.name, address: order.pharmacy.address }];
+    }
+    return [];
+  };
+
      const handleBackToHome = () => {
        router.push('/');
      };
@@ -69,12 +69,13 @@
                    required
                  />
                </div>
-               <Button
-                 type="submit"
-                 className="bg-indigo-600 hover:bg-indigo-700 text-white"
-               >
-                 Track Order
-               </Button>
+                <Button
+              type="submit"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white"
+              disabled={loading}
+            >
+              {loading ? 'Tracking...' : 'Track Order'}
+            </Button>
              </form>
            </CardContent>
          </Card>
@@ -101,39 +102,48 @@
                  <p className="text-gray-700">
                    <strong>Payment Status:</strong> {order.paymentStatus}
                  </p>
-                 <p className="text-gray-700">
-                   <strong>Delivery Method:</strong> {order.deliveryMethod === 'pickup' ? 'Pickup' : 'Delivery'}
-                 </p>
-                 {order.deliveryMethod === 'pickup' && order.items.length > 0 ? (
-                   <div>
-                     <strong className="text-gray-700">Pickup Addresses:</strong>
-                     <div className="mt-2 space-y-2">
-                       {getUniquePharmacyAddresses().length > 0 ? (
-                         getUniquePharmacyAddresses().map((pharmacy, index) => (
-                           <p key={index} className="text-gray-600">
-                             {pharmacy.name}: {pharmacy.address}
-                           </p>
-                         ))
-                       ) : (
-                         <p className="text-gray-600">Pharmacy address not available</p>
-                       )}
-                     </div>
-                   </div>
-                 ) : (
-                   <p className="text-gray-700">
-                     <strong>Delivery Address:</strong> {order.address}
-                   </p>
-                 )}
+                  <p className="text-gray-700">
+                <strong>Order Placed:</strong> {new Date(order.createdAt).toLocaleString()}
+              </p>
+              {order.cancelledAt && (
+                <p className="text-gray-700">
+                  <strong>Cancelled:</strong> {new Date(order.cancelledAt).toLocaleString()} {order.cancelReason ? `(${order.cancelReason})` : ''}
+                </p>
+              )}
+               <p className="text-gray-700">
+                <strong>Delivery Method:</strong> {order.deliveryMethod === 'pickup' ? 'Pickup' : 'Delivery'}
+              </p>
+              {order.deliveryMethod === 'pickup' && getUniquePharmacyAddresses().length > 0 ? (
+                <div>
+                  <strong className="text-gray-700">Pickup Address:</strong>
+                  <div className="mt-2 space-y-2">
+                    {getUniquePharmacyAddresses().map((pharmacy, index) => (
+                      <p key={index} className="text-gray-600">
+                        {pharmacy.name}: {pharmacy.address}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-gray-700">
+                  <strong>Delivery Address:</strong> {order.address || 'Not specified'}
+                </p>
+              )}
                  <h3 className="text-lg font-semibold text-indigo-800">Order Items</h3>
                  {order.items.map((item) => (
-                   <div key={item.id} className="mb-4">
-                     <p className="text-gray-700 font-medium">{item.medication.name}</p>
-                     <p className="text-gray-600">Pharmacy: {item.pharmacy.name}</p>
-                     <p className="text-gray-600">Quantity: {item.quantity}</p>
-                     <p className="text-gray-600">Unit Price: ₦{item.price}</p>
-                     <p className="text-gray-600">Total: ₦{calculateItemPrice(item)}</p>
-                   </div>
-                 ))}
+                <div key={item.id} className="mb-4">
+                  <p className="text-gray-700 font-medium">
+                    {item.medication.name} {item.medication.genericName ? `(${item.medication.genericName})` : ''}
+                  </p>
+                  {item.medication.dosage && (
+                    <p className="text-gray-600">Dosage: {item.medication.dosage}</p>
+                  )}
+                  <p className="text-gray-600">Pharmacy: {item.pharmacy.name}</p>
+                  <p className="text-gray-600">Quantity: {item.quantity}</p>
+                  <p className="text-gray-600">Unit Price: ₦{item.price}</p>
+                  <p className="text-gray-600">Total: ₦{calculateItemPrice(item)}</p>
+                </div>
+              ))}
                  <p className="text-xl font-semibold text-indigo-800 text-right">
                    Total: ₦{order.totalPrice}
                  </p>

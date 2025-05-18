@@ -56,7 +56,7 @@
            await fetchCart();
          } catch (err) {
            console.error('Quantity update error:', err);
-           alert(`Error: ${err.message}`);
+           setError(err.message);
          }
        };
        const handleRemoveItem = async (orderItemId) => {
@@ -95,7 +95,7 @@
            ) : (
              <div className="space-y-4">
                {cart.items.map((item) => (
-                 <Card key={item.id || `temp-${item.pharmacyMedicationMedicationId}-${item.pharmacyMedicationPharmacyId}`} className="border-indigo-100 shadow-md">
+                 <Card key={item.id} className="border-indigo-100 shadow-md">
                    <CardHeader>
                      <CardTitle className="text-indigo-800">{item.medication.name}</CardTitle>
                    </CardHeader>
@@ -139,7 +139,9 @@
                  <p className="text-xl font-semibold text-indigo-800">
                    Total: ₦{calculateTotalPrice()}
                  </p>
-                 <Button className="mt-4 bg-indigo-600 hover:bg-indigo-700 text-white" onClick={handleCheckout}>
+                 <Button className="mt-4 bg-indigo-600 hover:bg-indigo-700 text-white" 
+                 onClick={handleCheckout}
+                 disabled={cart.items.length === 0}>
                    Proceed to Checkout
                  </Button>
                </div>
