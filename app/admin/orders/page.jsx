@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -16,11 +17,27 @@ export default function Orders() {
     status: '',
     patientIdentifier: '',
   });
+  const router = useRouter();
+  const [authChecked, setAuthChecked] = useState(false); // ✅ Block rendering until auth check completes
+
+  useEffect(() => {
+    const token = localStorage.getItem('adminToken');
+    if (!token) {
+      router.replace('/admin/login'); // 🔒 Redirect to login if not authenticated
+    } else {
+      setAuthChecked(true); // ✅ Only show content if authenticated
+    }
+  }, [router]);
+
 
   const fetchOrders = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('adminToken');
+      if (!token) {
+        router.replace('/admin/login');
+        return;
+      }
       const query = new URLSearchParams({
         page,
         limit: '10',
@@ -33,6 +50,12 @@ export default function Orders() {
         },
       });
       if (!response.ok) {
+        if (response.status === 401) {
+          // Unauthorized: redirect to login
+          localStorage.removeItem('adminToken');
+          router.replace('/admin/login');
+          return;
+        }
         throw new Error('Failed to fetch orders');
       }
       const result = await response.json();
@@ -46,7 +69,12 @@ export default function Orders() {
 
   useEffect(() => {
     fetchOrders();
-  }, [page, filters]);
+  }, [page, filters, authChecked]);
+
+  
+  if (!authChecked) {
+    return null; // ⛔ Prevent rendering anything while checking auth
+  }
 
   const handleFilterChange = (name, value) => {
     setFilters((prev) => ({ ...prev, [name]: value === 'all' ? '' : value, }));

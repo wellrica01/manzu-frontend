@@ -29,20 +29,41 @@ export default function MedicationDetails() {
   });
   const [formError, setFormError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
-  const router = useRouter();
   const params = useParams(); 
   const medicationId = params.id;
+  const router = useRouter();
+  const [authChecked, setAuthChecked] = useState(false); // ✅ Block rendering until auth check completes
+
+  useEffect(() => {
+    const token = localStorage.getItem('adminToken');
+    if (!token) {
+      router.replace('/admin/login'); // 🔒 Redirect to login if not authenticated
+    } else {
+      setAuthChecked(true); // ✅ Only show content if authenticated
+    }
+  }, [router]);
+
 
   const fetchMedication = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('adminToken');
+      if (!token) {
+        router.replace('/admin/login');
+        return;
+      }
       const response = await fetch(`http://localhost:5000/api/admin/medications/${medicationId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
       if (!response.ok) {
+        if (response.status === 401) {
+          // Unauthorized: redirect to login
+          localStorage.removeItem('adminToken');
+          router.replace('/admin/login');
+          return;
+        }
         throw new Error('Failed to fetch medication');
       }
       const result = await response.json();
@@ -68,7 +89,12 @@ export default function MedicationDetails() {
 
   useEffect(() => {
     fetchMedication();
-  }, [medicationId]);
+  }, [medicationId, authChecked]);
+
+  
+  if (!authChecked) {
+    return null; // ⛔ Prevent rendering anything while checking auth
+  }
 
 
   const handleEdit = () => {
@@ -79,7 +105,11 @@ export default function MedicationDetails() {
     setSubmitting(true);
     setFormError(null);
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('adminToken');
+      if (!token) {
+        router.replace('/admin/login');
+        return;
+      }
       const response = await fetch(`http://localhost:5000/api/admin/medications/${medicationId}`, {
         method: 'PATCH',
         headers: {
@@ -89,6 +119,12 @@ export default function MedicationDetails() {
         body: JSON.stringify(formData),
       });
       if (!response.ok) {
+        if (response.status === 401) {
+          // Unauthorized: redirect to login
+          localStorage.removeItem('adminToken');
+          router.replace('/admin/login');
+          return;
+        }
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to update medication');
       }
@@ -104,7 +140,11 @@ export default function MedicationDetails() {
   const handleDelete = async () => {
     setSubmitting(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('adminToken');
+      if (!token) {
+        router.replace('/admin/login');
+        return;
+      }
       const response = await fetch(`http://localhost:5000/api/admin/medications/${medicationId}`, {
         method: 'DELETE',
         headers: {
@@ -112,6 +152,12 @@ export default function MedicationDetails() {
         },
       });
       if (!response.ok) {
+        if (response.status === 401) {
+          // Unauthorized: redirect to login
+          localStorage.removeItem('adminToken');
+          router.replace('/admin/login');
+          return;
+        }
         throw new Error('Failed to delete medication');
       }
       router.push('/admin/medications');

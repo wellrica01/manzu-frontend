@@ -14,17 +14,38 @@ export default function PrescriptionDetails() {
   const [submitting, setSubmitting] = useState(null); // 'verified' | 'rejected' | null
   const router = useRouter();
   const params = useParams(); 
+  const [authChecked, setAuthChecked] = useState(false); // ✅ Block rendering until auth check completes
+
+  useEffect(() => {
+    const token = localStorage.getItem('adminToken');
+    if (!token) {
+      router.replace('/admin/login'); // 🔒 Redirect to login if not authenticated
+    } else {
+      setAuthChecked(true); // ✅ Only show content if authenticated
+    }
+  }, [router]);
+
 
   const fetchPrescription = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('adminToken');
+      if (!token) {
+        router.replace('/admin/login');
+        return;
+      }
       const response = await fetch(`http://localhost:5000/api/admin/prescriptions/${params.id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
       if (!response.ok) {
+        if (response.status === 401) {
+          // Unauthorized: redirect to login
+          localStorage.removeItem('adminToken');
+          router.replace('/admin/login');
+          return;
+        }
         throw new Error('Failed to fetch prescription');
       }
       const result = await response.json();
@@ -43,7 +64,11 @@ export default function PrescriptionDetails() {
     setSubmitting(status);
     setError(null);
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('adminToken');
+      if (!token) {
+        router.replace('/admin/login');
+        return;
+      }
       const response = await fetch(`http://localhost:5000/api/prescription/${params.id}/verify`, {
         method: 'PATCH',
         headers: {
@@ -53,6 +78,12 @@ export default function PrescriptionDetails() {
         body: JSON.stringify({ status }),
       });
       if (!response || !response.ok) {
+        if (response.status === 401) {
+          // Unauthorized: redirect to login
+          localStorage.removeItem('adminToken');
+          router.replace('/admin/login');
+          return;
+        }
         const text = await response.text();
         console.error('Verify response:', text);
         throw new Error(`Failed to update prescription: ${response.status} ${response.statusText}`);
@@ -77,7 +108,12 @@ useEffect(() => {
   } else {
     setError("Prescription ID is missing");
   }
-}, [params.id]);
+}, [params.id, authChecked]);
+
+  if (!authChecked) {
+    return null; // ⛔ Prevent rendering anything while checking auth
+  }
+
 
 
   if (loading) return <div className="text-center p-6">Loading...</div>;

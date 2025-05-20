@@ -8,7 +8,8 @@
    import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
    import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
    import { Input } from '@/components/ui/input';
-   const formSchema = z.object({
+   
+   const loginSchema = z.object({
      email: z.string().email('Invalid email'),
      password: z.string().min(1, 'Password is required'),
    });
@@ -16,7 +17,7 @@
      const [error, setError] = useState(null);
      const router = useRouter();
      const form = useForm({
-       resolver: zodResolver(formSchema),
+       resolver: zodResolver(loginSchema),
        defaultValues: { email: '', password: '' },
      });
      const onSubmit = async (values) => {
@@ -32,7 +33,7 @@
            throw new Error(data.message || 'Login failed');
          }
          console.log('Login successful:', data);
-         localStorage.setItem('token', data.token);
+         localStorage.setItem('pharmacyToken', data.token);
          router.push('/pharmacy/dashboard');
        } catch (err) {
          console.error('Login error:', err);

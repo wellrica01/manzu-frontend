@@ -46,7 +46,7 @@
            throw new Error(data.message || 'Registration failed');
          }
          console.log('Registration successful:', data);
-         localStorage.setItem('token', data.token);
+         localStorage.setItem('pharmacyToken', data.token);
          router.push('/pharmacy/dashboard');
        } catch (err) {
          console.error('Registration error:', err);

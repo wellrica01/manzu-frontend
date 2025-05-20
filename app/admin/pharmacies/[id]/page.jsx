@@ -33,16 +33,37 @@ export default function PharmacyDetails() {
   const params = useParams(); 
   const pharmacyId = params.id;
   const router = useRouter();
+  const [authChecked, setAuthChecked] = useState(false); // ✅ Block rendering until auth check completes
+
+  useEffect(() => {
+    const token = localStorage.getItem('adminToken');
+    if (!token) {
+      router.replace('/admin/login'); // 🔒 Redirect to login if not authenticated
+    } else {
+      setAuthChecked(true); // ✅ Only show content if authenticated
+    }
+  }, [router]);
+
 
   const fetchPharmacyData = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('adminToken');
+      if (!token) {
+        router.replace('/admin/login');
+        return;
+      }
       // Fetch pharmacy details
       const pharmacyResponse = await fetch(`http://localhost:5000/api/admin/pharmacies/${pharmacyId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!pharmacyResponse.ok) {
+        if (response.status === 401) {
+          // Unauthorized: redirect to login
+          localStorage.removeItem('adminToken');
+          router.replace('/admin/login');
+          return;
+        }
         throw new Error('Failed to fetch pharmacy details');
       }
       const pharmacyData = await pharmacyResponse.json();
@@ -53,6 +74,12 @@ export default function PharmacyDetails() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!ordersResponse.ok) {
+        if (response.status === 401) {
+          // Unauthorized: redirect to login
+          localStorage.removeItem('adminToken');
+          router.replace('/admin/login');
+          return;
+        }
         throw new Error('Failed to fetch orders');
       }
       const ordersData = await ordersResponse.json();
@@ -63,6 +90,12 @@ export default function PharmacyDetails() {
         headers: { Authorization: `Bearer ${token}` },
         });
         if (!medicationsResponse.ok) {
+            if (response.status === 401) {
+          // Unauthorized: redirect to login
+          localStorage.removeItem('adminToken');
+          router.replace('/admin/login');
+          return;
+        }
         throw new Error('Failed to fetch medications');
         }
         const medicationsData = await medicationsResponse.json();
@@ -76,7 +109,11 @@ export default function PharmacyDetails() {
 
   useEffect(() => {
     fetchPharmacyData();
-  }, [pharmacyId, ordersPage, medicationsPage]);
+  }, [pharmacyId, ordersPage, medicationsPage, authChecked]);
+
+    if (!authChecked) {
+    return null; // ⛔ Prevent rendering anything while checking auth
+  }
 
   const handleEdit = () => {
     setFormData({
@@ -95,7 +132,11 @@ export default function PharmacyDetails() {
 
   const handleSaveEdit = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('adminToken');
+      if (!token) {
+        router.replace('/admin/login');
+        return;
+      }
       const response = await fetch(`http://localhost:5000/api/admin/pharmacies/${pharmacyId}`, {
         method: 'PATCH',
         headers: {
@@ -105,6 +146,12 @@ export default function PharmacyDetails() {
         body: JSON.stringify(formData),
       });
       if (!response.ok) {
+        if (response.status === 401) {
+          // Unauthorized: redirect to login
+          localStorage.removeItem('adminToken');
+          router.replace('/admin/login');
+          return;
+        }
         throw new Error('Failed to update pharmacy');
       }
       setEditOpen(false);
@@ -116,7 +163,11 @@ export default function PharmacyDetails() {
 
   const handleDelete = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('adminToken');
+      if (!token) {
+        router.replace('/admin/login');
+        return;
+      }
       const response = await fetch(`http://localhost:5000/api/admin/pharmacies/${pharmacyId}`, {
         method: 'DELETE',
         headers: {
@@ -124,6 +175,12 @@ export default function PharmacyDetails() {
         },
       });
       if (!response.ok) {
+        if (response.status === 401) {
+          // Unauthorized: redirect to login
+          localStorage.removeItem('adminToken');
+          router.replace('/admin/login');
+          return;
+        }
         throw new Error('Failed to delete pharmacy');
       }
       router.push('/admin/pharmacies');

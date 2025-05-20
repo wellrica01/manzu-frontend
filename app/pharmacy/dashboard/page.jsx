@@ -11,6 +11,7 @@
    import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
    import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
    import { Input } from '@/components/ui/input';
+
    const addUserSchema = z.object({
      name: z.string().min(1, 'Name is required'),
      email: z.string().email('Invalid email'),
@@ -38,202 +39,243 @@
        resolver: zodResolver(editUserSchema),
        defaultValues: { name: '', email: '' },
      });
-     useEffect(() => {
-       const token = localStorage.getItem('token');
-       if (!token) {
-         router.push('/pharmacy/login');
-         return;
-       }
-       try {
-         const decoded = jwtDecode(token);
-         setPharmacyId(decoded.pharmacyId);
-         setUserRole(decoded.role);
-       } catch (err) {
-         console.error('Invalid token:', err);
-         localStorage.removeItem('token');
-         router.push('/pharmacy/login');
-       }
-     }, [router]);
-     const fetchOrders = async () => {
-       if (!pharmacyId) return;
-       try {
-         setError(null);
-         const token = localStorage.getItem('token');
-         const response = await fetch(`http://localhost:5000/api/pharmacy/orders`, {
-           headers: { Authorization: `Bearer ${token}` },
-         });
-         if (!response.ok) {
-           const errorData = await response.json();
-           throw new Error(errorData.message || 'Failed to fetch orders');
-         }
-         const data = await response.json();
-         console.log('Pharmacy orders:', data);
-         setOrders(data.orders);
-       } catch (err) {
-         console.error('Fetch orders error:', err);
-         setError(err.message);
-         if (err.message.includes('Invalid token')) {
-           localStorage.removeItem('token');
-           router.push('/pharmacy/login');
-         }
-       }
-     };
-     const fetchUsers = async () => {
-       if (!pharmacyId) return;
-       try {
-         setUserError(null);
-         const token = localStorage.getItem('token');
-         const response = await fetch(`http://localhost:5000/api/pharmacy/users`, {
-           headers: { Authorization: `Bearer ${token}` },
-         });
-         if (!response.ok) {
-           const errorData = await response.json();
-           throw new Error(errorData.message || 'Failed to fetch users');
-         }
-         const data = await response.json();
-         console.log('Pharmacy users:', data);
-         setUsers(data.users);
-       } catch (err) {
-         console.error('Fetch users error:', err);
-         setUserError(err.message);
-         if (err.message.includes('Invalid token')) {
-           localStorage.removeItem('token');
-           router.push('/pharmacy/login');
-         }
-       }
-     };
-     useEffect(() => {
-       fetchOrders();
-       if (userRole === 'manager') {
-         fetchUsers();
-       }
-     }, [pharmacyId, userRole]);
-     const updateOrderStatus = async (orderId, status) => {
-       try {
-         const token = localStorage.getItem('token');
-         const response = await fetch(`http://localhost:5000/api/pharmacy/orders/${orderId}`, {
-           method: 'PATCH',
-           headers: {
-             'Content-Type': 'application/json',
-             Authorization: `Bearer ${token}`,
-           },
-           body: JSON.stringify({ status }),
-         });
-         if (!response.ok) {
-           const errorData = await response.json();
-           throw new Error(errorData.message || 'Failed to update status');
-         }
-         console.log('Order status updated:', { orderId, status });
-         fetchOrders();
-       } catch (err) {
-         console.error('Update status error:', err);
-         setError(err.message);
-         if (err.message.includes('Invalid token')) {
-           localStorage.removeItem('token');
-           router.push('/pharmacy/login');
-         }
-       }
-     };
-     const handleAddUser = async (values) => {
-       try {
-         setUserError(null);
-         const token = localStorage.getItem('token');
-         const response = await fetch('http://localhost:5000/api/auth/add-user', {
-           method: 'POST',
-           headers: {
-             'Content-Type': 'application/json',
-             Authorization: `Bearer ${token}`,
-           },
-           body: JSON.stringify(values),
-         });
-         const data = await response.json();
-         if (!response.ok) {
-           throw new Error(data.message || 'Failed to add user');
-         }
-         console.log('User added:', data);
-         addForm.reset();
-         fetchUsers();
-       } catch (err) {
-         console.error('Add user error:', err);
-         setUserError(err.message);
-       }
-     };
-     const handleEditUser = async (values, userId) => {
-       try {
-         setUserError(null);
-         const token = localStorage.getItem('token');
-         const response = await fetch(`http://localhost:5000/api/auth/users/${userId}`, {
-           method: 'PATCH',
-           headers: {
-             'Content-Type': 'application/json',
-             Authorization: `Bearer ${token}`,
-           },
-           body: JSON.stringify(values),
-         });
-         const data = await response.json();
-         if (!response.ok) {
-           throw new Error(data.message || 'Failed to update user');
-         }
-         console.log('User updated:', data);
-         setEditingUserId(null);
-         editForm.reset();
-         fetchUsers();
-       } catch (err) {
-         console.error('Edit user error:', err);
-         setUserError(err.message);
-       }
-     };
-     const handleDeleteUser = async (userId) => {
-       if (!confirm('Are you sure you want to delete this user?')) return;
-       try {
-         setUserError(null);
-         const token = localStorage.getItem('token');
-         const response = await fetch(`http://localhost:5000/api/auth/users/${userId}`, {
-           method: 'DELETE',
-           headers: {
-             Authorization: `Bearer ${token}`,
-           },
-         });
-         const data = await response.json();
-         if (!response.ok) {
-           throw new Error(data.message || 'Failed to delete user');
-         }
-         console.log('User deleted:', { userId });
-         fetchUsers();
-       } catch (err) {
-         console.error('Delete user error:', err);
-         setUserError(err.message);
-       }
-     };
-     const startEditing = (user) => {
-       setEditingUserId(user.id);
-       editForm.reset({ name: user.name, email: user.email });
-     };
-     const cancelEditing = () => {
-       setEditingUserId(null);
-       editForm.reset();
-     };
-     const getNextStatuses = (status, deliveryMethod) => {
-       const nextStatuses = {
-         confirmed: ['processing'],
-         processing: deliveryMethod === 'pickup' ? ['ready_for_pickup'] : ['shipped'],
-         shipped: ['delivered'],
-         ready_for_pickup: [],
-         delivered: [],
-       };
-       return nextStatuses[status] || [];
-     };
-     const getAddressDisplay = (order) => {
-       if (order.deliveryMethod === 'pickup') {
-         const addresses = [...new Set(order.items.map(item => `${item.pharmacy.name}: ${item.pharmacy.address}`))];
-         return addresses.join(', ');
-       }
-       return order.address || 'N/A';
-     };
-     const handleLogout = () => {
-       localStorage.removeItem('token');
-       router.push('/pharmacy/login');
-     };
+
+
+       useEffect(() => {
+    const token = localStorage.getItem('pharmacyToken');
+    if (!token) {
+      router.replace('/pharmacy/login');
+      return;
+    }
+    try {
+      const decoded = jwtDecode(token);
+      // Validate token is for PharmacyUser
+      if (!decoded.pharmacyId || !['manager', 'pharmacist'].includes(decoded.role)) {
+        console.error('Invalid token: Not a PharmacyUser');
+        localStorage.removeItem('pharmacyToken');
+        router.replace('/pharmacy/login');
+        return;
+      }
+      setPharmacyId(decoded.pharmacyId);
+      setUserRole(decoded.role);
+    } catch (err) {
+      console.error('Invalid token:', err);
+      localStorage.removeItem('pharmacyToken');
+      router.replace('/pharmacy/login');
+    }
+  }, [router]);
+
+  const fetchOrders = async () => {
+    if (!pharmacyId) return;
+    try {
+      setError(null);
+      const token = localStorage.getItem('pharmacyToken');
+      const response = await fetch(`http://localhost:5000/api/pharmacy/orders`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to fetch orders');
+      }
+      const data = await response.json();
+      console.log('Pharmacy orders:', data);
+      setOrders(data.orders);
+    } catch (err) {
+      console.error('Fetch orders error:', err);
+      setError(err.message);
+      if (err.message.includes('Invalid token') || err.message.includes('Unauthorized')) {
+        localStorage.removeItem('pharmacyToken');
+        router.replace('/pharmacy/login');
+      }
+    }
+  };
+
+  const fetchUsers = async () => {
+    if (!pharmacyId) return;
+    try {
+      setUserError(null);
+      const token = localStorage.getItem('pharmacyToken');
+      const response = await fetch(`http://localhost:5000/api/pharmacy/users`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to fetch users');
+      }
+      const data = await response.json();
+      console.log('Pharmacy users:', data);
+      setUsers(data.users);
+    } catch (err) {
+      console.error('Fetch users error:', err);
+      setUserError(err.message);
+      if (err.message.includes('Invalid token') || err.message.includes('Unauthorized')) {
+        localStorage.removeItem('pharmacyToken');
+        router.replace('/pharmacy/login');
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (pharmacyId && userRole) {
+      fetchOrders();
+      if (userRole === 'manager') {
+        fetchUsers();
+      }
+    }
+  }, [pharmacyId, userRole]);
+
+  const updateOrderStatus = async (orderId, status) => {
+    try {
+      const token = localStorage.getItem('pharmacyToken');
+      const response = await fetch(`http://localhost:5000/api/pharmacy/orders/${orderId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update status');
+      }
+      console.log('Order status updated:', { orderId, status });
+      fetchOrders();
+    } catch (err) {
+      console.error('Update status error:', err);
+      setError(err.message);
+      if (err.message.includes('Invalid token') || err.message.includes('Unauthorized')) {
+        localStorage.removeItem('pharmacyToken');
+        router.replace('/pharmacy/login');
+      }
+    }
+  };
+
+  const handleAddUser = async (values) => {
+    try {
+      setUserError(null);
+      const token = localStorage.getItem('pharmacyToken');
+      const response = await fetch('http://localhost:5000/api/auth/add-user', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ ...values, pharmacyId }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to add user');
+      }
+      console.log('User added:', data);
+      addForm.reset();
+      fetchUsers();
+    } catch (err) {
+      console.error('Add user error:', err);
+      setUserError(err.message);
+      if (err.message.includes('Invalid token') || err.message.includes('Unauthorized')) {
+        localStorage.removeItem('pharmacyToken');
+        router.replace('/pharmacy/login');
+      }
+    }
+  };
+
+  const handleEditUser = async (values, userId) => {
+    try {
+      setUserError(null);
+      const token = localStorage.getItem('pharmacyToken');
+      const response = await fetch(`http://localhost:5000/api/auth/users/${userId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(values),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to update user');
+      }
+      console.log('User updated:', data);
+      setEditingUserId(null);
+      editForm.reset();
+      fetchUsers();
+    } catch (err) {
+      console.error('Edit user error:', err);
+      setUserError(err.message);
+      if (err.message.includes('Invalid token') || err.message.includes('Unauthorized')) {
+        localStorage.removeItem('pharmacyToken');
+        router.replace('/pharmacy/login');
+      }
+    }
+  };
+
+  const handleDeleteUser = async (userId) => {
+    if (!confirm('Are you sure you want to delete this user?')) return;
+    try {
+      setUserError(null);
+      const token = localStorage.getItem('pharmacyToken');
+      const response = await fetch(`http://localhost:5000/api/auth/users/${userId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to delete user');
+      }
+      console.log('User deleted:', { userId });
+      fetchUsers();
+    } catch (err) {
+      console.error('Delete user error:', err);
+      setUserError(err.message);
+      if (err.message.includes('Invalid token') || err.message.includes('Unauthorized')) {
+        localStorage.removeItem('pharmacyToken');
+        router.replace('/pharmacy/login');
+      }
+    }
+  };
+
+  const startEditing = (user) => {
+    setEditingUserId(user.id);
+    editForm.reset({ name: user.name, email: user.email });
+  };
+
+  const cancelEditing = () => {
+    setEditingUserId(null);
+    editForm.reset();
+  };
+
+  const getNextStatuses = (status, deliveryMethod) => {
+    const nextStatuses = {
+      confirmed: ['processing'],
+      processing: deliveryMethod === 'pickup' ? ['ready_for_pickup'] : ['shipped'],
+      shipped: ['delivered'],
+      ready_for_pickup: [],
+      delivered: [],
+    };
+    return nextStatuses[status] || [];
+  };
+
+  const getAddressDisplay = (order) => {
+    if (order.deliveryMethod === 'pickup') {
+      const addresses = [...new Set(order.items.map(item => `${item.pharmacy.name}: ${item.pharmacy.address}`))];
+      return addresses.join(', ');
+    }
+    return order.address || 'N/A';
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('pharmacyToken');
+    router.push('/pharmacy/login');
+  };
+
+  // Don't render until token is validated
+  if (!pharmacyId || !userRole) {
+    return null; // or a loading spinner
+  }
+
      return (
        <div className="container mx-auto p-4">
          <div className="flex justify-between items-center mb-4">

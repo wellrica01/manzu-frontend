@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -35,12 +36,27 @@ export default function Medications() {
   });
   const [formError, setFormError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const router = useRouter();
+  const [authChecked, setAuthChecked] = useState(false); // ✅ Block rendering until auth check completes
 
+  useEffect(() => {
+    const token = localStorage.getItem('adminToken');
+    if (!token) {
+      router.replace('/admin/login'); // 🔒 Redirect to login if not authenticated
+    } else {
+      setAuthChecked(true); // ✅ Only show content if authenticated
+    }
+  }, [router]);
 
+ 
   const fetchMedications = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('adminToken');
+      if (!token) {
+        router.replace('/admin/login');
+        return;
+      }
       const query = new URLSearchParams({
         page,
         limit: '10',
@@ -55,6 +71,12 @@ export default function Medications() {
         },
       });
       if (!response.ok) {
+        if (response.status === 401) {
+          // Unauthorized: redirect to login
+          localStorage.removeItem('adminToken');
+          router.replace('/admin/login');
+          return;
+        }
         throw new Error('Failed to fetch medications');
       }
       const result = await response.json();
@@ -68,7 +90,12 @@ export default function Medications() {
 
   useEffect(() => {
     fetchMedications();
-  }, [page, filters]);
+  }, [page, filters, authChecked]);
+
+   if (!authChecked) {
+    return null; // ⛔ Prevent rendering anything while checking auth
+  }
+
 
   const handleFilterChange = (name, value) => {
     setFilters((prev) => ({ ...prev, [name]: value === 'all' ? '' : value, }));
@@ -87,7 +114,7 @@ export default function Medications() {
     setSubmitting(true);
     setFormError(null);
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('adminToken');
       const response = await fetch('http://localhost:5000/api/admin/medications', {
         method: 'POST',
         headers: {

@@ -8,6 +8,7 @@
    import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
    import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
    import { Input } from '@/components/ui/input';
+   
    const loginSchema = z.object({
      email: z.string().email('Invalid email'),
      password: z.string().min(1, 'Password required'),
@@ -32,7 +33,7 @@
            throw new Error(data.message || 'Login failed');
          }
          console.log('Admin login successful:', data);
-         localStorage.setItem('token', data.token);
+         localStorage.setItem('adminToken', data.token);
          router.push('/admin/dashboard');
        } catch (err) {
          console.error('Login error:', err);

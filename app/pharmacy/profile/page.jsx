@@ -37,9 +37,9 @@
        },
      });
      useEffect(() => {
-       const token = localStorage.getItem('token');
+       const token = localStorage.getItem('pharmacyToken');
        if (!token) {
-         router.push('/pharmacy/login');
+         router.replace('/pharmacy/login');
          return;
        }
        try {
@@ -47,14 +47,18 @@
          setUserRole(decoded.role);
        } catch (err) {
          console.error('Invalid token:', err);
-         localStorage.removeItem('token');
-         router.push('/pharmacy/login');
+         localStorage.removeItem('pharmacyToken');
+         router.replace('/pharmacy/login');
        }
      }, [router]);
      const fetchProfile = async () => {
        try {
          setError(null);
-         const token = localStorage.getItem('token');
+         const token = localStorage.getItem('pharmacyToken');
+         if (!token) {
+        router.replace('/pharmacy/login');
+        return;
+      }
          const response = await fetch('http://localhost:5000/api/auth/profile', {
            headers: { Authorization: `Bearer ${token}` },
          });
@@ -80,8 +84,8 @@
          console.error('Fetch profile error:', err);
          setError(err.message);
          if (err.message.includes('Invalid token')) {
-           localStorage.removeItem('token');
-           router.push('/pharmacy/login');
+           localStorage.removeItem('pharmacyToken');
+           router.replace('/pharmacy/login');
          }
        }
      };
@@ -93,7 +97,11 @@
      const handleEditProfile = async (values) => {
        try {
          setError(null);
-         const token = localStorage.getItem('token');
+         const token = localStorage.getItem('pharmacyToken');
+         if (!token) {
+        router.replace('/pharmacy/login');
+        return;
+      }
          const response = await fetch('http://localhost:5000/api/auth/profile', {
            method: 'PATCH',
            headers: {
@@ -116,7 +124,7 @@
        }
      };
      const handleLogout = () => {
-       localStorage.removeItem('token');
+       localStorage.removeItem('pharmacyToken');
        router.push('/pharmacy/login');
      };
      if (!user || !pharmacy) {

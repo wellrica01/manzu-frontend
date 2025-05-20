@@ -18,9 +18,9 @@
      const [pharmacyId, setPharmacyId] = useState(null);
      const router = useRouter();
      useEffect(() => {
-       const token = localStorage.getItem('token');
+       const token = localStorage.getItem('pharmacyToken');
        if (!token) {
-         router.push('/pharmacy/login');
+         router.replace('/pharmacy/login');
          return;
        }
        try {
@@ -28,15 +28,15 @@
          setPharmacyId(decoded.pharmacyId);
        } catch (err) {
          console.error('Invalid token:', err);
-         localStorage.removeItem('token');
-         router.push('/pharmacy/login');
+         localStorage.removeItem('pharmacyToken');
+         router.replace('/pharmacy/login');
        }
      }, [router]);
      const fetchMedications = async () => {
        if (!pharmacyId) return;
        try {
          setError(null);
-         const token = localStorage.getItem('token');
+         const token = localStorage.getItem('pharmacyToken');
          const response = await fetch(`http://localhost:5000/api/pharmacy/medications`, {
            headers: { Authorization: `Bearer ${token}` },
          });
@@ -53,8 +53,8 @@
          console.error('Fetch medications error:', err);
          setError(err.message);
          if (err.message.includes('Invalid token')) {
-           localStorage.removeItem('token');
-           router.push('/pharmacy/login');
+           localStorage.removeItem('pharmacyToken');
+           router.replace('/pharmacy/login');
          }
        }
      };
@@ -71,7 +71,7 @@
        e.preventDefault();
        try {
          setError(null);
-         const token = localStorage.getItem('token');
+         const token = localStorage.getItem('pharmacyToken');
          const response = await fetch(`http://localhost:5000/api/pharmacy/medications`, {
            method: 'POST',
            headers: {
@@ -91,15 +91,15 @@
          console.error('Add medication error:', err);
          setError(err.message);
          if (err.message.includes('Invalid token')) {
-           localStorage.removeItem('token');
-           router.push('/pharmacy/login');
+           localStorage.removeItem('pharmacyToken');
+           router.replace('/pharmacy/login');
          }
        }
      };
      const handleEditMedication = async (med) => {
        try {
          setError(null);
-         const token = localStorage.getItem('token');
+         const token = localStorage.getItem('pharmacyToken');
          const response = await fetch(`http://localhost:5000/api/pharmacy/medications`, {
            method: 'PATCH',
            headers: {
@@ -120,15 +120,15 @@
          console.error('Update medication error:', err);
          setError(err.message);
          if (err.message.includes('Invalid token')) {
-           localStorage.removeItem('token');
-           router.push('/pharmacy/login');
+           localStorage.removeItem('pharmacyToken');
+           router.replace('/pharmacy/login');
          }
        }
      };
      const handleDeleteMedication = async (med) => {
        try {
          setError(null);
-         const token = localStorage.getItem('token');
+         const token = localStorage.getItem('pharmacyToken');
          const response = await fetch(`http://localhost:5000/api/pharmacy/medications?medicationId=${med.medicationId}`, {
            method: 'DELETE',
            headers: { Authorization: `Bearer ${token}` },
@@ -143,8 +143,8 @@
          console.error('Delete medication error:', err);
          setError(err.message);
          if (err.message.includes('Invalid token')) {
-           localStorage.removeItem('token');
-           router.push('/pharmacy/login');
+           localStorage.removeItem('pharmacyToken');
+           router.replace('/pharmacy/login');
          }
        }
      };
@@ -153,7 +153,7 @@
        setEditForm({ stock: med.stock.toString(), price: med.price.toString() });
      };
      const handleLogout = () => {
-       localStorage.removeItem('token');
+       localStorage.removeItem('pharmacyToken');
        router.push('/pharmacy/login');
      };
      return (
