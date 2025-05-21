@@ -3,20 +3,25 @@ import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import Link from 'next/link';
 
 export default function Confirmation() {
-  const [order, setOrder] = useState(null);
+  const [confirmationData, setConfirmationData] = useState({ pharmacies: [], trackingCode: '', checkoutSessionId: '' });
   const [status, setStatus] = useState('pending');
   const [error, setError] = useState(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const guestId = typeof window !== 'undefined' ? localStorage.getItem('guestId') : null;
   const reference = searchParams.get('reference');
+  const session = searchParams.get('session');
 
   const fetchConfirmation = async () => {
     try {
       setError(null);
-      const response = await fetch(`http://localhost:5000/api/confirmation?reference=${reference}`, {
+      const query = new URLSearchParams();
+      if (reference) query.set('reference', reference);
+      if (session) query.set('session', session);
+      const response = await fetch(`http://localhost:5000/api/confirmation?${query.toString()}`, {
         headers: { 'x-guest-id': guestId },
       });
       if (!response.ok) {
@@ -25,36 +30,42 @@ export default function Confirmation() {
       }
       const data = await response.json();
       console.log('Confirmation data:', data);
-      setOrder(data.order);
+      setConfirmationData({
+        pharmacies: data.pharmacies,
+        trackingCode: data.trackingCode,
+        checkoutSessionId: data.checkoutSessionId,
+      });
       setStatus(data.status);
     } catch (err) {
       console.error('Confirmation error:', err);
-      setError(err.message === 'Order not found' ? 'Order not found. Please contact support.' : err.message);
+      setError(err.message === 'Orders not found' ? 'Orders not found. Please contact support.' : err.message);
       setStatus('failed');
     }
   };
 
   useEffect(() => {
-    if (guestId && reference) {
+    if (guestId && (reference || session)) {
       fetchConfirmation();
     } else {
-      setError('Missing guest ID or reference');
+      setError('Missing guest ID, reference, or session ID');
       setStatus('failed');
     }
-  }, [reference]);
+  }, [reference, session]);
 
   const calculateItemPrice = (item) => item.quantity * item.price;
 
-  const getUniquePharmacyAddresses = () => {
+  const getUniquePharmacyAddresses = (pharmacyOrders) => {
     const addresses = [];
     const seen = new Set();
-    order?.items.forEach(item => {
-      const address = item.pharmacy?.address;
-      const pharmacyName = item.pharmacy?.name;
-      if (address && pharmacyName && !seen.has(address)) {
-        addresses.push({ name: pharmacyName, address });
-        seen.add(address);
-      }
+    pharmacyOrders.forEach(order => {
+      order.items.forEach(item => {
+        const address = pharmacyOrders[0].pharmacy?.address;
+        const pharmacyName = pharmacyOrders[0].pharmacy?.name;
+        if (address && pharmacyName && !seen.has(address)) {
+          addresses.push({ name: pharmacyName, address });
+          seen.add(address);
+        }
+      });
     });
     return addresses;
   };
@@ -67,81 +78,109 @@ export default function Confirmation() {
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold text-indigo-800 mb-4">Order Confirmation</h1>
       {error && <p className="text-red-600 font-medium mb-4">{error}</p>}
-      {!order ? (
+      {confirmationData.pharmacies.length === 0 ? (
         <p className="text-gray-600">Loading order details...</p>
       ) : (
-        <Card className="border-indigo-100 shadow-md">
-          <CardHeader>
-            <CardTitle className="text-indigo-800">
-              Payment Status: {status === 'completed' ? 'Successful' : 'Failed'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
+        <div className="space-y-6">
+          <Card className="border-indigo-100 shadow-md">
+            <CardHeader>
+              <CardTitle className="text-indigo-800">
+                Order Status: {status === 'completed' ? 'Successful' : 'Awaiting Verification'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
               <p className="text-gray-700">
-                <strong>Order ID:</strong> {order.id}
+                <strong>Tracking Code:</strong> {confirmationData.trackingCode}
               </p>
               <p className="text-gray-700">
-                <strong>Tracking Code:</strong> {order.trackingCode}
+                <strong>Checkout Session ID:</strong> {confirmationData.checkoutSessionId}
               </p>
-              <p className="text-gray-700">
-                <strong>Customer:</strong> {order.patientIdentifier}
-              </p>
-              <p className="text-gray-700">
-                <strong>Delivery Method:</strong> {order.deliveryMethod === 'pickup' ? 'Pickup' : 'Delivery'}
-              </p>
-              {order.deliveryMethod === 'pickup' && order.items.length > 0 ? (
-                <div>
-                  <strong className="text-gray-700">Pickup Addresses:</strong>
-                  <div className="mt-2 space-y-2">
-                    {getUniquePharmacyAddresses().length > 0 ? (
-                      getUniquePharmacyAddresses().map((pharmacy, index) => (
-                        <p key={index} className="text-gray-600">
-                          {pharmacy.name}: {pharmacy.address}
-                        </p>
-                      ))
+            </CardContent>
+          </Card>
+          {confirmationData.pharmacies.map((pharmacy) => (
+            <Card key={pharmacy.pharmacy.id} className="border-indigo-100 shadow-md">
+              <CardHeader>
+                <CardTitle className="text-indigo-800">{pharmacy.pharmacy.name}</CardTitle>
+                <p className="text-gray-600">{pharmacy.pharmacy.address}</p>
+              </CardHeader>
+              <CardContent>
+                {pharmacy.orders.map((order) => (
+                  <div key={order.id} className="mb-6 border-b pb-4">
+                    <p className="text-gray-700">
+                      <strong>Order ID:</strong> {order.id}
+                    </p>
+                    <p className="text-gray-700">
+                      <strong>Status:</strong>{' '}
+                      {order.status === 'confirmed' ? 'Confirmed' : 'Awaiting Prescription Verification'}
+                    </p>
+                    <p className="text-gray-700">
+                      <strong>Delivery Method:</strong>{' '}
+                      {order.deliveryMethod === 'pickup' ? 'Pickup' : 'Delivery'}
+                    </p>
+                    {order.deliveryMethod === 'pickup' ? (
+                      <div>
+                        <strong className="text-gray-700">Pickup Address:</strong>
+                        <p className="text-gray-600">{pharmacy.pharmacy.address}</p>
+                      </div>
                     ) : (
-                      <p className="text-gray-600">Pharmacy address not available</p>
+                      <p className="text-gray-700">
+                        <strong>Delivery Address:</strong> {order.address}
+                      </p>
                     )}
+                    {order.prescription && (
+                      <p className="text-gray-700">
+                        <strong>Prescription:</strong>{' '}
+                        {order.prescription.status.charAt(0).toUpperCase() + order.prescription.status.slice(1)}
+                        {' '}
+                        (<a
+                          href={order.prescription.fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-indigo-600 hover:underline"
+                        >
+                          View File
+                        </a>)
+                        {order.prescription.status === 'verified' && order.status === 'pending_prescription' && (
+                          <span>
+                            {' '}
+                            <Link
+                              href={`/checkout/${order.id}`}
+                              className="text-indigo-600 hover:underline"
+                            >
+                              Complete Payment
+                            </Link>
+                          </span>
+                        )}
+                      </p>
+                    )}
+                    <h3 className="text-lg font-semibold text-indigo-800 mt-4">Order Items</h3>
+                    {order.items.map((item) => (
+                      <div key={item.id} className="mb-4">
+                        <p className="text-gray-700 font-medium">
+                          {item.medication.name}
+                          {item.medication.prescriptionRequired && ' (Prescription Required)'}
+                        </p>
+                        <p className="text-gray-600">Quantity: {item.quantity}</p>
+                        <p className="text-gray-600">Unit Price: ₦{item.price}</p>
+                        <p className="text-gray-600">Total: ₦{calculateItemPrice(item)}</p>
+                      </div>
+                    ))}
+                    <p className="text-gray-700 font-semibold">Order Total: ₦{order.totalPrice}</p>
                   </div>
-                </div>
-              ) : (
-                <p className="text-gray-700">
-                  <strong>Delivery Address:</strong> {order.address}
+                ))}
+                <p className="text-xl font-semibold text-indigo-800">
+                  Subtotal for {pharmacy.pharmacy.name}: ₦{pharmacy.subtotal}
                 </p>
-              )}
-              {order.prescription && (
-                <p className="text-gray-700">
-                  <strong>Prescription:</strong> {order.prescription.status.charAt(0).toUpperCase() + order.prescription.status.slice(1)}
-                  {' '}
-                  (<a href={order.prescription.fileUrl} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">View File</a>)
-                </p>
-              )}
-              <h3 className="text-lg font-semibold text-indigo-800">Order Items</h3>
-              {order.items.map((item) => (
-                <div key={item.id} className="mb-4">
-                  <p className="text-gray-700 font-medium">
-                    {item.medication.name}
-                    {item.medication.prescriptionRequired && ' (Prescription Required)'}
-                  </p>
-                  <p className="text-gray-600">Pharmacy: {item.pharmacy.name}</p>
-                  <p className="text-gray-600">Quantity: {item.quantity}</p>
-                  <p className="text-gray-600">Unit Price: ₦{item.price}</p>
-                  <p className="text-gray-600">Total: ₦{calculateItemPrice(item)}</p>
-                </div>
-              ))}
-              <p className="text-xl font-semibold text-indigo-800 text-right">
-                Total: ₦{order.totalPrice}
-              </p>
-              <Button
-                className="bg-green-600 hover:bg-green-700 text-white mt-4"
-                onClick={handleBackToHome}
-              >
-                Back to Home
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          ))}
+          <Button
+            className="bg-green-600 hover:bg-green-700 text-white mt-4"
+            onClick={handleBackToHome}
+          >
+            Back to Home
+          </Button>
+        </div>
       )}
     </div>
   );

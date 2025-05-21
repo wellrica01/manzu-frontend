@@ -9,7 +9,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 export default function Checkout() {
   const { orderId: resumeOrderId } = useParams();
-  const [cart, setCart] = useState({ items: [], totalPrice: 0 });
+  const [cart, setCart] = useState({ pharmacies: [], totalPrice: 0 });
   const [form, setForm] = useState({ name: '', email: '', phone: '', address: '', deliveryMethod: 'pickup' });
   const [prescriptionFile, setPrescriptionFile] = useState(null);
   const [error, setError] = useState(null);
@@ -78,7 +78,6 @@ export default function Checkout() {
     setError(null);
     setPendingMessage(null);
 
-    // Validate form inputs
     if (!form.name || !form.email || !form.phone || !form.deliveryMethod) {
       setError('All fields are required');
       return;
@@ -87,20 +86,21 @@ export default function Checkout() {
       setError('Address is required for delivery');
       return;
     }
-    if (cart.items.length === 0 || cart.totalPrice <= 0) {
+    if (cart.pharmacies.length === 0 || cart.totalPrice <= 0) {
       setError('Cart is empty or invalid');
       return;
     }
     if (form.deliveryMethod === 'pickup') {
-      const hasValidAddresses = cart.items.every(item => item.pharmacy?.address);
+      const hasValidAddresses = cart.pharmacies.every(pharmacy => pharmacy.pharmacy.address);
       if (!hasValidAddresses) {
         setError('One or more pharmacy addresses are not available for pickup');
         return;
       }
     }
 
-    // Check if prescription is required
-    const needsPrescription = cart.items.some(item => item.medication.prescriptionRequired);
+    const needsPrescription = cart.pharmacies.some(pharmacy =>
+      pharmacy.items.some(item => item.medication.prescriptionRequired)
+    );
     if (needsPrescription && !prescriptionFile) {
       setError('A prescription file is required for one or more medications');
       return;
@@ -132,47 +132,52 @@ export default function Checkout() {
       }
 
       const data = await response.json();
+      console.log('Checkout response:', data);
 
-      if (data.status === 'pending_prescription') {
-        setPendingMessage(
-          'Your prescription has been submitted for verification. You will be notified when it is verified to complete your payment.'
-        );
+      // Check for order types
+      const hasPrescriptionOrders = data.orders.some(order => order.status === 'pending_prescription');
+      const hasOtcOrders = data.paymentReference && data.paymentUrl;
+
+      // Set message based on order types
+      let message = '';
+      if (hasOtcOrders && hasPrescriptionOrders) {
+        message = 'Proceeding to payment for OTC items. Prescription items have been submitted for verification.';
+      } else if (hasOtcOrders) {
+        message = 'Proceeding to payment for your order.';
+      } else if (hasPrescriptionOrders) {
+        message = 'Your prescription has been submitted for verification. You will be notified when it is verified to complete your payment.';
+      }
+
+      setPendingMessage(message);
+
+      // Initiate payment for OTC orders if paymentUrl is provided
+      if (hasOtcOrders) {
+        if (typeof window.PaystackPop === 'undefined') {
+          throw new Error('PaystackPop not loaded');
+        }
+
+        const paystack = new window.PaystackPop();
+        paystack.newTransaction({
+          key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
+          email: form.email,
+          amount: data.orders
+            .filter(order => order.status === 'pending')
+            .reduce((sum, order) => sum + order.totalPrice, 0) * 100,
+          ref: data.paymentReference,
+          onSuccess: (transaction) => {
+            console.log('Payment successful:', transaction);
+            router.push(`/confirmation?reference=${transaction.reference}&session=${data.checkoutSessionId}`);
+            setLoading(false);
+          },
+          onCancel: () => {
+            console.log('Payment cancelled');
+            setError('Payment cancelled');
+            setLoading(false);
+          },
+        });
+      } else {
         setLoading(false);
-        return;
       }
-
-      if (!data.paymentReference || !data.paymentUrl) {
-        throw new Error('Payment reference or URL not provided');
-      }
-
-      console.log('Paystack transaction params:', {
-        key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
-        email: form.email,
-        amount: cart.totalPrice * 100,
-        ref: data.paymentReference,
-      });
-
-      if (typeof window.PaystackPop === 'undefined') {
-        throw new Error('PaystackPop not loaded');
-      }
-
-      const paystack = new window.PaystackPop();
-      paystack.newTransaction({
-        key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
-        email: form.email,
-        amount: cart.totalPrice * 100,
-        ref: data.paymentReference,
-        onSuccess: (transaction) => {
-          console.log('Payment successful:', transaction);
-          router.push('/confirmation?reference=' + transaction.reference);
-          setLoading(false);
-        },
-        onCancel: () => {
-          console.log('Payment cancelled');
-          setError('Payment cancelled');
-          setLoading(false);
-        },
-      });
     } catch (err) {
       console.error('Checkout error:', { message: err.message, stack: err.stack });
       setError(err.message || 'Invalid transaction parameters');
@@ -206,13 +211,6 @@ export default function Checkout() {
         throw new Error('Payment reference or URL not provided');
       }
 
-      console.log('Paystack transaction params (resume):', {
-        key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
-        email: form.email,
-        amount: cart.totalPrice * 100,
-        ref: data.paymentReference,
-      });
-
       if (typeof window.PaystackPop === 'undefined') {
         throw new Error('PaystackPop not loaded');
       }
@@ -221,11 +219,13 @@ export default function Checkout() {
       paystack.newTransaction({
         key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
         email: form.email,
-        amount: cart.totalPrice * 100,
+        amount: data.orders
+          ? data.orders.reduce((sum, order) => sum + order.totalPrice, 0) * 100
+          : cart.totalPrice * 100, // Fallback for resume case
         ref: data.paymentReference,
         onSuccess: (transaction) => {
           console.log('Payment successful:', transaction);
-          router.push('/confirmation?reference=' + transaction.reference);
+          router.push(`/confirmation?reference=${transaction.reference}&session=${data.checkoutSessionId}`);
           setLoading(false);
         },
         onCancel: () => {
@@ -246,9 +246,9 @@ export default function Checkout() {
   const getUniquePharmacyAddresses = () => {
     const addresses = [];
     const seen = new Set();
-    cart.items.forEach(item => {
-      const address = item.pharmacy?.address;
-      const pharmacyName = item.pharmacy?.name;
+    cart.pharmacies.forEach(pharmacy => {
+      const address = pharmacy.pharmacy.address;
+      const pharmacyName = pharmacy.pharmacy.name;
       if (address && pharmacyName && !seen.has(address)) {
         addresses.push({ name: pharmacyName, address });
         seen.add(address);
@@ -257,7 +257,9 @@ export default function Checkout() {
     return addresses;
   };
 
-  const needsPrescription = cart.items.some(item => item.medication.prescriptionRequired);
+  const needsPrescription = cart.pharmacies.some(pharmacy =>
+    pharmacy.items.some(item => item.medication.prescriptionRequired)
+  );
 
   return (
     <div className="container mx-auto p-4">
@@ -266,7 +268,7 @@ export default function Checkout() {
       {pendingMessage && (
         <p className="text-green-600 font-medium mb-4">{pendingMessage}</p>
       )}
-      {cart.items.length === 0 && !error && !resumeOrderId ? (
+      {cart.pharmacies.length === 0 && !error && !resumeOrderId ? (
         <p className="text-gray-600">Your cart is empty.</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -354,7 +356,7 @@ export default function Checkout() {
                     />
                   </div>
                 )}
-                {form.deliveryMethod === 'pickup' && cart.items.length > 0 && (
+                {form.deliveryMethod === 'pickup' && cart.pharmacies.length > 0 && (
                   <div>
                     <Label className="text-gray-700">Pickup Addresses</Label>
                     <div className="mt-2 space-y-2">
@@ -376,7 +378,7 @@ export default function Checkout() {
                     className="bg-indigo-600 hover:bg-indigo-700 text-white w-full"
                     disabled={loading}
                   >
-                    {loading ? 'Processing...' : needsPrescription ? 'Submit Prescription' : 'Pay with Paystack'}
+                    {loading ? 'Processing...' : needsPrescription ? 'Submit Prescription and Pay OTC' : 'Pay with Paystack'}
                   </Button>
                 )}
               </form>
@@ -387,16 +389,21 @@ export default function Checkout() {
               <CardTitle className="text-indigo-800">Order Summary</CardTitle>
             </CardHeader>
             <CardContent>
-              {cart.items.map((item) => (
-                <div key={item.id} className="mb-4">
-                  <p className="text-gray-700 font-medium">{item.medication.displayName}</p>
-                  <p className="text-gray-600">Pharmacy: {item.pharmacy.name}</p>
-                  <p className="text-gray-600">Quantity: {item.quantity}</p>
-                  <p className="text-gray-600">Unit Price: ₦{item.price}</p>
-                  <p className="text-gray-600">Total: ₦{calculateItemPrice(item)}</p>
-                  {item.medication.prescriptionRequired && (
-                    <p className="text-gray-600 font-medium">Prescription Required</p>
-                  )}
+              {cart.pharmacies.map((pharmacy) => (
+                <div key={pharmacy.pharmacy.id} className="mb-6">
+                  <h3 className="text-lg font-semibold text-indigo-700">{pharmacy.pharmacy.name}</h3>
+                  {pharmacy.items.map((item) => (
+                    <div key={item.id} className="mb-4">
+                      <p className="text-gray-700 font-medium">{item.medication.displayName}</p>
+                      <p className="text-gray-600">Quantity: {item.quantity}</p>
+                      <p className="text-gray-600">Unit Price: ₦{item.price}</p>
+                      <p className="text-gray-600">Total: ₦{calculateItemPrice(item)}</p>
+                      {item.medication.prescriptionRequired && (
+                        <p className="text-gray-600 font-medium">Prescription Required</p>
+                      )}
+                    </div>
+                  ))}
+                  <p className="text-gray-700 font-semibold">Subtotal: ₦{pharmacy.subtotal}</p>
                 </div>
               ))}
               <div className="text-right">
