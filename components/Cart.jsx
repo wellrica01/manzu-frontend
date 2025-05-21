@@ -97,7 +97,7 @@
                {cart.items.map((item) => (
                  <Card key={item.id} className="border-indigo-100 shadow-md">
                    <CardHeader>
-                     <CardTitle className="text-indigo-800">{item.medication.name}</CardTitle>
+                     <CardTitle className="text-indigo-800">{item.medication.displayName}</CardTitle>
                    </CardHeader>
                    <CardContent>
                      <p className="text-gray-700"><strong>Pharmacy:</strong> {item.pharmacy.name}</p>

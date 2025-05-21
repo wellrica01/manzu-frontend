@@ -23,10 +23,10 @@ export default function Home() {
         </header>
 
         {/* Main Content */}
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="flex flex-col gap-10">
           {/* Search Medications Card */}
           <div
-            className="bg-gray-50 border border-gray-200 p-6 rounded-xl shadow-md hover:shadow-lg hover:border-teal-300 hover:scale-105 transition-all duration-200"
+            className="bg-gray-50 border border-gray-200 p-6 rounded-xl shadow-m"
             data-testid="search-card"
           >
             <h2 className="text-2xl font-semibold text-teal-700 mb-4 border-b border-gray-200 pb-2">
@@ -37,8 +37,7 @@ export default function Home() {
 
           {/* Upload Prescription Card */}
           <div
-            className="bg-gray-50 border border-gray-200 p-6 rounded-xl shadow-md hover:shadow-lg hover:border-teal-300 hover:scale-105 transition-all duration-200"
-            data-testid="upload-card"
+            className="bg-gray-50 border border-gray-200 p-6 rounded-xl shadow-md"
           >
             <h2 className="text-2xl font-semibold text-teal-700 mb-4 border-b border-gray-200 pb-2">
               Upload Prescription

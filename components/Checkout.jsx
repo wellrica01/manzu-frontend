@@ -389,7 +389,7 @@ export default function Checkout() {
             <CardContent>
               {cart.items.map((item) => (
                 <div key={item.id} className="mb-4">
-                  <p className="text-gray-700 font-medium">{item.medication.name}</p>
+                  <p className="text-gray-700 font-medium">{item.medication.displayName}</p>
                   <p className="text-gray-600">Pharmacy: {item.pharmacy.name}</p>
                   <p className="text-gray-600">Quantity: {item.quantity}</p>
                   <p className="text-gray-600">Unit Price: ₦{item.price}</p>
