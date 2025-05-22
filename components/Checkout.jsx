@@ -9,32 +9,62 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 export default function Checkout() {
   const { orderId: resumeOrderId } = useParams();
-  const [cart, setCart] = useState({ pharmacies: [], totalPrice: 0 });
+  const [cart, setCart] = useState({ pharmacies: [], totalPrice: 0, orderItems: [] });
   const [form, setForm] = useState({ name: '', email: '', phone: '', address: '', deliveryMethod: 'pickup' });
   const [prescriptionFile, setPrescriptionFile] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [pendingMessage, setPendingMessage] = useState(null);
+  const [requiresUpload, setRequiresUpload] = useState(false);
   const router = useRouter();
   const guestId = typeof window !== 'undefined' ? localStorage.getItem('guestId') : null;
 
-  const fetchCart = async () => {
-    try {
-      setError(null);
-      const response = await fetch('http://localhost:5000/api/cart', {
-        headers: { 'x-guest-id': guestId },
-      });
-      if (!response.ok) {
-        throw new Error(`Failed to fetch cart: ${response.statusText}`);
-      }
-      const data = await response.json();
-      console.log('Checkout cart data:', data);
-      setCart(data);
-    } catch (err) {
-      console.error('Fetch cart error:', err);
-      setError(err.message);
+const fetchCart = async () => {
+  try {
+    setError(null);
+    const response = await fetch('http://localhost:5000/api/cart', {
+      headers: { 'x-guest-id': guestId },
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to fetch cart: ${response.statusText}`);
     }
-  };
+    const data = await response.json();
+    console.log('Checkout cart data:', data);
+
+    const orderItems = data.pharmacies.flatMap(pharmacy => pharmacy.items);
+    console.log('Order items:', orderItems);
+
+    setCart({
+      pharmacies: data.pharmacies,
+      orderItems,
+      prescriptionId: data.prescriptionId,
+      totalPrice: data.totalPrice,
+    });
+
+    // Validate prescription for prescription-required items
+    const prescriptionRequiredIds = orderItems
+      .filter(item => item.medication?.prescriptionRequired)
+      .map(item => item.pharmacyMedicationMedicationId); // Use pharmacyMedicationMedicationId
+    console.log('Prescription required IDs:', prescriptionRequiredIds);
+    if (prescriptionRequiredIds.length > 0) {
+      const validateResponse = await fetch(
+        `http://localhost:5000/api/checkout/prescription/validate?patientIdentifier=${guestId}&medicationIds=${prescriptionRequiredIds.join(',')}`
+      );
+      if (!validateResponse.ok) {
+        const errorData = await validateResponse.json();
+        throw new Error(`Failed to validate prescription: ${errorData.message || validateResponse.statusText}`);
+      }
+      const { requiresUpload } = await validateResponse.json();
+      setRequiresUpload(requiresUpload);
+    } else {
+      setRequiresUpload(false);
+    }
+  } catch (err) {
+    console.error('Fetch cart error:', err);
+    setError(err.message);
+  }
+};
+
 
   useEffect(() => {
     if (guestId) {
@@ -73,117 +103,132 @@ export default function Checkout() {
     setForm({ ...form, deliveryMethod: value, address: value === 'pickup' ? '' : form.address });
   };
 
-  const handleCheckout = async (e) => {
+  const handleResumeSession = async (e) => {
     e.preventDefault();
-    setError(null);
-    setPendingMessage(null);
-
-    if (!form.name || !form.email || !form.phone || !form.deliveryMethod) {
-      setError('All fields are required');
-      return;
-    }
-    if (form.deliveryMethod === 'delivery' && !form.address) {
-      setError('Address is required for delivery');
-      return;
-    }
-    if (cart.pharmacies.length === 0 || cart.totalPrice <= 0) {
-      setError('Cart is empty or invalid');
-      return;
-    }
-    if (form.deliveryMethod === 'pickup') {
-      const hasValidAddresses = cart.pharmacies.every(pharmacy => pharmacy.pharmacy.address);
-      if (!hasValidAddresses) {
-        setError('One or more pharmacy addresses are not available for pickup');
-        return;
-      }
-    }
-
-    const needsPrescription = cart.pharmacies.some(pharmacy =>
-      pharmacy.items.some(item => item.medication.prescriptionRequired)
-    );
-    if (needsPrescription && !prescriptionFile) {
-      setError('A prescription file is required for one or more medications');
-      return;
-    }
-
-    setLoading(true);
+    const { email, phone, sessionId } = form; // Reuse form fields or create a separate resume form
     try {
-      const formData = new FormData();
-      formData.append('name', form.name);
-      formData.append('email', form.email);
-      formData.append('phone', form.phone);
-      formData.append('deliveryMethod', form.deliveryMethod);
-      if (form.address) {
-        formData.append('address', form.address);
-      }
-      if (prescriptionFile) {
-        formData.append('prescription', prescriptionFile);
-      }
-
-      const response = await fetch('http://localhost:5000/api/checkout', {
+      const response = await fetch('http://localhost:5000/api/session/retrieve', {
         method: 'POST',
-        headers: { 'x-guest-id': guestId },
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, phone, checkoutSessionId: sessionId }),
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`Checkout failed: ${errorData.message || response.statusText}`);
-      }
-
-      const data = await response.json();
-      console.log('Checkout response:', data);
-
-      // Check for order types
-      const hasPrescriptionOrders = data.orders.some(order => order.status === 'pending_prescription');
-      const hasOtcOrders = data.paymentReference && data.paymentUrl;
-
-      // Set message based on order types
-      let message = '';
-      if (hasOtcOrders && hasPrescriptionOrders) {
-        message = 'Proceeding to payment for OTC items. Prescription items have been submitted for verification.';
-      } else if (hasOtcOrders) {
-        message = 'Proceeding to payment for your order.';
-      } else if (hasPrescriptionOrders) {
-        message = 'Your prescription has been submitted for verification. You will be notified when it is verified to complete your payment.';
-      }
-
-      setPendingMessage(message);
-
-      // Initiate payment for OTC orders if paymentUrl is provided
-      if (hasOtcOrders) {
-        if (typeof window.PaystackPop === 'undefined') {
-          throw new Error('PaystackPop not loaded');
-        }
-
-        const paystack = new window.PaystackPop();
-        paystack.newTransaction({
-          key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
-          email: form.email,
-          amount: data.orders
-            .filter(order => order.status === 'pending')
-            .reduce((sum, order) => sum + order.totalPrice, 0) * 100,
-          ref: data.paymentReference,
-          onSuccess: (transaction) => {
-            console.log('Payment successful:', transaction);
-            router.push(`/confirmation?reference=${transaction.reference}&session=${data.checkoutSessionId}`);
-            setLoading(false);
-          },
-          onCancel: () => {
-            console.log('Payment cancelled');
-            setError('Payment cancelled');
-            setLoading(false);
-          },
-        });
-      } else {
-        setLoading(false);
-      }
+      if (!response.ok) throw new Error('Session not found');
+      const { guestId } = await response.json();
+      localStorage.setItem('guestId', guestId);
+      await fetchCart();
     } catch (err) {
-      console.error('Checkout error:', { message: err.message, stack: err.stack });
-      setError(err.message || 'Invalid transaction parameters');
-      setLoading(false);
+      setError(err.message);
     }
   };
+
+const handleCheckout = async (e) => {
+  e.preventDefault();
+  setError(null);
+  setPendingMessage(null);
+
+  if (!form.name || !form.email || !form.phone || !form.deliveryMethod) {
+    setError('All fields are required');
+    return;
+  }
+  if (form.deliveryMethod === 'delivery' && !form.address) {
+    setError('Address is required for delivery');
+    return;
+  }
+  if (cart.pharmacies.length === 0 || cart.totalPrice <= 0) {
+    setError('Cart is empty or invalid');
+    return;
+  }
+  if (form.deliveryMethod === 'pickup') {
+    const hasValidAddresses = cart.pharmacies.every(pharmacy => pharmacy.pharmacy.address);
+    if (!hasValidAddresses) {
+      setError('One or more pharmacy addresses are not available for pickup');
+      return;
+    }
+  }
+
+  if (requiresUpload && !prescriptionFile) {
+    setError('A prescription file is required for one or more medications');
+    return;
+  }
+
+  setLoading(true);
+  try {
+    const formData = new FormData();
+    formData.append('name', form.name);
+    formData.append('email', form.email);
+    formData.append('phone', form.phone);
+    formData.append('deliveryMethod', form.deliveryMethod);
+    if (form.address) {
+      formData.append('address', form.address);
+    }
+    if (requiresUpload && prescriptionFile) {
+      formData.append('prescription', prescriptionFile);
+    }
+
+    const response = await fetch('http://localhost:5000/api/checkout', {
+      method: 'POST',
+      headers: { 'x-guest-id': guestId },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(`Checkout failed: ${errorData.message || response.statusText}`);
+    }
+
+    const data = await response.json();
+    console.log('Checkout response:', data);
+
+    // Check for order types
+    const hasPrescriptionOrders = data.orders.some(order => order.status === 'pending_prescription');
+    const hasPayableOrders = data.paymentReference && data.paymentUrl;
+
+    // Set message based on order types
+    let message = '';
+    if (hasPayableOrders && hasPrescriptionOrders) {
+      message = 'Proceeding to payment for OTC and verified prescription items. Unverified prescription items are awaiting verification.';
+    } else if (hasPayableOrders) {
+      message = 'Proceeding to payment for your order.';
+    } else if (hasPrescriptionOrders) {
+      message = 'Your prescription has been submitted for verification. You will be notified when it is verified to complete your payment.';
+    }
+
+    setPendingMessage(message);
+
+    // Initiate payment for payable orders (OTC or verified prescription)
+    if (hasPayableOrders) {
+      if (typeof window.PaystackPop === 'undefined') {
+        throw new Error('PaystackPop not loaded');
+      }
+
+      const paystack = new window.PaystackPop();
+      paystack.newTransaction({
+        key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
+        email: form.email,
+        amount: data.orders
+          .filter(order => order.status === 'pending')
+          .reduce((sum, order) => sum + order.totalPrice, 0) * 100,
+        ref: data.paymentReference,
+        onSuccess: (transaction) => {
+          console.log('Payment successful:', transaction);
+          router.push(`/confirmation?reference=${transaction.reference}&session=${data.checkoutSessionId}`);
+          setLoading(false);
+        },
+        onCancel: () => {
+          console.log('Payment cancelled');
+          setError('Payment cancelled');
+          setLoading(false);
+        },
+      });
+    } else {
+      setLoading(false);
+    }
+  } catch (err) {
+    console.error('Checkout error:', { message: err.message, stack: err.stack });
+    setError(err.message || 'Invalid transaction parameters');
+    setLoading(false);
+  }
+};
 
   const handleResumeCheckout = async (orderId) => {
     setError(null);
@@ -257,10 +302,6 @@ export default function Checkout() {
     return addresses;
   };
 
-  const needsPrescription = cart.pharmacies.some(pharmacy =>
-    pharmacy.items.some(item => item.medication.prescriptionRequired)
-  );
-
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold text-indigo-800 mb-4">Checkout</h1>
@@ -312,7 +353,7 @@ export default function Checkout() {
                     required
                   />
                 </div>
-                {needsPrescription && !resumeOrderId && (
+                {requiresUpload && !resumeOrderId && (
                   <div>
                     <Label htmlFor="prescription" className="text-gray-700">Prescription File (PDF, JPEG, PNG)</Label>
                     <Input
@@ -378,7 +419,7 @@ export default function Checkout() {
                     className="bg-indigo-600 hover:bg-indigo-700 text-white w-full"
                     disabled={loading}
                   >
-                    {loading ? 'Processing...' : needsPrescription ? 'Submit Prescription and Pay OTC' : 'Pay with Paystack'}
+                    {loading ? 'Processing...' : requiresUpload ? 'Submit Prescription and Pay OTC' : 'Pay with Paystack'}
                   </Button>
                 )}
               </form>

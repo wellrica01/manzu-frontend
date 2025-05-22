@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Search, Loader2, ShoppingCart } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -50,7 +51,7 @@ useEffect(() => {
       });
       if (!response.ok) throw new Error('Failed to fetch cart');
       const data = await response.json();
-      setCartItems(data.items || []);
+      setCartItems(data.pharmacies?.flatMap(p => p.items) || []);
     } catch (err) {
       console.error('Fetch cart error:', err);
     }
@@ -170,13 +171,18 @@ useEffect(() => {
     }
   };
 
-  const isInCart = (medicationId, pharmacyId) => {
-    return cartItems.some(
-      (item) =>
-        item.pharmacyMedicationMedicationId === medicationId &&
-        item.pharmacyMedicationPharmacyId === pharmacyId
-    );
-  };
+const isInCart = (medicationId, pharmacyId) => {
+  if (!Array.isArray(cartItems)) return false;
+  return cartItems.some(
+    (item) =>
+      item.pharmacyMedicationMedicationId === medicationId &&
+      item.pharmacyMedicationPharmacyId === pharmacyId
+  );
+};
+
+  console.log('cartItems:', cartItems);
+
+
 
   // Keyboard navigation and Enter key search
   const handleKeyDown = (e) => {
@@ -359,19 +365,14 @@ useEffect(() => {
                             <p className="text-xs text-teal-500">(Lower price & closer is better)</p>
                           </div>
                         </div>
-                        <button
-                          onClick={() => handleAddToCart(med.id, avail.pharmacyId)}
-                          disabled={isInCart(med.id, avail.pharmacyId)}
-                          className={`p-2 rounded-full transition-all duration-200 ${
-                            isInCart(med.id, avail.pharmacyId)
-                              ? 'bg-gray-200 cursor-not-allowed text-gray-400'
-                              : 'bg-teal-600 hover:bg-teal-700 text-white'
-                          }`}
-                          aria-label={`Add ${med.displayName} from ${avail.pharmacyName} to cart`}
-                          title={isInCart(med.id, avail.pharmacyId) ? 'Added to Cart' : 'Add to Cart'}
-                        >
-                          <ShoppingCart className="h-5 w-5" />
-                        </button>
+                        <Button
+                        onClick={() => handleAddToCart(med.id, avail.pharmacyId, med.quantity)}
+                        disabled={isInCart(med.id, avail.pharmacyId)}
+                        className={isInCart(med.id, avail.pharmacyId) ? 'bg-gray-200 text-gray-400' : 'bg-teal-600 hover:bg-teal-700 text-white'}
+                      >
+                        <ShoppingCart className="h-5 w-5 mr-2" />
+                        {isInCart(med.id, avail.pharmacyId) ? 'Added to Cart' : 'Add to Cart'}
+                      </Button>
                       </li>
                     ))
                   ) : (

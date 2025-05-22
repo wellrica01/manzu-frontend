@@ -100,15 +100,15 @@ export default function OrderDetails() {
           <p><strong>Updated:</strong> {new Date(order.updatedAt).toLocaleDateString()}</p>
         </CardContent>
       </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Pharmacy</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <p><strong>Pharmacy ID:</strong> {order.pharmacy.id}</p>
-          <p><strong>Name:</strong> {order.pharmacy.name}</p>
-        </CardContent>
-      </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Pharmacy</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <p><strong>Pharmacy ID:</strong> {order.pharmacy?.id ?? 'Not available'}</p>
+            <p><strong>Name:</strong> {order.pharmacy?.name ?? 'Not available'}</p>
+          </CardContent>
+        </Card>
       {order.prescription && (
         <Card>
           <CardHeader>
