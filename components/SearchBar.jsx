@@ -25,24 +25,22 @@ export default function SearchBar() {
     localStorage.setItem('guestId', guestId);
   }
 
-  // Fetch user location
-useEffect(() => {
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        console.log('Geolocation:', position.coords); // Debug
-        setUserLocation({
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-        });
-      },
-      (err) => {
-        console.error('Geolocation error:', err);
-        setError('Unable to fetch location; showing all pharmacies');
-      }
-    );
-  }
-}, []);
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          });
+        },
+        (err) => {
+          console.error('Geolocation error:', err);
+          setError('Unable to fetch location; showing all pharmacies');
+        }
+      );
+    }
+  }, []);
 
   const fetchCart = async () => {
     try {
@@ -171,20 +169,15 @@ useEffect(() => {
     }
   };
 
-const isInCart = (medicationId, pharmacyId) => {
-  if (!Array.isArray(cartItems)) return false;
-  return cartItems.some(
-    (item) =>
-      item.pharmacyMedicationMedicationId === medicationId &&
-      item.pharmacyMedicationPharmacyId === pharmacyId
-  );
-};
+  const isInCart = (medicationId, pharmacyId) => {
+    if (!Array.isArray(cartItems)) return false;
+    return cartItems.some(
+      (item) =>
+        item.pharmacyMedicationMedicationId === medicationId &&
+        item.pharmacyMedicationPharmacyId === pharmacyId
+    );
+  };
 
-  console.log('cartItems:', cartItems);
-
-
-
-  // Keyboard navigation and Enter key search
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && focusedSuggestionIndex === -1 && searchTerm) {
       e.preventDefault();
@@ -215,7 +208,6 @@ const isInCart = (medicationId, pharmacyId) => {
     }
   };
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -229,14 +221,12 @@ const isInCart = (medicationId, pharmacyId) => {
     };
   }, []);
 
- return (
-    <div className="space-y-6 p-6 max-w-5xl mx-auto bg-gray-50 rounded-xl">
+  return (
+    <div className="space-y-8 max-w-5xl mx-auto">
       {/* Search Input */}
-      <div className="relative">
-        <div className="relative flex-1 max-w-md mx-auto">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search className="h-5 w-5 text-teal-500" aria-hidden="true" />
-          </div>
+      <div className="relative max-w-lg mx-auto fade-in">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-secondary" />
           <Input
             ref={inputRef}
             type="text"
@@ -244,7 +234,7 @@ const isInCart = (medicationId, pharmacyId) => {
             value={searchTerm}
             onChange={handleSearchChange}
             onKeyDown={handleKeyDown}
-            className="pl-10 py-3 text-gray-900 bg-white border border-teal-200 rounded-full shadow-sm focus:ring-2 focus:ring-teal-400 focus:border-teal-400 transition-all duration-300 w-full text-lg"
+            className="pl-10 py-3 w-full"
             autoComplete="off"
             aria-autocomplete="list"
             aria-expanded={showDropdown}
@@ -254,11 +244,11 @@ const isInCart = (medicationId, pharmacyId) => {
             <div
               ref={dropdownRef}
               id="suggestions-list"
-              className="absolute z-20 w-full mt-2 bg-white border border-teal-200 rounded-lg shadow-lg max-h-60 overflow-y-auto transition-all duration-300 ease-in-out"
+              className="absolute z-20 w-full mt-2 card max-h-60 overflow-y-auto"
               role="listbox"
             >
               {isLoadingSuggestions ? (
-                <div className="px-4 py-3 flex items-center text-teal-600">
+                <div className="px-4 py-3 flex items-center text-primary">
                   <Loader2 className="h-5 w-5 animate-spin mr-2" />
                   Loading...
                 </div>
@@ -267,8 +257,8 @@ const isInCart = (medicationId, pharmacyId) => {
                   <div
                     key={med.id}
                     ref={(el) => (suggestionRefs.current[index] = el)}
-                    className={`px-4 py-3 text-gray-800 cursor-pointer hover:bg-teal-50 transition-colors duration-150 ${
-                      index === focusedSuggestionIndex ? 'bg-teal-100' : ''
+                    className={`px-4 py-3 cursor-pointer hover:bg-primary/10 transition-colors duration-150 ${
+                      index === focusedSuggestionIndex ? 'bg-primary/20' : ''
                     }`}
                     onClick={() => handleSelectMedication(med)}
                     role="option"
@@ -279,7 +269,7 @@ const isInCart = (medicationId, pharmacyId) => {
                 ))
               ) : (
                 searchTerm && (
-                  <div className="px-4 py-3 text-teal-500 italic">
+                  <div className="px-4 py-3 text-muted-foreground italic">
                     No medications found for "{searchTerm}"
                   </div>
                 )
@@ -291,43 +281,44 @@ const isInCart = (medicationId, pharmacyId) => {
 
       {/* Error Message */}
       {error && (
-        <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-lg shadow-sm">
-          <p className="text-red-700 font-medium">{error}</p>
+        <div className="card bg-destructive/10 border-l-4 border-destructive p-4 fade-in">
+          <p className="text-destructive font-medium">{error}</p>
         </div>
       )}
 
       {/* Search Results */}
       <div className="space-y-6">
         {results.length === 0 && !error && searchTerm ? (
-          <div className="text-center py-10 bg-white rounded-lg shadow-sm">
-            <p className="text-teal-600 text-lg font-medium">
+          <div className="card text-center py-10 fade-in">
+            <p className="text-primary text-lg font-medium">
               No medications found for "{searchTerm}"
             </p>
           </div>
         ) : results.length === 0 && !searchTerm ? (
-          <div className="text-center py-10 bg-white rounded-lg shadow-sm">
-            <p className="text-teal-600 text-lg font-medium">
+          <div className="card text-center py-10 fade-in">
+            <p className="text-primary text-lg font-medium">
               Enter a medication name to find available pharmacies
             </p>
           </div>
         ) : (
-          results.map((med) => (
+          results.map((med, index) => (
             <Card
               key={med.id}
-              className="bg-white border border-teal-100 shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-xl overflow-hidden"
+              className="card card-hover overflow-hidden fade-in"
+              style={{ animationDelay: `${0.2 * index}s` }}
             >
-              <CardHeader className="bg-teal-50 border-b border-teal-100">
-                <CardTitle className="text-2xl font-semibold text-teal-800">
+              <CardHeader className="bg-primary/5">
+                <CardTitle className="text-2xl font-semibold text-primary">
                   {med.displayName}
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                   <div>
-                    <p className="text-teal-700">
+                    <p className="text-foreground">
                       <strong>Generic Name:</strong> {med.genericName || 'N/A'}
                     </p>
-                    <p className="text-teal-700">
+                    <p className="text-foreground">
                       <strong>NAFDAC Code:</strong> {med.nafdacCode || 'N/A'}
                     </p>
                   </div>
@@ -335,11 +326,11 @@ const isInCart = (medicationId, pharmacyId) => {
                     <img
                       src={med.imageUrl}
                       alt={med.displayName}
-                      className="w-32 h-32 object-cover rounded-lg border border-teal-200 self-center justify-self-end"
+                      className="w-40 h-40 object-cover rounded-lg border border-border self-center justify-self-end"
                     />
                   )}
                 </div>
-                <h3 className="font-semibold text-teal-700 text-lg mb-4">
+                <h3 className="font-semibold text-primary text-lg mb-4">
                   Available at:
                 </h3>
                 <ul className="space-y-4">
@@ -347,12 +338,12 @@ const isInCart = (medicationId, pharmacyId) => {
                     med.availability.map((avail, index) => (
                       <li
                         key={index}
-                        className="flex items-center justify-between bg-teal-50 p-4 rounded-lg shadow-sm hover:bg-teal-100 transition-colors duration-200"
+                        className="card bg-primary/5 p-4 rounded-lg hover:bg-primary/10 transition-colors duration-200"
                       >
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full text-teal-800">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-foreground">
                           <div>
                             <span className="font-medium text-lg">{avail.pharmacyName}</span>
-                            <p className="text-sm text-teal-600">{avail.address || 'Address not available'}</p>
+                            <p className="text-sm text-muted-foreground">{avail.address || 'Address not available'}</p>
                           </div>
                           <div className="text-sm">
                             <p>Price: ₦{avail.price.toLocaleString()}</p>
@@ -362,21 +353,21 @@ const isInCart = (medicationId, pharmacyId) => {
                           </div>
                           <div className="text-sm">
                             <p>Best Deal: {(1 - avail.score).toFixed(3)}</p>
-                            <p className="text-xs text-teal-500">(Lower price & closer is better)</p>
+                            <p className="text-xs text-muted-foreground">(Lower price & closer is better)</p>
                           </div>
                         </div>
                         <Button
-                        onClick={() => handleAddToCart(med.id, avail.pharmacyId, med.quantity)}
-                        disabled={isInCart(med.id, avail.pharmacyId)}
-                        className={isInCart(med.id, avail.pharmacyId) ? 'bg-gray-200 text-gray-400' : 'bg-teal-600 hover:bg-teal-700 text-white'}
-                      >
-                        <ShoppingCart className="h-5 w-5 mr-2" />
-                        {isInCart(med.id, avail.pharmacyId) ? 'Added to Cart' : 'Add to Cart'}
-                      </Button>
+                          onClick={() => handleAddToCart(med.id, avail.pharmacyId)}
+                          disabled={isInCart(med.id, avail.pharmacyId)}
+                          className={isInCart(med.id, avail.pharmacyId) ? 'bg-muted text-muted-foreground mt-4' : 'mt-4'}
+                        >
+                          <ShoppingCart className="h-5 w-5 mr-2" />
+                          {isInCart(med.id, avail.pharmacyId) ? 'Added to Cart' : 'Add to Cart'}
+                        </Button>
                       </li>
                     ))
                   ) : (
-                    <li className="text-teal-500 italic p-4">
+                    <li className="text-muted-foreground italic p-4">
                       Not available at any verified pharmacy
                     </li>
                   )}

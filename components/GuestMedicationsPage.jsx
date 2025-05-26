@@ -36,36 +36,31 @@ export default function GuestOrder() {
     }
   }, []);
 
-const fetchGuestOrder = async () => {
-  try {
-    setLoading(true);
-    const queryParams = new URLSearchParams();
-    if (userLocation) {
-      queryParams.append('lat', userLocation.lat);
-      queryParams.append('lng', userLocation.lng);
-      queryParams.append('radius', '10');
+  const fetchGuestOrder = async () => {
+    try {
+      setLoading(true);
+      const queryParams = new URLSearchParams();
+      if (userLocation) {
+        queryParams.append('lat', userLocation.lat);
+        queryParams.append('lng', userLocation.lng);
+        queryParams.append('radius', '10');
+      }
+      const url = `http://localhost:5000/api/prescription/guest-order/${patientIdentifier}?${queryParams.toString()}`;
+      const response = await fetch(url, {
+        headers: { 'x-guest-id': guestId },
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to fetch guest order');
+      }
+      const data = await response.json();
+      setMedications(data.medications || []);
+    } catch (err) {
+      setError(err.message || 'Unknown error');
+    } finally {
+      setLoading(false);
     }
-    const url = `http://localhost:5000/api/prescription/guest-order/${patientIdentifier}?${queryParams.toString()}`;
-    console.log('Fetching guest order:', url);
-    const response = await fetch(url, {
-      headers: { 'x-guest-id': guestId },
-    });
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Guest order error response:', errorData);
-      throw new Error(errorData.message || 'Failed to fetch guest order');
-    }
-    const data = await response.json();
-    setMedications(data.medications || []);
-  } catch (err) {
-    console.error('Guest order fetch error:', err);
-    setError(err.message || 'Unknown error');
-    console.error('Stack trace:', err.stack);
-
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const fetchCart = async () => {
     try {
@@ -114,58 +109,90 @@ const fetchGuestOrder = async () => {
     );
   };
 
-  if (loading) return <div className="text-center p-6">Loading...</div>;
-  if (error) return <div className="text-center p-6 text-red-500">Error: {error}</div>;
+  if (loading) {
+    return (
+      <div className="text-center p-6">
+        <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+        <p className="text-muted-foreground mt-2">Loading medications...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="card bg-destructive/10 border-l-4 border-destructive p-4 mx-auto max-w-5xl fade-in">
+        <p className="text-destructive font-medium">Error: {error}</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6 p-6 max-w-5xl mx-auto bg-gray-50 rounded-xl">
-      <h1 className="text-3xl font-bold text-teal-800">Your Prescription Medications</h1>
+    <div className="space-y-6 max-w-5xl mx-auto">
       {medications.length === 0 ? (
-        <p className="text-teal-600">No medications found for this prescription.</p>
+        <div className="card text-center py-10 fade-in">
+          <p className="text-muted-foreground text-lg">
+            No medications found for this prescription.{' '}
+            <a href="/" className="text-primary hover:text-secondary">
+              Search for medications
+            </a>
+          </p>
+        </div>
       ) : (
-        medications.map((med) => (
-          <Card key={med.id} className="bg-white border border-teal-100 shadow-lg rounded-xl">
-            <CardHeader>
-              <CardTitle className="text-teal-800">{med.displayName}</CardTitle>
-              <p className="text-teal-600">Quantity: {med.quantity}</p>
+        medications.map((med, index) => (
+          <Card
+            key={med.id}
+            className="card card-hover fade-in"
+            style={{ animationDelay: `${0.2 * index}s` }}
+          >
+            <CardHeader className="bg-primary/5">
+              <CardTitle className="text-2xl font-semibold text-primary">
+                {med.displayName}
+              </CardTitle>
+              <p className="text-muted-foreground">Quantity: {med.quantity}</p>
             </CardHeader>
-            <CardContent>
-              <h3 className="font-semibold text-teal-700 mb-4">Available at:</h3>
+            <CardContent className="p-6">
+              <h3 className="font-semibold text-primary mb-4">Available at:</h3>
               {med.availability && med.availability.length > 0 ? (
                 <ul className="space-y-4">
                   {med.availability.map((avail) => (
                     <li
                       key={avail.pharmacyId}
-                      className="flex items-center justify-between bg-teal-50 p-4 rounded-lg shadow-sm"
+                      className="card bg-primary/5 p-4 rounded-lg hover:bg-primary/10 transition-colors duration-200"
                     >
-                      <div>
-                        <span className="font-medium text-teal-800">{avail.pharmacyName}</span>
-                        <p className="text-sm text-teal-600">{avail.address || 'Address not available'}</p>
-                        <p className="text-sm text-teal-600">Price: ₦{avail.price.toLocaleString()}</p>
-                        {avail.distance_km !== null && (
-                          <p className="text-sm text-teal-600">Distance: ~{avail.distance_km} km</p>
-                        )}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-foreground">
+                        <div>
+                          <span className="font-medium text-foreground">{avail.pharmacyName}</span>
+                          <p className="text-sm text-muted-foreground">{avail.address || 'Address not available'}</p>
+                          <p className="text-sm text-muted-foreground">Price: ₦{avail.price.toLocaleString()}</p>
+                          {avail.distance_km !== null && (
+                            <p className="text-sm text-muted-foreground">Distance: ~{avail.distance_km} km</p>
+                          )}
+                        </div>
+                        <Button
+                          onClick={() => handleAddToCart(med.id, avail.pharmacyId, med.quantity)}
+                          disabled={isInCart(med.id, avail.pharmacyId)}
+                          className={
+                            isInCart(med.id, avail.pharmacyId)
+                              ? 'bg-muted text-muted-foreground self-center'
+                              : 'bg-primary hover:bg-primary/90 text-primary-foreground self-center'
+                          }
+                        >
+                          <ShoppingCart className="h-5 w-5 mr-2" />
+                          {isInCart(med.id, avail.pharmacyId) ? 'Added to Cart' : 'Add to Cart'}
+                        </Button>
                       </div>
-                      <Button
-                        onClick={() => handleAddToCart(med.id, avail.pharmacyId, med.quantity)}
-                        disabled={isInCart(med.id, avail.pharmacyId)}
-                        className={isInCart(med.id, avail.pharmacyId) ? 'bg-gray-200 text-gray-400' : 'bg-teal-600 hover:bg-teal-700 text-white'}
-                      >
-                        <ShoppingCart className="h-5 w-5 mr-2" />
-                        {isInCart(med.id, avail.pharmacyId) ? 'Added to Cart' : 'Add to Cart'}
-                      </Button>
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p className="text-teal-500 italic">Not available at any verified pharmacy</p>
+                <p className="text-muted-foreground italic">Not available at any verified pharmacy</p>
               )}
             </CardContent>
           </Card>
         ))
       )}
       <Button
-        className="bg-teal-600 hover:bg-teal-700 text-white rounded-full"
+        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg"
         onClick={() => router.push('/cart')}
         disabled={cartItems.length === 0}
       >

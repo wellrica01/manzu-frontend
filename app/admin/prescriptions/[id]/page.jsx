@@ -6,18 +6,19 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
-import { Search, Loader2 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Search, Loader2, FileText, Plus, X } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
 
 export default function PrescriptionDetails() {
   const [prescription, setPrescription] = useState(null);
-  const [pharmacies, setPharmacies] = useState([]); // New state for pharmacies
+  const [pharmacies, setPharmacies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(null);
   const [medicationInputs, setMedicationInputs] = useState([{ medicationId: '', quantity: 1, pharmacyId: '', searchTerm: '' }]);
-  const [suggestions, setSuggestions] = useState([]);
+  const [suggestions, setSuggestions] = useState({});
   const [showDropdowns, setShowDropdowns] = useState({});
   const [focusedSuggestionIndices, setFocusedSuggestionIndices] = useState({});
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState({});
@@ -36,11 +37,14 @@ export default function PrescriptionDetails() {
     }
   }, [router]);
 
-  // Fetch prescription details
   const fetchPrescription = async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('adminToken');
+      if (!token) {
+        router.replace('/admin/login');
+        return;
+      }
       const response = await fetch(`http://localhost:5000/api/admin/prescriptions/${params.id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -62,22 +66,28 @@ export default function PrescriptionDetails() {
     }
   };
 
-  // Fetch pharmacies
   const fetchPharmacies = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`http://localhost:5000/api/pharmacies`, {
+      const response = await fetch(`http://localhost:5000/api/admin/pharmacies`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!response.ok) throw new Error('Failed to fetch pharmacies');
+      if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem('adminToken');
+          router.replace('/admin/login');
+          return;
+        }
+        throw new Error('Failed to fetch pharmacies');
+      }
       const data = await response.json();
       setPharmacies(data);
     } catch (err) {
-      toast.error('Failed to fetch pharmacies');
+      setError(err.message);
+      toast.error(err.message);
     }
   };
 
-  // Fetch medication suggestions
   const fetchSuggestions = async (query, index) => {
     if (!query.trim()) {
       setSuggestions((prev) => ({ ...prev, [index]: [] }));
@@ -105,7 +115,7 @@ export default function PrescriptionDetails() {
   useEffect(() => {
     if (params.id && authChecked) {
       fetchPrescription();
-      fetchPharmacies(); // Fetch pharmacies on component mount
+      fetchPharmacies();
     }
   }, [params.id, authChecked]);
 
@@ -131,6 +141,7 @@ export default function PrescriptionDetails() {
     setMedicationInputs(updated);
     setShowDropdowns((prev) => ({ ...prev, [index]: false }));
     setFocusedSuggestionIndices((prev) => ({ ...prev, [index]: -1 }));
+    inputRefs.current[index]?.focus(); // Return focus to input
   };
 
   const handleKeyDown = (e, index) => {
@@ -157,6 +168,7 @@ export default function PrescriptionDetails() {
     } else if (e.key === 'Escape') {
       setShowDropdowns((prev) => ({ ...prev, [index]: false }));
       setFocusedSuggestionIndices((prev) => ({ ...prev, [index]: -1 }));
+      inputRefs.current[index]?.focus();
     }
   };
 
@@ -193,37 +205,61 @@ export default function PrescriptionDetails() {
     });
   };
 
-const handleAddMedications = async () => {
-  setSubmitting('medications');
-  try {
-    const token = localStorage.getItem('adminToken');
-    const response = await fetch(`http://localhost:5000/api/prescription/${params.id}/medications`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ medications: medicationInputs.map(({ medicationId, quantity }) => ({ medicationId, quantity })) }),
-    });
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to add medications');
+  const handleAddMedications = async () => {
+    if (!isFormValid) {
+      toast.error('Please complete all required fields for medications.');
+      return;
     }
-    await fetchPrescription();
-    setMedicationInputs([{ medicationId: '', quantity: 1, searchTerm: '' }]);
-    toast.success('Medications added and order created');
-  } catch (err) {
-    toast.error(err.message);
-  } finally {
-    setSubmitting(null);
-  }
-};
+    setSubmitting('medications');
+    try {
+      const token = localStorage.getItem('adminToken');
+      if (!token) {
+        router.replace('/admin/login');
+        return;
+      }
+      const response = await fetch(`http://localhost:5000/api/prescription/${params.id}/medications`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          medications: medicationInputs.map(({ medicationId, quantity, pharmacyId }) => ({
+            medicationId,
+            quantity,
+            pharmacyId: pharmacyId || null,
+          })),
+        }),
+      });
+      if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem('adminToken');
+          router.replace('/admin/login');
+          return;
+        }
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to add medications');
+      }
+      await fetchPrescription();
+      setMedicationInputs([{ medicationId: '', quantity: 1, pharmacyId: '', searchTerm: '' }]);
+      toast.success('Medications added and order created');
+    } catch (err) {
+      setError(err.message);
+      toast.error(err.message);
+    } finally {
+      setSubmitting(null);
+    }
+  };
 
   const handleVerify = async (status) => {
     setSubmitting(status);
     setError(null);
     try {
       const token = localStorage.getItem('adminToken');
+      if (!token) {
+        router.replace('/admin/login');
+        return;
+      }
       const response = await fetch(`http://localhost:5000/api/prescription/${params.id}/verify`, {
         method: 'PATCH',
         headers: {
@@ -243,210 +279,277 @@ const handleAddMedications = async () => {
       await fetchPrescription();
       toast.success(`Prescription ${status}`);
     } catch (err) {
+      setError(err.message);
       toast.error(err.message);
     } finally {
       setSubmitting(null);
     }
   };
 
-  if (!authChecked) return null;
-  if (loading) return <div className="text-center p-6">Loading...</div>;
-  if (error) return <div className="text-center p-6 text-red-500">Error: {error}</div>;
-  if (!prescription) return <div className="text-center p-6">Prescription not found</div>;
+  const isFormValid = medicationInputs.every(
+    (input) => input.medicationId && input.quantity >= 1
+  );
 
-  const isFormValid = medicationInputs.every(input => input.medicationId);
+  if (!authChecked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-muted">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-muted">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-muted-foreground ml-2">Loading prescription details...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-muted">
+        <div className="card bg-destructive/10 border-l-4 border-destructive p-4 fade-in">
+          <p className="text-destructive font-medium">Error: {error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!prescription) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-muted">
+        <div className="card bg-muted p-4 fade-in">
+          <p className="text-muted-foreground">Prescription not found</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Prescription #{prescription.id}</h1>
-        <div className="space-x-2">
-          {prescription.status === 'pending' && (
-            <>
-              <Button
-                onClick={() => handleVerify('verified')}
-                disabled={submitting !== null}
-              >
-                {submitting === 'verified' ? 'Verifying...' : 'Verify'}
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={() => handleVerify('rejected')}
-                disabled={submitting !== null}
-              >
-                {submitting === 'rejected' ? 'Rejecting...' : 'Reject'}
-              </Button>
-            </>
-          )}
-          <Link href="/admin/prescriptions">
-            <Button variant="outline">Back to Prescriptions</Button>
-          </Link>
-        </div>
-      </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>Prescription Information</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <p><strong>ID:</strong> {prescription.id}</p>
-          <p><strong>Patient Identifier:</strong> {prescription.patientIdentifier}</p>
-          <p><strong>Status:</strong> {prescription.status}</p>
-          <p><strong>Verified:</strong> {prescription.verified ? 'Yes' : 'No'}</p>
-          <p><strong>Created:</strong> {new Date(prescription.createdAt).toLocaleDateString()}</p>
-          {prescription.fileUrl && (
-            <div>
-              <strong>Prescription File:</strong>
-              {prescription.fileUrl.match(/\.(jpg|jpeg|png|gif)$/i) ? (
-                <img src={prescription.fileUrl} alt="Prescription" className="h-48 mt-2" />
-              ) : (
-                <a href={prescription.fileUrl} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">
-                  View Prescription File
-                </a>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-<Card>
-  <CardHeader>
-    <CardTitle>Add Medications</CardTitle>
-  </CardHeader>
-  <CardContent>
-    {medicationInputs.map((input, index) => (
-      <div key={index} className="grid grid-cols-3 gap-4 mb-4">
-        <div className="relative">
-          <Label>Medication</Label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-5 w-5 text-teal-500" aria-hidden="true" />
-            </div>
-            <Input
-              ref={(el) => (inputRefs.current[index] = el)}
-              type="text"
-              placeholder="Search for medications..."
-              value={input.searchTerm}
-              onChange={(e) => handleMedicationChange(index, 'searchTerm', e.target.value)}
-              onKeyDown={(e) => handleKeyDown(e, index)}
-              className="pl-10 py-3 text-gray-900 bg-white border border-teal-200 rounded-full shadow-sm focus:ring-2 focus:ring-teal-400 focus:border-teal-400 transition-all duration-300 w-full"
-              autoComplete="off"
-              aria-autocomplete="list"
-              aria-expanded={showDropdowns[index] || false}
-              aria-controls={`suggestions-list-${index}`}
-              role="combobox"
-              aria-label="Search for medications"
-            />
-            {showDropdowns[index] && (
-              <div
-                ref={(el) => (dropdownRefs.current[index] = el)}
-                id={`suggestions-list-${index}`}
-                className="absolute z-20 w-full mt-2 bg-white border border-teal-200 rounded-lg shadow-lg max-h-60 overflow-y-auto transition-all duration-300 ease-in-out"
-                role="listbox"
-              >
-                {isLoadingSuggestions[index] ? (
-                  <div className="px-4 py-3 flex items-center text-teal-600">
-                    <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                    Loading...
-                  </div>
-                ) : suggestions[index]?.length > 0 ? (
-                  suggestions[index].map((med, i) => (
-                    <div
-                      key={med.id}
-                      className={`px-4 py-3 text-gray-800 cursor-pointer hover:bg-teal-50 transition-colors duration-150 ${
-                        i === focusedSuggestionIndices[index] ? 'bg-teal-100' : ''
-                      }`}
-                      onClick={() => handleSelectMedication(index, med)}
-                      role="option"
-                      aria-selected={i === focusedSuggestionIndices[index]}
-                    >
-                      {med.displayName}
-                    </div>
-                  ))
-                ) : (
-                  input.searchTerm && (
-                    <div className="px-4 py-3 text-teal-500 italic">
-                      No medications found for "{input.searchTerm}"
-                    </div>
-                  )
-                )}
-              </div>
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted py-12 px-4 sm:px-6 lg:px-8 fade-in">
+      <div className="container mx-auto max-w-5xl">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-4xl sm:text-5xl font-bold text-primary">
+            Prescription #{prescription.id}
+          </h1>
+          <div className="flex space-x-2">
+            {prescription.status === 'pending' && (
+              <>
+                <Button
+                  onClick={() => handleVerify('verified')}
+                  disabled={submitting !== null}
+                  className="bg-primary hover:bg-success/90 text-primary-foreground"
+                >
+                  {submitting === 'verified' ? 'Verifying...' : 'Verify'}
+                </Button>
+                <Button
+                  onClick={() => handleVerify('rejected')}
+                  disabled={submitting !== null}
+                  className="bg-destructive hover:bg-destructive/90 text-primary-foreground"
+                >
+                  {submitting === 'rejected' ? 'Rejecting...' : 'Reject'}
+                </Button>
+              </>
             )}
+            <Link href="/admin/prescriptions">
+              <Button className="bg-muted hover:bg-muted/90 text-foreground">
+                Back to Prescriptions
+              </Button>
+            </Link>
           </div>
         </div>
-        <div>
-          <Label>Quantity</Label>
-          <Input
-            type="number"
-            value={input.quantity}
-            onChange={(e) => handleMedicationChange(index, 'quantity', parseInt(e.target.value) || 1)}
-            min="1"
-            className="py-3 text-gray-900 bg-white border border-teal-200 rounded-full shadow-sm focus:ring-2 focus:ring-teal-400 focus:border-teal-400 transition-all duration-300"
-          />
-        </div>
-        <div className="flex items-end">
-          <Button
-            variant="destructive"
-            onClick={() => removeMedicationInput(index)}
-            disabled={medicationInputs.length === 1}
-          >
-            Remove
-          </Button>
+        <div className="space-y-6">
+          <Card className="card card-shadow fade-in">
+            <CardHeader className="bg-primary/5">
+              <CardTitle className="text-2xl font-semibold text-primary flex items-center">
+                <FileText className="h-6 w-6 mr-2" />
+                Prescription Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 space-y-2">
+              <p className="text-muted-foreground"><strong>ID:</strong> {prescription.id}</p>
+              <p className="text-muted-foreground"><strong>Patient Identifier:</strong> {prescription.patientIdentifier}</p>
+              <p className="text-muted-foreground"><strong>Status:</strong> {prescription.status.toUpperCase()}</p>
+              <p className="text-muted-foreground"><strong>Verified:</strong> {prescription.verified ? 'Yes' : 'No'}</p>
+              <p className="text-muted-foreground"><strong>Created:</strong> {new Date(prescription.createdAt).toLocaleDateString()}</p>
+              {prescription.fileUrl && (
+                <div>
+                  <strong className="text-primary">Prescription File:</strong>
+                  {prescription.fileUrl.match(/\.(jpg|jpeg|png|gif)$/i) ? (
+                    <img src={prescription.fileUrl} alt="Prescription" className="h-48 mt-2 rounded shadow-sm" />
+                  ) : (
+                    <a href={prescription.fileUrl} target="_blank" rel="noopener noreferrer" className="text-primary underline hover:text-primary/80">
+                      View Prescription File
+                    </a>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+          <Card className="card card-shadow fade-in">
+            <CardHeader className="bg-primary/5">
+              <CardTitle className="text-2xl font-semibold text-primary flex items-center">
+                <Plus className="h-6 w-6 mr-2" />
+                Add Medications
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              {medicationInputs.map((input, index) => (
+                <div key={index} className="grid grid-cols-1 sm:grid-cols-12 gap-4 mb-4">
+                  <div className="relative sm:col-span-5">
+                    <Label className="text-primary">Medication *</Label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Search className="h-5 w-5 text-primary" aria-hidden="true" />
+                      </div>
+                      <Input
+                        ref={(el) => (inputRefs.current[index] = el)}
+                        type="text"
+                        placeholder="Search for medications..."
+                        value={input.searchTerm}
+                        onChange={(e) => handleMedicationChange(index, 'searchTerm', e.target.value)}
+                        onKeyDown={(e) => handleKeyDown(e, index)}
+                        className="pl-10 border-border"
+                        autoComplete="off"
+                        aria-autocomplete="list"
+                        aria-expanded={showDropdowns[index] || false}
+                        aria-controls={`suggestions-list-${index}`}
+                        role="combobox"
+                        aria-label="Search for medications"
+                      />
+                      {showDropdowns[index] && (
+                        <div
+                          ref={(el) => (dropdownRefs.current[index] = el)}
+                          id={`suggestions-list-${index}`}
+                          className="absolute z-20 w-full mt-2 bg-card border border-border rounded-lg shadow-lg max-h-60 overflow-y-auto"
+                          role="listbox"
+                        >
+                          {isLoadingSuggestions[index] ? (
+                            <div className="px-4 py-3 flex items-center text-primary">
+                              <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                              Loading...
+                            </div>
+                          ) : suggestions[index]?.length > 0 ? (
+                            suggestions[index].map((med, i) => (
+                              <div
+                                key={med.id}
+                                className={`px-4 py-3 text-foreground cursor-pointer hover:bg-muted transition-colors ${i === focusedSuggestionIndices[index] ? 'bg-muted' : ''}`}
+                                onClick={() => handleSelectMedication(index, med)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleSelectMedication(index, med)}
+                                role="option"
+                                tabIndex={0}
+                                aria-selected={i === focusedSuggestionIndices[index]}
+                              >
+                                {med.displayName}
+                              </div>
+                            ))
+                          ) : (
+                            input.searchTerm && (
+                              <div className="px-4 py-3 text-muted-foreground italic">
+                                No medications found for "{input.searchTerm}"
+                              </div>
+                            )
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <Label className="text-primary">Quantity *</Label>
+                    <Input
+                      type="number"
+                      value={input.quantity}
+                      onChange={(e) => handleMedicationChange(index, 'quantity', parseInt(e.target.value) || 1)}
+                      min="1"
+                      className="border-border"
+                      aria-label="Quantity"
+                    />
+                  </div>
+                  <div className="sm:col-span-2 flex items-end">
+                    <Button
+                      onClick={() => removeMedicationInput(index)}
+                      disabled={medicationInputs.length === 1}
+                      className="bg-destructive hover:bg-destructive/90 text-primary-foreground w-full"
+                      aria-label="Remove medication"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+              {!isFormValid && (
+                <div className="card bg-destructive/10 border-l-4 border-destructive p-2 mb-4">
+                  <p className="text-destructive text-sm">Please select a medication and valid quantity for all entries.</p>
+                </div>
+              )}
+              <div className="flex flex-col sm:flex-row sm:space-x-2 space-y-2 sm:space-y-0">
+                <Button
+                  onClick={addMedicationInput}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Another Medication
+                </Button>
+                <Button
+                  onClick={handleAddMedications}
+                  disabled={submitting === 'medications' || !isFormValid}
+                  className="bg-primary hover:bg-success/90 text-primary-foreground"
+                >
+                  {submitting === 'medications' ? 'Adding...' : 'Add Medications and Create Order'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="card card-shadow fade-in">
+            <CardHeader className="bg-primary/5">
+              <CardTitle className="text-2xl font-semibold text-primary flex items-center">
+                <FileText className="h-6 w-6 mr-2" />
+                Related Orders
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              {prescription.orders && prescription.orders.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-primary">Order ID</TableHead>
+                      <TableHead className="text-primary">Pharmacy</TableHead>
+                      <TableHead className="text-primary">Status</TableHead>
+                      <TableHead className="text-primary">Total Amount</TableHead>
+                      <TableHead className="text-primary">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {prescription.orders.map((order, index) => (
+                      <TableRow key={order.id} className="fade-in" style={{ animationDelay: `${0.1 * index}s` }}>
+                        <TableCell>{order.id}</TableCell>
+                        <TableCell>{order.pharmacy?.name || 'N/A'}</TableCell>
+                        <TableCell>{order.status.toUpperCase()}</TableCell>
+                        <TableCell>{order.totalPrice.toLocaleString('en-NG', { style: 'currency', currency: 'NGN' })}</TableCell>
+                        <TableCell>
+                          <Link href={`/admin/orders/${order.id}`}>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="border-border text-primary hover:bg-muted"
+                            >
+                              View Details
+                            </Button>
+                          </Link>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <p className="text-muted-foreground">No orders associated with this prescription.</p>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
-    ))}
-    {!isFormValid && (
-      <p className="text-red-500 mb-4">Please select a medication for all entries.</p>
-    )}
-    <div className="space-x-2">
-      <Button onClick={addMedicationInput} className="rounded-full">
-        Add Another Medication
-      </Button>
-      <Button
-        onClick={handleAddMedications}
-        disabled={submitting === 'medications' || !isFormValid}
-        className="rounded-full"
-      >
-        {submitting === 'medications' ? 'Adding...' : 'Add Medications and Create Order'}
-      </Button>
-    </div>
-  </CardContent>
-</Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Related Orders</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {prescription.orders && prescription.orders.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Order ID</TableHead>
-                  <TableHead>Pharmacy</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Total Amount</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {prescription.orders.map((order) => (
-                  <TableRow key={order.id}>
-                    <TableCell>{order.id}</TableCell>
-                    <TableCell>{order.pharmacy?.name || 'N/A'}</TableCell>
-                    <TableCell>{order.status}</TableCell>
-                    <TableCell>₦{order.totalPrice.toFixed(2)}</TableCell>
-                    <TableCell>
-                      <Link href={`/admin/orders/${order.id}`}>
-                        <Button variant="outline" size="sm">View Details</Button>
-                      </Link>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <p>No orders associated with this prescription.</p>
-          )}
-        </CardContent>
-      </Card>
     </div>
   );
 }

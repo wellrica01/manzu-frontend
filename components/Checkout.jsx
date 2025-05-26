@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Loader2, Upload } from 'lucide-react';
 
 export default function Checkout() {
   const { orderId: resumeOrderId } = useParams();
@@ -303,159 +304,219 @@ const handleCheckout = async (e) => {
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold text-indigo-800 mb-4">Checkout</h1>
-      {error && <p className="text-red-600 font-medium mb-4">{error}</p>}
-      {pendingMessage && (
-        <p className="text-green-600 font-medium mb-4">{pendingMessage}</p>
-      )}
-      {cart.pharmacies.length === 0 && !error && !resumeOrderId ? (
-        <p className="text-gray-600">Your cart is empty.</p>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="border-indigo-100 shadow-md">
-            <CardHeader>
-              <CardTitle className="text-indigo-800">User Information</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleCheckout} className="space-y-4">
-                <div>
-                  <Label htmlFor="name" className="text-gray-700">Full Name</Label>
-                  <Input
-                    id="name"
-                    name="name"
-                    value={form.name}
-                    onChange={handleInputChange}
-                    className="border-indigo-300"
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="email" className="text-gray-700">Email</Label>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    value={form.email}
-                    onChange={handleInputChange}
-                    className="border-indigo-300"
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="phone" className="text-gray-700">Phone</Label>
-                  <Input
-                    id="phone"
-                    name="phone"
-                    value={form.phone}
-                    onChange={handleInputChange}
-                    className="border-indigo-300"
-                    required
-                  />
-                </div>
-                {requiresUpload && !resumeOrderId && (
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted py-12 px-4 sm:px-6 lg:px-8">
+      <div className="container mx-auto max-w-5xl">
+        <h1 className="text-4xl sm:text-5xl font-bold text-primary mb-8 text-center fade-in">
+          Checkout
+        </h1>
+        {error && (
+          <div className="card bg-destructive/10 border-l-4 border-destructive p-4 mb-6 fade-in">
+            <p className="text-destructive font-medium">{error}</p>
+          </div>
+        )}
+        {pendingMessage && (
+          <div className="card bg-green-50 border-l-4 border-green-400 p-4 mb-6 fade-in">
+            <p className="text-green-700 font-medium">{pendingMessage}</p>
+          </div>
+        )}
+        {cart.pharmacies.length === 0 && !error && !resumeOrderId ? (
+          <div className="card text-center py-10 fade-in">
+            <p className="text-muted-foreground text-lg">
+              Your cart is empty.{' '}
+              <a href="/" className="text-primary hover:text-secondary">
+                Start shopping
+              </a>
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <Card className="card card-hover fade-in">
+              <CardHeader className="bg-primary/5">
+                <CardTitle className="text-2xl font-semibold text-primary">
+                  User Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <form onSubmit={handleCheckout} className="space-y-6">
                   <div>
-                    <Label htmlFor="prescription" className="text-gray-700">Prescription File (PDF, JPEG, PNG)</Label>
+                    <Label htmlFor="name" className="text-primary font-medium">
+                      Full Name
+                    </Label>
                     <Input
-                      id="prescription"
-                      name="prescription"
-                      type="file"
-                      accept=".pdf,image/jpeg,image/png"
-                      onChange={handleFileChange}
-                      className="border-indigo-300"
-                      required
-                    />
-                  </div>
-                )}
-                <div>
-                  <Label className="text-gray-700">Delivery Method</Label>
-                  <RadioGroup
-                    value={form.deliveryMethod}
-                    onValueChange={handleDeliveryMethodChange}
-                    className="flex space-x-4 mt-2"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="pickup" id="pickup" />
-                      <Label htmlFor="pickup">Pickup</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="delivery" id="delivery" />
-                      <Label htmlFor="delivery">Delivery</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-                {form.deliveryMethod === 'delivery' && (
-                  <div>
-                    <Label htmlFor="address" className="text-gray-700">Delivery Address</Label>
-                    <Input
-                      id="address"
-                      name="address"
-                      value={form.address}
+                      id="name"
+                      name="name"
+                      value={form.name}
                       onChange={handleInputChange}
-                      className="border-indigo-300"
+                      className="mt-1"
                       required
                     />
                   </div>
-                )}
-                {form.deliveryMethod === 'pickup' && cart.pharmacies.length > 0 && (
                   <div>
-                    <Label className="text-gray-700">Pickup Addresses</Label>
-                    <div className="mt-2 space-y-2">
-                      {getUniquePharmacyAddresses().length > 0 ? (
-                        getUniquePharmacyAddresses().map((pharmacy, index) => (
-                          <p key={index} className="text-gray-600">
-                            {pharmacy.name}: {pharmacy.address}
-                          </p>
-                        ))
-                      ) : (
-                        <p className="text-gray-600">Pharmacy address not available</p>
-                      )}
-                    </div>
+                    <Label htmlFor="email" className="text-primary font-medium">
+                      Email
+                    </Label>
+                    <Input
+                      id="email"
+                      name="email"
+                      type="email"
+                      value={form.email}
+                      onChange={handleInputChange}
+                      className="mt-1"
+                      required
+                    />
                   </div>
-                )}
-                {!resumeOrderId && (
-                  <Button
-                    type="submit"
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white w-full"
-                    disabled={loading}
-                  >
-                    {loading ? 'Processing...' : requiresUpload ? 'Submit Prescription and Pay OTC' : 'Pay with Paystack'}
-                  </Button>
-                )}
-              </form>
-            </CardContent>
-          </Card>
-          <Card className="border-indigo-100 shadow-md">
-            <CardHeader>
-              <CardTitle className="text-indigo-800">Order Summary</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {cart.pharmacies.map((pharmacy) => (
-                <div key={pharmacy.pharmacy.id} className="mb-6">
-                  <h3 className="text-lg font-semibold text-indigo-700">{pharmacy.pharmacy.name}</h3>
-                  {pharmacy.items.map((item) => (
-                    <div key={item.id} className="mb-4">
-                      <p className="text-gray-700 font-medium">{item.medication.displayName}</p>
-                      <p className="text-gray-600">Quantity: {item.quantity}</p>
-                      <p className="text-gray-600">Unit Price: ₦{item.price}</p>
-                      <p className="text-gray-600">Total: ₦{calculateItemPrice(item)}</p>
-                      {item.medication.prescriptionRequired && (
-                        <p className="text-gray-600 font-medium">Prescription Required</p>
-                      )}
+                  <div>
+                    <Label htmlFor="phone" className="text-primary font-medium">
+                      Phone
+                    </Label>
+                    <Input
+                      id="phone"
+                      name="phone"
+                      value={form.phone}
+                      onChange={handleInputChange}
+                      className="mt-1"
+                      required
+                    />
+                  </div>
+                  {requiresUpload && !resumeOrderId && (
+                    <div>
+                      <Label htmlFor="prescription" className="text-primary font-medium">
+                        Prescription File (PDF, JPEG, PNG)
+                      </Label>
+                      <div className="mt-2 border-2 border-dashed border-border rounded-lg p-4 text-center hover:border-primary transition-colors duration-300">
+                        <Input
+                          id="prescription"
+                          name="prescription"
+                          type="file"
+                          accept=".pdf,image/jpeg,image/png"
+                          onChange={handleFileChange}
+                          className="hidden"
+                        />
+                        <div className="flex flex-col items-center">
+                          <Upload className="h-8 w-8 text-secondary mb-2" aria-hidden="true" />
+                          {prescriptionFile ? (
+                            <p className="text-foreground">{prescriptionFile.name}</p>
+                          ) : (
+                            <p className="text-muted-foreground">
+                              Drag your prescription here or{' '}
+                              <button
+                                type="button"
+                                onClick={() => document.getElementById('prescription').click()}
+                                className="text-primary hover:text-secondary font-medium"
+                              >
+                                browse
+                              </button>
+                            </p>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  ))}
-                  <p className="text-gray-700 font-semibold">Subtotal: ₦{pharmacy.subtotal}</p>
+                  )}
+                  <div>
+                    <Label className="text-primary font-medium">Delivery Method</Label>
+                    <RadioGroup
+                      value={form.deliveryMethod}
+                      onValueChange={handleDeliveryMethodChange}
+                      className="flex space-x-4 mt-2"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="pickup" id="pickup" />
+                        <Label htmlFor="pickup" className="text-foreground">Pickup</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="delivery" id="delivery" />
+                        <Label htmlFor="delivery" className="text-foreground">Delivery</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+                  {form.deliveryMethod === 'delivery' && (
+                    <div>
+                      <Label htmlFor="address" className="text-primary font-medium">
+                        Delivery Address
+                      </Label>
+                      <Input
+                        id="address"
+                        name="address"
+                        value={form.address}
+                        onChange={handleInputChange}
+                        className="mt-1"
+                        required
+                      />
+                    </div>
+                  )}
+                  {form.deliveryMethod === 'pickup' && cart.pharmacies.length > 0 && (
+                    <div>
+                      <Label className="text-primary font-medium">Pickup Addresses</Label>
+                      <div className="mt-2 space-y-2">
+                        {getUniquePharmacyAddresses().length > 0 ? (
+                          getUniquePharmacyAddresses().map((pharmacy, index) => (
+                            <p key={index} className="text-muted-foreground">
+                              {pharmacy.name}: {pharmacy.address}
+                            </p>
+                          ))
+                        ) : (
+                          <p className="text-muted-foreground">Pharmacy address not available</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                    <Button
+                      type="submit"
+                      className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <>
+                          <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                          Processing...
+                        </>
+                      ) : requiresUpload ? (
+                        'Submit Prescription and Pay OTC'
+                      ) : (
+                        'Pay with Paystack'
+                      )}
+                    </Button>
+                </form>
+              </CardContent>
+            </Card>
+            <Card className="card card-hover fade-in" style={{ animationDelay: '0.2s' }}>
+              <CardHeader className="bg-primary/5">
+                <CardTitle className="text-2xl font-semibold text-primary">
+                  Order Summary
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                {cart.pharmacies.map((pharmacy) => (
+                  <div key={pharmacy.pharmacy.id} className="mb-6">
+                    <h3 className="text-lg font-semibold text-foreground">
+                      {pharmacy.pharmacy.name}
+                    </h3>
+                    {pharmacy.items.map((item) => (
+                      <div key={item.id} className="mb-4">
+                        <p className="text-foreground font-medium">{item.medication.displayName}</p>
+                        <p className="text-muted-foreground">Quantity: {item.quantity}</p>
+                        <p className="text-muted-foreground">Unit Price: ₦{item.price.toLocaleString()}</p>
+                        <p className="text-muted-foreground">Total: ₦{calculateItemPrice(item).toLocaleString()}</p>
+                        {item.medication.prescriptionRequired && (
+                          <p className="text-muted-foreground font-medium">Prescription Required</p>
+                        )}
+                      </div>
+                    ))}
+                    <p className="text-foreground font-semibold">
+                      Subtotal: ₦{pharmacy.subtotal.toLocaleString()}
+                    </p>
+                  </div>
+                ))}
+                <div className="text-right">
+                  <p className="text-xl font-semibold text-primary">
+                    Total: ₦{cart.totalPrice.toLocaleString()}
+                  </p>
                 </div>
-              ))}
-              <div className="text-right">
-                <p className="text-xl font-semibold text-indigo-800">
-                  Total: ₦{cart.totalPrice}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

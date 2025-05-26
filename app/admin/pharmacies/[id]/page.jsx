@@ -8,6 +8,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Loader2, Building2, Package, Pill, Edit, Trash2 } from 'lucide-react';
 
 export default function PharmacyDetails() {
   const [pharmacy, setPharmacy] = useState(null);
@@ -30,20 +33,19 @@ export default function PharmacyDetails() {
     logoUrl: '',
     isActive: true,
   });
-  const params = useParams(); 
+  const params = useParams();
   const pharmacyId = params.id;
   const router = useRouter();
-  const [authChecked, setAuthChecked] = useState(false); // ✅ Block rendering until auth check completes
+  const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('adminToken');
     if (!token) {
-      router.replace('/admin/login'); // 🔒 Redirect to login if not authenticated
+      router.replace('/admin/login');
     } else {
-      setAuthChecked(true); // ✅ Only show content if authenticated
+      setAuthChecked(true);
     }
   }, [router]);
-
 
   const fetchPharmacyData = async () => {
     setLoading(true);
@@ -53,13 +55,11 @@ export default function PharmacyDetails() {
         router.replace('/admin/login');
         return;
       }
-      // Fetch pharmacy details
       const pharmacyResponse = await fetch(`http://localhost:5000/api/admin/pharmacies/${pharmacyId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!pharmacyResponse.ok) {
-        if (response.status === 401) {
-          // Unauthorized: redirect to login
+        if (pharmacyResponse.status === 401) {
           localStorage.removeItem('adminToken');
           router.replace('/admin/login');
           return;
@@ -69,13 +69,11 @@ export default function PharmacyDetails() {
       const pharmacyData = await pharmacyResponse.json();
       setPharmacy(pharmacyData.pharmacy);
 
-      // Fetch orders
       const ordersResponse = await fetch(`http://localhost:5000/api/admin/orders?pharmacyId=${pharmacyId}&page=${ordersPage}&limit=10`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!ordersResponse.ok) {
-        if (response.status === 401) {
-          // Unauthorized: redirect to login
+        if (ordersResponse.status === 401) {
           localStorage.removeItem('adminToken');
           router.replace('/admin/login');
           return;
@@ -85,21 +83,19 @@ export default function PharmacyDetails() {
       const ordersData = await ordersResponse.json();
       setOrders(ordersData);
 
-      // Fetch medications
-        const medicationsResponse = await fetch(`http://localhost:5000/api/admin/medications?page=${medicationsPage}&limit=10&pharmacyId=${pharmacyId}`, {
+      const medicationsResponse = await fetch(`http://localhost:5000/api/admin/medications?page=${medicationsPage}&limit=10&pharmacyId=${pharmacyId}`, {
         headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!medicationsResponse.ok) {
-            if (response.status === 401) {
-          // Unauthorized: redirect to login
+      });
+      if (!medicationsResponse.ok) {
+        if (medicationsResponse.status === 401) {
           localStorage.removeItem('adminToken');
           router.replace('/admin/login');
           return;
         }
         throw new Error('Failed to fetch medications');
-        }
-        const medicationsData = await medicationsResponse.json();
-        setMedications(medicationsData);
+      }
+      const medicationsData = await medicationsResponse.json();
+      setMedications(medicationsData);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -108,12 +104,9 @@ export default function PharmacyDetails() {
   };
 
   useEffect(() => {
+    if (!authChecked) return;
     fetchPharmacyData();
   }, [pharmacyId, ordersPage, medicationsPage, authChecked]);
-
-    if (!authChecked) {
-    return null; // ⛔ Prevent rendering anything while checking auth
-  }
 
   const handleEdit = () => {
     setFormData({
@@ -147,7 +140,6 @@ export default function PharmacyDetails() {
       });
       if (!response.ok) {
         if (response.status === 401) {
-          // Unauthorized: redirect to login
           localStorage.removeItem('adminToken');
           router.replace('/admin/login');
           return;
@@ -176,7 +168,6 @@ export default function PharmacyDetails() {
       });
       if (!response.ok) {
         if (response.status === 401) {
-          // Unauthorized: redirect to login
           localStorage.removeItem('adminToken');
           router.replace('/admin/login');
           return;
@@ -197,234 +188,348 @@ export default function PharmacyDetails() {
     }));
   };
 
-  if (loading) return <div className="text-center p-6">Loading...</div>;
-  if (error) return <div className="text-center p-6 text-red-500">Error: {error}</div>;
-  if (!pharmacy) return <div className="text-center p-6">Pharmacy not found</div>;
+  if (!authChecked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-muted">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
-  return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Pharmacy: {pharmacy.name}</h1>
-        <div className="space-x-2">
-          <Button onClick={handleEdit}>Edit</Button>
-          <Button variant="destructive" onClick={() => setDeleteOpen(true)}>Delete</Button>
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-muted">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-muted-foreground ml-2">Loading pharmacy details...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-muted">
+        <div className="card bg-destructive/10 border-l-4 border-destructive p-4 fade-in">
+          <p className="text-destructive font-medium">Error: {error}</p>
         </div>
       </div>
-      <Tabs defaultValue="info" className="w-full">
-        <TabsList>
-          <TabsTrigger value="info">Info</TabsTrigger>
-          <TabsTrigger value="orders">Orders</TabsTrigger>
-          <TabsTrigger value="medications">Medications</TabsTrigger>
-        </TabsList>
-        <TabsContent value="info">
-          <Card>
-            <CardHeader>
-              <CardTitle>Pharmacy Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <p><strong>ID:</strong> {pharmacy.id}</p>
-              <p><strong>Name:</strong> {pharmacy.name}</p>
-              <p><strong>Address:</strong> {pharmacy.address}</p>
-              <p><strong>LGA:</strong> {pharmacy.lga}</p>
-              <p><strong>State:</strong> {pharmacy.state}</p>
-              <p><strong>Phone:</strong> {pharmacy.phone}</p>
-              <p><strong>License Number:</strong> {pharmacy.licenseNumber}</p>
-              <p><strong>Status:</strong> {pharmacy.status}</p>
-              <p><strong>Active:</strong> {pharmacy.isActive ? 'Yes' : 'No'}</p>
-              <p><strong>Created:</strong> {new Date(pharmacy.createdAt).toLocaleDateString()}</p>
-              <p><strong>Verified:</strong> {pharmacy.verifiedAt ? new Date(pharmacy.verifiedAt).toLocaleDateString() : '-'}</p>
-              {pharmacy.logoUrl && (
-                <div>
-                  <strong>Logo:</strong>
-                  <img src={pharmacy.logoUrl} alt="Pharmacy Logo" className="h-16 mt-2" />
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="orders">
-          <Card>
-            <CardHeader>
-              <CardTitle>Orders</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>ID</TableHead>
-                    <TableHead>Tracking Code</TableHead>
-                    <TableHead>Patient</TableHead>
-                    <TableHead>Total Price</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Created At</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {orders.orders.map((order) => (
-                    <TableRow key={order.id}>
-                      <TableCell>{order.id}</TableCell>
-                      <TableCell>{order.trackingCode}</TableCell>
-                      <TableCell>{order.patientIdentifier}</TableCell>
-                      <TableCell>₦{order.totalPrice.toFixed(2)}</TableCell>
-                      <TableCell>{order.status}</TableCell>
-                      <TableCell>{new Date(order.createdAt).toLocaleDateString()}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-              <div className="flex justify-between mt-4">
-                <Button
-                  disabled={ordersPage === 1}
-                  onClick={() => setOrdersPage(ordersPage - 1)}
-                >
-                  Previous
-                </Button>
-                <span>
-                  Page {orders.pagination.page} of {orders.pagination.pages}
-                </span>
-                <Button
-                  disabled={ordersPage === orders.pagination.pages}
-                  onClick={() => setOrdersPage(ordersPage + 1)}
-                >
-                  Next
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="medications">
-          <Card>
-            <CardHeader>
-              <CardTitle>Medications</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>ID</TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Generic Name</TableHead>
-                    <TableHead>Stock</TableHead>
-                    <TableHead>Price</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {medications.medications.map((med) => {
-                    const pm = med.pharmacyMedications.find((pm) => pm.pharmacy.id === parseInt(pharmacyId));
-                    return (
-                      <TableRow key={med.id}>
-                        <TableCell>{med.id}</TableCell>
-                        <TableCell>{med.name}</TableCell>
-                        <TableCell>{med.genericName}</TableCell>
-                        <TableCell>{pm.stock}</TableCell>
-                        <TableCell>₦{pm.price.toFixed(2)}</TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-              <div className="flex justify-between mt-4">
-                <Button
-                  disabled={medicationsPage === 1}
-                  onClick={() => setMedicationsPage(medicationsPage - 1)}
-                >
-                  Previous
-                </Button>
-                <span>
-                  Page {medications.pagination.page} of {medications.pagination.pages}
-                </span>
-                <Button
-                  disabled={medicationsPage === medications.pagination.pages}
-                  onClick={() => setMedicationsPage(medicationsPage + 1)}
-                >
-                  Next
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+    );
+  }
 
-      {/* Edit Modal */}
-      <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Pharmacy</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium">Name</label>
-              <Input name="name" value={formData.name} onChange={handleInputChange} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium">Address</label>
-              <Input name="address" value={formData.address} onChange={handleInputChange} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium">LGA</label>
-              <Input name="lga" value={formData.lga} onChange={handleInputChange} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium">State</label>
-              <Input name="state" value={formData.state} onChange={handleInputChange} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium">Phone</label>
-              <Input name="phone" value={formData.phone} onChange={handleInputChange} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium">License Number</label>
-              <Input name="licenseNumber" value={formData.licenseNumber} onChange={handleInputChange} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium">Status</label>
-              <select name="status" value={formData.status} onChange={handleInputChange} className="w-full border rounded p-2">
-                <option value="pending">Pending</option>
-                <option value="verified">Verified</option>
-                <option value="rejected">Rejected</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium">Logo URL</label>
-              <Input name="logoUrl" value={formData.logoUrl} onChange={handleInputChange} />
-            </div>
-            <div>
-              <label className="flex items-center">
-                <Input
-                  type="checkbox"
-                  name="isActive"
-                  checked={formData.isActive}
-                  onChange={handleInputChange}
-                  className="mr-2"
-                />
-                Active
-              </label>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditOpen(false)}>
-              Cancel
+  if (!pharmacy) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-muted">
+        <div className="card bg-muted p-4 fade-in">
+          <p className="text-muted-foreground">Pharmacy not found</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted py-12 px-4 sm:px-6 lg:px-8 fade-in">
+      <div className="container mx-auto max-w-5xl">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-4xl sm:text-5xl font-bold text-primary">
+            Pharmacy: {pharmacy.name}
+          </h1>
+          <div className="flex space-x-2">
+            <Button
+              onClick={handleEdit}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
+            >
+              <Edit className="h-5 w-5 mr-2" />
+              Edit
             </Button>
-            <Button onClick={handleSaveEdit}>Save</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            <Button
+              onClick={() => setDeleteOpen(true)}
+              className="bg-destructive hover:bg-destructive/90 text-primary-foreground"
+            >
+              <Trash2 className="h-5 w-5 mr-2" />
+              Delete
+            </Button>
+            <Button
+              onClick={() => router.push('/admin/pharmacies')}
+              className="bg-muted hover:bg-muted/90 text-foreground"
+            >
+              Back to Pharmacies
+            </Button>
+          </div>
+        </div>
+        <Tabs defaultValue="info" className="w-full">
+          <TabsList className="bg-muted">
+            <TabsTrigger value="info" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              Info
+            </TabsTrigger>
+            <TabsTrigger value="orders" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              Orders
+            </TabsTrigger>
+            <TabsTrigger value="medications" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              Medications
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="info">
+            <Card className="card card-shadow fade-in">
+              <CardHeader className="bg-primary/5">
+                <CardTitle className="text-2xl font-semibold text-primary flex items-center">
+                  <Building2 className="h-6 w-6 mr-2" />
+                  Pharmacy Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6 space-y-2">
+                <p className="text-muted-foreground"><strong>ID:</strong> {pharmacy.id}</p>
+                <p className="text-muted-foreground"><strong>Name:</strong> {pharmacy.name}</p>
+                <p className="text-muted-foreground"><strong>Address:</strong> {pharmacy.address}</p>
+                <p className="text-muted-foreground"><strong>LGA:</strong> {pharmacy.lga}</p>
+                <p className="text-muted-foreground"><strong>State:</strong> {pharmacy.state}</p>
+                <p className="text-muted-foreground"><strong>Phone:</strong> {pharmacy.phone}</p>
+                <p className="text-muted-foreground"><strong>License Number:</strong> {pharmacy.licenseNumber}</p>
+                <p className="text-muted-foreground"><strong>Status:</strong> {pharmacy.status.toUpperCase()}</p>
+                <p className="text-muted-foreground"><strong>Active:</strong> {pharmacy.isActive ? 'Yes' : 'No'}</p>
+                <p className="text-muted-foreground"><strong>Created:</strong> {new Date(pharmacy.createdAt).toLocaleDateString()}</p>
+                <p className="text-muted-foreground"><strong>Verified:</strong> {pharmacy.verifiedAt ? new Date(pharmacy.verifiedAt).toLocaleDateString() : '-'}</p>
+                {pharmacy.logoUrl && (
+                  <div>
+                    <strong className="text-primary">Logo:</strong>
+                    <img src={pharmacy.logoUrl} alt="Pharmacy Logo" className="h-16 mt-2 rounded shadow-sm" />
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="orders">
+            <Card className="card card-shadow fade-in">
+              <CardHeader className="bg-primary/5">
+                <CardTitle className="text-2xl font-semibold text-primary flex items-center">
+                  <Package className="h-6 w-6 mr-2" />
+                  Orders
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-primary">ID</TableHead>
+                      <TableHead className="text-primary">Tracking Code</TableHead>
+                      <TableHead className="text-primary">Patient</TableHead>
+                      <TableHead className="text-primary">Total Price</TableHead>
+                      <TableHead className="text-primary">Status</TableHead>
+                      <TableHead className="text-primary">Created At</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {orders.orders.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-muted-foreground text-center">
+                          No orders found.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      orders.orders.map((order, index) => (
+                        <TableRow key={order.id} className="fade-in" style={{ animationDelay: `${0.1 * index}s` }}>
+                          <TableCell>{order.id}</TableCell>
+                          <TableCell>{order.trackingCode}</TableCell>
+                          <TableCell>{order.patientIdentifier}</TableCell>
+                          <TableCell>₦{order.totalPrice.toLocaleString()}</TableCell>
+                          <TableCell>{order.status.replace('_', ' ').toUpperCase()}</TableCell>
+                          <TableCell>{new Date(order.createdAt).toLocaleDateString()}</TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+                <div className="flex justify-between items-center mt-4">
+                  <Button
+                    disabled={ordersPage === 1}
+                    onClick={() => setOrdersPage(ordersPage - 1)}
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground disabled:bg-muted disabled:text-muted-foreground"
+                  >
+                    Previous
+                  </Button>
+                  <span className="text-muted-foreground">
+                    Page {orders.pagination.page || 1} of {orders.pagination.pages || 1}
+                  </span>
+                  <Button
+                    disabled={ordersPage === orders.pagination.pages}
+                    onClick={() => setOrdersPage(ordersPage + 1)}
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground disabled:bg-muted disabled:text-muted-foreground"
+                  >
+                    Next
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="medications">
+            <Card className="card card-shadow fade-in">
+              <CardHeader className="bg-primary/5">
+                <CardTitle className="text-2xl font-semibold text-primary flex items-center">
+                  <Pill className="h-6 w-6 mr-2" />
+                  Medications
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-primary">ID</TableHead>
+                      <TableHead className="text-primary">Name</TableHead>
+                      <TableHead className="text-primary">Generic Name</TableHead>
+                      <TableHead className="text-primary">Stock</TableHead>
+                      <TableHead className="text-primary">Price</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {medications.medications.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-muted-foreground text-center">
+                          No medications found.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      medications.medications.map((med, index) => {
+                        const pm = med.pharmacyMedications.find((pm) => pm.pharmacy.id === parseInt(pharmacyId));
+                        return (
+                          <TableRow key={med.id} className="fade-in" style={{ animationDelay: `${0.1 * index}s` }}>
+                            <TableCell>{med.id}</TableCell>
+                            <TableCell>{med.name}</TableCell>
+                            <TableCell>{med.genericName || 'N/A'}</TableCell>
+                            <TableCell>{pm ? pm.stock : '-'}</TableCell>
+                            <TableCell>{pm ? `₦${pm.price.toLocaleString()}` : '-'}</TableCell>
+                          </TableRow>
+                        );
+                      })
+                    )}
+                  </TableBody>
+                </Table>
+                <div className="flex justify-between items-center mt-4">
+                  <Button
+                    disabled={medicationsPage === 1}
+                    onClick={() => setMedicationsPage(medicationsPage - 1)}
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground disabled:bg-muted disabled:text-muted-foreground"
+                  >
+                    Previous
+                  </Button>
+                  <span className="text-muted-foreground">
+                    Page {medications.pagination.page || 1} of {medications.pagination.pages || 1}
+                  </span>
+                  <Button
+                    disabled={medicationsPage === medications.pagination.pages}
+                    onClick={() => setMedicationsPage(medicationsPage + 1)}
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground disabled:bg-muted disabled:text-muted-foreground"
+                  >
+                    Next
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
 
-      {/* Delete Confirmation */}
-      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this pharmacy? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        <Dialog open={editOpen} onOpenChange={setEditOpen}>
+          <DialogContent className="card bg-card">
+            <DialogHeader>
+              <DialogTitle className="text-primary">Edit Pharmacy</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label className="text-primary font-medium">Name</Label>
+                <Input name="name" value={formData.name} onChange={handleInputChange} className="border-border" />
+              </div>
+              <div>
+                <Label className="text-primary font-medium">Address</Label>
+                <Input name="address" value={formData.address} onChange={handleInputChange} className="border-border" />
+              </div>
+              <div>
+                <Label className="text-primary font-medium">LGA</Label>
+                <Input name="lga" value={formData.lga} onChange={handleInputChange} className="border-border" />
+              </div>
+              <div>
+                <Label className="text-primary font-medium">State</Label>
+                <Input name="state" value={formData.state} onChange={handleInputChange} className="border-border" />
+              </div>
+              <div>
+                <Label className="text-primary font-medium">Phone</Label>
+                <Input name="phone" value={formData.phone} onChange={handleInputChange} className="border-border" />
+              </div>
+              <div>
+                <Label className="text-primary font-medium">License Number</Label>
+                <Input name="licenseNumber" value={formData.licenseNumber} onChange={handleInputChange} className="border-border" />
+              </div>
+              <div>
+                <Label className="text-primary font-medium">Status</Label>
+                <Select
+                  name="status"
+                  value={formData.status}
+                  onValueChange={(value) => setFormData((prev) => ({ ...prev, status: value }))}
+                  className="border-border"
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="verified">Verified</SelectItem>
+                    <SelectItem value="rejected">Rejected</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-primary font-medium">Logo URL</Label>
+                <Input name="logoUrl" value={formData.logoUrl} onChange={handleInputChange} className="border-border" />
+              </div>
+              <div>
+                <label className="flex items-center">
+                  <Input
+                    type="checkbox"
+                    name="isActive"
+                    checked={formData.isActive}
+                    onChange={handleInputChange}
+                    className="mr-2"
+                  />
+                  <span className="text-primary font-medium">Active</span>
+                </label>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setEditOpen(false)}
+                className="border-border text-primary hover:bg-muted"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSaveEdit}
+                className="bg-success hover:bg-success/90 text-primary-foreground"
+              >
+                Save
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+          <AlertDialogContent className="bg-card">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-primary">Confirm Deletion</AlertDialogTitle>
+              <AlertDialogDescription className="text-muted-foreground">
+                Are you sure you want to delete this pharmacy? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="border-border text-primary hover:bg-muted">
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDelete}
+                className="bg-destructive hover:bg-destructive/90 text-primary-foreground"
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
     </div>
   );
 }

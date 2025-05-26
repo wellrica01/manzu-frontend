@@ -1,4 +1,3 @@
-// PrescriptionUploadForm.jsx
 'use client';
 import { useState, useRef } from 'react';
 import { Input } from '@/components/ui/input';
@@ -17,7 +16,6 @@ export default function PrescriptionUploadForm() {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef(null);
 
-  // Store guestId in localStorage
   if (typeof window !== 'undefined' && !localStorage.getItem('guestId')) {
     localStorage.setItem('guestId', patientIdentifier);
   }
@@ -89,26 +87,26 @@ export default function PrescriptionUploadForm() {
   };
 
   return (
-    <div className="max-w-md mx-auto p-4 space-y-6">
+    <div className="max-w-lg mx-auto space-y-6 fade-in">
       <form
         onSubmit={handleSubmit}
-        className="space-y-4 bg-white p-6 rounded-lg shadow-md"
+        className="card p-8 space-y-6"
         aria-labelledby="prescription-upload-title"
       >
         <h2
           id="prescription-upload-title"
-          className="text-2xl font-semibold text-teal-800"
+          className="text-2xl font-semibold text-primary"
         >
           Upload Your Prescription
         </h2>
-        <p className="text-gray-500 text-sm flex items-center">
-          <File className="h-5 w-5 mr-2" />
-          We’ll check your prescription and send you the medications.
+        <p className="text-muted-foreground text-sm flex items-center">
+          <File className="h-5 w-5 mr-2 text-secondary" />
+          Securely upload your prescription and we’ll deliver your medications.
         </p>
 
         {/* Guest ID */}
         <div>
-          <Label htmlFor="patientIdentifier" className="text-teal-700 font-medium">
+          <Label htmlFor="patientIdentifier" className="text-primary font-medium">
             Guest ID
           </Label>
           <Input
@@ -116,62 +114,62 @@ export default function PrescriptionUploadForm() {
             type="text"
             value={patientIdentifier}
             readOnly
-            className="mt-1 w-full bg-gray-100 border border-gray-200 rounded-lg shadow-sm"
+            className="mt-1 w-full bg-muted"
             aria-describedby="patient-identifier-help"
           />
-          <p id="patient-identifier-help" className="mt-1 text-sm text-gray-500">
+          <p id="patient-identifier-help" className="mt-1 text-sm text-muted-foreground">
             Your unique ID for this session
           </p>
         </div>
 
         {/* Email */}
         <div>
-          <Label htmlFor="email" className="text-teal-700 font-medium">
+          <Label htmlFor="email" className="text-primary font-medium">
             Email (Optional)
           </Label>
           <div className="relative">
-            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-teal-500" />
+            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-secondary" />
             <Input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email"
-              className="mt-1 w-full pl-10 bg-white border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-teal-500"
+              className="mt-1 w-full pl-10"
             />
           </div>
         </div>
 
         {/* Phone */}
         <div>
-          <Label htmlFor="phone" className="text-teal-700 font-medium">
+          <Label htmlFor="phone" className="text-primary font-medium">
             Phone (Optional)
           </Label>
           <div className="relative">
-            <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-teal-500" />
+            <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-secondary" />
             <Input
               id="phone"
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="Enter your phone number"
-              className="mt-1 w-full pl-10 bg-white border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-teal-500"
+              className="mt-1 w-full pl-10"
             />
           </div>
-          <p className="mt-1 text-sm text-gray-500">
-            Provide email or phone to get updates
+          <p className="mt-1 text-sm text-muted-foreground">
+            Provide email or phone for updates
           </p>
         </div>
 
         {/* File Upload */}
         <div>
-          <Label htmlFor="fileInput" className="text-teal-700 font-medium">
+          <Label htmlFor="fileInput" className="text-primary font-medium">
             Prescription File (PDF, JPG, PNG)
           </Label>
           <div
             onDrop={handleDrop}
             onDragOver={handleDragOver}
-            className="mt-1 w-full border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-teal-500"
+            className="mt-2 w-full border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary transition-colors duration-300"
             role="region"
             aria-label="Drag and drop prescription file here"
           >
@@ -184,19 +182,19 @@ export default function PrescriptionUploadForm() {
               className="hidden"
             />
             <div className="flex flex-col items-center">
-              <Upload className="h-8 w-8 text-teal-500 mb-2" aria-hidden="true" />
+              <Upload className="h-10 w-10 text-secondary mb-3" aria-hidden="true" />
               {file ? (
-                <p className="text-gray-700 flex items-center">
-                  <File className="h-5 w-5 mr-2" />
+                <p className="text-foreground flex items-center">
+                  <File className="h-5 w-5 mr-2 text-secondary" />
                   {file.name}
                 </p>
               ) : (
-                <p className="text-gray-500">
+                <p className="text-muted-foreground">
                   Drag your prescription here or{' '}
                   <button
                     type="button"
                     onClick={() => fileInputRef.current.click()}
-                    className="text-teal-600 hover:text-teal-700 font-medium"
+                    className="text-primary hover:text-secondary font-medium"
                   >
                     browse
                   </button>
@@ -210,7 +208,7 @@ export default function PrescriptionUploadForm() {
         <Button
           type="submit"
           disabled={isUploading || !file}
-          className="w-full bg-teal-600 hover:bg-teal-700 text-white font-medium py-2 rounded-lg disabled:bg-gray-300"
+          className="w-full disabled:bg-muted disabled:cursor-not-allowed"
         >
           {isUploading ? (
             <>
@@ -227,12 +225,12 @@ export default function PrescriptionUploadForm() {
       </form>
 
       {message && (
-        <div className="bg-green-50 border-l-4 border-green-400 p-4 rounded-md">
+        <div className="card bg-green-50 border-l-4 border-green-400 p-4">
           <p className="text-green-700 font-medium">{message}</p>
         </div>
       )}
       {error && (
-        <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md">
+        <div className="card bg-red-50 border-l-4 border-red-400 p-4">
           <p className="text-red-700 font-medium">{error}</p>
         </div>
       )}

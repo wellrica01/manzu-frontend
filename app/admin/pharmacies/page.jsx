@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { Loader2, Building2 } from 'lucide-react';
 
 export default function Pharmacies() {
   const [data, setData] = useState({ pharmacies: [], pagination: {} });
@@ -56,83 +57,133 @@ export default function Pharmacies() {
   useEffect(() => {
     if (!authChecked) return;
     fetchPharmacies(page);
-  }, [page, authChecked]); // ✅ now safe: always runs, logic gated
+  }, [page, authChecked]);
 
   if (!authChecked) {
-    return null; // ✅ after hooks, so no violation
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-muted">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
-  if (loading) return <div className="text-center p-6">Loading...</div>;
-  if (error) return <div className="text-center p-6 text-red-500">Error: {error}</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-muted">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-muted-foreground ml-2">Loading pharmacies...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-muted">
+        <div className="card bg-destructive/10 border-l-4 border-destructive p-4 fade-in">
+          <p className="text-destructive font-medium">Error: {error}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Pharmacies</h1>
-      <Card>
-        <CardHeader>
-          <CardTitle>Pharmacy List</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Address</TableHead>
-                <TableHead>LGA</TableHead>
-                <TableHead>State</TableHead>
-                <TableHead>Phone</TableHead>
-                <TableHead>License</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Active</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead>Verified</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.pharmacies.map((pharmacy) => (
-                <TableRow key={pharmacy.id}>
-                  <TableCell>{pharmacy.id}</TableCell>
-                  <TableCell>{pharmacy.name}</TableCell>
-                  <TableCell>{pharmacy.address}</TableCell>
-                  <TableCell>{pharmacy.lga}</TableCell>
-                  <TableCell>{pharmacy.state}</TableCell>
-                  <TableCell>{pharmacy.phone}</TableCell>
-                  <TableCell>{pharmacy.licenseNumber}</TableCell>
-                  <TableCell>{pharmacy.status}</TableCell>
-                  <TableCell>{pharmacy.isActive ? 'Yes' : 'No'}</TableCell>
-                  <TableCell>{new Date(pharmacy.createdAt).toLocaleDateString()}</TableCell>
-                  <TableCell>{pharmacy.verifiedAt ? new Date(pharmacy.verifiedAt).toLocaleDateString() : '-'}</TableCell>
-                  <TableCell>
-                    <Link href={`/admin/pharmacies/${pharmacy.id}`}>
-                      <Button variant="outline" size="sm">
-                        View
-                      </Button>
-                    </Link>
-                  </TableCell>
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted py-12 px-4 sm:px-6 lg:px-8 fade-in">
+      <div className="container mx-auto max-w-6xl">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-4xl sm:text-5xl font-bold text-primary">
+            Pharmacies
+          </h1>
+          <Button
+            onClick={() => router.push('/admin/dashboard')}
+            className="bg-primary hover:bg-primary/90 text-primary-foreground"
+          >
+            Back to Dashboard
+          </Button>
+        </div>
+        <Card className="card-wrapper card-shadow fade-in">
+          <CardHeader className="bg-primary/5">
+            <CardTitle className="text-2xl font-semibold text-primary flex items-center">
+              <Building2 className="h-6 w-6 mr-2" />
+              Pharmacy List
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-primary">ID</TableHead>
+                  <TableHead className="text-primary">Name</TableHead>
+                  <TableHead className="text-primary">Address</TableHead>
+                  <TableHead className="text-primary">LGA</TableHead>
+                  <TableHead className="text-primary">State</TableHead>
+                  <TableHead className="text-primary">Phone</TableHead>
+                  <TableHead className="text-primary">License</TableHead>
+                  <TableHead className="text-primary">Status</TableHead>
+                  <TableHead className="text-primary">Active</TableHead>
+                  <TableHead className="text-primary">Created</TableHead>
+                  <TableHead className="text-primary">Verified</TableHead>
+                  <TableHead className="text-primary">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          <div className="flex justify-between mt-4">
-            <Button
-              disabled={page === 1}
-              onClick={() => setPage(page - 1)}
-            >
-              Previous
-            </Button>
-            <span>
-              Page {data.pagination.page} of {data.pagination.pages}
-            </span>
-            <Button
-              disabled={page === data.pagination.pages}
-              onClick={() => setPage(page + 1)}
-            >
-              Next
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+              </TableHeader>
+              <TableBody>
+                {data.pharmacies.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={12} className="text-muted-foreground text-center">
+                      No pharmacies found.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  data.pharmacies.map((pharmacy, index) => (
+                    <TableRow key={pharmacy.id} className="fade-in" style={{ animationDelay: `${0.1 * index}s` }}>
+                      <TableCell>{pharmacy.id}</TableCell>
+                      <TableCell>{pharmacy.name}</TableCell>
+                      <TableCell>{pharmacy.address}</TableCell>
+                      <TableCell>{pharmacy.lga}</TableCell>
+                      <TableCell>{pharmacy.state}</TableCell>
+                      <TableCell>{pharmacy.phone}</TableCell>
+                      <TableCell>{pharmacy.licenseNumber}</TableCell>
+                      <TableCell>{pharmacy.status.toUpperCase()}</TableCell>
+                      <TableCell>{pharmacy.isActive ? 'Yes' : 'No'}</TableCell>
+                      <TableCell>{new Date(pharmacy.createdAt).toLocaleDateString()}</TableCell>
+                      <TableCell>{pharmacy.verifiedAt ? new Date(pharmacy.verifiedAt).toLocaleDateString() : '-'}</TableCell>
+                      <TableCell>
+                        <Link href={`/admin/pharmacies/${pharmacy.id}`}>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="border-border text-primary hover:bg-muted"
+                          >
+                            View
+                          </Button>
+                        </Link>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+            <div className="flex justify-between items-center mt-4">
+              <Button
+                disabled={page === 1}
+                onClick={() => setPage(page - 1)}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground disabled:bg-muted disabled:text-muted-foreground"
+              >
+                Previous
+              </Button>
+              <span className="text-muted-foreground">
+                Page {data.pagination.page} of {data.pagination.pages}
+              </span>
+              <Button
+                disabled={page === data.pagination.pages}
+                onClick={() => setPage(page + 1)}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground disabled:bg-muted disabled:text-muted-foreground"
+              >
+                Next
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
