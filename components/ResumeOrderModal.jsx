@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
+import { CheckCircle } from 'lucide-react';
 
 const ResumeOrderModal = () => {
   const [form, setForm] = React.useState({ email: '', phone: '' });
@@ -67,6 +68,7 @@ const ResumeOrderModal = () => {
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
+        <CheckCircle className="h-8 w-8 text-green-500 mx-auto mb-2" />
         <DialogHeader>
           <DialogTitle>Resume Order</DialogTitle>
           <DialogDescription>

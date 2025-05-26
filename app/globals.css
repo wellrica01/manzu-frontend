@@ -124,3 +124,10 @@
     @apply px-4;
   }
 }
+
+/* app/globals.css */
+@media (prefers-reduced-motion: reduce) {
+  .transition-colors, .transition-shadow, .transition-transform {
+    transition: none !important;
+  }
+}
