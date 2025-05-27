@@ -38,9 +38,6 @@ export default function MainLayout({ children }) {
               <Link href="/track" className="text-foreground hover:text-secondary font-medium transition-colors">
                 Track Order
               </Link>
-              <Link href="/pharmacy/dashboard" className="text-foreground hover:text-secondary font-medium transition-colors">
-                Pharmacy Dashboard
-              </Link>
               <Link href="/pharmacy/register">
                 <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground">
                   Register Pharmacy
@@ -77,9 +74,6 @@ export default function MainLayout({ children }) {
                   <Link href="/track" className="text-foreground hover:text-secondary font-medium">
                     Track Order
                   </Link>
-                  <Link href="/pharmacy/dashboard" className="text-foreground hover:text-secondary font-medium">
-                    Pharmacy Dashboard
-                  </Link>
                   <Link href="/pharmacy/register">
                     <Button variant="outline" className="w-full border-primary text-primary hover:bg-primary hover:text-primary-foreground">
                       Register Pharmacy
@@ -102,13 +96,13 @@ export default function MainLayout({ children }) {
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <p className="text-sm">© 2025 Manzu. All rights reserved.</p>
             <div className="mt-4 flex flex-col sm:flex-row justify-center gap-6">
-              <Link href="/about" className="hover:text-secondary transition-colors">
+              <Link href="/about" className="text-neutral-50 hover:text-secondary transition-colors">
                 About
               </Link>
-              <Link href="/contact" className="hover:text-secondary transition-colors">
+              <Link href="/contact" className="text-neutral-50 hover:text-secondary transition-colors">
                 Contact
               </Link>
-              <Link href="/privacy" className="hover:text-secondary transition-colors">
+              <Link href="/privacy" className="text-neutral-50 hover:text-secondary transition-colors">
                 Privacy Policy
               </Link>
             </div>
