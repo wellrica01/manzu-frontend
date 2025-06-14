@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Search, Loader2, ShoppingCart, CheckCircle, Filter, X } from 'lucide-react';
+import { Search, CheckCircle, ShoppingCart, Filter, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
 import Link from 'next/link';
@@ -46,16 +46,63 @@ export default function SearchBar() {
   }
 
 
-    // Load geo data for filters
+// Custom react-select styles to match Shadcn
+const customSelectStyles = {
+  control: (provided, state) => ({
+    ...provided,
+    height: '48px',
+    borderRadius: '0.5rem',
+    border: `1px solid ${state.isFocused ? '#3b82f6' : '#e5e7eb'}`,
+    backgroundColor: '#ffffff', // Explicit white
+    boxShadow: state.isFocused ? '0 0 0 2px rgba(59, 130, 246, 0.2)' : 'none',
+    '&:hover': { borderColor: '#3b82f6' },
+    fontSize: '1rem',
+    paddingLeft: '0.5rem',
+  }),
+  input: (provided) => ({
+    ...provided,
+    fontSize: '1rem',
+    color: '#1f2937',
+  }),
+  placeholder: (provided) => ({
+    ...provided,
+    fontSize: '1rem',
+    color: '#9ca3af',
+  }),
+  singleValue: (provided) => ({
+    ...provided,
+    fontSize: '1rem',
+    color: '#1f2937',
+  }),
+  menu: (provided) => ({
+    ...provided,
+    borderRadius: '0.5rem',
+    border: '1px solid #e5e7eb',
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+    marginTop: '0.25rem',
+    zIndex: 20,
+  }),
+  option: (provided, state) => ({
+    ...provided,
+    fontSize: '1rem',
+    color: '#1f2937',
+    backgroundColor: state.isSelected ? '#3b82f6' : state.isFocused ? '#f9fafb' : '#ffffff',
+    '&:hover': { backgroundColor: '#f9fafb' },
+  }),
+  clearIndicator: (provided) => ({
+    ...provided,
+    color: '#9ca3af',
+    '&:hover': { color: '#dc2626' },
+  }),
+};
+
+  // Load geo data for filters
   useEffect(() => {
     fetch('/data/full.json')
       .then(res => res.json())
       .then(data => {
         setGeoData(data);
-        setStates(data.map(state => ({
-          value: state.state,
-          label: state.state,
-        })));
+        setStates(data.map(state => ({ value: state.state, label: state.state })));
       })
       .catch(err => {
         console.error('Failed to load geo data:', err);
@@ -67,10 +114,7 @@ export default function SearchBar() {
   const updateLgas = (state) => {
     if (!geoData) return;
     const stateData = geoData.find(s => s.state === state);
-    setLgas(stateData ? stateData.lgas.map(lga => ({
-      value: lga.name,
-      label: lga.name,
-    })) : []);
+    setLgas(stateData ? stateData.lgas.map(lga => ({ value: lga.name, label: lga.name })) : []);
     setWards([]);
     setFilterLga('');
     setFilterWard('');
@@ -81,15 +125,13 @@ export default function SearchBar() {
     if (!geoData) return;
     const stateData = geoData.find(s => s.state === state);
     const lgaData = stateData?.lgas.find(l => l.name === lga);
-    setWards(lgaData ? lgaData.wards.map(ward => ({
-      value: ward.name,
-      label: ward.name,
-    })) : []);
+    setWards(lgaData ? lgaData.wards.map(ward => ({ value: ward.name, label: ward.name })) : []);
     setFilterWard('');
   };
- 
-    // ClearFilters
-    const clearFilters = () => {
+
+
+  // Clear filters
+  const clearFilters = () => {
     setFilterState('');
     setFilterLga('');
     setFilterWard('');
@@ -98,7 +140,6 @@ export default function SearchBar() {
     setWards([]);
     if (searchTerm) handleSearch(searchTerm);
   };
-
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -110,7 +151,7 @@ export default function SearchBar() {
           });
         },
         () => {
-          toast.error('Unable to fetch location. Showing all pharmacies.', { duration: 4000 });
+          toast.error('Unable to fetch location. Showing all pharmacies.');
         }
       );
     }
@@ -145,7 +186,7 @@ export default function SearchBar() {
       setShowDropdown(true);
       setFocusedSuggestionIndex(-1);
     } catch (err) {
-      toast.error('Failed to load suggestions. Please try again.', { duration: 4000 });
+      toast.error('Failed to load suggestions. Please try again.');
       setSuggestions([]);
       setShowDropdown(false);
     } finally {
@@ -192,7 +233,7 @@ export default function SearchBar() {
     } catch (err) {
       setError(err.message);
       setResults([]);
-      toast.error(err.message, { duration: 4000 });
+      toast.error(err.message);
     }
   };
 
@@ -220,7 +261,7 @@ export default function SearchBar() {
     } catch (err) {
       setError(err.message);
       setResults([]);
-      toast.error(err.message, { duration: 4000 });
+      toast.error(err.message);
     }
   };
 
@@ -243,13 +284,12 @@ export default function SearchBar() {
       }
       setLastAddedItem(medicationName);
       setOpenCartDialog(true);
-      // Track cart addition (placeholder)
       if (typeof window !== 'undefined' && window.gtag) {
         window.gtag('event', 'add_to_cart', { medicationId, pharmacyId });
       }
       await fetchCart();
     } catch (err) {
-      toast.error(`Error: ${err.message}`, { duration: 4000 });
+      toast.error(`Error: ${err.message}`);
     } finally {
       setIsAddingToCart(false);
     }
@@ -306,31 +346,28 @@ export default function SearchBar() {
   }, []);
 
   return (
-    <div className="space-y-6 max-w-3xl mx-auto">
+    <div className="space-y-6 max-w-lg mx-auto">
       {/* Cart Confirmation Dialog */}
       <Dialog open={openCartDialog} onOpenChange={setOpenCartDialog}>
-        <DialogContent className="sm:max-w-md">
-          <CheckCircle className="h-8 w-8 text-green-500 mx-auto mb-2" />
+        <DialogContent className="sm:max-w-md p-6 shadow-lg">
           <DialogHeader>
-            <DialogTitle className="text-lg font-semibold text-primary">
+            <CheckCircle className="h-10 w-10 mx-auto text-green-500" />
+            <DialogTitle className="text-2xl font-semibold text-primary text-center mt-2">
               Item Added to Cart
             </DialogTitle>
           </DialogHeader>
-          <div className="py-4">
-            <p className="text-sm text-foreground">
-              <span className="font-medium">{lastAddedItem}</span> has been added to your cart.
-            </p>
-          </div>
-          <DialogFooter className="flex flex-col sm:flex-row gap-2">
+          <p className="text-center text-gray-600">
+            <span className="font-medium">{lastAddedItem}</span> has been added to your cart.
+          </p>
+          <DialogFooter className="mt-6 flex justify-center gap-4">
             <Button
               variant="outline"
               onClick={() => setOpenCartDialog(false)}
-              className="w-full sm:w-auto"
               aria-label="Continue shopping"
             >
               Continue Shopping
             </Button>
-            <Button asChild className="w-full sm:w-auto">
+            <Button asChild className="bg-primary hover:bg-primary/90">
               <Link href="/cart" aria-label="View cart">
                 View Cart
               </Link>
@@ -340,249 +377,265 @@ export default function SearchBar() {
       </Dialog>
 
       {/* Search Input */}
-      <div className="relative max-w-full sm:max-w-md mx-auto">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-secondary" />
-          <Input
-            ref={inputRef}
-            type="text"
-            placeholder="Search for medications..."
-            value={searchTerm}
-            onChange={handleSearchChange}
-            onKeyDown={handleKeyDown}
-            className="pl-10 py-2 text-sm w-full"
-            autoComplete="off"
-            aria-autocomplete="list"
-            aria-expanded={showDropdown}
-            aria-controls="suggestions-list"
+      <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
+        <CardContent className="p-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Input
+              ref={inputRef}
+              type="text"
+              placeholder="Search for medications..."
+              value={searchTerm}
+              onChange={handleSearchChange}
+              onKeyDown={handleKeyDown}
+              className="pl-10 h-12 text-base rounded-lg border-gray-300 focus:ring-2 focus:ring-primary"
+              autoComplete="off"
+              aria-autocomplete="list"
+              aria-expanded={showDropdown}
+              aria-controls="suggestions-list"
+            />
+            {showDropdown && (
+              <div
+                ref={dropdownRef}
+                id="suggestions-list"
+                className="absolute z-20 w-full mt-4 bg-background border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto transition-transform duration-200"
+                role="listbox"
+              >
+                {isLoadingSuggestions ? (
+                  <div className="px-4 py-3 flex items-center text-primary">
+                    <svg className="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                    </svg>
+                    Loading...
+                  </div>
+                ) : suggestions.length > 0 ? (
+                  suggestions.map((med, index) => (
+                    <div
+                      key={med.id}
+                      ref={(el) => (suggestionRefs.current[index] = el)}
+                      className={cn(
+                        'px-4 py-3 cursor-pointer hover:bg-primary/5 transition-colors duration-200 text-base',
+                        index === focusedSuggestionIndex && 'bg-primary/10'
+                      )}
+                      onClick={() => handleSelectMedication(med)}
+                      role="option"
+                      aria-selected={index === focusedSuggestionIndex}
+                    >
+                      {med.displayName}
+                    </div>
+                  ))
+                ) : (
+                  searchTerm && (
+                    <div className="px-4 py-3 text-gray-500 text-base">
+                      No medications found for "{searchTerm}"
+                    </div>
+                  )
+                )}
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+{/* Filter Controls */}
+<Card className="shadow-md border border-[#e5e7eb] rounded-xl overflow-hidden">
+  <div
+    className="flex justify-between items-center px-4 py-3 bg-gradient-to-r from-[#dbeafe] to-[#ffffff] cursor-pointer hover:bg-[#bfdbfe] transition-colors duration-200"
+    onClick={() => setShowFilters(!showFilters)}
+    role="button"
+    aria-expanded={showFilters}
+    aria-controls="filter-content"
+  >
+    <div className="flex items-center gap-2">
+      <Filter className="h-5 w-5 text-[#3b82f6]" />
+      <span className="text-base font-semibold text-[#3b82f6]">
+        {showFilters ? 'Hide Filters' : 'Show Filters'}
+      </span>
+    </div>
+    {(filterState || filterLga || filterWard || sortBy !== 'cheapest') && (
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={(e) => {
+          e.stopPropagation();
+          clearFilters();
+        }}
+        className="text-[#dc2626] hover:text-[#b91c1c] p-2"
+        aria-label="Clear all filters"
+      >
+        <X className="h-5 w-5" />
+      </Button>
+    )}
+  </div>
+  {showFilters && (
+    <CardContent
+      id="filter-content"
+      className="px-6 py-4 space-y-4 bg-[#ffffff] transition-opacity duration-300 ease-in-out"
+    >
+      <p className="text-sm font-medium text-[#6b7280]">
+        Refine your search by location or sort preference
+      </p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="space-y-1">
+          <Label htmlFor="state-filter" className="text-sm font-medium text-[#3b82f6]">
+            State
+          </Label>
+          <Select
+            inputId="state-filter"
+            options={states}
+            onChange={(selected) => {
+              const newState = selected?.value || '';
+              setFilterState(newState);
+              updateLgas(newState);
+              if (!newState) {
+                setFilterLga('');
+                setFilterWard('');
+                setLgas([]);
+                setWards([]);
+              }
+              if (searchTerm) handleSearch(searchTerm);
+            }}
+            value={states.find(option => option.value === filterState) || null}
+            placeholder="Select a state"
+            isClearable
+            styles={customSelectStyles}
+            className="text-sm"
+            aria-label="Select state"
           />
-          {showDropdown && (
-            <div
-              ref={dropdownRef}
-              id="suggestions-list"
-              className="absolute z-20 w-full mt-1 card max-h-48 overflow-y-auto shadow-lg"
-              role="listbox"
-            >
-              {isLoadingSuggestions ? (
-                <div className="px-3 py-2 flex items-center text-primary">
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Loading...
-                </div>
-              ) : suggestions.length > 0 ? (
-                suggestions.map((med, index) => (
-                  <div
-                    key={med.id}
-                    ref={(el) => (suggestionRefs.current[index] = el)}
-                    className={cn(
-                      'px-3 py-2 cursor-pointer hover:bg-primary/10 transition-colors duration-150 text-sm',
-                      index === focusedSuggestionIndex && 'bg-primary/20'
-                    )}
-                    onClick={() => handleSelectMedication(med)}
-                    role="option"
-                    aria-selected={index === focusedSuggestionIndex}
-                  >
-                    {med.displayName}
-                  </div>
-                ))
-              ) : (
-                searchTerm && (
-                  <div className="px-3 py-2 text-muted-foreground italic text-sm">
-                    No medications found for "{searchTerm}"
-                  </div>
-                )
-              )}
-            </div>
-          )}
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="lga-filter" className="text-sm font-medium text-[#3b82f6]">
+            LGA
+          </Label>
+          <Select
+            inputId="lga-filter"
+            options={lgas}
+            onChange={(selected) => {
+              const newLga = selected?.value || '';
+              setFilterLga(newLga);
+              updateWards(filterState, newLga);
+              if (!newLga) {
+                setFilterWard('');
+                setWards([]);
+              }
+              if (searchTerm) handleSearch(searchTerm);
+            }}
+            value={lgas.find(option => option.value === filterLga) || null}
+            placeholder="Select an LGA"
+            isClearable
+            isDisabled={!filterState}
+            styles={customSelectStyles}
+            className="text-sm"
+            aria-label="Select LGA"
+          />
         </div>
       </div>
-
-    {/* Filter Controls */}
-      <Card className="shadow-md border-border rounded-lg overflow-hidden">
-        <div
-          className="flex justify-between items-center p-3 sm:p-4 bg-gradient-to-r from-primary/5 to-background cursor-pointer hover:bg-primary/10 transition-colors duration-200"
-          onClick={() => setShowFilters(!showFilters)}
+      <div className="space-y-1">
+        <Label htmlFor="ward-filter" className="text-sm font-medium text-[#3b82f6]">
+          Ward
+        </Label>
+        <Select
+          inputId="ward-filter"
+          options={wards}
+          onChange={(selected) => {
+            setFilterWard(selected?.value || '');
+            if (searchTerm) handleSearch(searchTerm);
+          }}
+          value={wards.find(option => option.value === filterWard) || null}
+          placeholder="Select a ward"
+          isClearable
+          isDisabled={!filterLga}
+          styles={customSelectStyles}
+          className="text-sm"
+          aria-label="Select ward"
+        />
+      </div>
+      <div className="space-y-1">
+        <Label className="text-sm font-medium text-[#3b82f6]">Sort By</Label>
+        <RadioGroup
+          value={sortBy}
+          onValueChange={(value) => {
+            setSortBy(value);
+            if (searchTerm) handleSearch(searchTerm);
+          }}
+          className="flex flex-wrap gap-4 pt-2"
         >
-          <div className="flex items-center">
-            <Filter className="h-4 w-4 sm:h-5 sm:w-5 text-primary mr-2" />
-            <span className="text-sm sm:text-base font-semibold text-primary">
-              {showFilters ? 'Hide Filters' : 'Show Filters'}
-            </span>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="cheapest" id="cheapest" />
+            <Label htmlFor="cheapest" className="text-sm font-medium text-[#374151]">
+              Cheapest
+            </Label>
           </div>
-          {(filterState || filterLga || filterWard || sortBy !== 'cheapest') && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                clearFilters();
-              }}
-              className="text-destructive hover:text-destructive/80 p-1"
-              aria-label="Clear all filters"
-            >
-              <X className="h-3 w-3 sm:h-4 sm:w-4" />
-            </Button>
-          )}
-        </div>
-        {showFilters && (
-          <CardContent className="p-4 sm:p-6 space-y-6 transition-all duration-300 ease-in-out">
-            <p className="text-xs sm:text-sm text-muted-foreground">
-              Narrow your search by location or sort results
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="state-filter" className="text-primary font-medium text-sm">
-                  State
-                </Label>
-                <Select
-                  inputId="state-filter"
-                  options={states}
-                  onChange={(selected) => {
-                    const newState = selected?.value || '';
-                    setFilterState(newState);
-                    updateLgas(newState);
-                    if (!newState) {
-                      setFilterLga('');
-                      setFilterWard('');
-                      setLgas([]);
-                      setWards([]);
-                    }
-                    if (searchTerm) handleSearch(searchTerm);
-                  }}
-                  value={states.find(option => option.value === filterState) || null}
-                  placeholder="Select a state"
-                  isClearable={true}
-                  className="text-sm"
-                  aria-label="Select state"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="lga-filter" className="text-primary font-medium text-sm">
-                  LGA
-                </Label>
-                <Select
-                  inputId="lga-filter"
-                  options={lgas}
-                  onChange={(selected) => {
-                    const newLga = selected?.value || '';
-                    setFilterLga(newLga);
-                    updateWards(filterState, newLga);
-                    if (!newLga) {
-                      setFilterWard('');
-                      setWards([]);
-                    }
-                    if (searchTerm) handleSearch(searchTerm);
-                  }}
-                  value={lgas.find(option => option.value === filterLga) || null}
-                  placeholder="Select an LGA"
-                  isClearable={true}
-                  isDisabled={!filterState}
-                  className="text-sm"
-                  aria-label="Select LGA"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="ward-filter" className="text-primary font-medium text-sm">
-                  Ward
-                </Label>
-                <Select
-                  inputId="ward-filter"
-                  options={wards}
-                  onChange={(selected) => {
-                    setFilterWard(selected?.value || '');
-                    if (searchTerm) handleSearch(searchTerm);
-                  }}
-                  value={wards.find(option => option.value === filterWard) || null}
-                  placeholder="Select a ward"
-                  isClearable={true}
-                  isDisabled={!filterLga}
-                  className="text-sm"
-                  aria-label="Select ward"
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-primary font-medium text-sm">Sort By</Label>
-              <RadioGroup
-                value={sortBy}
-                onValueChange={(value) => {
-                  setSortBy(value);
-                  if (searchTerm) handleSearch(searchTerm);
-                }}
-                className="flex flex-col sm:flex-row sm:space-x-6 space-y-2 sm:space-y-0"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="cheapest" id="cheapest" />
-                  <Label htmlFor="cheapest" className="text-sm">
-                    Cheapest
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="closest" id="closest" />
-                  <Label htmlFor="closest" className="text-sm">
-                    Closest
-                  </Label>
-                </div>
-              </RadioGroup>
-            </div>
-            <div className="flex justify-end space-x-2">
-              <Button
-                variant="outline"
-                onClick={clearFilters}
-                className="text-sm"
-                aria-label="Clear all filters"
-              >
-                Clear Filters
-              </Button>
-              <Button
-                onClick={() => handleSearch(searchTerm)}
-                className="text-sm bg-primary hover:bg-primary/90"
-              >
-                Apply Filters
-              </Button>
-            </div>
-          </CardContent>
-        )}
-      </Card>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="closest" id="closest" />
+            <Label htmlFor="closest" className="text-sm font-medium text-[#374151]">
+              Closest
+            </Label>
+          </div>
+        </RadioGroup>
+      </div>
+      <div className="flex justify-end gap-3 pt-2">
+        <Button
+          variant="outline"
+          onClick={clearFilters}
+          className="h-10 px-4 text-sm font-medium border-[#e5e7eb] hover:bg-[#f9fafb]"
+          aria-label="Clear all filters"
+        >
+          Clear
+        </Button>
+        <Button
+          onClick={() => handleSearch(searchTerm)}
+          className="h-10 px-4 text-sm font-medium bg-[#3b82f6] hover:bg-[#2563eb]"
+        >
+          Apply
+        </Button>
+      </div>
+    </CardContent>
+  )}
+</Card>
 
       {/* Error Message */}
       {error && (
-        <div className="card bg-destructive/10 border-l-4 border-destructive p-3">
-          <p className="text-destructive text-sm font-medium">{error}</p>
-        </div>
+        <Card className="bg-destructive/5 border border-destructive rounded-lg p-4">
+          <p className="text-destructive text-base font-medium" aria-live="polite">
+            {error}
+          </p>
+        </Card>
       )}
 
       {/* Search Results */}
-      <div className="space-y-4">
+      <div className="space-y-6">
         {results.length === 0 && !error && searchTerm ? (
-          <div className="card text-center py-8">
-            <p className="text-primary text-sm font-medium">
+          <Card className="shadow-lg text-center p-6">
+            <p className="text-primary text-base font-medium">
               No medications found for "{searchTerm}"
             </p>
-          </div>
+          </Card>
         ) : results.length === 0 && !searchTerm ? (
-          <div className="card text-center py-8">
-            <p className="text-primary text-sm font-medium">
+          <Card className="shadow-lg text-center p-6">
+            <p className="text-primary text-base font-medium">
               Enter a medication name to find available pharmacies
             </p>
-          </div>
+          </Card>
         ) : (
-          results.map((med, index) => (
+          results.map((med) => (
             <Card
               key={med.id}
               className="shadow-lg hover:shadow-xl transition-shadow duration-300"
             >
-              <CardHeader className="bg-primary/5">
-                <CardTitle className="text-xl font-semibold text-primary">
+              <CardHeader className="bg-gradient-to-r from-primary/5 to-background">
+                <CardTitle className="text-2xl font-semibold text-primary">
                   {med.displayName}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-4">
-                <div className="flex flex-col sm:flex-row gap-4 mb-4">
+              <CardContent className="p-6">
+                <div className="flex flex-col sm:flex-row gap-6 mb-6">
                   <div className="flex-1">
-                    <p className="text-foreground text-sm">
+                    <p className="text-gray-700 text-base">
                       <strong>Generic Name:</strong> {med.genericName || 'N/A'}
                     </p>
-                    <p className="text-foreground text-sm">
+                    <p className="text-gray-700 text-base">
                       <strong>NAFDAC Code:</strong> {med.nafdacCode || 'N/A'}
                     </p>
                   </div>
@@ -590,56 +643,57 @@ export default function SearchBar() {
                     <img
                       src={med.imageUrl}
                       alt={med.displayName}
-                      className="w-24 h-24 object-cover rounded-lg border border-border"
+                      className="w-32 h-32 object-cover rounded-lg border border-gray-300"
                     />
                   )}
                 </div>
-                <h3 className="font-semibold text-primary text-base mb-3">
+                <h3 className="text-lg font-semibold text-primary mb-4">
                   Available at:
                 </h3>
-                <ul className="space-y-3">
-                  {med.availability && med.availability.length > 0 ? (
-                    med.availability.map((avail, index) => (
-                      <li
+                {med.availability && med.availability.length > 0 ? (
+                  <div className="space-y-4">
+                    {med.availability.map((avail, index) => (
+                      <div
                         key={index}
-                        className="card bg-primary/5 p-3 rounded-lg hover:bg-primary/10 transition-colors duration-200"
+                        className="flex flex-col sm:flex-row gap-4 items-start sm:items-center p-4 bg-gray-50 rounded-lg hover:bg-primary/5 transition-colors duration-200"
                       >
-                        <div className="flex flex-col sm:flex-row gap-3 text-foreground text-sm">
-                          <div className="flex-1">
-                            <span className="font-medium">{avail.pharmacyName}</span>
-                            <p className="text-xs text-muted-foreground">{avail.address || 'Address not available'}</p>
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-xs">Price: ₦{avail.price.toLocaleString()}</p>
-                            {avail.distance_km !== null && (
-                              <p className="text-xs">Distance: ~{avail.distance_km} km</p>
-                            )}
-                          </div>
+                        <div className="flex-1">
+                          <p className="text-base font-medium text-gray-900">{avail.pharmacyName}</p>
+                          <p className="text-sm text-gray-500">{avail.address || 'Address not available'}</p>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-base">Price: ₦{avail.price.toLocaleString()}</p>
+                          {avail.distance_km !== null && (
+                            <p className="text-base">Distance: ~{avail.distance_km} km</p>
+                          )}
                         </div>
                         <Button
                           onClick={() => handleAddToCart(med.id, avail.pharmacyId, med.displayName)}
                           disabled={isInCart(med.id, avail.pharmacyId) || isAddingToCart}
                           className={cn(
-                            'mt-3 w-full sm:w-auto text-sm',
-                            isInCart(med.id, avail.pharmacyId) ? 'bg-muted text-muted-foreground' : ''
+                            'h-12 text-base',
+                            isInCart(med.id, avail.pharmacyId) ? 'bg-gray-300 text-gray-500' : 'bg-primary hover:bg-primary/90'
                           )}
                           aria-label={isInCart(med.id, avail.pharmacyId) ? 'Added to cart' : 'Add to cart'}
                         >
                           {isAddingToCart ? (
-                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                            <svg className="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
+                              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                              <path fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                            </svg>
                           ) : (
-                            <ShoppingCart className="h-4 w-4 mr-2" />
+                            <ShoppingCart className="h-5 w-5 mr-2" />
                           )}
                           {isInCart(med.id, avail.pharmacyId) ? 'Added to Cart' : 'Add to Cart'}
                         </Button>
-                      </li>
-                    ))
-                  ) : (
-                    <li className="text-muted-foreground italic text-sm p-3">
-                      Not available at any verified pharmacy
-                    </li>
-                  )}
-                </ul>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-base italic p-4">
+                    Not available at any verified pharmacy
+                  </p>
+                )}
               </CardContent>
             </Card>
           ))
