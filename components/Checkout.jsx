@@ -10,6 +10,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Loader2, Upload, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { v4 as uuidv4 } from 'uuid';
 
 export default function Checkout() {
   const { orderId: resumeOrderId } = useParams();
@@ -22,35 +23,38 @@ export default function Checkout() {
   const [requiresUpload, setRequiresUpload] = useState(false);
   const [showCheckoutDialog, setShowCheckoutDialog] = useState(false);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
+  const [patientIdentifier, setPatientIdentifier] = useState('');
   const router = useRouter();
-  const guestId = typeof window !== 'undefined' ? localStorage.getItem('guestId') : null;
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      let id = localStorage.getItem('guestId');
+      if (!id) {
+        id = uuidv4();
+        localStorage.setItem('guestId', id);
+      }
+      setPatientIdentifier(id);
+    }
+  }, []);
 
   const fetchCart = async () => {
     try {
       setError(null);
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart`, {
-        headers: { 'x-guest-id': guestId },
+        headers: { 'x-guest-id': patientIdentifier },
       });
-      if (!response.ok) {
-        throw new Error(`Failed to fetch cart: ${response.statusText}`);
-      }
+      if (!response.ok) throw new Error(`Failed to fetch cart: ${response.statusText}`);
       const data = await response.json();
       const orderItems = data.pharmacies.flatMap(pharmacy => pharmacy.items);
-      setCart({
-        pharmacies: data.pharmacies,
-        orderItems,
-        prescriptionId: data.prescriptionId,
-        totalPrice: data.totalPrice,
-      });
+      setCart({ pharmacies: data.pharmacies, orderItems, prescriptionId: data.prescriptionId, totalPrice: data.totalPrice });
 
       const prescriptionRequiredIds = orderItems
         .filter(item => item.medication?.prescriptionRequired)
         .map(item => item.pharmacyMedicationMedicationId);
+
       if (prescriptionRequiredIds.length > 0) {
-        const validateResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/checkout/prescription/validate?patientIdentifier=${guestId}&medicationIds=${prescriptionRequiredIds.join(',')}`
-        );
+        const validateResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/checkout/prescription/validate?patientIdentifier=${patientIdentifier}&medicationIds=${prescriptionRequiredIds.join(',')}`);
         if (!validateResponse.ok) {
           const errorData = await validateResponse.json();
           throw new Error(`Failed to validate prescription: ${errorData.message || validateResponse.statusText}`);
@@ -67,24 +71,22 @@ export default function Checkout() {
   };
 
   useEffect(() => {
-    if (guestId) {
+    if (patientIdentifier) {
       fetchCart();
     } else {
       setError('Guest ID not found');
       toast.error('Guest ID not found', { duration: 4000 });
     }
-  }, []);
+  }, [patientIdentifier]);
 
   useEffect(() => {
-    if (resumeOrderId && guestId && form.email) {
+    if (resumeOrderId && patientIdentifier && form.email) {
       setPendingMessage('Resuming checkout...');
       handleResumeCheckout(resumeOrderId);
     }
-  }, [resumeOrderId, guestId, form.email]);
+  }, [resumeOrderId, patientIdentifier, form.email]);
 
-  const handleInputChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  const handleInputChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -96,9 +98,7 @@ export default function Checkout() {
     }
   };
 
-  const handleDeliveryMethodChange = (value) => {
-    setForm({ ...form, deliveryMethod: value, address: value === 'pickup' ? '' : form.address });
-  };
+  const handleDeliveryMethodChange = (value) => setForm({ ...form, deliveryMethod: value, address: value === 'pickup' ? '' : form.address });
 
   const handleResumeSession = async (e) => {
     e.preventDefault();
@@ -110,8 +110,8 @@ export default function Checkout() {
         body: JSON.stringify({ email, phone, checkoutSessionId: sessionId }),
       });
       if (!response.ok) throw new Error('Session not found');
-      const { guestId } = await response.json();
-      localStorage.setItem('guestId', guestId);
+      const { patientIdentifier } = await response.json();
+      localStorage.setItem('guestId', patientIdentifier);
       await fetchCart();
       toast.success('Session resumed successfully', { duration: 4000 });
     } catch (err) {
@@ -179,7 +179,7 @@ export default function Checkout() {
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/checkout`, {
         method: 'POST',
-        headers: { 'x-guest-id': guestId },
+        headers: { 'x-guest-id': patientIdentifier },
         body: formData,
       });
 
@@ -247,7 +247,7 @@ export default function Checkout() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-guest-id': guestId,
+          'x-guest-id': patientIdentifier,
         },
         body: JSON.stringify({ email: form.email }),
       });

@@ -29,7 +29,7 @@ export default function HomePage() {
             Discover Medications with <span className="text-secondary">Manzu</span>
           </h1>
           <p className="mt-3 text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
-            Find medications nearby or upload your prescription effortlessly with our premium pharmacy platform.
+            Find medications nearby or upload your prescription effortlessly.
           </p>
         </header>
 

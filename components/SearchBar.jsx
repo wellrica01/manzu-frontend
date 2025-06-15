@@ -346,7 +346,7 @@ const customSelectStyles = {
   }, []);
 
   return (
-    <div className="space-y-6 max-w-lg mx-auto">
+    <div className="space-y-6 p-6">
       {/* Cart Confirmation Dialog */}
       <Dialog open={openCartDialog} onOpenChange={setOpenCartDialog}>
         <DialogContent className="sm:max-w-md p-6 shadow-lg">

@@ -93,7 +93,6 @@ export default function PrescriptionUploadForm() {
 
     const formData = new FormData();
     formData.append('prescriptionFile', file);
-    formData.append('patientIdentifier', patientIdentifier);
     if (email) formData.append('email', email);
     if (phone) formData.append('phone', phone);
 
