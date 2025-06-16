@@ -8,8 +8,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Loader2, Upload, CheckCircle } from 'lucide-react';
+import { Loader2, Upload, CheckCircle, File as FileIcon } from 'lucide-react';
 import { toast } from 'sonner';
+import Link from 'next/link';
 import { v4 as uuidv4 } from 'uuid';
 
 export default function Checkout() {
@@ -311,314 +312,357 @@ export default function Checkout() {
     return addresses;
   };
 
-  return (
-    <>
-      <Script
-        src="https://js.paystack.co/v2/inline.js"
-        strategy="afterInteractive"
-        onError={() => toast.error('Failed to load Paystack', { duration: 4000 })}
-      />
-      <div className="min-h-screen bg-gradient-to-b from-background to-muted py-8 px-4 sm:px-6 lg:px-8">
-        <div className="container mx-auto max-w-4xl">
-          <h1 className="text-3xl sm:text-4xl font-bold text-primary mb-6 text-center">
-            Checkout
-          </h1>
-          {error && (
-            <div className="card bg-destructive/10 border-l-4 border-destructive p-3 mb-4">
-              <p className="text-destructive text-sm font-medium">{error}</p>
-            </div>
-          )}
-          {pendingMessage && (
-            <div className="card bg-green-50 border-l-4 border-green-400 p-3 mb-4">
-              <p className="text-green-700 text-sm font-medium">{pendingMessage}</p>
-            </div>
-          )}
-          {cart.pharmacies.length === 0 && !error && !resumeOrderId ? (
-            <div className="card text-center py-8">
-              <p className="text-muted-foreground text-base">
-                Your cart is empty.{' '}
-                <a href="/" className="text-primary hover:text-secondary">
-                  Start shopping
-                </a>
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-4">
-              {/* Checkout Confirmation Dialog */}
-              <Dialog open={showCheckoutDialog} onOpenChange={setShowCheckoutDialog}>
-                <DialogContent className="sm:max-w-md">
-                  <CheckCircle className="h-8 w-8 text-green-500 mx-auto mb-2" />
-                  <DialogHeader>
-                    <DialogTitle className="text-lg font-semibold text-primary">
-                      Confirm Checkout
-                    </DialogTitle>
-                  </DialogHeader>
-                  <div className="py-4">
-                    <p className="text-sm text-foreground">
-                      You’re about to place an order for ₦{cart.totalPrice.toLocaleString()}.
-                      {requiresUpload && prescriptionFile && (
-                        <> A prescription file ({prescriptionFile.name}) will be submitted.</>
-                      )}
-                    </p>
-                  </div>
-                  <DialogFooter className="flex flex-col sm:flex-row gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => setShowCheckoutDialog(false)}
-                      className="w-full sm:w-auto"
-                      aria-label="Review order"
-                    >
-                      Review Order
-                    </Button>
-                    <Button
-                      onClick={confirmCheckout}
-                      className="w-full sm:w-auto"
-                      disabled={loading}
-                      aria-label="Confirm payment"
-                    >
-                      {loading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                      Confirm Payment
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-              {/* Prescription Upload Dialog */}
-              <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
-                <DialogContent className="sm:max-w-md">
-                  <CheckCircle className="h-8 w-8 text-green-500 mx-auto mb-2" />
-                  <DialogHeader>
-                    <DialogTitle className="text-lg font-semibold text-primary">
-                      Prescription Uploaded
-                    </DialogTitle>
-                  </DialogHeader>
-                  <div className="py-4">
-                    <p className="text-sm text-foreground">
-                      Prescription file <span className="font-medium">{prescriptionFile?.name}</span> uploaded successfully.
-                    </p>
-                  </div>
-                  <DialogFooter className="flex flex-col sm:flex-row gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setPrescriptionFile(null);
-                        setShowUploadDialog(false);
-                        fileInputRef.current.value = '';
-                      }}
-                      className="w-full sm:w-auto"
-                      aria-label="Upload another prescription"
-                    >
-                      Upload Another
-                    </Button>
-                    <Button
-                      onClick={() => setShowUploadDialog(false)}
-                      className="w-full sm:w-auto"
-                      aria-label="Continue checkout"
-                    >
-                      Continue Checkout
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-              <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
-                <CardHeader className="bg-primary/5">
-                  <CardTitle className="text-xl font-semibold text-primary">
-                    User Information
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-4">
-                  <form onSubmit={handleCheckout} className="space-y-4" role="form" aria-labelledby="checkout-form-title">
-                    <div>
-                      <Label htmlFor="name" className="text-primary font-medium text-sm">
-                        Full Name
-                      </Label>
-                      <Input
-                        id="name"
-                        name="name"
-                        value={form.name}
-                        onChange={handleInputChange}
-                        className="mt-1 text-sm"
-                        required
-                        aria-required="true"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="email" className="text-primary font-medium text-sm">
-                        Email
-                      </Label>
-                      <Input
-                        id="email"
-                        name="email"
-                        type="email"
-                        value={form.email}
-                        onChange={handleInputChange}
-                        className="mt-1 text-sm"
-                        required
-                        aria-required="true"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="phone" className="text-primary font-medium text-sm">
-                        Phone
-                      </Label>
-                      <Input
-                        id="phone"
-                        name="phone"
-                        value={form.phone}
-                        onChange={handleInputChange}
-                        className="mt-1 text-sm"
-                        required
-                        aria-required="true"
-                      />
-                    </div>
-                    {requiresUpload && !resumeOrderId && (
-                      <div>
-                        <Label htmlFor="prescription" className="text-primary font-medium text-sm">
-                          Prescription File (PDF, JPEG, PNG)
-                        </Label>
-                        <div
-                          className="mt-2 border-2 border-dashed border-border rounded-lg p-4 text-center hover:border-primary transition-colors duration-300"
-                          role="region"
-                          aria-label="Drag and drop prescription file here"
-                        >
-                          <Input
-                            id="prescription"
-                            name="prescription"
-                            type="file"
-                            accept=".pdf,image/jpeg,image/png"
-                            onChange={handleFileChange}
-                            className="hidden"
-                            ref={fileInputRef}
-                          />
-                          <div className="flex flex-col items-center">
-                            <Upload className="h-8 w-8 text-secondary mb-2" aria-hidden="true" />
-                            {prescriptionFile ? (
-                              <p className="text-foreground text-sm">{prescriptionFile.name}</p>
-                            ) : (
-                              <p className="text-muted-foreground text-sm">
-                                Drag your prescription here or{' '}
-                                <button
-                                  type="button"
-                                  onClick={() => fileInputRef.current.click()}
-                                  className="text-primary hover:text-secondary font-medium"
-                                  aria-label="Browse for prescription file"
-                                >
-                                  browse
-                                </button>
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      </div>
+return (
+  <>
+    <Script
+      src="https://js.paystack.co/v2/inline.js"
+      strategy="afterInteractive"
+      onError={() => toast.error('Failed to load Paystack', { duration: 4000 })}
+    />
+    <div className="min-h-screen bg-gradient-to-b from-gray-50/95 to-gray-100/95 py-10 px-4 sm:px-6 lg:px-8 animate-in fade-in-20 duration-500">
+      <div className="container mx-auto max-w-5xl">
+        <h1 className="text-4xl sm:text-5xl font-extrabold text-primary mb-8 text-center tracking-tight animate-in slide-in-from-top-10 duration-700">
+          Checkout
+        </h1>
+        {error && (
+          <Card
+            className="bg-red-50/95 border border-red-100/50 rounded-2xl shadow-md mb-6 p-4 animate-in slide-in-from-top-10 duration-500"
+            role="alert"
+          >
+            <p className="text-red-600 text-base font-medium">{error}</p>
+          </Card>
+        )}
+        {pendingMessage && (
+          <Card
+            className="bg-green-50/95 border border-green-100/50 rounded-2xl shadow-md mb-6 p-4 animate-in slide-in-from-top-10 duration-500"
+            role="alert"
+          >
+            <p className="text-green-700 text-base font-medium">{pendingMessage}</p>
+          </Card>
+        )}
+        {cart.pharmacies.length === 0 && !error && !resumeOrderId ? (
+          <Card
+            className="shadow-2xl border border-gray-100/30 rounded-3xl bg-gradient-to-br from-white/90 to-gray-50/90 backdrop-blur-md text-center py-12 animate-in slide-in-from-top-10 duration-500"
+          >
+            <p className="text-gray-600 text-lg font-medium">
+              Your cart is empty.{' '}
+              <Link href="/" className="text-primary hover:text-primary/80 font-semibold underline transition-colors duration-200">
+                Start shopping
+              </Link>
+            </p>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Checkout Confirmation Dialog */}
+            <Dialog open={showCheckoutDialog} onOpenChange={setShowCheckoutDialog}>
+              <DialogContent
+                className="sm:max-w-md p-8 border border-gray-100/30 rounded-3xl bg-gradient-to-br from-white/90 to-gray-50/90 backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.2)] animate-in slide-in-from-top-10 fade-in-20 duration-300"
+              >
+                <div className="absolute top-0 left-0 w-12 h-12 bg-primary/20 rounded-br-full" />
+                <CheckCircle
+                  className="h-10 w-10 text-green-500 mx-auto mb-4 animate-[pulse_1s_ease-in-out_infinite]"
+                  aria-hidden="true"
+                />
+                <DialogHeader>
+                  <DialogTitle className="text-2xl font-extrabold text-primary text-center tracking-tight">
+                    Confirm Checkout
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="py-4">
+                  <p className="text-base text-gray-600 text-center font-medium">
+                    You’re about to place an order for ₦{cart.totalPrice.toLocaleString()}.
+                    {requiresUpload && prescriptionFile && (
+                      <span>
+                        {' '}A prescription file (<span className="font-semibold">{prescriptionFile.name}</span>) will be submitted.
+                      </span>
                     )}
+                  </p>
+                </div>
+                <DialogFooter className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowCheckoutDialog(false)}
+                    className="h-12 px-6 text-sm font-semibold rounded-full border-gray-200/50 text-gray-700 hover:bg-gray-100/50 hover:border-gray-300/50 hover:shadow-[0_0_10px_rgba(0,0,0,0.1)] transition-all duration-300"
+                    aria-label="Review order"
+                  >
+                    Review Order
+                  </Button>
+                  <Button
+                    onClick={confirmCheckout}
+                    className="h-12 px-6 text-sm font-semibold rounded-full bg-primary text-white hover:bg-primary/90 hover:shadow-[0_0_15px_rgba(59,130,246,0.5)] animate-pulse transition-all duration-300"
+                    disabled={loading}
+                    aria-label="Confirm payment"
+                  >
+                    {loading && <Loader2 className="h-5 w-5 animate-spin mr-2" />}
+                    Confirm Payment
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+            {/* Prescription Upload Dialog */}
+            <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
+              <DialogContent
+                className="sm:max-w-md p-8 border border-gray-100/30 rounded-3xl bg-gradient-to-br from-white/90 to-gray-50/90 backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.2)] animate-in slide-in-from-top-10 fade-in-20 duration-300"
+              >
+                <div className="absolute top-0 left-0 w-12 h-12 bg-primary/20 rounded-br-full" />
+                <CheckCircle
+                  className="h-10 w-10 text-green-500 mx-auto mb-4 animate-[pulse_1s_ease-in-out_infinite]"
+                  aria-hidden="true"
+                />
+                <DialogHeader>
+                  <DialogTitle className="text-2xl font-extrabold text-primary text-center tracking-tight">
+                    Prescription Uploaded
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="py-4">
+                  <p className="text-base text-gray-600 text-center font-medium">
+                    Prescription file <span className="font-semibold text-gray-900">{prescriptionFile?.name}</span> uploaded successfully.
+                  </p>
+                </div>
+                <DialogFooter className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setPrescriptionFile(null);
+                      setShowUploadDialog(false);
+                      fileInputRef.current.value = '';
+                    }}
+                    className="h-12 px-6 text-sm font-semibold rounded-full border-gray-200/50 text-gray-700 hover:bg-gray-100/50 hover:border-gray-300/50 hover:shadow-[0_0_10px_rgba(0,0,0,0.1)] transition-all duration-300"
+                    aria-label="Upload another prescription"
+                  >
+                    Upload Another
+                  </Button>
+                  <Button
+                    onClick={() => setShowUploadDialog(false)}
+                    className="h-12 px-6 text-sm font-semibold rounded-full bg-primary text-white hover:bg-primary/90 hover:shadow-[0_0_15px_rgba(59,130,246,0.5)] animate-pulse transition-all duration-300"
+                    aria-label="Continue checkout"
+                  >
+                    Continue Checkout
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+                        <Card
+              className="shadow-2xl border border-gray-100/30 rounded-3xl overflow-hidden bg-gradient-to-br from-white/90 to-gray-50/90 backdrop-blur-md transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_10px_30px_rgba(59,130,246,0.2)]"
+            >
+              <div className="absolute top-0 left-0 w-12 h-12 bg-primary/20 rounded-br-full" />
+              <CardHeader className="bg-primary/10 p-6 sm:p-8">
+                <CardTitle className="text-xl sm:text-2xl font-extrabold text-primary">
+                  Order Summary
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6 sm:p-8">
+                {cart.pharmacies.map((pharmacy) => (
+                  <div key={pharmacy.pharmacy.id} className="mb-6">
+                    <h3 className="text-lg font-semibold text-gray-900 truncate">
+                      {pharmacy.pharmacy.name}
+                    </h3>
+                    {pharmacy.items.map((item) => (
+                      <div key={item.id} className="mb-4 mt-2">
+                        <p className="text-gray-900 text-base font-medium truncate">{item.medication.displayName}</p>
+                        <p className="text-gray-600 text-sm font-medium">Quantity: {item.quantity}</p>
+                        <p className="text-gray-600 text-sm font-medium">Unit Price: ₦{item.price.toLocaleString()}</p>
+                        <p className="text-gray-600 text-sm font-medium">Total: ₦{calculateItemPrice(item).toLocaleString()}</p>
+                        {item.medication.prescriptionRequired && (
+                          <p className="text-gray-600 text-sm font-medium">Prescription Required</p>
+                        )}
+                      </div>
+                    ))}
+                    <p className="text-gray-900 text-base font-semibold">
+                      Subtotal: ₦{pharmacy.subtotal.toLocaleString()}
+                    </p>
+                  </div>
+                ))}
+                <div className="text-right">
+                  <p className="text-xl font-extrabold text-primary">
+                    Total: ₦{cart.totalPrice.toLocaleString()}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card
+              className="shadow-2xl border border-gray-100/30 rounded-3xl overflow-hidden bg-gradient-to-br from-white/90 to-gray-50/90 backdrop-blur-md transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_10px_30px_rgba(59,130,246,0.2)]"
+            >
+              <div className="absolute top-0 left-0 w-12 h-12 bg-primary/20 rounded-br-full" />
+              <CardHeader className="bg-primary/10 p-6 sm:p-8">
+                <CardTitle className="text-xl sm:text-2xl font-extrabold text-primary">
+                  User Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6 sm:p-8">
+                <form onSubmit={handleCheckout} className="space-y-6" role="form" aria-labelledby="checkout-form-title">
+                  <div>
+                    <Label htmlFor="name" className="text-sm font-semibold text-primary uppercase tracking-wider">
+                      Full Name
+                    </Label>
+                    <Input
+                      id="name"
+                      name="name"
+                      value={form.name}
+                      onChange={handleInputChange}
+                      className="mt-2 h-12 text-lg font-medium rounded-2xl border-gray-200/50 bg-white/95 text-gray-900 placeholder:text-gray-400 focus:ring-0 focus:border-primary/50 focus:shadow-[0_0_15px_rgba(59,130,246,0.3)] transition-all duration-300"
+                      required
+                      aria-required="true"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="email" className="text-sm font-semibold text-primary uppercase tracking-wider">
+                      Email
+                    </Label>
+                    <Input
+                      id="email"
+                      name="email"
+                      type="email"
+                      value={form.email}
+                      onChange={handleInputChange}
+                      className="mt-2 h-12 text-lg font-medium rounded-2xl border-gray-200/50 bg-white/95 text-gray-900 placeholder:text-gray-400 focus:ring-0 focus:border-primary/50 focus:shadow-[0_0_15px_rgba(59,130,246,0.3)] transition-all duration-300"
+                      required
+                      aria-required="true"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="phone" className="text-sm font-semibold text-primary uppercase tracking-wider">
+                      Phone
+                    </Label>
+                    <Input
+                      id="phone"
+                      name="phone"
+                      value={form.phone}
+                      onChange={handleInputChange}
+                      className="mt-2 h-12 text-lg font-medium rounded-2xl border-gray-200/50 bg-white/95 text-gray-900 placeholder:text-gray-400 focus:ring-0 focus:border-primary/50 focus:shadow-[0_0_15px_rgba(59,130,246,0.3)] transition-all duration-300"
+                      required
+                      aria-required="true"
+                    />
+                  </div>
+                  {requiresUpload && !resumeOrderId && (
                     <div>
-                      <Label className="text-primary font-medium text-sm">Delivery Method</Label>
-                      <RadioGroup
-                        value={form.deliveryMethod}
-                        onValueChange={handleDeliveryMethodChange}
-                        className="flex flex-col sm:flex-row gap-4 mt-2"
-                        aria-label="Delivery method"
+                      <Label htmlFor="prescription" className="text-sm font-semibold text-primary uppercase tracking-wider">
+                        Prescription File (PDF, JPEG, PNG)
+                      </Label>
+                      <div
+                        className="mt-3 p-6 border-2 border-dashed border-gray-200/50 rounded-2xl text-center bg-white/95 hover:border-primary/50 hover:shadow-[0_0_15px_rgba(59,130,246,0.2)] transition-all duration-300"
+                        role="region"
+                        aria-label="Drag and drop prescription file here"
                       >
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="pickup" id="pickup" />
-                          <Label htmlFor="pickup" className="text-foreground text-sm">Pickup</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="delivery" id="delivery" />
-                          <Label htmlFor="delivery" className="text-foreground text-sm">Delivery</Label>
-                        </div>
-                      </RadioGroup>
-                    </div>
-                    {form.deliveryMethod === 'delivery' && (
-                      <div>
-                        <Label htmlFor="address" className="text-primary font-medium text-sm">
-                          Delivery Address
-                        </Label>
                         <Input
-                          id="address"
-                          name="address"
-                          value={form.address}
-                          onChange={handleInputChange}
-                          className="mt-1 text-sm"
-                          required
-                          aria-required="true"
+                          id="prescription"
+                          name="prescription"
+                          type="file"
+                          accept=".pdf,image/jpeg,image/png"
+                          onChange={handleFileChange}
+                          className="hidden"
+                          ref={fileInputRef}
                         />
-                      </div>
-                    )}
-                    {form.deliveryMethod === 'pickup' && cart.pharmacies.length > 0 && (
-                      <div>
-                        <Label className="text-primary font-medium text-sm">Pickup Addresses</Label>
-                        <div className="mt-2 space-y-2">
-                          {getUniquePharmacyAddresses().length > 0 ? (
-                            getUniquePharmacyAddresses().map((pharmacy, index) => (
-                              <p key={index} className="text-muted-foreground text-sm truncate">
-                                {pharmacy.name}: {pharmacy.address}
-                              </p>
-                            ))
+                        <div className="flex flex-col items-center gap-3">
+                          <Upload
+                            className="h-8 w-8 text-primary/70 transition-transform duration-300 group-hover:scale-110"
+                            aria-hidden="true"
+                          />
+                          {prescriptionFile ? (
+                            <div className="flex items-center gap-3 animate-in fade-in-20 duration-300">
+                              <FileIcon className="h-5 w-5 text-primary" aria-hidden="true" />
+                              <span className="text-base font-medium text-gray-900 truncate max-w-[200px]">
+                                {prescriptionFile.name}
+                              </span>
+                            </div>
                           ) : (
-                            <p className="text-muted-foreground text-sm">Pharmacy address not available</p>
+                            <p className="text-base text-gray-600 font-medium">
+                              Drag your prescription here or{' '}
+                              <button
+                                type="button"
+                                onClick={() => fileInputRef.current.click()}
+                                className="text-primary hover:text-primary/80 font-semibold underline transition-colors duration-200"
+                                aria-label="Browse for prescription file"
+                              >
+                                browse
+                              </button>
+                            </p>
                           )}
+                          <p className="text-sm text-gray-500 mt-1">
+                            Supports .pdf, .jpg, .jpeg, .png
+                          </p>
                         </div>
                       </div>
-                    )}
-                    <Button
-                      type="submit"
-                      className="w-full bg-primary hover:bg-primary/90 text-primary-foreground text-sm py-2 px-6"
-                      disabled={loading}
-                      aria-label="Submit checkout"
-                    >
-                      {loading ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                          Processing...
-                        </>
-                      ) : requiresUpload ? (
-                        'Submit Prescription and Pay OTC'
-                      ) : (
-                        'Pay with Paystack'
-                      )}
-                    </Button>
-                  </form>
-                </CardContent>
-              </Card>
-              <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
-                <CardHeader className="bg-primary/5">
-                  <CardTitle className="text-xl font-semibold text-primary">
-                    Order Summary
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-4">
-                  {cart.pharmacies.map((pharmacy) => (
-                    <div key={pharmacy.pharmacy.id} className="mb-4">
-                      <h3 className="text-base font-semibold text-foreground truncate">
-                        {pharmacy.pharmacy.name}
-                      </h3>
-                      {pharmacy.items.map((item) => (
-                        <div key={item.id} className="mb-3">
-                          <p className="text-foreground text-sm font-medium truncate">{item.medication.displayName}</p>
-                          <p className="text-muted-foreground text-sm">Quantity: {item.quantity}</p>
-                          <p className="text-muted-foreground text-sm">Unit Price: ₦{item.price.toLocaleString()}</p>
-                          <p className="text-muted-foreground text-sm">Total: ₦{calculateItemPrice(item).toLocaleString()}</p>
-                          {item.medication.prescriptionRequired && (
-                            <p className="text-muted-foreground text-sm font-medium">Prescription Required</p>
-                          )}
-                        </div>
-                      ))}
-                      <p className="text-foreground text-sm font-semibold">
-                        Subtotal: ₦{pharmacy.subtotal.toLocaleString()}
-                      </p>
                     </div>
-                  ))}
-                  <div className="text-right">
-                    <p className="text-lg font-semibold text-primary">
-                      Total: ₦{cart.totalPrice.toLocaleString()}
-                    </p>
+                  )}
+                  <div>
+                    <Label className="text-sm font-semibold text-primary uppercase tracking-wider">
+                      Delivery Method
+                    </Label>
+                    <RadioGroup
+                      value={form.deliveryMethod}
+                      onValueChange={handleDeliveryMethodChange}
+                      className="flex flex-col sm:flex-row gap-6 mt-3"
+                      aria-label="Delivery method"
+                    >
+                      <div className="flex items-center space-x-3">
+                        <RadioGroupItem value="pickup" id="pickup" className="h-5 w-5" />
+                        <Label htmlFor="pickup" className="text-gray-900 text-base font-medium">Pickup</Label>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <RadioGroupItem value="delivery" id="delivery" className="h-5 w-5" />
+                        <Label htmlFor="delivery" className="text-gray-900 text-base font-medium">Delivery</Label>
+                      </div>
+                    </RadioGroup>
                   </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-        </div>
+                  {form.deliveryMethod === 'delivery' && (
+                    <div>
+                      <Label htmlFor="address" className="text-sm font-semibold text-primary uppercase tracking-wider">
+                        Delivery Address
+                      </Label>
+                      <Input
+                        id="address"
+                        name="address"
+                        value={form.address}
+                        onChange={handleInputChange}
+                        className="mt-2 h-12 text-lg font-medium rounded-2xl border-gray-200/50 bg-white/95 text-gray-900 placeholder:text-gray-400 focus:ring-0 focus:border-primary/50 focus:shadow-[0_0_15px_rgba(59,130,246,0.3)] transition-all duration-300"
+                        required
+                        aria-required="true"
+                      />
+                    </div>
+                  )}
+                  {form.deliveryMethod === 'pickup' && cart.pharmacies.length > 0 && (
+                    <div>
+                      <Label className="text-sm font-semibold text-primary uppercase tracking-wider">
+                        Pickup Addresses
+                      </Label>
+                      <div className="mt-3 space-y-3">
+                        {getUniquePharmacyAddresses().length > 0 ? (
+                          getUniquePharmacyAddresses().map((pharmacy, index) => (
+                            <p key={index} className="text-gray-600 text-base font-medium truncate">
+                              <span className="font-semibold text-gray-900">{pharmacy.name}</span>: {pharmacy.address}
+                            </p>
+                          ))
+                        ) : (
+                          <p className="text-gray-600 text-base font-medium">Pharmacy address not available</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  <Button
+                    type="submit"
+                    className="w-full h-14 px-8 text-lg font-semibold rounded-2xl bg-primary text-white hover:bg-primary/90 hover:shadow-[0_0_20px_rgba(59,130,246,0.6)] animate-pulse disabled:opacity-50 disabled:cursor-not-allowed disabled:animate-none transition-all duration-300"
+                    disabled={loading}
+                    aria-label="Submit checkout"
+                  >
+                    {loading ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        Processing...
+                      </span>
+                    ) : requiresUpload ? (
+                      'Submit Prescription and Pay OTC'
+                    ) : (
+                      'Pay with Paystack'
+                    )}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
-    </>
-  );
+    </div>
+  </>
+);
 }

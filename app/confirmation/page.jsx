@@ -110,140 +110,160 @@ export default function Confirmation() {
     router.push(`/track?trackingCode=${encodeURIComponent(confirmationData.trackingCode)}`);
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted py-8 px-4 sm:px-6 lg:px-8">
-      <div className="container mx-auto max-w-4xl">
-        <h1 className="text-3xl sm:text-4xl font-bold text-primary mb-6 text-center">
-          Order Confirmation
-        </h1>
-        {error && (
-          <div className="card bg-destructive/10 border-l-4 border-destructive p-3 mb-4" role="alert">
-            <p className="text-destructive text-sm font-medium">{error}</p>
-          </div>
-        )}
-        {loading && (
-          <div className="card text-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-            <p className="text-muted-foreground text-base mt-2">Loading order details...</p>
-          </div>
-        )}
-        {!loading && confirmationData.pharmacies.length === 0 && !error ? (
-          <div className="card text-center py-8">
-            <p className="text-muted-foreground text-base">No order details available.</p>
-          </div>
-        ) : (
-          <>
-            <Dialog open={showConfirmationDialog} onOpenChange={setShowConfirmationDialog}>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle className="text-lg font-semibold text-primary">
-                    {status === 'completed' ? 'Payment Successful' : 'Order Awaiting Verification'}
-                  </DialogTitle>
-                </DialogHeader>
-                <div className="py-4">
-                  <CheckCircle className="h-8 w-8 text-green-500 mx-auto mb-2" />
-                  <p className="text-sm text-foreground">
-                    {status === 'completed'
-                      ? `Your payment of ₦${confirmationData.pharmacies.reduce((sum, p) => sum + p.subtotal, 0).toLocaleString()} was successful.`
-                      : 'Your order has been placed and is awaiting prescription verification.'}
-                    <br />
-                    Tracking Code: <span className="font-medium">{confirmationData.trackingCode}</span>
+return (
+  <div className="min-h-screen bg-gradient-to-b from-gray-50/95 to-gray-100/95 py-10 px-4 sm:px-6 lg:px-8 animate-in fade-in-20 duration-500">
+    <div className="container mx-auto max-w-5xl">
+      <h1 className="text-4xl sm:text-5xl font-extrabold text-primary mb-8 text-center tracking-tight animate-in slide-in-from-top-10 duration-700">
+        Order Confirmation
+      </h1>
+      {error && (
+        <Card
+          className="bg-red-50/95 border border-red-100/50 rounded-2xl shadow-md mb-6 p-4 animate-in slide-in-from-top-10 duration-500"
+          role="alert"
+        >
+          <p className="text-red-600 text-base font-medium">{error}</p>
+        </Card>
+      )}
+      {loading && (
+        <Card
+          className="shadow-2xl border border-gray-100/30 rounded-3xl bg-gradient-to-br from-white/90 to-gray-50/90 backdrop-blur-md text-center py-12 animate-in slide-in-from-top-10 duration-500"
+        >
+          <Loader2 className="h-10 w-10 animate-spin mx-auto text-primary" aria-hidden="true" />
+          <p className="text-gray-600 text-lg font-medium mt-3">Loading order details...</p>
+        </Card>
+      )}
+      {!loading && confirmationData.pharmacies.length === 0 && !error ? (
+        <Card
+          className="shadow-2xl border border-gray-100/30 rounded-3xl bg-gradient-to-br from-white/90 to-gray-50/90 backdrop-blur-md text-center py-12 animate-in slide-in-from-top-10 duration-500"
+        >
+          <p className="text-gray-600 text-lg font-medium">No order details available.</p>
+        </Card>
+      ) : (
+        <>
+          <Dialog open={showConfirmationDialog} onOpenChange={setShowConfirmationDialog}>
+            <DialogContent
+              className="sm:max-w-md p-8 border border-gray-100/30 rounded-3xl bg-gradient-to-br from-white/90 to-gray-50/90 backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.2)] animate-in slide-in-from-top-10 fade-in-20 duration-300"
+            >
+              <div className="absolute top-0 left-0 w-12 h-12 bg-primary/20 rounded-br-full" />
+              <CheckCircle
+                className="h-10 w-10 text-green-500 mx-auto mb-4 animate-[pulse_1s_ease-in-out_infinite]"
+                aria-hidden="true"
+              />
+              <DialogHeader>
+                <DialogTitle className="text-2xl font-extrabold text-primary text-center tracking-tight">
+                  {status === 'completed' ? 'Payment Successful' : 'Order Awaiting Verification'}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="py-4">
+                <p className="text-base text-gray-600 text-center font-medium">
+                  {status === 'completed'
+                    ? `Your payment of ₦${confirmationData.pharmacies.reduce((sum, p) => sum + p.subtotal, 0).toLocaleString()} was successful.`
+                    : 'Your order has been placed and is awaiting prescription verification.'}
+                  <br />
+                  Tracking Code: <span className="font-semibold text-gray-900">{confirmationData.trackingCode}</span>
+                </p>
+              </div>
+              <DialogFooter className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button
+                  variant="outline"
+                  onClick={handleBackToHome}
+                  className="h-12 px-6 text-sm font-semibold rounded-full border-gray-200/50 text-gray-700 hover:bg-gray-100/50 hover:border-gray-300/50 hover:shadow-[0_0_10px_rgba(0,0,0,0.1)] transition-all duration-300"
+                  aria-label="Back to home"
+                >
+                  Back to Home
+                </Button>
+                <Button
+                  onClick={handleTrackOrder}
+                  className="h-12 px-6 text-sm font-semibold rounded-full bg-primary text-white hover:bg-primary/90 hover:shadow-[0_0_15px_rgba(59,130,246,0.5)] animate-pulse transition-all duration-300"
+                  aria-label="Track order"
+                >
+                  Track Order
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+          <div className="space-y-6">
+            <Card
+              className="shadow-2xl border border-gray-100/30 rounded-3xl overflow-hidden bg-gradient-to-br from-white/90 to-gray-50/90 backdrop-blur-md transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_10px_30px_rgba(59,130,246,0.2)]"
+            >
+              <div className="absolute top-0 left-0 w-12 h-12 bg-primary/20 rounded-br-full" />
+              <CardHeader className="bg-primary/10 p-6 sm:p-8">
+                <CardTitle className="text-xl sm:text-2xl font-extrabold text-primary">
+                  Order Status: {status === 'completed' ? 'Successful' : 'Awaiting Verification'}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6 sm:p-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-gray-600 text-base font-medium">
+                  <p>
+                    <strong className="text-gray-900">Tracking Code:</strong> {confirmationData.trackingCode || 'N/A'}
+                  </p>
+                  <p>
+                    <strong className="text-gray-900">Checkout Session ID:</strong> {confirmationData.checkoutSessionId || 'N/A'}
                   </p>
                 </div>
-                <DialogFooter className="flex flex-col sm:flex-row gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={handleBackToHome}
-                    className="w-full sm:w-auto"
-                    aria-label="Back to home"
-                  >
-                    Back to Home
-                  </Button>
-                  <Button
-                    onClick={handleTrackOrder}
-                    className="w-full sm:w-auto"
-                    aria-label="Track order"
-                  >
-                    Track Order
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-            <div className="space-y-4">
-              <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
-                <CardHeader className="bg-primary/5">
-                  <CardTitle className="text-xl font-semibold text-primary">
-                    Order Status: {status === 'completed' ? 'Successful' : 'Awaiting Verification'}
+              </CardContent>
+            </Card>
+            {confirmationData.pharmacies.map((pharmacy, index) => (
+              <Card
+                key={pharmacy.pharmacy.id}
+                className="shadow-2xl border border-gray-100/30 rounded-3xl overflow-hidden bg-gradient-to-br from-white/90 to-gray-50/90 backdrop-blur-md transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_10px_30px_rgba(59,130,246,0.2)] animate-in fade-in-20"
+                style={{ animationDelay: `${0.2 * index}s` }}
+              >
+                <div className="absolute top-0 left-0 w-12 h-12 bg-primary/20 rounded-br-full" />
+                <CardHeader className="bg-primary/10 p-6 sm:p-8">
+                  <CardTitle className="text-xl sm:text-2xl font-extrabold text-primary truncate">
+                    {pharmacy.pharmacy.name}
                   </CardTitle>
+                  <p className="text-gray-600 text-base font-medium truncate">{pharmacy.pharmacy.address || 'Address not available'}</p>
                 </CardHeader>
-                <CardContent className="p-4">
-                  <p className="text-foreground text-sm">
-                    <strong>Tracking Code:</strong> {confirmationData.trackingCode || 'N/A'}
-                  </p>
-                  <p className="text-foreground text-sm">
-                    <strong>Checkout Session ID:</strong> {confirmationData.checkoutSessionId || 'N/A'}
-                  </p>
-                </CardContent>
-              </Card>
-              {confirmationData.pharmacies.map((pharmacy, index) => (
-                <Card
-                  key={pharmacy.pharmacy.id}
-                  className="shadow-lg hover:shadow-xl transition-shadow duration-300"
-                  style={{ animation: 'fadeIn 0.5s ease-in', animationDelay: `${0.2 * index}s` }}
-                >
-                  <CardHeader className="bg-primary/5">
-                    <CardTitle className="text-xl font-semibold text-primary truncate">
-                      {pharmacy.pharmacy.name}
-                    </CardTitle>
-                    <p className="text-muted-foreground text-sm truncate">{pharmacy.pharmacy.address || 'Address not available'}</p>
-                  </CardHeader>
-                  <CardContent className="p-4">
-                    {pharmacy.orders.map((order) => (
-                      <div key={order.id} className="mb-4 border-b border-border pb-3">
-                        <p className="text-foreground text-sm">
-                          <strong>Order ID:</strong> {order.id}
+                <CardContent className="p-6 sm:p-8 space-y-6">
+                  {pharmacy.orders.map((order) => (
+                    <div key={order.id} className="mb-6 border-b border-gray-200/50 pb-4 last:border-b-0">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-gray-600 text-sm font-medium">
+                        <p>
+                          <strong className="text-gray-900">Order ID:</strong> {order.id}
                         </p>
-                        <p className="text-foreground text-sm">
-                          <strong>Status:</strong>{' '}
+                        <p>
+                          <strong className="text-gray-900">Status:</strong>{' '}
                           {order.status === 'confirmed' ? 'Confirmed' : 'Awaiting Prescription Verification'}
                         </p>
-                        <p className="text-foreground text-sm">
-                          <strong>Delivery Method:</strong>{' '}
+                        <p>
+                          <strong className="text-gray-900">Delivery Method:</strong>{' '}
                           {order.deliveryMethod === 'pickup' ? 'Pickup' : 'Delivery'}
                         </p>
                         {order.deliveryMethod === 'pickup' ? (
                           <div>
-                            <strong className="text-foreground text-sm">Pickup Address:</strong>
+                            <strong className="text-gray-900">Pickup Address:</strong>
                             {getUniquePharmacyAddresses(pharmacy.orders).map((pharmacy, index) => (
-                              <p key={index} className="text-muted-foreground text-sm truncate">{pharmacy.address}</p>
+                              <p key={index} className="text-gray-600 truncate">{pharmacy.address}</p>
                             ))}
                           </div>
                         ) : (
-                          <p className="text-foreground text-sm">
-                            <strong>Delivery Address:</strong> {order.address || 'N/A'}
+                          <p>
+                            <strong className="text-gray-900">Delivery Address:</strong> {order.address || 'N/A'}
                           </p>
                         )}
                         {order.prescription && (
-                          <p className="text-foreground text-sm">
-                            <strong>Prescription:</strong>{' '}
+                          <p>
+                            <strong className="text-gray-900">Prescription:</strong>{' '}
                             {order.prescription.status.charAt(0).toUpperCase() + order.prescription.status.slice(1)}
                             {' '}
-                            (<a
+                            <a
                               href={order.prescription.fileUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-primary hover:text-secondary"
+                              className="text-primary hover:text-primary/80 underline inline-flex items-center gap-1"
                               aria-label="View prescription file"
                             >
-                              <ExternalLink className="h-4 w-4 inline-block mr-1" />
-                              View File
-                            </a>)
+                              <ExternalLink className="h-4 w-4" />
+                              View
+                            </a>
                             {order.prescription.status === 'verified' && order.status === 'pending_prescription' && (
                               <span>
                                 {' '}
                                 <Link
                                   href={`/checkout/${order.id}`}
-                                  className="text-primary hover:text-secondary"
+                                  className="text-primary hover:text-primary/80 underline inline-flex items-center gap-1"
                                   aria-label="Complete payment for order"
                                 >
                                   Complete Payment
@@ -252,39 +272,42 @@ export default function Confirmation() {
                             )}
                           </p>
                         )}
-                        <h3 className="text-base font-semibold text-primary mt-3">Order Items</h3>
-                        {order.items.map((item) => (
-                          <div key={item.id} className="mb-3">
-                            <p className="text-foreground text-sm font-medium truncate">
-                              {item.medication.name}
-                              {item.medication.prescriptionRequired && ' (Prescription Required)'}
-                            </p>
-                            <p className="text-muted-foreground text-sm">Quantity: {item.quantity}</p>
-                            <p className="text-muted-foreground text-sm">Unit Price: ₦{item.price.toLocaleString()}</p>
-                            <p className="text-muted-foreground text-sm">Total: ₦{calculateItemPrice(item).toLocaleString()}</p>
-                          </div>
-                        ))}
-                        <p className="text-foreground text-sm font-semibold">Order Total: ₦{order.totalPrice.toLocaleString()}</p>
                       </div>
-                    ))}
-                    <p className="text-lg font-semibold text-primary">
-                      Subtotal for {pharmacy.pharmacy.name}: ₦{pharmacy.subtotal.toLocaleString()}
-                    </p>
-                  </CardContent>
-                </Card>
-              ))}
-              <Button
-                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground text-sm py-2 px-6 mt-2"
-                onClick={handleBackToHome}
-                aria-label="Back to home"
-              >
-                <Home className="h-4 w-4 mr-2" />
-                Back to Home
-              </Button>
-            </div>
-          </>
-        )}
-      </div>
+                      <h3 className="text-lg font-semibold text-primary mt-4">Order Items</h3>
+                      {order.items.map((item) => (
+                        <div key={item.id} className="mb-3 mt-2">
+                          <p className="text-gray-900 text-base font-medium truncate">
+                            {item.medication.name}
+                            {item.medication.prescriptionRequired && ' (Prescription Required)'}
+                          </p>
+                          <p className="text-gray-600 text-sm font-medium">Quantity: {item.quantity}</p>
+                          <p className="text-gray-600 text-sm font-medium">Unit Price: ₦{item.price.toLocaleString()}</p>
+                          <p className="text-gray-600 text-sm font-medium">Total: ₦{calculateItemPrice(item).toLocaleString()}</p>
+                        </div>
+                      ))}
+                      <p className="text-gray-900 text-base font-semibold mt-2">
+                        Order Total: ₦{order.totalPrice.toLocaleString()}
+                      </p>
+                    </div>
+                  ))}
+                  <p className="text-lg font-extrabold text-primary">
+                    Subtotal for {pharmacy.pharmacy.name}: ₦{pharmacy.subtotal.toLocaleString()}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+            <Button
+              className="w-full h-14 px-8 text-lg font-semibold rounded-2xl bg-primary text-white hover:bg-primary/90 hover:shadow-[0_0_20px_rgba(59,130,246,0.6)] animate-pulse transition-all duration-300"
+              onClick={handleBackToHome}
+              aria-label="Back to home"
+            >
+              <Home className="h-5 w-5 mr-2" />
+              Back to Home
+            </Button>
+          </div>
+        </>
+      )}
     </div>
-  );
+  </div>
+);
 }
