@@ -1,10 +1,14 @@
 // /app/confirmation/page.tsx
 
 'use client';
-export const dynamic = 'force-dynamic';
-
-import { Suspense } from 'react';
-import ConfirmationInner from './ConfirmationInner';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Loader2, Home, ExternalLink, CheckCircle } from 'lucide-react';
+import { toast } from 'sonner';
+import Link from 'next/link';
 
 export default function Confirmation() {
   return (
