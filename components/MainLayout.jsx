@@ -56,7 +56,14 @@ return (
             className="text-lg font-semibold text-primary hover:text-primary/80 hover:bg-primary/10 px-4 py-2 rounded-full transition-all duration-200"
             aria-label="Track Order"
           >
-            Track Order
+            Track Your Order
+          </Link>
+           <Link
+            href="/status-check"
+            className="text-lg font-semibold text-primary hover:text-primary/80 hover:bg-primary/10 px-4 py-2 rounded-full transition-all duration-200"
+            aria-label="Track Order"
+          >
+            Check Prescription Status
           </Link>
           <Link
             href="/cart"

@@ -377,7 +377,7 @@ export default function PrescriptionDetails() {
                 <div>
                   <strong className="text-primary">Prescription File:</strong>
                   {prescription.fileUrl.match(/\.(jpg|jpeg|png|gif)$/i) ? (
-                    <img src={prescription.fileUrl} alt="Prescription" className="h-48 mt-2 rounded shadow-sm" />
+                    <img src={`http://localhost:5000${prescription.fileUrl}`} alt="Prescription" className="h-48 mt-2 rounded shadow-sm" />
                   ) : (
                     <a href={prescription.fileUrl} target="_blank" rel="noopener noreferrer" className="text-primary underline hover:text-primary/80">
                       View Prescription File

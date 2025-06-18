@@ -33,29 +33,35 @@ export default function AdminSideNav() {
   ];
 
   return (
-    <div className="flex flex-col h-full p-4 bg-card">
-      <h2 className="text-2xl font-bold text-primary mb-6">Admin Panel</h2>
-      <nav className="flex-1 space-y-1">
+    <div className="flex flex-col h-full p-6 bg-gradient-to-b from-white/95 to-gray-50/95 backdrop-blur-lg border-r border-gray-100/20 shadow-[0_4px_20px_rgba(0,0,0,0.05)]">
+      <h2 className="text-2xl sm:text-3xl font-extrabold text-primary mb-8 tracking-tight">
+        <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-600 hover:animate-pulse">
+          Admin Panel
+        </span>
+      </h2>
+      <nav className="flex-1 space-y-2">
         {navItems.map((item, index) => (
           <Link key={item.name} href={item.href}>
             <Button
               variant="ghost"
-              className="w-full justify-start text-foreground hover:bg-primary/10 transition-colors duration-200 fade-in"
+              className="w-full justify-start text-gray-700 text-base font-semibold hover:bg-primary/10 hover:text-primary hover:shadow-[0_0_10px_rgba(59,130,246,0.2)] rounded-full transition-all duration-300 animate-in fade-in-20"
               style={{ animationDelay: `${0.1 * index}s` }}
+              aria-label={`Navigate to ${item.name}`}
             >
-              <item.icon className="h-5 w-5 mr-3 text-primary" />
+              <item.icon className="h-6 w-6 mr-3 text-primary/90" aria-hidden="true" />
               {item.name}
             </Button>
           </Link>
         ))}
       </nav>
-      <Separator className="my-4 bg-border" />
+      <Separator className="my-6 bg-gray-100/30" />
       <Button
         variant="destructive"
-        className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+        className="h-12 px-6 text-sm font-semibold rounded-full bg-red-600 hover:bg-red-700 text-white hover:shadow-[0_0_15px_rgba(220,38,38,0.5)] transition-all duration-300"
         onClick={handleLogout}
+        aria-label="Logout"
       >
-        <LogOut className="h-5 w-5 mr-2" />
+        <LogOut className="h-5 w-5 mr-2" aria-hidden="true" />
         Logout
       </Button>
     </div>

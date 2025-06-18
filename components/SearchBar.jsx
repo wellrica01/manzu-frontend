@@ -9,8 +9,6 @@ import { toast } from 'sonner';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import Select from 'react-select';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
 import { useCart } from '@/hooks/useCart';
 
 // Custom react-select styles to match Shadcn
