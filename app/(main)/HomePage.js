@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense, useState, useEffect } from 'react';
-import SearchBar from '@/components/SearchBar';
+import SearchBar from '@/components/search/SearchBar';
 import PrescriptionUploadForm from '@/components/PrescriptionUploadForm';
 import ConsentModal from '@/components/ConsentModal';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

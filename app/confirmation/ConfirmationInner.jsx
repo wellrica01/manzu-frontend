@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Home, CheckCircle, AlertCircle } from 'lucide-react';
+import { Loader2, Home, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
 
@@ -19,7 +19,7 @@ export default function ConfirmationInner() {
 
   const validateQueryParams = () => {
     if (!guestId) return 'Missing guest ID';
-    if (!reference || !session) return 'Missing reference or session ID';
+    if (!session) return 'Missing session ID';
     return null;
   };
 
@@ -34,7 +34,9 @@ export default function ConfirmationInner() {
 
     try {
       setError(null);
-      const query = new URLSearchParams({ reference, session });
+      const query = new URLSearchParams();
+      query.append('session', session);
+      if (reference) query.append('reference', reference);
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/confirmation?${query.toString()}`, {
         headers: { 'x-guest-id': guestId },
       });
@@ -65,11 +67,11 @@ export default function ConfirmationInner() {
   };
 
   useEffect(() => {
-    if (guestId && reference && session) {
+    if (guestId && session) {
       fetchConfirmation();
     } else {
-      setError('Missing guest ID, reference, or session ID');
-      toast.error('Missing guest ID, reference, or session ID', { duration: 4000 });
+      setError('Missing guest ID or session ID');
+      toast.error('Missing guest ID or session ID', { duration: 4000 });
       setLoading(false);
     }
   }, [reference, session]);

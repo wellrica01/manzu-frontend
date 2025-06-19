@@ -1,14 +1,15 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'next/navigation';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { ShoppingCart, Loader2, CheckCircle, Info, X } from 'lucide-react';
-import { v4 as uuidv4 } from 'uuid';
-import { cn } from '@/lib/utils';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+import { Loader2, CheckCircle, Info, X } from 'lucide-react';
+import { cn, getGuestId } from '@/lib/utils';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import MedicationCard from './MedicationCard';
 
 export default function GuestOrder() {
   const [medications, setMedications] = useState([]);
@@ -21,13 +22,9 @@ export default function GuestOrder() {
   const [lastAddedItem, setLastAddedItem] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
+  const [showMedImage, setShowMedImage] = useState(null);
   const { patientIdentifier } = useParams();
-  const router = useRouter();
-  const guestId = typeof window !== 'undefined' ? localStorage.getItem('guestId') || uuidv4() : uuidv4();
-
-  if (typeof window !== 'undefined' && !localStorage.getItem('guestId')) {
-    localStorage.setItem('guestId', guestId);
-  }
+  const guestId = getGuestId();
 
   // Analytics tracking
   useEffect(() => {
@@ -169,7 +166,6 @@ export default function GuestOrder() {
         return (
           <Card className="shadow-xl border border-gray-100/30 rounded-3xl bg-gradient-to-br from-white/95 to-gray-50/95 backdrop-blur-md p-6 mb-6 text-center">
             <div className="absolute top-0 left-0 w-12 h-12 bg-primary/20 rounded-br-full" />
-            <h1 className="text-3xl font-extrabold text-primary mb-2">Your Prescription Medications</h1>
             <p className="text-base text-gray-600">
               Your prescription has been verified by our team. Select your preferred pharmacies below to order your medications.{' '}
               <Link
@@ -207,46 +203,96 @@ export default function GuestOrder() {
     }
   };
 
+  // Stepper configuration
+  const steps = [
+    { label: 'Uploaded', description: 'You submitted the prescription' },
+    { label: 'Verifying', description: 'Pharmacist is reviewing' },
+    { label: 'Ready to Order', description: 'Place your order' },
+  ];
+
   if (loading) {
     return (
-      <div className="text-center p-6">
-        <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" aria-hidden="true" />
-        <p className="text-gray-600 mt-2 text-lg font-medium">Loading prescription...</p>
+      <div className="flex flex-col items-center justify-center min-h-screen p-4">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden="true" />
+        <p className="text-gray-600 mt-2 text-base font-medium">Loading your prescription...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <Card className="shadow-md border border-red-100/50 rounded-2xl bg-red-50/90 backdrop-blur-sm p-4 mx-auto max-w-5xl">
-        <p className="text-red-600 text-base font-medium text-center" aria-live="polite">
-          Error: {error}
-        </p>
-        <p className="text-gray-600 text-base text-center mt-2">
-          Please ensure your prescription link is correct or{' '}
-          <Link
-            href="/prescription/upload"
-            className="text-primary hover:text-blue-600 underline font-semibold"
-            aria-label="Upload new prescription"
-          >
-            upload a new prescription
-          </Link>.
-          Contact{' '}
-          <Link
-            href="/support"
-            className="text-primary hover:text-blue-600 underline font-semibold"
-            aria-label="Contact support"
-          >
-            support
-          </Link>{' '}
-          for assistance.
-        </p>
-      </Card>
+      <div className="flex flex-col items-center justify-center min-h-screen p-4">
+        <div className="bg-red-50/90 rounded-xl p-6 max-w-md text-center">
+          <p className="text-red-600 text-base font-medium" aria-live="polite">
+            Error: {error}
+          </p>
+          <p className="text-gray-600 text-sm mt-2">
+            Please check your prescription link or{' '}
+            <Link
+              href="/prescription/upload"
+              className="text-primary hover:text-blue-600 underline font-semibold"
+              aria-label="Upload new prescription"
+            >
+              upload a new prescription
+            </Link>.
+            Contact{' '}
+            <Link
+              href="/support"
+              className="text-primary hover:text-blue-600 underline font-semibold"
+              aria-label="Contact support"
+            >
+              support
+            </Link>{' '}
+            for help.
+          </p>
+        </div>
+      </div>
     );
   }
 
   return (
     <div className="space-y-6 p-6 max-w-5xl mx-auto bg-gradient-to-b from-gray-50/95 to-gray-100/95 animate-in fade-in-20 duration-500">
+      {/* Progress Stepper */}
+      <div className="flex items-center justify-between gap-2 sm:gap-4 px-2 sm:px-4">
+        {steps.map((step, index) => {
+          const statusMap = { uploaded: 0, pending: 1, verified: 2 };
+          const currentStep = statusMap[prescriptionMetadata.status] || 0;
+          const isCompleted = index < currentStep;
+          const isCurrent = index === currentStep;
+
+          return (
+            <React.Fragment key={step.label || index}>
+              {/* Step */}
+              <div className="flex flex-col items-center text-center min-w-[60px]">
+                <div
+                  className={cn(
+                    'h-6 w-6 sm:h-8 sm:w-8 rounded-full flex items-center justify-center font-semibold mb-1 sm:mb-2 text-sm sm:text-base',
+                    isCompleted
+                      ? 'bg-primary text-white'
+                      : isCurrent
+                      ? 'border-2 border-primary bg-primary/10 text-primary'
+                      : 'bg-gray-200 text-gray-400'
+                  )}
+                >
+                  {isCompleted ? '✓' : index + 1}
+                </div>
+                <div className="text-xs sm:text-sm font-medium text-gray-700">{step.label}</div>
+                <div className="text-[10px] sm:text-xs text-gray-500 hidden sm:block">{step.description}</div>
+              </div>
+
+              {/* Connector (except after last step) */}
+              {index < steps.length - 1 && (
+                <div
+                  className={cn(
+                    'flex-1 h-1 mx-1 sm:mx-2 rounded-full bg-primary'
+                  )}
+                />
+              )}
+            </React.Fragment>
+          );
+        })}
+      </div>
+
       {/* Introductory Section */}
       {getIntroMessage()}
 
@@ -261,7 +307,7 @@ export default function GuestOrder() {
               </p>
               <p className="text-sm text-gray-500 capitalize">Status: {prescriptionMetadata.status.replace('_', ' ')}</p>
             </div>
-            {prescriptionMetadata.imageUrl && (
+            {prescriptionMetadata.fileUrl && (
               <Button
                 variant="outline"
                 onClick={() => setShowPreview(true)}
@@ -278,11 +324,34 @@ export default function GuestOrder() {
       {/* Prescription Image Preview Dialog */}
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
         <DialogContent className="sm:max-w-lg p-6 rounded-3xl bg-white/95 backdrop-blur-md border border-gray-100/30">
+          <DialogTitle>
+            <VisuallyHidden>Prescription Image Preview</VisuallyHidden>
+          </DialogTitle>
           <img
             src={prescriptionMetadata?.imageUrl}
             alt="Prescription"
             className="w-full h-auto rounded-lg"
           />
+        </DialogContent>
+      </Dialog>
+
+      {/* Medication Image Preview Dialog */}
+      <Dialog open={!!showMedImage} onOpenChange={() => setShowMedImage(null)}>
+        <DialogContent className="sm:max-w-lg p-6 rounded-3xl bg-white/95 backdrop-blur-md border border-gray-100/30">
+          <DialogTitle>
+            <VisuallyHidden>Medication Image Preview</VisuallyHidden>
+          </DialogTitle>
+          <img
+            src={medications.find(med => med.id === showMedImage)?.imageUrl || '/fallback-pill.png'}
+            alt={medications.find(med => med.id === showMedImage)?.displayName || 'Medication'}
+            className="w-full h-auto rounded-lg"
+          />
+          {medications.find(med => med.id === showMedImage)?.pillDetails && (
+            <p className="text-gray-600 mt-2">
+              Color: {medications.find(med => med.id === showMedImage).pillDetails.color}, 
+              Shape: {medications.find(med => med.id === showMedImage).pillDetails.shape}
+            </p>
+          )}
         </DialogContent>
       </Dialog>
 
@@ -351,152 +420,13 @@ export default function GuestOrder() {
           </Card>
         ) : (
           medications.map((med) => (
-            <Card
+            <MedicationCard
               key={med.id}
-              className="relative shadow-2xl border border-gray-100/30 rounded-3xl overflow-hidden bg-gradient-to-br from-white/90 to-gray-50/90 backdrop-blur-md transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_10px_30px_rgba(59,130,246,0.2)] animate-in slide-in-from-top-10"
-            >
-              <div className="absolute top-0 left-0 w-12 h-12 bg-primary/20 rounded-br-full" />
-              <CardHeader className="p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-gradient-to-r from-primary/5 to-transparent">
-                <div className="flex-1">
-                  <CardTitle className="text-3xl font-extrabold text-primary tracking-tight leading-tight">
-                    {med.displayName}
-                  </CardTitle>
-                  <div className="flex items-center gap-2 mt-2">
-                    {med.prescriptionRequired && (
-                      <span className="inline-flex items-center px-3 py-1 text-sm font-semibold text-blue-600 bg-blue-100 rounded-full animate-pulse">
-                        Prescription Needed
-                      </span>
-                    )}
-                    <span className="text-sm text-gray-500">
-                      {med.genericName || 'Generic N/A'}
-                    </span>
-                    <div className="relative group flex items-center">
-                      <span className="text-base font-medium text-gray-600">
-                        Quantity: {med.quantity}
-                      </span>
-                      <Info className="h-4 w-4 text-primary/50 ml-1" aria-hidden="true" />
-                      <div className="absolute z-10 hidden group-hover:block bg-gray-800 text-white text-sm rounded-lg p-2 mt-1 shadow-lg max-w-xs">
-                        This is the prescribed quantity. You can adjust it in the cart.
-                      </div>
-                    </div>
-                  </div>
-                  <div className="mt-2">
-                    <p className="text-gray-600 text-base">
-                      <strong className="font-semibold text-gray-800">NAFDAC Code:</strong> {med.nafdacCode || 'N/A'}
-                    </p>
-                  </div>
-                </div>
-                {med.imageUrl && (
-                  <div className="relative w-24 h-24 sm:w-32 sm:h-32 flex-shrink-0">
-                    <img
-                      src={med.imageUrl}
-                      alt={med.displayName}
-                      className="w-full h-full object-cover rounded-2xl border border-gray-200/50 shadow-md transition-transform duration-300 hover:scale-110"
-                    />
-                  </div>
-                )}
-              </CardHeader>
-              <CardContent className="p-6">
-                <h3 className="text-xl font-bold text-primary mb-4">Compare Pharmacies</h3>
-                {med.availability && med.availability.length > 0 ? (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse" aria-describedby={`pharmacy-comparison-${med.id}`}>
-                      <caption id={`pharmacy-comparison-${med.id}`} className="sr-only">
-                        Comparison of pharmacies for {med.displayName}
-                      </caption>
-                      <thead>
-                        <tr className="bg-primary/5 text-sm font-semibold text-gray-700">
-                          <th className="p-4 rounded-tl-xl">Pharmacy</th>
-                          <th className="p-4">Price</th>
-                          <th className="p-4">Distance</th>
-                          <th className="p-4 rounded-tr-xl">Action</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {med.availability.map((avail, index) => {
-                          const validDistances = med.availability
-                            .filter((a) => typeof a.distance_km === 'number' && !isNaN(a.distance_km))
-                            .map((a) => a.distance_km);
-                          const isCheapest =
-                            avail.price === Math.min(...med.availability.map((a) => a.price));
-                          const isClosest =
-                            validDistances.length > 0 &&
-                            typeof avail.distance_km === 'number' &&
-                            !isNaN(avail.distance_km) &&
-                            avail.distance_km === Math.min(...validDistances);
-                          return (
-                            <tr
-                              key={index}
-                              className="border-t border-gray-100/50 hover:bg-primary/10 transition-colors duration-200"
-                            >
-                              <td className="p-4">
-                                <p className="text-base font-semibold text-gray-900 truncate max-w-[200px]">
-                                  {avail.pharmacyName}
-                                </p>
-                                {avail.address && (
-                                  <p className="text-sm text-gray-500 truncate max-w-[200px] mt-1">
-                                    {avail.address}
-                                  </p>
-                                )}
-                              </td>
-                              <td className="p-4">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-base font-bold text-gray-800">
-                                    ₦{avail.price.toLocaleString()}
-                                  </span>
-                                  {isCheapest && (
-                                    <span className="inline-flex items-center px-2 py-1 text-xs font-bold text-green-600 bg-green-100 rounded-full animate-bounce">
-                                      Cheapest
-                                    </span>
-                                  )}
-                                </div>
-                              </td>
-                              <td className="p-4">
-                                {typeof avail.distance_km === 'number' && !isNaN(avail.distance_km) ? (
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-base text-gray-600">
-                                      {avail.distance_km.toFixed(1)} km
-                                    </span>
-                                    {isClosest && (
-                                      <span className="inline-flex items-center px-2 py-1 text-xs font-bold text-blue-600 bg-blue-100 rounded-full animate-bounce">
-                                        Closest
-                                      </span>
-                                    )}
-                                  </div>
-                                ) : (
-                                  <span className="text-gray-500 text-base">N/A</span>
-                                )}
-                              </td>
-                              <td className="p-4">
-                                <Button
-                                  id={`add-to-cart-${med.id}-${avail.pharmacyId}`}
-                                  onClick={() => handleAddToCart(med.id, avail.pharmacyId, med.displayName)}
-                                  disabled={isInCart(med.id, avail.pharmacyId)}
-                                  className={cn(
-                                    'h-10 px-5 text-sm font-semibold rounded-full transition-all duration-300',
-                                    isInCart(med.id, avail.pharmacyId)
-                                      ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                                      : 'bg-primary text-white hover:bg-primary/90 hover:shadow-[0_0_15px_rgba(59,130,246,0.5)] animate-pulse'
-                                  )}
-                                  aria-label={isInCart(med.id, avail.pharmacyId) ? 'Added to cart' : 'Add to cart'}
-                                >
-                                  <ShoppingCart className="h-5 w-5 mr-2" aria-hidden="true" />
-                                  {isInCart(med.id, avail.pharmacyId) ? 'Added' : 'Add to Cart'}
-                                </Button>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <p className="text-gray-500 text-base italic p-4">
-                    Not available at any verified pharmacy
-                  </p>
-                )}
-              </CardContent>
-            </Card>
+              med={med}
+              handleAddToCart={handleAddToCart}
+              isInCart={isInCart}
+              setShowMedImage={setShowMedImage}
+            />
           ))
         )
       ) : null}

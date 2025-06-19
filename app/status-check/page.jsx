@@ -33,92 +33,91 @@ export default function StatusCheck() {
 
   const handleInputChange = (e) => setForm({ ...form, identifier: e.target.value });
 
-  const fetchStatus = async (patientId, orderId) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/prescription/guest-order/${patientId}`, {
+ const fetchStatus = async (patientId, orderId) => {
+  setLoading(true);
+  setError(null);
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/prescription/guest-order/${patientId}`, {
+      headers: { 'x-guest-id': patientId },
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to fetch status');
+    }
+    const data = await response.json();
+    console.log('Prescription API response:', data); // Debug log
+    const { prescriptionMetadata, orderId: fetchedOrderId, orderStatus, medications } = data;
+
+    if (['pending', 'pending_admin', 'pending_action'].includes(prescriptionMetadata.status)) {
+      setPrescription({ ...prescriptionMetadata, order: fetchedOrderId ? { id: fetchedOrderId } : null });
+      toast.info('Your prescription is under review. You’ll be notified when it’s ready.', { duration: 4000 });
+      return;
+    }
+
+    if (fetchedOrderId) {
+      const orderResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/checkout/resume/${fetchedOrderId}`, {
         headers: { 'x-guest-id': patientId },
       });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to fetch status');
+      console.log('Order API response:', { status: orderResponse.status, ok: orderResponse.ok }); // Debug log
+      if (!orderResponse.ok) {
+        const errorData = await orderResponse.json();
+        console.log('Order API error:', errorData); // Debug log
+        throw new Error(errorData.message || 'Failed to fetch order details');
       }
-      const data = await response.json();
-      const { prescriptionMetadata, orderId: fetchedOrderId, orderStatus, medications } = data;
+      const orderData = await orderResponse.json();
+      const { checkoutSessionId, trackingCode } = orderData;
 
-      if (prescriptionMetadata.status === 'pending' || prescriptionMetadata.status === 'pending_admin' || prescriptionMetadata.status === 'pending_action') {
-        setPrescription({ ...prescriptionMetadata, order: fetchedOrderId ? { id: fetchedOrderId } : null });
-        toast.info('Your prescription is under review. You’ll be notified when it’s ready.', { duration: 4000 });
-        return;
+      switch (orderStatus) {
+        case 'pending':
+          router.push(`/checkout/resume/${fetchedOrderId}`);
+          break;
+        case 'pending_prescription':
+          setPrescription({ ...prescriptionMetadata, order: { id: fetchedOrderId } });
+          toast.info('Your prescription is under review for this order. You’ll be notified when it’s ready.', { duration: 4000 });
+          break;
+        case 'confirmed':
+        case 'processing':
+        case 'shipped':
+        case 'delivered':
+        case 'ready_for_pickup':
+          setPrescription({
+            ...prescriptionMetadata,
+            order: { id: fetchedOrderId, trackingCode, checkoutSessionId },
+            status: orderStatus,
+          });
+          toast.success(`Order ${orderStatus}. Track your order with code: ${trackingCode}`, {
+            duration: 6000,
+            action: {
+              label: 'Track Now',
+              onClick: () => router.push(`/track?trackingCode=${encodeURIComponent(trackingCode)}`),
+            },
+          });
+          break;
+        case 'cancelled':
+          setPrescription({ ...prescriptionMetadata, order: { id: fetchedOrderId }, status: 'cancelled' });
+          toast.error('Your order has been cancelled. Please contact support or start a new order.', { duration: 4000 });
+          break;
+        default:
+          throw new Error(`Unknown order status: ${orderStatus}`);
       }
-
-      if (fetchedOrderId) {
-        const orderResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/checkout/resume/${fetchedOrderId}`, {
-          headers: { 'x-guest-id': patientId },
-        });
-        if (!orderResponse.ok) {
-          const errorData = await orderResponse.json();
-          throw new Error(errorData.message || 'Failed to fetch order details');
-        }
-        const orderData = await orderResponse.json();
-        const { checkoutSessionId, trackingCode } = orderData;
-
-        switch (orderStatus) {
-          case 'pending':
-            if (orderId && orderId == fetchedOrderId) {
-              router.push(`/order/${orderId}`);
-            } else {
-              router.push(`/order/${fetchedOrderId}`);
-            }
-            break;
-          case 'pending_prescription':
-            setPrescription({ ...prescriptionMetadata, order: { id: fetchedOrderId } });
-            toast.info('Your prescription is under review for this order. You’ll be notified when it’s ready.', { duration: 4000 });
-            break;
-          case 'confirmed':
-          case 'processing':
-          case 'shipped':
-          case 'delivered':
-          case 'ready_for_pickup':
-            setPrescription({
-              ...prescriptionMetadata,
-              order: { id: fetchedOrderId, trackingCode, checkoutSessionId },
-              status: orderStatus,
-            });
-            toast.success(`Order ${orderStatus}. Track your order with code: ${trackingCode}`, {
-              duration: 6000,
-              action: {
-                label: 'Track Now',
-                onClick: () => router.push(`/track?trackingCode=${encodeURIComponent(trackingCode)}`),
-              },
-            });
-            break;
-          case 'cancelled':
-            setPrescription({ ...prescriptionMetadata, order: { id: fetchedOrderId }, status: 'cancelled' });
-            toast.error('Your order has been cancelled. Please contact support or start a new order.', { duration: 4000 });
-            break;
-          default:
-            throw new Error(`Unknown order status: ${orderStatus}`);
-        }
-      } else if (prescriptionMetadata.status === 'verified') {
-        if (medications.some(med => med.availability?.length && med.availability[0].price > 0)) {
-          router.push(`/guest-order/${patientId}`);
-        } else {
-          setPrescription({ ...prescriptionMetadata });
-          toast.info('No medications available for this prescription. Please upload a new prescription or contact support.', { duration: 4000 });
-        }
+    } else if (prescriptionMetadata.status === 'verified') {
+      if (medications.some(med => med.availability?.length && med.availability[0].price > 0)) {
+        router.push(`/guest-order/${patientId}`);
       } else {
-        throw new Error('Invalid prescription status');
+        setPrescription({ ...prescriptionMetadata });
+        toast.info('No medications available for this prescription. Please contact support or start a new order.', { duration: 4000 });
       }
-    } catch (err) {
-      setError(err.message);
-      toast.error(err.message, { duration: 4000 });
-      setPrescription(null);
-    } finally {
-      setLoading(false);
+    } else {
+      throw new Error('Invalid prescription status');
     }
-  };
+  } catch (err) {
+    setError(err.message);
+    toast.error(err.message, { duration: 4000 });
+    setPrescription(null);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -170,7 +169,7 @@ export default function StatusCheck() {
             <div className="p-4 border-b border-gray-100/50">
               <p className="text-base font-semibold">Prescription #{prescription.id} | Uploaded: {new Date(prescription.uploadedAt).toLocaleDateString()}</p>
               <p className="text-base text-gray-600">
-                Status: {prescription.status === 'pending' || prescription.status === 'pending_admin' || prescription.status === 'pending_action' ? 'Under Review' : 
+                Status: {prescription.status === 'pending' ? 'Under Review' : 
                          prescription.status === 'verified' ? 'Verified' : 
                          prescription.status === 'cancelled' ? 'Cancelled' : 
                          prescription.status.charAt(0).toUpperCase() + prescription.status.slice(1)}
@@ -189,7 +188,7 @@ export default function StatusCheck() {
                   <p className="text-base font-medium">This order was cancelled. Contact <Link href="/support" className="text-blue-600 underline">support</Link> for assistance.</p>
                 </div>
               )}
-              {prescription.order && (prescription.status === 'pending' || prescription.status === 'pending_admin' || prescription.status === 'pending_action') && (
+              {prescription.order && (prescription.status === 'pending') && (
                 <div className="mt-4 flex items-center gap-2 text-yellow-600">
                   <AlertCircle className="h-5 w-5" />
                   <p className="text-base font-medium">Your order is waiting for prescription verification.</p>

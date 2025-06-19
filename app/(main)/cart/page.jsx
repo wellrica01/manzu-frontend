@@ -1,4 +1,4 @@
-import Cart from '@/components/Cart';
+import Cart from '@/components/cart/Cart';
      export default function CartPage() {
        return (
          <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
