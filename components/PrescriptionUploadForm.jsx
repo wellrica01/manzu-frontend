@@ -13,13 +13,12 @@ import {
 } from '@/components/ui/dialog';
 import { Upload, CheckCircle, File as FileIcon, Mail, Phone } from 'lucide-react';
 import { toast } from 'sonner';
-import { v4 as uuidv4 } from 'uuid';
+import { getGuestId } from '@/lib/utils';
 import Link from 'next/link';
 
 export default function PrescriptionUploadForm() {
   const [file, setFile] = useState(null);
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
+  const [contact, setContact] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [openSuccessDialog, setOpenSuccessDialog] = useState(false);
   const [patientIdentifier, setPatientIdentifier] = useState('');
@@ -30,29 +29,26 @@ export default function PrescriptionUploadForm() {
   // Persistent identifier logic
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      let id = localStorage.getItem('guestId');
-      if (!id) {
-        id = uuidv4();
-        localStorage.setItem('guestId', id);
-      }
+      const id = getGuestId();
       setPatientIdentifier(id);
     }
   }, []);
 
-  const validateEmail = (email) => {
-    return email ? /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) : true;
-  };
-
-  const validatePhone = (phone) => {
-    return phone ? /^\+?\d{10,15}$/.test(phone) : true;
+  const validateContact = (contact) => {
+    if (!contact) return false;
+    // Email validation
+    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact)) return true;
+    // Phone validation
+    if (/^\+?\d{10,15}$/.test(contact)) return true;
+    return false;
   };
 
   const validateForm = () => {
     const newErrors = {};
     if (!file) newErrors.file = 'Please select a prescription file';
-    if (!email && !phone) newErrors.contact = 'Please provide an email or phone number';
-    if (email && !validateEmail(email)) newErrors.email = 'Please enter a valid email address';
-    if (phone && !validatePhone(phone)) newErrors.phone = 'Please enter a valid phone number (10-15 digits)';
+    if (!contact) newErrors.contact = 'Please provide an email or phone number';
+    if (contact && !validateContact(contact))
+      newErrors.contact = 'Please enter a valid email or phone number (10-15 digits)';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -95,8 +91,7 @@ export default function PrescriptionUploadForm() {
 
     const formData = new FormData();
     formData.append('prescriptionFile', file);
-    if (email) formData.append('email', email);
-    if (phone) formData.append('phone', phone);
+    formData.append('contact', contact);
 
     try {
       const response = await fetch(
@@ -116,14 +111,13 @@ export default function PrescriptionUploadForm() {
         );
       }
 
-      setSubmittedContact(email || phone);
+      setSubmittedContact(contact);
       setOpenSuccessDialog(true);
       if (typeof window !== 'undefined' && window.gtag) {
         window.gtag('event', 'upload_prescription', { patientIdentifier });
       }
       setFile(null);
-      setEmail('');
-      setPhone('');
+      setContact('');
       fileInputRef.current.value = '';
       setErrors({});
     } catch (err) {
@@ -138,8 +132,7 @@ export default function PrescriptionUploadForm() {
     setOpenSuccessDialog(false);
     setSubmittedContact('');
     setFile(null);
-    setEmail('');
-    setPhone('');
+    setContact('');
     fileInputRef.current.value = '';
     setErrors({});
   };
@@ -151,20 +144,43 @@ export default function PrescriptionUploadForm() {
         <DialogContent
           className="sm:max-w-md p-8 border border-gray-100/30 rounded-3xl bg-gradient-to-br from-white/90 to-gray-50/90 backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.2)] animate-in slide-in-from-top-10 fade-in-20 duration-300"
         >
+          {/* Decorative corner highlight */}
           <div className="absolute top-0 left-0 w-12 h-12 bg-primary/20 rounded-br-full" />
+
+          {/* Header with success icon and title */}
           <DialogHeader className="flex flex-col items-center gap-3">
             <CheckCircle
               className="h-12 w-12 text-green-500 animate-[pulse_1s_ease-in-out_infinite]"
               aria-hidden="true"
             />
-            <DialogTitle className="text-2xl font-extrabold text-primary tracking-tight text-center">
+            <DialogTitle className="text-2xl font-extrabold text-primary text-center tracking-tight">
               Prescription Uploaded!
             </DialogTitle>
           </DialogHeader>
-          <p className="text-center text-gray-600 text-base font-medium mt-2">
-            Your prescription has been submitted. We’ll notify you via{' '}
-            <span className="font-semibold text-gray-900" aria-label="Contact method">{submittedContact}</span> once processed.
+
+          {/* Confirmation message */}
+          <p className="mt-4 text-base font-medium text-center text-gray-600">
+            Your prescription has been successfully submitted. We’ll notify you at{' '}
+            <span className="font-semibold text-gray-900" aria-label="Contact method">
+              {submittedContact}
+            </span>{' '}
+            once it's processed.
           </p>
+
+          {/* Status tracking link */}
+          <p className="mt-3 text-base font-medium text-center text-gray-600">
+            Verification usually takes a few minutes. You can also{' '}
+            <a
+              href="/"
+              className="font-semibold text-primary underline hover:text-primary/80"
+              aria-label="Check prescription status"
+            >
+              check your status here
+            </a>
+            .
+          </p>
+
+          {/* Action buttons */}
           <DialogFooter className="mt-8 flex justify-center gap-4">
             <Button
               variant="outline"
@@ -174,6 +190,7 @@ export default function PrescriptionUploadForm() {
             >
               Upload Another
             </Button>
+
             <Button
               asChild
               className="h-12 px-6 text-sm font-semibold rounded-full bg-primary text-white hover:bg-primary/90 hover:shadow-[0_0_15px_rgba(59,130,246,0.5)] animate-pulse transition-all duration-300"
@@ -204,13 +221,13 @@ export default function PrescriptionUploadForm() {
             >
               Upload Your Prescription
             </h2>
-            {/* Email */}
+            {/* Contact */}
             <div>
               <Label
-                htmlFor="email"
+                htmlFor="contact"
                 className="text-sm font-semibold text-primary uppercase tracking-wider"
               >
-                Email (Optional)
+                Email or Phone
               </Label>
               <div className="relative mt-2">
                 <Mail
@@ -218,58 +235,19 @@ export default function PrescriptionUploadForm() {
                   aria-hidden="true"
                 />
                 <Input
-                  id="email"
-                  type="email"
-                  value={email}
+                  id="contact"
+                  type="text"
+                  value={contact}
                   onChange={(e) => {
-                    setEmail(e.target.value);
-                    setErrors((prev) => ({ ...prev, email: null, contact: null }));
+                    setContact(e.target.value);
+                    setErrors((prev) => ({ ...prev, contact: null }));
                   }}
-                  placeholder="Enter your email"
+                  placeholder="Enter your email or phone number"
                   className="h-14 pl-12 text-lg font-medium rounded-2xl border border-gray-200/50 bg-white/95 text-gray-900 placeholder:text-gray-400 focus:ring-0 focus:border-primary/50 focus:shadow-[0_0_15px_rgba(59,130,246,0.3)] transition-all duration-300"
-                  aria-invalid={!!errors.email}
-                  aria-describedby={errors.email ? 'email-error' : undefined}
+                  aria-invalid={!!errors.contact}
+                  aria-describedby={errors.contact ? 'contact-error' : undefined}
                 />
               </div>
-              {errors.email && (
-                <p id="email-error" className="mt-2 text-sm text-red-600 font-medium">
-                  {errors.email}
-                </p>
-              )}
-            </div>
-
-            {/* Phone */}
-            <div>
-              <Label
-                htmlFor="phone"
-                className="text-sm font-semibold text-primary uppercase tracking-wider"
-              >
-                Phone (Optional)
-              </Label>
-              <div className="relative mt-2">
-                <Phone
-                  className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary/70 transition-transform duration-300 group-focus-within:scale-110"
-                  aria-hidden="true"
-                />
-                <Input
-                  id="phone"
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => {
-                    setPhone(e.target.value);
-                    setErrors((prev) => ({ ...prev, phone: null, contact: null }));
-                  }}
-                  placeholder="Enter your phone number"
-                  className="h-14 pl-12 text-lg font-medium rounded-2xl border border-gray-200/50 bg-white/95 text-gray-900 placeholder:text-gray-400 focus:ring-0 focus:border-primary/50 focus:shadow-[0_0_15px_rgba(59,130,246,0.3)] transition-all duration-300"
-                  aria-invalid={!!errors.phone}
-                  aria-describedby={errors.phone ? 'phone-error' : undefined}
-                />
-              </div>
-              {errors.phone && (
-                <p id="phone-error" className="mt-2 text-sm text-red-600 font-medium">
-                  {errors.phone}
-                </p>
-              )}
               {errors.contact && (
                 <p id="contact-error" className="mt-2 text-sm text-red-600 font-medium">
                   {errors.contact}
@@ -339,7 +317,7 @@ export default function PrescriptionUploadForm() {
             {/* Submit */}
             <Button
               type="submit"
-              disabled={isUploading || !file || (!email && !phone)}
+              disabled={isUploading || !file || !contact}
               className="w-full h-14 px-6 text-lg font-semibold rounded-2xl bg-primary text-white hover:bg-primary/90 hover:shadow-[0_0_20px_rgba(59,130,246,0.6)] animate-pulse disabled:opacity-50 disabled:cursor-not-allowed disabled:animate-none transition-all duration-300"
             >
               {isUploading ? (

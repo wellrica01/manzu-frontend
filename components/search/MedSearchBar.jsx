@@ -10,7 +10,6 @@ const MedicationCard = dynamic(() => import('./MedicationCard'), { ssr: false })
 import CartDialog from './CartDialog';
 import ErrorMessage from '@/components/ErrorMessage';
 
-
 export default function SearchBar() {
   const [searchTerm, setSearchTerm] = useState('');
   const [results, setResults] = useState([]);
@@ -37,9 +36,8 @@ export default function SearchBar() {
   const dropdownRef = useRef(null);
   const inputRef = useRef(null);
   const suggestionRefs = useRef([]);
-  const { fetchCart, guestId, subscribe } = useCart();
+  const { cart, fetchCart, guestId } = useCart();
 
-  // Load geo data for filters
   useEffect(() => {
     fetch('/data/full.json')
       .then(res => res.json())
@@ -53,7 +51,6 @@ export default function SearchBar() {
       });
   }, []);
 
-  // Update LGAs when state changes
   const updateLgas = (state) => {
     if (!geoData) return;
     const stateData = geoData.find(s => s.state === state);
@@ -63,7 +60,6 @@ export default function SearchBar() {
     setFilterWard('');
   };
 
-  // Update wards when LGA changes
   const updateWards = (state, lga) => {
     if (!geoData) return;
     const stateData = geoData.find(s => s.state === state);
@@ -72,7 +68,6 @@ export default function SearchBar() {
     setFilterWard('');
   };
 
-  // Clear filters
   const clearFilters = () => {
     setFilterState('');
     setFilterLga('');
@@ -83,7 +78,6 @@ export default function SearchBar() {
     if (searchTerm) handleSearch(searchTerm);
   };
 
-  // Geolocation
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -100,12 +94,9 @@ export default function SearchBar() {
     }
   }, []);
 
-  const fetchCartLocal = async () => {
-    const data = await fetchCart();
-    if (data) {
-      setCartItems(data.pharmacies?.flatMap(p => p.items) || []);
-    }
-  };
+  useEffect(() => {
+    setCartItems(cart.pharmacies?.flatMap(p => p.items) || []);
+  }, [cart]);
 
   useEffect(() => {
     const debounce = setTimeout(() => {
@@ -157,7 +148,7 @@ export default function SearchBar() {
       setResults(data);
       setShowDropdown(false);
       setFocusedSuggestionIndex(-1);
-      await fetchCartLocal();
+      await fetchCart();
     } catch (err) {
       setError(err.message);
       setResults([]);
@@ -185,7 +176,7 @@ export default function SearchBar() {
       if (!response.ok) throw new Error('Search failed');
       const data = await response.json();
       setResults(data);
-      await fetchCartLocal();
+      await fetchCart();
     } catch (err) {
       setError(err.message);
       setResults([]);
@@ -245,14 +236,6 @@ export default function SearchBar() {
         item.pharmacyMedicationPharmacyId === pharmacyId
     );
   };
-
-  useEffect(() => {
-    fetchCartLocal();
-    const unsubscribe = subscribe((_, newCart) => {
-      setCartItems(newCart.pharmacies?.flatMap(p => p.items) || []);
-    });
-    return unsubscribe;
-  }, [fetchCart, subscribe]);
 
   return (
     <div className="space-y-6 p-6">

@@ -4,22 +4,19 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { v4 as uuidv4 } from 'uuid';
+import { getGuestId } from '@/lib/utils';
 
 export default function ConsentModal({ isOpen, onClose }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  useEffect(() => {
-    const storedId = localStorage.getItem('guestId');
-    if (!storedId) {
-      const newId = uuidv4();
-      localStorage.setItem('guestId', newId);
-    }
-  }, []);
+useEffect(() => {
+  getGuestId(); // This will ensure guestId exists
+}, []);
+
 
   const handleConsent = async () => {
-    const guestId = localStorage.getItem('guestId');
+    const guestId = getGuestId();
 
     // If consent already granted, just close
     if (localStorage.getItem('manzu_consent') === 'granted') {

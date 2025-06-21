@@ -1,44 +1,42 @@
 'use client';
-import { useState, useCallback } from 'react';
-import { v4 as uuidv4 } from 'uuid';
-
-const listeners = new Set();
+import { useQuery } from '@tanstack/react-query';
+import { getGuestId } from '@/lib/utils';
 
 export function useCart() {
-  const [cartItemCount, setCartItemCount] = useState(0);
-  const [cart, setCart] = useState({ pharmacies: [], totalPrice: 0 });
-  const guestId = typeof window !== 'undefined' ? localStorage.getItem('guestId') || uuidv4() : uuidv4();
+  const guestId = getGuestId();
 
-  if (typeof window !== 'undefined' && !localStorage.getItem('guestId')) {
-    localStorage.setItem('guestId', guestId);
-  }
+  const { data: cartData, isPending, isError, error, refetch: fetchCart } = useQuery({
+    queryKey: ['cart', guestId],
+    queryFn: async () => {
+      console.log('Fetching cart for guestId:', guestId);
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart`, {
+          headers: { 'x-guest-id': guestId },
+        });
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          console.error('Cart API error:', response.status, errorData);
+          throw new Error(errorData.message || `Failed to fetch cart: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log('Cart API response:', data);
+        return data;
+      } catch (error) {
+        console.error('Cart fetch error:', error.message);
+        throw error;
+      }
+    },
+    enabled: !!guestId, // Only fetch if guestId exists
+    staleTime: 5 * 1000, // Cache for 5 seconds
+    refetchOnWindowFocus: false,
+    retry: 2, // Retry up to 2 times on failure
+    placeholderData: { pharmacies: [], totalPrice: 0 }, // Provide fallback during loading
+  });
 
-  const notifyListeners = useCallback(() => {
-    listeners.forEach(listener => listener(cartItemCount, cart));
-  }, [cartItemCount, cart]);
+  const cart = cartData || { pharmacies: [], totalPrice: 0 };
+  const cartItemCount = cart.pharmacies?.reduce((sum, pharmacy) => sum + (pharmacy.items?.length || 0), 0) || 0;
 
-  const fetchCart = useCallback(async () => {
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart`, {
-        headers: { 'x-guest-id': guestId },
-      });
-      if (!response.ok) throw new Error('Failed to fetch cart');
-      const data = await response.json();
-      const totalItems = data.pharmacies?.reduce((sum, pharmacy) => sum + pharmacy.items.length, 0) || 0;
-      setCartItemCount(totalItems);
-      setCart(data);
-      notifyListeners();
-      return data;
-    } catch (err) {
-      console.error('Fetch cart error:', err);
-      return null;
-    }
-  }, [guestId, notifyListeners]);
+  console.log('useCart state:', { isPending, isError, error, cart });
 
-  const subscribe = useCallback((listener) => {
-    listeners.add(listener);
-    return () => listeners.delete(listener);
-  }, []);
-
-  return { cartItemCount, cart, fetchCart, guestId, subscribe };
+  return { cartItemCount, cart, fetchCart, guestId, isPending, isError };
 }

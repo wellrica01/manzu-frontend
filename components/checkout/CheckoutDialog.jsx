@@ -15,8 +15,9 @@ const CheckoutDialog = ({
 }) => {
   // Compute item statuses with guards for undefined properties
   const itemsWithStatus = useMemo(() => {
-    if (!cart.orderItems) return [];
-    return cart.orderItems
+    if (!cart.pharmacies || !Array.isArray(cart.pharmacies)) return [];
+    const orderItems = cart.pharmacies.flatMap(pharmacy => pharmacy.items || []);
+    return orderItems
       .filter(item => item && item.medication && item.pharmacyMedicationMedicationId)
       .map(item => {
         const status = item.medication.prescriptionRequired
@@ -30,7 +31,7 @@ const CheckoutDialog = ({
           status,
         };
       });
-  }, [cart.orderItems, prescriptionStatuses]);
+  }, [cart.pharmacies, prescriptionStatuses]);
 
   const payableTotal = itemsWithStatus
     .filter(item => item.isPayable)

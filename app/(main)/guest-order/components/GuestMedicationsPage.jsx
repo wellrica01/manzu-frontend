@@ -10,6 +10,7 @@ import { cn, getGuestId } from '@/lib/utils';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import MedicationCard from './MedicationCard';
+import { useCart } from '@/hooks/useCart';
 
 export default function GuestOrder() {
   const [medications, setMedications] = useState([]);
@@ -24,9 +25,8 @@ export default function GuestOrder() {
   const [showInfo, setShowInfo] = useState(false);
   const [showMedImage, setShowMedImage] = useState(null);
   const { patientIdentifier } = useParams();
-  const guestId = getGuestId();
+  const { cart, fetchCart, guestId } = useCart();
 
-  // Analytics tracking
   useEffect(() => {
     if (typeof window !== 'undefined' && window.gtag) {
       window.gtag('event', 'page_view', {
@@ -36,7 +36,6 @@ export default function GuestOrder() {
     }
   }, [patientIdentifier]);
 
-  // Geolocation
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -54,7 +53,6 @@ export default function GuestOrder() {
     }
   }, []);
 
-  // Fetch guest order
   const fetchGuestOrder = async () => {
     try {
       setLoading(true);
@@ -89,29 +87,14 @@ export default function GuestOrder() {
     }
   };
 
-  // Fetch cart
-  const fetchCart = async () => {
-    try {
-      const response = await fetch('http://localhost:5000/api/cart', {
-        headers: { 'x-guest-id': guestId },
-      });
-      if (!response.ok) throw new Error('Failed to fetch cart');
-      const data = await response.json();
-      setCartItems(data.pharmacies?.flatMap(p => p.items) || []);
-    } catch (err) {
-      console.error('Fetch cart error:', err);
-      toast.error('Failed to sync cart', { duration: 4000 });
-    }
-  };
-
   useEffect(() => {
     if (patientIdentifier && (userLocation || error)) {
       fetchGuestOrder();
       fetchCart();
+      setCartItems(cart.pharmacies?.flatMap(p => p.items) || []);
     }
-  }, [patientIdentifier, userLocation, error]);
+  }, [patientIdentifier, userLocation, error, fetchCart, cart]);
 
-  // Add to cart
   const handleAddToCart = async (medicationId, pharmacyId, medicationName) => {
     const quantity = 1;
     try {
@@ -158,7 +141,6 @@ export default function GuestOrder() {
     );
   };
 
-  // Dynamic introductory message
   const getIntroMessage = () => {
     if (!prescriptionMetadata) return null;
     switch (prescriptionMetadata.status) {
@@ -203,7 +185,6 @@ export default function GuestOrder() {
     }
   };
 
-  // Stepper configuration
   const steps = [
     { label: 'Uploaded', description: 'You submitted the prescription' },
     { label: 'Verifying', description: 'Pharmacist is reviewing' },
@@ -252,7 +233,6 @@ export default function GuestOrder() {
 
   return (
     <div className="space-y-6 p-6 max-w-5xl mx-auto bg-gradient-to-b from-gray-50/95 to-gray-100/95 animate-in fade-in-20 duration-500">
-      {/* Progress Stepper */}
       <div className="flex items-center justify-between gap-2 sm:gap-4 px-2 sm:px-4">
         {steps.map((step, index) => {
           const statusMap = { uploaded: 0, pending: 1, verified: 2 };
@@ -262,7 +242,6 @@ export default function GuestOrder() {
 
           return (
             <React.Fragment key={step.label || index}>
-              {/* Step */}
               <div className="flex flex-col items-center text-center min-w-[60px]">
                 <div
                   className={cn(
@@ -279,8 +258,6 @@ export default function GuestOrder() {
                 <div className="text-xs sm:text-sm font-medium text-gray-700">{step.label}</div>
                 <div className="text-[10px] sm:text-xs text-gray-500 hidden sm:block">{step.description}</div>
               </div>
-
-              {/* Connector (except after last step) */}
               {index < steps.length - 1 && (
                 <div
                   className={cn(
@@ -292,11 +269,7 @@ export default function GuestOrder() {
           );
         })}
       </div>
-
-      {/* Introductory Section */}
       {getIntroMessage()}
-
-      {/* Prescription Metadata */}
       {prescriptionMetadata && (
         <Card className="shadow-md border border-gray-100/50 rounded-2xl bg-gray-50/90 backdrop-blur-sm p-4 mb-6">
           <div className="flex justify-between items-center">
@@ -320,8 +293,6 @@ export default function GuestOrder() {
           </div>
         </Card>
       )}
-
-      {/* Prescription Image Preview Dialog */}
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
         <DialogContent className="sm:max-w-lg p-6 rounded-3xl bg-white/95 backdrop-blur-md border border-gray-100/30">
           <DialogTitle>
@@ -334,8 +305,6 @@ export default function GuestOrder() {
           />
         </DialogContent>
       </Dialog>
-
-      {/* Medication Image Preview Dialog */}
       <Dialog open={!!showMedImage} onOpenChange={() => setShowMedImage(null)}>
         <DialogContent className="sm:max-w-lg p-6 rounded-3xl bg-white/95 backdrop-blur-md border border-gray-100/30">
           <DialogTitle>
@@ -354,8 +323,6 @@ export default function GuestOrder() {
           )}
         </DialogContent>
       </Dialog>
-
-      {/* Cart Confirmation Dialog */}
       <Dialog open={openCartDialog} onOpenChange={setOpenCartDialog}>
         <DialogContent
           className="sm:max-w-md p-8 border border-gray-100/30 rounded-3xl bg-gradient-to-br from-white/90 to-gray-50/90 backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.2)] animate-in slide-in-from-top-10 fade-in-20 duration-300"
@@ -393,8 +360,6 @@ export default function GuestOrder() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Medications (only for verified prescriptions) */}
       {prescriptionMetadata?.status === 'verified' ? (
         medications.length === 0 ? (
           <Card className="shadow-xl border border-gray-100/50 rounded-2xl text-center py-10 bg-gradient-to-br from-white to-gray-50 backdrop-blur-sm">
@@ -430,8 +395,6 @@ export default function GuestOrder() {
           ))
         )
       ) : null}
-
-      {/* Delivery Guidance (only for verified prescriptions with medications) */}
       {prescriptionMetadata?.status === 'verified' && medications.length > 0 && (
         <>
           <div className="flex items-center gap-2 mb-4">

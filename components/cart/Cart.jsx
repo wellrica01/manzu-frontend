@@ -16,7 +16,7 @@ export default function Cart() {
   const [removeItem, setRemoveItem] = useState(null);
   const [quantityUpdate, setQuantityUpdate] = useState(null);
   const [isUpdating, setIsUpdating] = useState({});
-  const [isFetched, setIsFetched] = useState(false); // Track fetch completion
+  const [isFetched, setIsFetched] = useState(false);
   const router = useRouter();
   const { cart, fetchCart, guestId } = useCart();
 
@@ -54,7 +54,7 @@ export default function Cart() {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to update quantity');
       }
-      await fetchCart();
+      await fetchCart(); // Refetch to update cart
       setQuantityUpdate({ id: orderItemId, name: itemName, quantity: newQuantity });
       if (typeof window !== 'undefined' && window.gtag) {
         window.gtag('event', 'update_cart_quantity', { orderItemId, quantity: newQuantity });
@@ -81,7 +81,7 @@ export default function Cart() {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to remove item');
       }
-      await fetchCart();
+      await fetchCart(); // Refetch to update cart
       setRemoveItem(null);
       if (typeof window !== 'undefined' && window.gtag) {
         window.gtag('event', 'remove_from_cart', { orderItemId: removeItem.id });
@@ -94,7 +94,7 @@ export default function Cart() {
   };
 
   const handleCheckout = () => {
-    router.push('/checkout');
+    router.push('/med/checkout');
   };
 
   const calculateItemPrice = (item) => item.quantity * item.price;

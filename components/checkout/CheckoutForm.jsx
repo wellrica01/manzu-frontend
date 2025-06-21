@@ -16,7 +16,7 @@ const CheckoutForm = ({
   handleDeliveryMethodChange,
   handleCheckout,
   requiresUpload,
-  prescriptionStatus,
+  prescriptionStatuses,
   prescriptionFile,
   resumeOrderId,
   fileInputRef,
@@ -49,31 +49,47 @@ const CheckoutForm = ({
     }
   };
 
+  // Flatten items from all pharmacies into a single array
+  const orderItems = useMemo(() => {
+    return cart.pharmacies?.flatMap(pharmacy => pharmacy.items) || [];
+  }, [cart.pharmacies]);
+
+  // Determine if upload form should be shown
+  const needsUpload = useMemo(() => {
+    if (!requiresUpload || resumeOrderId) return false;
+    return orderItems.some(
+      item => item.medication?.prescriptionRequired &&
+        (prescriptionStatuses[item.pharmacyMedicationMedicationId.toString()] || 'none') !== 'verified'
+    );
+  }, [requiresUpload, prescriptionStatuses, orderItems, resumeOrderId]);
+
+  console.log('CheckoutForm upload rendering:', { requiresUpload, prescriptionStatuses, needsUpload });
+
   // Compute button text based on checkout scenario
   const submitButtonText = useMemo(() => {
     if (resumeOrderId) {
       return 'Continue Payment';
     }
 
-    const hasOTCItems = cart.orderItems.some(item => !item.medication?.prescriptionRequired);
-    const hasPrescriptionItems = cart.orderItems.some(item => item.medication?.prescriptionRequired);
-    const allPrescriptionsVerified = hasPrescriptionItems &&  cart.orderItems
-    .filter(item => item.medication?.prescriptionRequired)
-    .every(() => prescriptionStatus === 'verified');
+    const hasOTCItems = orderItems.some(item => !item.medication?.prescriptionRequired);
+    const hasPrescriptionItems = orderItems.some(item => item.medication?.prescriptionRequired);
+    const allPrescriptionsVerified = hasPrescriptionItems && orderItems
+      .filter(item => item.medication?.prescriptionRequired)
+      .every(item => prescriptionStatuses[item.pharmacyMedicationMedicationId.toString()] === 'verified');
 
     if (!hasOTCItems && !hasPrescriptionItems) {
-      return 'Submit Order'; // Fallback for empty/invalid cart (button will be disabled)
+      return 'Submit Order'; // Fallback for empty/invalid cart
     }
 
-    if (hasPrescriptionItems && !allPrescriptionsVerified && requiresUpload) {
-      if (hasOTCItems) {
+    if (hasPrescriptionItems && !allPrescriptionsVerified && needsUpload) {
+      if (hasOTCItems || allPrescriptionsVerified) {
         return 'Pay Non-Prescription & Submit Prescription';
       }
       return 'Submit Prescription';
     }
 
     return 'Pay Now';
-  }, [cart.orderItems, requiresUpload, prescriptionStatus, resumeOrderId]);
+  }, [orderItems, needsUpload, prescriptionStatuses, resumeOrderId]);
 
   return (
     <Card
@@ -140,7 +156,7 @@ const CheckoutForm = ({
               <p id="phone-error" className="text-red-500 text-xs mt-1">{phoneError}</p>
             )}
           </div>
-          {requiresUpload && !resumeOrderId && (
+          {needsUpload && (
             <PrescriptionUpload
               handleFileChange={handleFileChange}
               fileInputRef={fileInputRef}

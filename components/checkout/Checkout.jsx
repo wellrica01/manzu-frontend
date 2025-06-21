@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Script from 'next/script';
 import { toast } from 'sonner';
-import { v4 as uuidv4 } from 'uuid';
+import { getGuestId } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
 import ErrorMessage from '@/components/ErrorMessage';
 import EmptyCart from '@/components/cart/EmptyCart';
@@ -12,10 +12,10 @@ import CheckoutDialog from './CheckoutDialog';
 import PrescriptionUploadDialog from './PrescriptionUploadDialog';
 import CheckoutForm from './CheckoutForm';
 import dynamic from 'next/dynamic';
+import { useCart } from '@/hooks/useCart';
 const OrderSummary = dynamic(() => import('./OrderSummary'), { ssr: false });
 
 export default function Checkout() {
-  const [cart, setCart] = useState({ pharmacies: [], totalPrice: 0, orderItems: [] });
   const [form, setForm] = useState({ name: '', email: '', phone: '', address: '', deliveryMethod: 'pickup' });
   const [prescriptionFile, setPrescriptionFile] = useState(null);
   const [error, setError] = useState(null);
@@ -28,83 +28,108 @@ export default function Checkout() {
   const [prescriptionStatuses, setPrescriptionStatuses] = useState({});
   const router = useRouter();
   const fileInputRef = useRef(null);
+  const { cart, fetchCart, guestId, isPending, isError } = useCart();
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      let id = localStorage.getItem('guestId');
-      if (!id) {
-        id = uuidv4();
-        localStorage.setItem('guestId', id);
-      }
-      setPatientIdentifier(id);
-    }
+    const id = getGuestId();
+    console.log('Setting patientIdentifier:', id);
+    setPatientIdentifier(id);
   }, []);
 
-  const fetchCart = async () => {
-    setLoading(true);
-    try {
-      setError(null);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart`, {
-        headers: { 'x-guest-id': patientIdentifier },
-      });
-      if (!response.ok) throw new Error(`Failed to fetch cart: ${response.statusText}`);
-      const data = await response.json();
-      const orderItems = data.pharmacies.flatMap(pharmacy => pharmacy.items).filter(
-        item => item && item.medication && item.pharmacyMedicationMedicationId
-      );
-      setCart({ pharmacies: data.pharmacies, orderItems, prescriptionId: data.prescriptionId, totalPrice: data.totalPrice });
-
-      const prescriptionRequiredIds = orderItems
-        .filter(item => item.medication?.prescriptionRequired)
-        .map(item => item.pharmacyMedicationMedicationId.toString());
-
-      if (prescriptionRequiredIds.length > 0) {
-        const validateResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/checkout/prescription/validate?patientIdentifier=${patientIdentifier}&medicationIds=${prescriptionRequiredIds.join(',')}`
-        );
-        if (!validateResponse.ok) {
-          const errorData = await validateResponse.json();
-          throw new Error(`Failed to validate prescription: ${errorData.message || validateResponse.statusText}`);
-        }
-        const { requiresUpload } = await validateResponse.json();
-        setRequiresUpload(requiresUpload);
-
-        const statusResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/prescription/status?patientIdentifier=${patientIdentifier}&medicationIds=${prescriptionRequiredIds.join(',')}`,
-          { headers: { 'x-guest-id': patientIdentifier } }
-        );
-        if (statusResponse.ok) {
-          const statusData = await statusResponse.json();
-          console.log('Prescription statuses:', statusData);
-          setPrescriptionStatuses(statusData && typeof statusData === 'object' ? statusData : {});
-        } else {
-          console.warn('Prescription status API failed:', statusResponse.statusText);
-          setPrescriptionStatuses(
-            Object.fromEntries(prescriptionRequiredIds.map(id => [id, 'none']))
-          );
-        }
-      } else {
-        setRequiresUpload(false);
-        setPrescriptionStatuses({});
-      }
-    } catch (err) {
-      console.error('Fetch cart error:', err);
-      setError(mapErrorMessage(err.message));
-      toast.error(mapErrorMessage(err.message), { duration: 4000 });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    if (patientIdentifier) {
-      fetchCart();
-    } else {
-      setError('Guest ID not found');
-      toast.error('Guest ID not found', { duration: 4000 });
-      setLoading(false);
+    async function loadCartAndPrescriptions() {
+      if (!patientIdentifier) {
+        setError('Guest ID not found');
+        toast.error('Guest ID not found', { duration: 4000 });
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setError(null);
+        console.log('loadCartAndPrescriptions: cart state:', { cart, isPending, isError });
+
+        if (isPending) {
+          console.log('Cart query is pending, waiting...');
+          return;
+        }
+
+        if (isError) {
+          throw new Error('Failed to fetch cart or invalid cart data');
+        }
+
+        if (!cart || !Array.isArray(cart.pharmacies)) {
+          throw new Error('Invalid cart data: missing or invalid pharmacies');
+        }
+
+        const orderItems = cart.pharmacies
+          .flatMap(pharmacy => pharmacy.items || [])
+          .filter(item => item && item.medication && item.pharmacyMedicationMedicationId);
+
+        console.log('Processed orderItems:', orderItems);
+
+        const prescriptionRequiredIds = orderItems
+          .filter(item => item.medication?.prescriptionRequired)
+          .map(item => item.pharmacyMedicationMedicationId.toString());
+
+        console.log('Prescription required IDs:', prescriptionRequiredIds);
+
+        if (prescriptionRequiredIds.length > 0) {
+          const validateResponse = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/api/checkout/prescription/validate?patientIdentifier=${patientIdentifier}&medicationIds=${prescriptionRequiredIds.join(',')}`
+          );
+          if (!validateResponse.ok) {
+            const errorData = await validateResponse.json();
+            throw new Error(`Failed to validate prescription: ${errorData.message || validateResponse.statusText}`);
+          }
+          const validateData = await validateResponse.json();
+          console.log('Prescription validate API response:', validateData);
+          setRequiresUpload(validateData.requiresUpload);
+
+          const statusResponse = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/api/prescription/status?patientIdentifier=${patientIdentifier}&medicationIds=${prescriptionRequiredIds.join(',')}`,
+            { headers: { 'x-guest-id': patientIdentifier } }
+          );
+          if (statusResponse.ok) {
+            const statusData = await statusResponse.json();
+            console.log('Prescription statuses:', statusData);
+            setPrescriptionStatuses(statusData && typeof statusData === 'object' ? statusData : {});
+            // Fallback: If all prescriptions are verified, override requiresUpload
+            const allVerified = prescriptionRequiredIds.every(
+              id => (statusData[id] || 'none') === 'verified'
+            );
+            if (allVerified && validateData.requiresUpload) {
+              console.log('All prescriptions verified, overriding requiresUpload to false');
+              setRequiresUpload(false);
+            } else if (!allVerified && !validateData.requiresUpload) {
+              console.log('Some prescriptions unverified but API says no upload needed, setting requiresUpload to true');
+              setRequiresUpload(true);
+            }
+          } else {
+            console.warn('Prescription status API failed:', statusResponse.statusText);
+            setPrescriptionStatuses(
+              Object.fromEntries(prescriptionRequiredIds.map(id => [id, 'none']))
+            );
+            setRequiresUpload(true); // Assume upload required if status check fails
+          }
+        } else {
+          console.log('No prescription required, setting requiresUpload to false');
+          setRequiresUpload(false);
+          setPrescriptionStatuses({});
+        }
+
+        console.log('Final prescription state:', { requiresUpload, prescriptionStatuses });
+      } catch (err) {
+        console.error('Fetch cart error:', err.message);
+        setError(mapErrorMessage(err.message));
+        toast.error(mapErrorMessage(err.message), { duration: 4000 });
+      } finally {
+        setLoading(false);
+      }
     }
-  }, [patientIdentifier]);
+
+    loadCartAndPrescriptions();
+  }, [patientIdentifier, cart, isPending, isError]);
 
   const handleInputChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -127,7 +152,7 @@ export default function Checkout() {
   const handleDeliveryMethodChange = (value) => {
     setForm({ ...form, deliveryMethod: value, address: value === 'pickup' ? '' : form.address });
     if (value === 'pickup') {
-      const hasValidAddresses = cart.pharmacies.every(pharmacy => pharmacy.pharmacy.address);
+      const hasValidAddresses = cart.pharmacies.every(pharmacy => pharmacy.pharmacy?.address);
       if (!hasValidAddresses) {
         setError('One or more pharmacy addresses are unavailable for pickup. Please select delivery or contact support.');
         toast.error('One or more pharmacy addresses are unavailable for pickup', { duration: 4000 });
@@ -145,7 +170,10 @@ export default function Checkout() {
       'Cart is empty or invalid': 'Your cart is empty or contains invalid items.',
       'One or more pharmacy addresses are not available for pickup': 'One or more pharmacy addresses are unavailable for pickup. Please select delivery or contact support.',
       'Checkout failed: Server error': 'An error occurred during checkout. Please try again or contact support.',
-      'Invalid transaction parameters': 'Payment couldn’t be processed. Please check your details and try again.'
+      'Invalid transaction parameters': 'Payment couldn’t be processed. Please check your details and try again.',
+      'Failed to fetch cart or invalid cart data': 'Unable to load cart. Please try again or contact support.',
+      'Invalid cart data: missing or invalid pharmacies': 'Unable to load cart. Please try again or contact support.',
+      'Guest ID not found': 'Unable to identify user. Please try again or contact support.'
     };
     return errorMap[error] || error || 'An unexpected error occurred.';
   };
@@ -167,7 +195,7 @@ export default function Checkout() {
       return 'Cart is empty or invalid';
     }
     if (form.deliveryMethod === 'pickup') {
-      const hasValidAddresses = cart.pharmacies.every(pharmacy => pharmacy.pharmacy.address);
+      const hasValidAddresses = cart.pharmacies.every(pharmacy => pharmacy.pharmacy?.address);
       if (!hasValidAddresses) {
         return 'One or more pharmacy addresses are not available for pickup';
       }
@@ -275,8 +303,8 @@ export default function Checkout() {
     const addresses = [];
     const seen = new Set();
     cart.pharmacies.forEach(pharmacy => {
-      const address = pharmacy.pharmacy.address;
-      const pharmacyName = pharmacy.pharmacy.name;
+      const address = pharmacy.pharmacy?.address;
+      const pharmacyName = pharmacy.pharmacy?.name;
       if (address && pharmacyName && !seen.has(address)) {
         addresses.push({ name: pharmacyName, address });
         seen.add(address);
@@ -299,11 +327,13 @@ export default function Checkout() {
           </h1>
           <ErrorMessage error={error} onReupload={() => fileInputRef.current.click()} />
           <PendingMessage message={pendingMessage} />
-          {loading && cart.pharmacies.length === 0 ? (
+          {(isPending || loading) ? (
             <div className="flex justify-center items-center h-64">
               <Loader2 className="h-12 w-12 text-primary animate-spin" aria-label="Loading checkout" />
             </div>
-          ) : cart.pharmacies.length === 0 && !error ? (
+          ) : isError ? (
+            <ErrorMessage error={mapErrorMessage('Failed to fetch cart or invalid cart data')} />
+          ) : cart.pharmacies.length === 0 ? (
             <EmptyCart />
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

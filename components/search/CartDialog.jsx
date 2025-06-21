@@ -35,7 +35,7 @@ const CartDialog = ({ openCartDialog, setOpenCartDialog, lastAddedItem }) => {
             asChild
             className="h-12 px-6 text-sm font-semibold rounded-full bg-primary text-white hover:bg-primary/90 hover:shadow-[0_0_15px_rgba(59,130,246,0.5)] animate-pulse transition-all duration-300"
           >
-            <Link href="/cart" aria-label="View cart">
+            <Link href="/med/cart" aria-label="View cart">
               View Cart
             </Link>
           </Button>
