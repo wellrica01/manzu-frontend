@@ -1,9 +1,10 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import Script from 'next/script';
 import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
+import { Loader2 } from 'lucide-react';
 import ErrorMessage from '@/components/ErrorMessage';
 import EmptyCart from '@/components/cart/EmptyCart';
 import PendingMessage from './PendingMessage';
@@ -14,17 +15,17 @@ import dynamic from 'next/dynamic';
 const OrderSummary = dynamic(() => import('./OrderSummary'), { ssr: false });
 
 export default function Checkout() {
-  const { orderId: resumeOrderId } = useParams();
   const [cart, setCart] = useState({ pharmacies: [], totalPrice: 0, orderItems: [] });
   const [form, setForm] = useState({ name: '', email: '', phone: '', address: '', deliveryMethod: 'pickup' });
   const [prescriptionFile, setPrescriptionFile] = useState(null);
   const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [pendingMessage, setPendingMessage] = useState(null);
   const [requiresUpload, setRequiresUpload] = useState(false);
   const [showCheckoutDialog, setShowCheckoutDialog] = useState(false);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [patientIdentifier, setPatientIdentifier] = useState('');
+  const [prescriptionStatuses, setPrescriptionStatuses] = useState({});
   const router = useRouter();
   const fileInputRef = useRef(null);
 
@@ -40,6 +41,7 @@ export default function Checkout() {
   }, []);
 
   const fetchCart = async () => {
+    setLoading(true);
     try {
       setError(null);
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart`, {
@@ -47,27 +49,50 @@ export default function Checkout() {
       });
       if (!response.ok) throw new Error(`Failed to fetch cart: ${response.statusText}`);
       const data = await response.json();
-      const orderItems = data.pharmacies.flatMap(pharmacy => pharmacy.items);
+      const orderItems = data.pharmacies.flatMap(pharmacy => pharmacy.items).filter(
+        item => item && item.medication && item.pharmacyMedicationMedicationId
+      );
       setCart({ pharmacies: data.pharmacies, orderItems, prescriptionId: data.prescriptionId, totalPrice: data.totalPrice });
 
       const prescriptionRequiredIds = orderItems
         .filter(item => item.medication?.prescriptionRequired)
-        .map(item => item.pharmacyMedicationMedicationId);
+        .map(item => item.pharmacyMedicationMedicationId.toString());
 
       if (prescriptionRequiredIds.length > 0) {
-        const validateResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/checkout/prescription/validate?patientIdentifier=${patientIdentifier}&medicationIds=${prescriptionRequiredIds.join(',')}`);
+        const validateResponse = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/checkout/prescription/validate?patientIdentifier=${patientIdentifier}&medicationIds=${prescriptionRequiredIds.join(',')}`
+        );
         if (!validateResponse.ok) {
           const errorData = await validateResponse.json();
           throw new Error(`Failed to validate prescription: ${errorData.message || validateResponse.statusText}`);
         }
         const { requiresUpload } = await validateResponse.json();
         setRequiresUpload(requiresUpload);
+
+        const statusResponse = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/prescription/status?patientIdentifier=${patientIdentifier}&medicationIds=${prescriptionRequiredIds.join(',')}`,
+          { headers: { 'x-guest-id': patientIdentifier } }
+        );
+        if (statusResponse.ok) {
+          const statusData = await statusResponse.json();
+          console.log('Prescription statuses:', statusData);
+          setPrescriptionStatuses(statusData && typeof statusData === 'object' ? statusData : {});
+        } else {
+          console.warn('Prescription status API failed:', statusResponse.statusText);
+          setPrescriptionStatuses(
+            Object.fromEntries(prescriptionRequiredIds.map(id => [id, 'none']))
+          );
+        }
       } else {
         setRequiresUpload(false);
+        setPrescriptionStatuses({});
       }
     } catch (err) {
-      setError(err.message);
-      toast.error(err.message, { duration: 4000 });
+      console.error('Fetch cart error:', err);
+      setError(mapErrorMessage(err.message));
+      toast.error(mapErrorMessage(err.message), { duration: 4000 });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -77,48 +102,52 @@ export default function Checkout() {
     } else {
       setError('Guest ID not found');
       toast.error('Guest ID not found', { duration: 4000 });
+      setLoading(false);
     }
   }, [patientIdentifier]);
-
-  useEffect(() => {
-    if (resumeOrderId && patientIdentifier && form.email) {
-      setPendingMessage('Resuming checkout...');
-      handleResumeCheckout(resumeOrderId);
-    }
-  }, [resumeOrderId, patientIdentifier, form.email]);
 
   const handleInputChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    if (file && ['application/pdf', 'image/jpeg', 'image/png'].includes(file.type)) {
-      setPrescriptionFile(file);
-      setShowUploadDialog(true);
-    } else {
-      toast.error('Please upload a valid PDF, JPG, or PNG file', { duration: 4000 });
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('File size exceeds 5MB limit', { duration: 4000 });
+        return;
+      }
+      if (['application/pdf', 'image/jpeg', 'image/png'].includes(file.type)) {
+        setPrescriptionFile(file);
+        setShowUploadDialog(true);
+      } else {
+        toast.error('Please upload a valid PDF, JPG, or PNG file', { duration: 4000 });
+      }
     }
   };
 
-  const handleDeliveryMethodChange = (value) => setForm({ ...form, deliveryMethod: value, address: value === 'pickup' ? '' : form.address });
-
-  const handleResumeSession = async (e) => {
-    e.preventDefault();
-    const { email, phone, sessionId } = form;
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/session/retrieve`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, phone, checkoutSessionId: sessionId }),
-      });
-      if (!response.ok) throw new Error('Session not found');
-      const { patientIdentifier } = await response.json();
-      localStorage.setItem('guestId', patientIdentifier);
-      await fetchCart();
-      toast.success('Session resumed successfully', { duration: 4000 });
-    } catch (err) {
-      setError(err.message);
-      toast.error(err.message, { duration: 4000 });
+  const handleDeliveryMethodChange = (value) => {
+    setForm({ ...form, deliveryMethod: value, address: value === 'pickup' ? '' : form.address });
+    if (value === 'pickup') {
+      const hasValidAddresses = cart.pharmacies.every(pharmacy => pharmacy.pharmacy.address);
+      if (!hasValidAddresses) {
+        setError('One or more pharmacy addresses are unavailable for pickup. Please select delivery or contact support.');
+        toast.error('One or more pharmacy addresses are unavailable for pickup', { duration: 4000 });
+      }
     }
+  };
+
+  const mapErrorMessage = (error) => {
+    const errorMap = {
+      'Prescription file is required for one or more medications': 'Please upload a prescription file for the required medications.',
+      'Existing prescription does not cover all required medications, and no new prescription uploaded': 'Your current prescription does not cover all medications. Please upload a new prescription.',
+      'Invalid email address': 'Please enter a valid email address.',
+      'Invalid phone number (10-15 digits)': 'Please enter a valid phone number with 10-15 digits.',
+      'Address is required for delivery': 'Please provide a delivery address.',
+      'Cart is empty or invalid': 'Your cart is empty or contains invalid items.',
+      'One or more pharmacy addresses are not available for pickup': 'One or more pharmacy addresses are unavailable for pickup. Please select delivery or contact support.',
+      'Checkout failed: Server error': 'An error occurred during checkout. Please try again or contact support.',
+      'Invalid transaction parameters': 'Payment couldn’t be processed. Please check your details and try again.'
+    };
+    return errorMap[error] || error || 'An unexpected error occurred.';
   };
 
   const validateForm = () => {
@@ -144,7 +173,7 @@ export default function Checkout() {
       }
     }
     if (requiresUpload && !prescriptionFile) {
-      return 'A prescription file is required for one or more medications';
+      return 'Prescription file is required for one or more medications';
     }
     return null;
   };
@@ -153,150 +182,92 @@ export default function Checkout() {
     e.preventDefault();
     const validationError = validateForm();
     if (validationError) {
-      setError(validationError);
-      toast.error(validationError, { duration: 4000 });
+      setError(mapErrorMessage(validationError));
+      toast.error(mapErrorMessage(validationError), { duration: 4000 });
       return;
     }
     setShowCheckoutDialog(true);
   };
 
-const confirmCheckout = async () => {
-  setError(null);
-  setPendingMessage(null);
-  setLoading(true);
-  setShowCheckoutDialog(false);
-  try {
-    const formData = new FormData();
-    formData.append('name', form.name);
-    formData.append('email', form.email);
-    formData.append('phone', form.phone);
-    formData.append('deliveryMethod', form.deliveryMethod);
-    if (form.address) {
-      formData.append('address', form.address);
-    }
-    if (requiresUpload && prescriptionFile) {
-      formData.append('prescription', prescriptionFile);
-    }
-
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/checkout`, {
-      method: 'POST',
-      headers: { 'x-guest-id': patientIdentifier },
-      body: formData,
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(`Checkout failed: ${errorData.message || response.statusText}`);
-    }
-
-    const data = await response.json();
-    console.log('Checkout response:', data); // Debug log
-    const hasPrescriptionOrders = data.orders.some(order => order.status === 'pending_prescription');
-    const hasPayableOrders = data.paymentReferences && data.paymentReferences.length > 0 && data.paymentUrl;
-
-    let message = '';
-    if (hasPayableOrders && hasPrescriptionOrders) {
-      message = 'Proceeding to payment for OTC and verified prescription items. Unverified prescription items are awaiting verification.';
-    } else if (hasPayableOrders) {
-      message = 'Proceeding to payment for your order.';
-    } else if (hasPrescriptionOrders) {
-      message = 'Your prescription has been submitted for verification. You will be notified when it is verified to complete your payment.';
-    }
-
-    setPendingMessage(message);
-
-    if (hasPayableOrders) {
-      if (typeof window.PaystackPop === 'undefined') {
-        throw new Error('PaystackPop not loaded');
+  const confirmCheckout = async () => {
+    setError(null);
+    setPendingMessage(null);
+    setLoading(true);
+    setShowCheckoutDialog(false);
+    try {
+      const formData = new FormData();
+      formData.append('name', form.name);
+      formData.append('email', form.email);
+      formData.append('phone', form.phone);
+      formData.append('deliveryMethod', form.deliveryMethod);
+      if (form.address) {
+        formData.append('address', form.address);
+      }
+      if (requiresUpload && prescriptionFile) {
+        formData.append('prescription', prescriptionFile);
       }
 
-      const paystack = new window.PaystackPop();
-      paystack.newTransaction({
-        key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
-        email: form.email,
-        amount: data.orders
-          .filter(order => order.status === 'pending')
-          .reduce((sum, order) => sum + order.totalPrice, 0) * 100,
-        ref: data.transactionReference,
-        onSuccess: (transaction) => {
-          const primaryReference = data.paymentReferences[0];
-          router.push(`/confirmation?reference=${primaryReference}&session=${data.checkoutSessionId}`);
-          toast.success('Payment successful!', { duration: 4000 });
-          if (typeof window !== 'undefined' && window.gtag) {
-            window.gtag('event', 'checkout_complete', { transactionId: transaction.reference });
-          }
-        },
-        onCancel: () => {
-          setError('Payment cancelled');
-          toast.error('Payment cancelled', { duration: 4000 });
-        },
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/checkout`, {
+        method: 'POST',
+        headers: { 'x-guest-id': patientIdentifier },
+        body: formData,
       });
-    }
-  } catch (err) {
-    setError(err.message || 'Invalid transaction parameters');
-    toast.error(err.message || 'Invalid transaction parameters', { duration: 4000 });
-  } finally {
-    setLoading(false);
-  }
-};
 
-const handleResumeCheckout = async (orderId) => {
-  setError(null);
-  setPendingMessage(null);
-  setLoading(true);
-  try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/checkout/resume/${orderId}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-guest-id': patientIdentifier,
-      },
-      body: JSON.stringify({ email: form.email }),
-    });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Checkout failed: ${errorData.message || response.statusText}`);
+      }
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(`Resume checkout failed: ${errorData.message || response.statusText}`);
-    }
+      const data = await response.json();
+      console.log('Checkout response:', data);
+      const hasPrescriptionOrders = data.orders.some(order => order.status === 'pending_prescription');
+      const hasPayableOrders = data.paymentReferences && data.paymentReferences.length > 0 && data.paymentUrl;
 
-    const data = await response.json();
-    console.log('Resume checkout response:', data); // Debug log
-    if (!data.paymentReferences || !data.paymentReferences.length || !data.paymentUrl) {
-      throw new Error('Payment references or URL not provided');
-    }
+      let message = '';
+      if (hasPayableOrders && hasPrescriptionOrders) {
+        message = 'Proceeding to payment for over-the-counter and verified prescription items. Unverified prescription items are awaiting verification.';
+      } else if (hasPayableOrders) {
+        message = 'Proceeding to payment for your order.';
+      } else if (hasPrescriptionOrders) {
+        message = 'Your prescription has been submitted for verification. You will be notified via email to complete payment.';
+      }
 
-    if (typeof window.PaystackPop === 'undefined') {
-      throw new Error('PaystackPop not loaded');
-    }
+      setPendingMessage(message);
 
-    const paystack = new window.PaystackPop();
-    paystack.newTransaction({
-      key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
-      email: form.email,
-      amount: data.orders
-        ? data.orders.reduce((sum, order) => sum + order.totalPrice, 0) * 100
-        : cart.totalPrice * 100,
-      ref: data.transactionReference,
-      onSuccess: (transaction) => {
-        const primaryReference = data.paymentReferences[0];
-        router.push(`/confirmation?reference=${primaryReference}&session=${data.checkoutSessionId}`);
-        toast.success('Payment successful!', { duration: 4000 });
-        if (typeof window !== 'undefined' && window.gtag) {
-          window.gtag('event', 'resume_checkout_complete', { transactionId: transaction.reference });
+      if (hasPayableOrders) {
+        if (typeof window.PaystackPop === 'undefined') {
+          throw new Error('PaystackPop not loaded');
         }
-      },
-      onCancel: () => {
-        setError('Payment cancelled');
-        toast.error('Payment cancelled', { duration: 4000 });
-      },
-    });
-  } catch (err) {
-    setError(err.message || 'Failed to resume checkout');
-    toast.error(err.message || 'Failed to resume checkout', { duration: 4000 });
-  } finally {
-    setLoading(false);
-  }
-};
+
+        const paystack = new window.PaystackPop();
+        paystack.newTransaction({
+          key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
+          email: form.email,
+          amount: data.orders
+            .filter(order => order.status === 'pending')
+            .reduce((sum, order) => sum + order.totalPrice, 0) * 100,
+          ref: data.transactionReference,
+          onSuccess: (transaction) => {
+            const primaryReference = data.paymentReferences[0];
+            router.push(`/confirmation?reference=${primaryReference}&session=${data.checkoutSessionId}`);
+            toast.success('Payment successful!', { duration: 4000 });
+            if (typeof window !== 'undefined' && window.gtag) {
+              window.gtag('event', 'checkout_complete', { transactionId: transaction.reference });
+            }
+          },
+          onCancel: () => {
+            setError('Payment cancelled');
+            toast.error('Payment cancelled', { duration: 4000 });
+          },
+        });
+      }
+    } catch (err) {
+      setError(mapErrorMessage(err.message));
+      toast.error(mapErrorMessage(err.message), { duration: 4000 });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const calculateItemPrice = (item) => item.quantity * item.price;
 
@@ -326,9 +297,13 @@ const handleResumeCheckout = async (orderId) => {
           <h1 className="text-4xl sm:text-5xl font-extrabold text-primary mb-8 text-center tracking-tight animate-in slide-in-from-top-10 duration-700">
             Checkout
           </h1>
-          <ErrorMessage error={error} />
+          <ErrorMessage error={error} onReupload={() => fileInputRef.current.click()} />
           <PendingMessage message={pendingMessage} />
-          {cart.pharmacies.length === 0 && !error && !resumeOrderId ? (
+          {loading && cart.pharmacies.length === 0 ? (
+            <div className="flex justify-center items-center h-64">
+              <Loader2 className="h-12 w-12 text-primary animate-spin" aria-label="Loading checkout" />
+            </div>
+          ) : cart.pharmacies.length === 0 && !error ? (
             <EmptyCart />
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -340,6 +315,7 @@ const handleResumeCheckout = async (orderId) => {
                 prescriptionFile={prescriptionFile}
                 confirmCheckout={confirmCheckout}
                 loading={loading}
+                prescriptionStatuses={prescriptionStatuses}
               />
               <PrescriptionUploadDialog
                 showUploadDialog={showUploadDialog}
@@ -348,7 +324,7 @@ const handleResumeCheckout = async (orderId) => {
                 setPrescriptionFile={setPrescriptionFile}
                 fileInputRef={fileInputRef}
               />
-              <OrderSummary cart={cart} calculateItemPrice={calculateItemPrice} />
+              <OrderSummary cart={cart} calculateItemPrice={calculateItemPrice} prescriptionStatuses={prescriptionStatuses} />
               <CheckoutForm
                 form={form}
                 setForm={setForm}
@@ -357,7 +333,8 @@ const handleResumeCheckout = async (orderId) => {
                 handleDeliveryMethodChange={handleDeliveryMethodChange}
                 handleCheckout={handleCheckout}
                 requiresUpload={requiresUpload}
-                resumeOrderId={resumeOrderId}
+                prescriptionStatuses={prescriptionStatuses}
+                prescriptionFile={prescriptionFile}
                 fileInputRef={fileInputRef}
                 cart={cart}
                 getUniquePharmacyAddresses={getUniquePharmacyAddresses}

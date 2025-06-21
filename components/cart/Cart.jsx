@@ -8,7 +8,7 @@ import ErrorMessage from '@/components/ErrorMessage';
 import EmptyCart from './EmptyCart';
 import RemoveItemDialog from './RemoveItemDialog';
 import QuantityUpdateDialog from './QuantityUpdateDialog';
-const PharmacyCartCard = dynamic(() => import('./PharmacyCartCard'), { ssr: false });
+import PharmacyCartCard from './PharmacyCartCard';
 import CartSummary from './CartSummary';
 
 export default function Cart() {
@@ -16,11 +16,22 @@ export default function Cart() {
   const [removeItem, setRemoveItem] = useState(null);
   const [quantityUpdate, setQuantityUpdate] = useState(null);
   const [isUpdating, setIsUpdating] = useState({});
+  const [isFetched, setIsFetched] = useState(false); // Track fetch completion
   const router = useRouter();
   const { cart, fetchCart, guestId } = useCart();
 
   useEffect(() => {
-    fetchCart();
+    async function loadCart() {
+      try {
+        await fetchCart();
+      } catch (err) {
+        setError(err.message);
+        toast.error(err.message, { duration: 4000 });
+      } finally {
+        setIsFetched(true);
+      }
+    }
+    loadCart();
   }, [fetchCart]);
 
   const handleQuantityChange = async (orderItemId, newQuantity, itemName) => {
@@ -95,7 +106,7 @@ export default function Cart() {
           Your Cart
         </h1>
         <ErrorMessage error={error} />
-        {cart.pharmacies.length === 0 ? (
+        {!isFetched ? null : cart.pharmacies.length === 0 ? (
           <EmptyCart />
         ) : (
           <div className="space-y-6">
