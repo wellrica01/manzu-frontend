@@ -11,7 +11,7 @@ export function useBooking() {
     queryFn: async () => {
       console.log('Fetching bookings for guestId:', guestId);
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/test/bookings`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/booking`, {
           headers: { 'x-guest-id': guestId },
         });
         if (!response.ok) {

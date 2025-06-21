@@ -115,7 +115,7 @@ export default function TestSearchBar() {
     }
     try {
       setIsLoadingSuggestions(true);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/test-suggestions?q=${encodeURIComponent(query)}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tests/test-suggestions?q=${encodeURIComponent(query)}`);
       if (!response.ok) throw new Error('Failed to fetch suggestions');
       const data = await response.json();
       setSuggestions(data);
@@ -143,7 +143,7 @@ export default function TestSearchBar() {
       if (filterLga) queryParams.append('lga', filterLga);
       if (filterWard) queryParams.append('ward', filterWard);
       queryParams.append('sortBy', sortBy);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/test/tests?${queryParams.toString()}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tests/search?${queryParams.toString()}`);
       if (!response.ok) throw new Error('Search failed');
       const data = await response.json();
       setResults(data);
@@ -173,7 +173,7 @@ export default function TestSearchBar() {
       if (filterLga) queryParams.append('lga', filterLga);
       if (filterWard) queryParams.append('ward', filterWard);
       queryParams.append('sortBy', sortBy);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/test/tests?${queryParams.toString()}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tests/search?${queryParams.toString()}`);
       if (!response.ok) throw new Error('Search failed');
       const data = await response.json();
       setResults(data);
@@ -186,7 +186,6 @@ export default function TestSearchBar() {
   };
 
   const handleAddToBooking = async (testId, labId, testName) => {
-    const quantity = 1;
     const itemKey = `${testId}-${labId}`;
     try {
       if (!testId || !labId) throw new Error('Invalid test or lab');
@@ -196,17 +195,16 @@ export default function TestSearchBar() {
         {
           labTestTestId: testId,
           labTestLabId: labId,
-          quantity,
           test: { displayName: testName },
         },
       ]);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/test/bookings/add`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/booking/add`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'x-guest-id': guestId,
         },
-        body: JSON.stringify({ testId, labId, quantity }),
+        body: JSON.stringify({ testId, labId }),
       });
       if (!response.ok) {
         const errorData = await response.json();
