@@ -4,8 +4,8 @@ import { Suspense } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import TestSearchBar from '@/components/search/TestSearchBar';
-import TestOrderUploadForm from '@/components/TestOrderUploadForm';
+import TestSearchBar from '@/components/lab/search/TestSearchBar';
+import TestOrderUploadForm from '@/components/lab/TestOrderUploadForm';
 
 export default function TestPage() {
   return (

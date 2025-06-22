@@ -1,27 +1,28 @@
 'use client';
+
 import { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { toast } from 'sonner';
-import { Card } from '../ui/card';
-import { useCart } from '@/hooks/useCart';
-import SearchInput from './SearchInput';
-import FilterControls from './FilterControls';
-const MedicationCard = dynamic(() => import('./MedicationCard'), { ssr: false });
-import CartDialog from './CartDialog';
+import { Card } from '@/components/ui/card';
+import { useBooking } from '@/hooks/useBooking';
+import SearchInput from '../../med/search/SearchInput';
+import FilterControls from '../../med/search/FilterControls';
+const TestCard = dynamic(() => import('./TestCard'), { ssr: false });
+import BookingDialog from './BookingDialog';
 import ErrorMessage from '@/components/ErrorMessage';
 
-export default function SearchBar() {
+export default function TestSearchBar() {
   const [searchTerm, setSearchTerm] = useState('');
   const [results, setResults] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
   const [error, setError] = useState(null);
-  const [cartItems, setCartItems] = useState([]);
+  const [bookingItems, setBookingItems] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [userLocation, setUserLocation] = useState(null);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
-  const [isAddingToCart, setIsAddingToCart] = useState({});
+  const [isAddingToBooking, setIsAddingToBooking] = useState({});
   const [focusedSuggestionIndex, setFocusedSuggestionIndex] = useState(-1);
-  const [openCartDialog, setOpenCartDialog] = useState(false);
+  const [openBookingDialog, setOpenBookingDialog] = useState(false);
   const [lastAddedItem, setLastAddedItem] = useState(null);
   const [filterState, setFilterState] = useState('');
   const [filterLga, setFilterLga] = useState('');
@@ -36,7 +37,7 @@ export default function SearchBar() {
   const dropdownRef = useRef(null);
   const inputRef = useRef(null);
   const suggestionRefs = useRef([]);
-  const { cart, fetchCart, guestId } = useCart();
+  const { bookings, fetchBookings, guestId } = useBooking();
 
   useEffect(() => {
     fetch('/data/full.json')
@@ -88,15 +89,15 @@ export default function SearchBar() {
           });
         },
         () => {
-          toast.error('Unable to fetch location. Showing all pharmacies.');
+          toast.error('Unable to fetch location. Showing all labs.');
         }
       );
     }
   }, []);
 
   useEffect(() => {
-    setCartItems(cart.pharmacies?.flatMap(p => p.items) || []);
-  }, [cart]);
+    setBookingItems(bookings.labs?.flatMap(l => l.items) || []);
+  }, [bookings]);
 
   useEffect(() => {
     const debounce = setTimeout(() => {
@@ -114,7 +115,7 @@ export default function SearchBar() {
     }
     try {
       setIsLoadingSuggestions(true);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/medication-suggestions?q=${encodeURIComponent(query)}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tests/test-suggestions?q=${encodeURIComponent(query)}`);
       if (!response.ok) throw new Error('Failed to fetch suggestions');
       const data = await response.json();
       setSuggestions(data);
@@ -142,13 +143,13 @@ export default function SearchBar() {
       if (filterLga) queryParams.append('lga', filterLga);
       if (filterWard) queryParams.append('ward', filterWard);
       queryParams.append('sortBy', sortBy);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/search?${queryParams.toString()}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tests/search?${queryParams.toString()}`);
       if (!response.ok) throw new Error('Search failed');
       const data = await response.json();
       setResults(data);
       setShowDropdown(false);
       setFocusedSuggestionIndex(-1);
-      await fetchCart();
+      await fetchBookings();
     } catch (err) {
       setError(err.message);
       setResults([]);
@@ -156,13 +157,13 @@ export default function SearchBar() {
     }
   };
 
-  const handleSelectMedication = async (med) => {
-    setSearchTerm(med.displayName);
+  const handleSelectTest = async (test) => {
+    setSearchTerm(test.displayName);
     setShowDropdown(false);
     setFocusedSuggestionIndex(-1);
     try {
       setError(null);
-      const queryParams = new URLSearchParams({ medicationId: med.id });
+      const queryParams = new URLSearchParams({ testId: test.id });
       if (userLocation) {
         queryParams.append('lat', userLocation.lat);
         queryParams.append('lng', userLocation.lng);
@@ -172,11 +173,11 @@ export default function SearchBar() {
       if (filterLga) queryParams.append('lga', filterLga);
       if (filterWard) queryParams.append('ward', filterWard);
       queryParams.append('sortBy', sortBy);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/search?${queryParams.toString()}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tests/search?${queryParams.toString()}`);
       if (!response.ok) throw new Error('Search failed');
       const data = await response.json();
       setResults(data);
-      await fetchCart();
+      await fetchBookings();
     } catch (err) {
       setError(err.message);
       setResults([]);
@@ -184,64 +185,61 @@ export default function SearchBar() {
     }
   };
 
-  const handleAddToCart = async (medicationId, pharmacyId, medicationName) => {
-    const quantity = 1;
-    const itemKey = `${medicationId}-${pharmacyId}`;
+  const handleAddToBooking = async (testId, labId, testName) => {
+    const itemKey = `${testId}-${labId}`;
     try {
-      if (!medicationId || !pharmacyId) throw new Error('Invalid medication or pharmacy');
-      setIsAddingToCart(prev => ({ ...prev, [itemKey]: true }));
-      setCartItems(prev => [
+      if (!testId || !labId) throw new Error('Invalid test or lab');
+      setIsAddingToBooking(prev => ({ ...prev, [itemKey]: true }));
+      setBookingItems(prev => [
         ...prev,
         {
-          pharmacyMedicationMedicationId: medicationId,
-          pharmacyMedicationPharmacyId: pharmacyId,
-          quantity,
-          medication: { displayName: medicationName },
+          labTestTestId: testId,
+          labTestLabId: labId,
+          test: { displayName: testName },
         },
       ]);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart/add`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/booking/add`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'x-guest-id': guestId,
         },
-        body: JSON.stringify({ medicationId, pharmacyId, quantity }),
+        body: JSON.stringify({ testId, labId }),
       });
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to add to cart');
+        throw new Error(errorData.message || 'Failed to add to booking');
       }
-      setLastAddedItem(medicationName);
-      setOpenCartDialog(true);
+      setLastAddedItem(testName);
+      setOpenBookingDialog(true);
       if (typeof window !== 'undefined' && window.gtag) {
-        window.gtag('event', 'add_to_cart', { medicationId, pharmacyId });
+        window.gtag('event', 'add_to_booking', { testId, labId });
       }
-      await fetchCart();
+      await fetchBookings();
     } catch (err) {
       toast.error(`Error: ${err.message}`);
-      setCartItems(prev => prev.filter(item => 
-        !(item.pharmacyMedicationMedicationId === medicationId && 
-          item.pharmacyMedicationPharmacyId === pharmacyId)
+      setBookingItems(prev => prev.filter(item => 
+        !(item.labTestTestId === testId && item.labTestLabId === labId)
       ));
     } finally {
-      setIsAddingToCart(prev => ({ ...prev, [itemKey]: false }));
+      setIsAddingToBooking(prev => ({ ...prev, [itemKey]: false }));
     }
   };
 
-  const isInCart = (medicationId, pharmacyId) => {
-    if (!Array.isArray(cartItems)) return false;
-    return cartItems.some(
+  const isInBooking = (testId, labId) => {
+    if (!Array.isArray(bookingItems)) return false;
+    return bookingItems.some(
       (item) =>
-        item.pharmacyMedicationMedicationId === medicationId &&
-        item.pharmacyMedicationPharmacyId === pharmacyId
+        item.labTestTestId === testId &&
+        item.labTestLabId === labId
     );
   };
 
   return (
     <div className="space-y-6 p-6">
-      <CartDialog
-        openCartDialog={openCartDialog}
-        setOpenCartDialog={setOpenCartDialog}
+      <BookingDialog
+        openBookingDialog={openBookingDialog}
+        setOpenBookingDialog={setOpenBookingDialog}
         lastAddedItem={lastAddedItem}
       />
       <SearchInput
@@ -256,7 +254,7 @@ export default function SearchBar() {
         focusedSuggestionIndex={focusedSuggestionIndex}
         setFocusedSuggestionIndex={setFocusedSuggestionIndex}
         handleSearch={handleSearch}
-        handleSelectMedication={handleSelectMedication}
+        handleSelectMedication={handleSelectTest}
         dropdownRef={dropdownRef}
         inputRef={inputRef}
         suggestionRefs={suggestionRefs}
@@ -288,24 +286,24 @@ export default function SearchBar() {
           <Card className="shadow-xl border border-gray-100/50 rounded-2xl text-center py-10 bg-gradient-to-br from-white to-gray-50 backdrop-blur-sm">
             <div className="absolute top-0 left-0 w-12 h-12 bg-primary/20 rounded-br-full" />
             <p className="text-gray-600 text-xl font-medium">
-              No medications found for "{searchTerm}"
+              No tests found for "{searchTerm}"
             </p>
           </Card>
         ) : results.length === 0 && !searchTerm ? (
           <Card className="shadow-xl border border-gray-100/50 rounded-2xl text-center py-10 bg-gradient-to-br from-white to-gray-50 backdrop-blur-sm">
             <div className="absolute top-0 left-0 w-12 h-12 bg-primary/20 rounded-br-full" />
             <p className="text-gray-600 text-xl font-medium">
-              Enter a medication name to compare pharmacies
+              Enter a test name to compare labs
             </p>
           </Card>
         ) : (
-          results.map((med) => (
-            <MedicationCard
-              key={med.id}
-              med={med}
-              handleAddToCart={handleAddToCart}
-              isInCart={isInCart}
-              isAddingToCart={isAddingToCart}
+          results.map((test) => (
+            <TestCard
+              key={test.id}
+              test={test}
+              handleAddToBooking={handleAddToBooking}
+              isInBooking={isInBooking}
+              isAddingToBooking={isAddingToBooking}
             />
           ))
         )}

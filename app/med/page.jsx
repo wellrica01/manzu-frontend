@@ -4,8 +4,8 @@ import { Suspense } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import SearchBar from '@/components/search/MedSearchBar';
-import PrescriptionUploadForm from '@/components/PrescriptionUploadForm';
+import SearchBar from '@/components/med/search/MedSearchBar';
+import PrescriptionUploadForm from '@/components/med/PrescriptionUploadForm';
 
 export default function MedPage() {
   return (

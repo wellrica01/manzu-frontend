@@ -1,4 +1,4 @@
-import MedLayout from '@/components/MedLayout';
+import MedLayout from '@/components/med/MedLayout';
 
 export const metadata = {
   title: 'Manzu - Medication Services',

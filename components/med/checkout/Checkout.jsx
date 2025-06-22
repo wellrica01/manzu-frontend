@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { getGuestId } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
 import ErrorMessage from '@/components/ErrorMessage';
-import EmptyCart from '@/components/cart/EmptyCart';
+import EmptyCart from '@/components/med/cart/EmptyCart';
 import PendingMessage from './PendingMessage';
 import CheckoutDialog from './CheckoutDialog';
 import PrescriptionUploadDialog from './PrescriptionUploadDialog';

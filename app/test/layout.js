@@ -1,4 +1,4 @@
-import TestLayout from '@/components/TestLayout';
+import TestLayout from '@/components/lab/TestLayout';
 
 export const metadata = {
   title: 'Manzu - Test Services',
