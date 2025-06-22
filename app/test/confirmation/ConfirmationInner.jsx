@@ -37,7 +37,7 @@ export default function ConfirmationInner() {
       const query = new URLSearchParams();
       query.append('session', session);
       if (reference) query.append('reference', reference);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/booking/confirmation?${query.toString()}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/test-confirmation?${query.toString()}`, {
         headers: { 'x-guest-id': guestId },
       });
       if (!response.ok) {
@@ -76,15 +76,15 @@ export default function ConfirmationInner() {
     }
   }, [reference, session]);
 
-  const calculateItemPrice = (item) => item.quantity * item.price;
+  const calculateItemPrice = (item) => item.price;
 
   const handleBackToHome = () => {
-    router.push('/');
+    router.push('/test');
   };
 
   const handleTrackBooking = () => {
     if (confirmationData.trackingCode) {
-      router.push(`/track?trackingCode=${encodeURIComponent(confirmationData.trackingCode)}`);
+      router.push(`/test/track?trackingCode=${encodeURIComponent(confirmationData.trackingCode)}`);
     } else {
       toast.error('Tracking code not available.', { duration: 4000 });
     }
@@ -109,7 +109,7 @@ export default function ConfirmationInner() {
               variant="outline"
               className="mt-4 h-10 px-4 rounded-full border-primary text-primary hover:bg-primary/10"
             >
-              <Link href="/status-check">Check Status</Link>
+              <Link href="/test/status-check">Check Status</Link>
             </Button>
           </Card>
         </div>
@@ -150,11 +150,9 @@ export default function ConfirmationInner() {
                     {booking.items.map((item) => (
                       <div key={item.id} className="mt-2">
                         <p className="text-gray-900 text-sm font-medium">{item.test.name}</p>
-                        <p className="text-gray-600 text-sm">Quantity: {item.quantity}</p>
-                        <p className="text-gray-600 text-sm">Total: ₦{calculateItemPrice(item).toLocaleString()}</p>
+                        <p className="text-gray-600 text-sm">Price: ₦{calculateItemPrice(item).toLocaleString()}</p>
                       </div>
                     ))}
-                    <p className="text-gray-900 text-base font-semibold mt-2">Booking Total: ₦{booking.totalPrice.toLocaleString()}</p>
                   </div>
                 ))}
                 <p className="text-lg font-extrabold text-primary mt-4">Subtotal: ₦{lab.subtotal.toLocaleString()}</p>

@@ -10,28 +10,28 @@ import { cn, getGuestId } from '@/lib/utils';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import TestCard from './TestCard';
-import { useCart } from '@/hooks/useCart';
+import { useBooking } from '@/hooks/useBooking';
 
-export default function GuestTestPage() {
+export default function GuestTest() {
   const [tests, setTests] = useState([]);
   const [testOrderMetadata, setTestOrderMetadata] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [cartItems, setCartItems] = useState([]);
+  const [bookingItems, setBookingItems] = useState([]);
   const [userLocation, setUserLocation] = useState(null);
-  const [openCartDialog, setOpenCartDialog] = useState(false);
+  const [openBookingDialog, setOpenBookingDialog] = useState(false);
   const [lastAddedItem, setLastAddedItem] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const [showTestImage, setShowTestImage] = useState(null);
   const { patientIdentifier } = useParams();
-  const { cart, fetchCart, guestId } = useCart();
+  const { bookings, fetchBookings, guestId } = useBooking();
 
   useEffect(() => {
     if (typeof window !== 'undefined' && window.gtag) {
       window.gtag('event', 'page_view', {
         page_title: 'Guest Tests',
-        page_path: `/guest-test/${patientIdentifier}`,
+        page_path: `/test/guest-test/${patientIdentifier}`,
       });
     }
   }, [patientIdentifier]);
@@ -62,7 +62,7 @@ export default function GuestTestPage() {
         queryParams.append('lng', userLocation.lng);
         queryParams.append('radius', '10');
       }
-      const url = `${process.env.NEXT_PUBLIC_API_URL}/api/test-order/guest-order/${patientIdentifier}?${queryParams.toString()}`;
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/api/test-order/guest-test/${patientIdentifier}?${queryParams.toString()}`;
       const response = await fetch(url, {
         headers: { 'x-guest-id': guestId },
       });
@@ -90,52 +90,50 @@ export default function GuestTestPage() {
   useEffect(() => {
     if (patientIdentifier && (userLocation || error)) {
       fetchGuestTestOrder();
-      fetchCart();
-      setCartItems(cart.labs?.flatMap(l => l.items) || []);
+      fetchBookings();
+      setBookingItems(bookings.labs?.flatMap(l => l.items) || []);
     }
-  }, [patientIdentifier, userLocation, error, fetchCart, cart]);
+  }, [patientIdentifier, userLocation, error, fetchBookings, bookings]);
 
-  const handleAddToCart = async (testId, labId, testName) => {
-    const quantity = 1;
+  const handleAddToBooking = async (testId, labId, testName) => {
     try {
-      setCartItems(prev => [
+      setBookingItems(prev => [
         ...prev,
         {
           labTestTestId: testId,
           labTestLabId: labId,
-          quantity,
           test: { name: testName },
         },
       ]);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart/add`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/booking/add`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'x-guest-id': guestId,
         },
-        body: JSON.stringify({ testId, labId, quantity }),
+        body: JSON.stringify({ testId, labId }),
       });
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to add to cart');
       }
       setLastAddedItem(testName);
-      setOpenCartDialog(true);
+      setOpenBookingDialog(true);
       if (typeof window !== 'undefined' && window.gtag) {
-        window.gtag('event', 'add_to_cart', { testId, labId });
+        window.gtag('event', 'add_to_booking', { testId, labId });
       }
-      await fetchCart();
+      await fetchBookings();
     } catch (err) {
       toast.error(`Error: ${err.message}`, { duration: 4000 });
-      setCartItems(prev => prev.filter(item =>
+      setBookingItems(prev => prev.filter(item =>
         !(item.labTestTestId === testId && item.labTestLabId === labId)
       ));
     }
   };
 
-  const isInCart = (testId, labId) => {
+  const isInBooking = (testId, labId) => {
     if (!Array.isArray(cartItems)) return false;
-    return cartItems.some(
+    return bookingItems.some(
       (item) => item.labTestTestId === testId && item.labTestLabId === labId
     );
   };
@@ -315,7 +313,7 @@ export default function GuestTestPage() {
           />
         </DialogContent>
       </Dialog>
-      <Dialog open={openCartDialog} onOpenChange={setOpenCartDialog}>
+      <Dialog open={openBookingDialog} onOpenChange={setOpenBookingDialog}>
         <DialogContent
           className="sm:max-w-md p-8 border border-gray-100/30 rounded-3xl bg-gradient-to-br from-white/90 to-gray-50/90 backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.2)] animate-in slide-in-from-top-10 fade-in-20 duration-300"
           onOpenAutoFocus={(e) => e.preventDefault()}
@@ -328,16 +326,16 @@ export default function GuestTestPage() {
               aria-hidden="true"
             />
             <DialogTitle className="text-2xl font-extrabold text-primary tracking-tight text-center">
-              Added to Cart!
+              Added to Booking!
             </DialogTitle>
           </DialogHeader>
           <p className="text-center text-gray-600 text-base font-medium mt-2">
-            <span className="font-semibold text-gray-900">{lastAddedItem}</span> is now in your cart.
+            <span className="font-semibold text-gray-900">{lastAddedItem}</span> is now in your booking.
           </p>
           <DialogFooter className="mt-8 flex justify-center gap-4">
             <Button
               variant="outline"
-              onClick={() => setOpenCartDialog(false)}
+              onClick={() => setOpenBookingDialog(false)}
               className="h-12 px-6 text-sm font-semibold rounded-full border-gray-200/50 text-gray-700 hover:bg-gray-100/50 hover:border-gray-300/50 hover:shadow-[0_0_10px_rgba(0,0,0,0.1)] transition-all duration-300"
               aria-label="Continue shopping"
             >
@@ -347,7 +345,7 @@ export default function GuestTestPage() {
               asChild
               className="h-12 px-6 text-sm font-semibold rounded-full bg-primary text-white hover:bg-primary/90 hover:shadow-[0_0_15px_rgba(59,130,246,0.5)] animate-pulse transition-all duration-300"
             >
-              <Link href="/lab/cart" aria-label="View cart">View Cart</Link>
+              <Link href="/lab/cart" aria-label="View cart">View Booking</Link>
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -380,8 +378,8 @@ export default function GuestTestPage() {
             <TestCard
               key={test.id}
               test={test}
-              handleAddToCart={handleAddToCart}
-              isInCart={isInCart}
+              handleAddToBooking={handleAddToBooking}
+              isInBooking={isInBooking}
               setShowTestImage={setShowTestImage}
             />
           ))
@@ -394,9 +392,9 @@ export default function GuestTestPage() {
               asChild
               className="w-full h-14 px-6 text-lg font-semibold rounded-2xl bg-primary text-white hover:bg-primary/90 hover:shadow-[0_0_20px_rgba(59,130,246,0.6)] animate-pulse disabled:opacity-50 disabled:cursor-not-allowed disabled:animate-none transition-all duration-300"
               disabled={cartItems.length === 0}
-              aria-label="View cart"
+              aria-label="View booking"
             >
-              <Link href="/lab/cart">View Cart</Link>
+              <Link href="/lab/booking">View Booking</Link>
             </Button>
             <Button
               variant="ghost"
@@ -410,7 +408,7 @@ export default function GuestTestPage() {
           {showInfo && (
             <Card className="shadow-md border border-gray-100/50 rounded-2xl bg-gray-50/90 backdrop-blur-sm p-4">
               <p className="text-base text-gray-600">
-                After adding tests to your cart, proceed to checkout to choose home collection or lab visit options and complete your secure payment. Your booking will be confirmed within 24 hours.
+                After adding tests to your booking, proceed to checkout to choose home collection or lab visit options and complete your secure payment. Your booking will be confirmed within 24 hours.
               </p>
             </Card>
           )}

@@ -93,7 +93,7 @@ export default function TestOrderUploadForm() {
 
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/testorder/upload`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/test-order/upload`,
         {
           method: 'POST',
           headers: { 'x-guest-id': patientIdentifier },

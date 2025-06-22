@@ -1,10 +1,9 @@
 import React from 'react';
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
-import { Info } from 'lucide-react';
 import LabCards from './LabCards';
 import LabTable from './LabTable';
 
-const TestCard = ({ test, handleAddToCart, isInCart, setShowTestImage }) => {
+const TestCard = ({ test, handleAddToBooking, isInBooking, setShowTestImage }) => {
   return (
     <Card
       className="relative shadow-2xl border border-gray-100/30 rounded-3xl overflow-hidden bg-gradient-to-br from-white/90 to-gray-50/90 backdrop-blur-md transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_10px_30px_rgba(59,130,246,0.2)] animate-in slide-in-from-top-10"
@@ -23,15 +22,6 @@ const TestCard = ({ test, handleAddToCart, isInCart, setShowTestImage }) => {
             )}
             <div className="relative group">
               <span className="text-sm text-gray-500">{test.description || 'Description N/A'}</span>
-            </div>
-            <div className="relative group flex items-center">
-              <span className="text-base font-medium text-gray-600">
-                Quantity: {test.quantity}
-              </span>
-              <Info className="h-4 w-4 text-primary/50 ml-1" aria-hidden="true" />
-              <div className="absolute z-10 hidden group-hover:block bg-gray-800 text-white text-sm rounded-lg p-2 mt-1 shadow-lg max-w-xs">
-                This is the recommended quantity. You can adjust it in the cart.
-              </div>
             </div>
           </div>
         </div>
@@ -55,16 +45,16 @@ const TestCard = ({ test, handleAddToCart, isInCart, setShowTestImage }) => {
         <LabCards
           availability={test.availability}
           testId={test.id}
-          handleAddToCart={handleAddToCart}
-          isInCart={isInCart}
+          handleAddToBooking={handleAddToBooking}
+          isInBooking={isInBooking}
           name={test.name}
         />
         {/* Desktop Lab Table */}
         <LabTable
           availability={test.availability}
           testId={test.id}
-          handleAddToCart={handleAddToCart}
-          isInCart={isInCart}
+          handleAddToBooking={handleAddToBooking}
+          isInBooking={isInBooking}
           name={test.name}
         />
       </CardContent>

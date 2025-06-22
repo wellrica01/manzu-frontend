@@ -37,7 +37,7 @@ export default function ConfirmationInner() {
       const query = new URLSearchParams();
       query.append('session', session);
       if (reference) query.append('reference', reference);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/confirmation?${query.toString()}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/med-confirmation?${query.toString()}`, {
         headers: { 'x-guest-id': guestId },
       });
       if (!response.ok) {
@@ -79,12 +79,12 @@ export default function ConfirmationInner() {
   const calculateItemPrice = (item) => item.quantity * item.price;
 
   const handleBackToHome = () => {
-    router.push('/');
+    router.push('/med');
   };
 
   const handleTrackOrder = () => {
     if (confirmationData.trackingCode) {
-      router.push(`/track?trackingCode=${encodeURIComponent(confirmationData.trackingCode)}`);
+      router.push(`/med/track?trackingCode=${encodeURIComponent(confirmationData.trackingCode)}`);
     } else {
       toast.error('Tracking code not available.', { duration: 4000 });
     }
@@ -109,7 +109,7 @@ export default function ConfirmationInner() {
               variant="outline"
               className="mt-4 h-10 px-4 rounded-full border-primary text-primary hover:bg-primary/10"
             >
-              <Link href="/status-check">Check Status</Link>
+              <Link href="/med/status-check">Check Status</Link>
             </Button>
           </Card>
         </div>

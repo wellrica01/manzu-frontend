@@ -1,7 +1,7 @@
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 import LabItems from './LabItems';
 
-const BookingSummary = ({ cart, calculateItemPrice, testOrderStatuses }) => {
+const BookingSummary = ({ bookings, calculateItemPrice, testOrderStatuses }) => {
   return (
     <Card
       className="shadow-2xl border border-gray-100/30 rounded-3xl overflow-hidden bg-gradient-to-br from-white/90 to-gray-50/90 backdrop-blur-md transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_10px_30px_rgba(59,130,246,0.2)]"
@@ -13,10 +13,10 @@ const BookingSummary = ({ cart, calculateItemPrice, testOrderStatuses }) => {
         </CardTitle>
       </CardHeader>
       <CardContent className="p-6 sm:p-8">
-        <LabItems cart={cart} calculateItemPrice={calculateItemPrice} testOrderStatuses={testOrderStatuses} />
+        <LabItems bookings={bookings} calculateItemPrice={calculateItemPrice} testOrderStatuses={testOrderStatuses} />
         <div className="text-right">
           <p className="text-xl font-extrabold text-primary">
-            Total: ₦{cart.totalPrice.toLocaleString()}
+            Total: ₦{bookings.totalPrice.toLocaleString()}
           </p>
         </div>
       </CardContent>

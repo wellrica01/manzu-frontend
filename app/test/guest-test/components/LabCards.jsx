@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-const LabCards = ({ availability, testId, handleAddToCart, isInCart, name }) => {
+const LabCards = ({ availability, testId, handleAddToBooking, isInBooking, name }) => {
   if (!availability || availability.length === 0) {
     return (
       <p className="text-gray-500 text-base italic p-4 block sm:hidden">
@@ -42,17 +42,17 @@ const LabCards = ({ availability, testId, handleAddToCart, isInCart, name }) => 
               </p>
               <Button
                 id={`add-to-cart-${testId}-${avail.labId}`}
-                onClick={() => handleAddToCart(testId, avail.labId, name)}
-                disabled={isInCart(testId, avail.labId)}
+                onClick={() => handleAddToBooking(testId, avail.labId, name)}
+                disabled={isInBooking(testId, avail.labId)}
                 className={cn(
                   'h-8 px-3 text-sm rounded-full',
-                  isInCart(testId, avail.labId)
+                  isInBooking(testId, avail.labId)
                     ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
                     : 'bg-primary text-white hover:bg-primary/90'
                 )}
-                aria-label={isInCart(testId, avail.labId) ? 'Added to cart' : 'Add to cart'}
+                aria-label={isInBooking(testId, avail.labId) ? 'Added to booking' : 'Add to booking'}
               >
-                {isInCart(testId, avail.labId) ? 'Added' : 'Add'}
+                {isInBooking(testId, avail.labId) ? 'Added' : 'Add'}
               </Button>
             </div>
             {avail.address && (

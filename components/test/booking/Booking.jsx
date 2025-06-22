@@ -59,7 +59,7 @@ export default function Booking() {
   };
 
   const handleConfirm = () => {
-    router.push('/test/confirm');
+    router.push('/test/checkout');
   };
 
   const calculateItemPrice = (item) => item.price;

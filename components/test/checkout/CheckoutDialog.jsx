@@ -6,7 +6,7 @@ import { Loader2, CheckCircle } from 'lucide-react';
 const CheckoutDialog = ({
   showCheckoutDialog,
   setShowCheckoutDialog,
-  cart,
+  bookings,
   requiresUpload,
   testOrderFile,
   confirmCheckout,
@@ -14,8 +14,8 @@ const CheckoutDialog = ({
   testOrderStatuses,
 }) => {
   const itemsWithStatus = useMemo(() => {
-    if (!cart.labs || !Array.isArray(cart.labs)) return [];
-    const bookingItems = cart.labs.flatMap(lab => lab.items || []);
+    if (!bookings.labs || !Array.isArray(bookings.labs)) return [];
+    const bookingItems = bookings.labs.flatMap(lab => lab.items || []);
     return bookingItems
       .filter(item => item && item.test && item.labTestTestId)
       .map(item => {
@@ -30,11 +30,11 @@ const CheckoutDialog = ({
           status,
         };
       });
-  }, [cart.labs, testOrderStatuses]);
+  }, [bookings.labs, testOrderStatuses]);
 
   const payableTotal = itemsWithStatus
     .filter(item => item.isPayable)
-    .reduce((sum, item) => sum + item.quantity * item.price, 0);
+    .reduce((sum, item) => sum + item.price, 0);
   const hasPendingItems = itemsWithStatus.some(item => !item.isPayable);
   const hasItems = itemsWithStatus.length > 0;
 
@@ -67,7 +67,7 @@ const CheckoutDialog = ({
                       .filter(item => item.isPayable)
                       .map(item => (
                         <li key={item.id}>
-                          {item.test.name} (Qty: {item.quantity}) -{' '}
+                          {item.test.name}
                           <span className="text-green-600">{item.status}</span>
                         </li>
                       ))}
@@ -82,7 +82,7 @@ const CheckoutDialog = ({
                       .filter(item => !item.isPayable)
                       .map(item => (
                         <li key={item.id}>
-                          {item.test.name} (Qty: {item.quantity}) -{' '}
+                          {item.test.name}
                           <span className="text-gray-500">{item.status}</span>
                         </li>
                       ))}
@@ -90,7 +90,7 @@ const CheckoutDialog = ({
                   <p className="text-sm text-gray-500 mt-2">
                     Verification takes 24-48 hours. You’ll be notified by email when ready. Track progress on the{' '}
                     <a
-                      href="/"
+                      href="/test"
                       className="text-primary hover:text-primary/80 font-semibold underline"
                       aria-label="Track test order status"
                     >
@@ -106,7 +106,7 @@ const CheckoutDialog = ({
               )}
             </>
           ) : (
-            <p>Please review your cart as no items are available for checkout.</p>
+            <p>Please review your booking as no items are available for checkout.</p>
           )}
         </div>
         <DialogFooter className="flex flex-col sm:flex-row gap-4 justify-center">

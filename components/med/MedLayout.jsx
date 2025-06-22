@@ -41,14 +41,14 @@ export default function MedLayout({ children }) {
           </Link>
           <div className="hidden md:flex items-center gap-10">
             <Link
-              href="/"
+              href="/med"
               className="text-lg font-semibold text-primary hover:text-primary/80 hover:bg-primary/10 px-4 py-2 rounded-full transition-all duration-200"
               aria-label="Home"
             >
               Home
             </Link>
             <Link
-              href="/status-check"
+              href="/med/status-check"
               className="text-lg font-semibold text-primary hover:text-primary/80 hover:bg-primary/10 px-4 py-2 rounded-full transition-all duration-200"
               aria-label="Check Prescription Status"
             >
@@ -101,7 +101,7 @@ export default function MedLayout({ children }) {
               </SheetHeader>
               <div className="flex flex-col gap-3 mt-10 px-4">
                 <Link
-                  href="/"
+                  href="/med"
                   className="text-lg font-semibold text-primary hover:bg-primary/10 px-4 py-3 rounded-full transition-all duration-200"
                   aria-label="Home"
                   onClick={() => setIsOpen(false)}
@@ -109,7 +109,7 @@ export default function MedLayout({ children }) {
                   Home
                 </Link>
                 <Link
-                  href="/status-check"
+                  href="/med/status-check"
                   className="text-lg font-semibold text-primary hover:bg-primary/10 px-4 py-3 rounded-full transition-all duration-200"
                   aria-label="Check Prescription Status"
                   onClick={() => setIsOpen(false)}

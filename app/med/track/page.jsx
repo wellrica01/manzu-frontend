@@ -39,13 +39,13 @@ export default function Track() {
       setError(null);
       setOrders([]);
       setLoading(true);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/track?trackingCode=${encodeURIComponent(trackingCode)}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/med-track?trackingCode=${encodeURIComponent(trackingCode)}`);
       if (!response.ok) {
         const errorData = await response.json();
         const errorMsg = errorData.message === 'Orders not found or prescription still under review' ? (
           <>
             Orders not found or not ready for tracking. Please check your tracking code or{' '}
-            <Link href="/status-check" className="text-blue-600 underline">check order status</Link>.
+            <Link href="/med/status-check" className="text-blue-600 underline">check order status</Link>.
           </>
         ) : errorData.message;
         setError(errorMsg);
@@ -88,7 +88,7 @@ export default function Track() {
   };
 
   const handleBackToHome = () => {
-    router.push('/');
+    router.push('/med');
   };
 
   const getStatusProgress = (status) => {
@@ -151,7 +151,7 @@ export default function Track() {
             {error.includes('not ready for tracking') && (
               <p className="text-gray-600 text-sm mt-2">
                 Try checking your order status with your email or phone number on the{' '}
-                <Link href="/status-check" className="text-blue-600 underline">Status Check</Link> page.
+                <Link href="/med/status-check" className="text-blue-600 underline">Status Check</Link> page.
               </p>
             )}
           </Card>

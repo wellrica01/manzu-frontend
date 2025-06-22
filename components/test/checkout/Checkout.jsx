@@ -6,17 +6,17 @@ import { toast } from 'sonner';
 import { getGuestId } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
 import ErrorMessage from '@/components/ErrorMessage';
-import EmptyCart from '@/components/lab/cart/EmptyCart';
+import EmptyBooking from '@/components/test/booking//EmptyBooking';
 import PendingMessage from './PendingMessage';
 import CheckoutDialog from './CheckoutDialog';
 import TestOrderUploadDialog from './TestOrderUploadDialog';
 import CheckoutForm from './CheckoutForm';
 import dynamic from 'next/dynamic';
-import { useCart } from '@/hooks/useCart';
+import { useBooking } from '@/hooks/useBooking';
 const BookingSummary = dynamic(() => import('./BookingSummary'), { ssr: false });
 
 export default function Checkout() {
-  const [form, setForm] = useState({ name: '', email: '', phone: '', address: '', deliveryMethod: 'lab_visit' });
+  const [form, setForm] = useState({ name: '', email: '', phone: '', address: '', fulfillmentType: 'lab_visit' });
   const [testOrderFile, setTestOrderFile] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -28,7 +28,7 @@ export default function Checkout() {
   const [testOrderStatuses, setTestOrderStatuses] = useState({});
   const router = useRouter();
   const fileInputRef = useRef(null);
-  const { cart, fetchCart, guestId, isPending, isError } = useCart();
+  const { bookings, fetchBookings, guestId, isPending, isError } = useBooking();
 
   useEffect(() => {
     const id = getGuestId();
@@ -37,7 +37,7 @@ export default function Checkout() {
   }, []);
 
   useEffect(() => {
-    async function loadCartAndTestOrders() {
+    async function loadBookingAndTestOrders() {
       if (!patientIdentifier) {
         setError('Guest ID not found');
         toast.error('Guest ID not found', { duration: 4000 });
@@ -47,22 +47,22 @@ export default function Checkout() {
 
       try {
         setError(null);
-        console.log('loadCartAndTestOrders: cart state:', { cart, isPending, isError });
+        console.log('loadBookingAndTestOrders: booking state:', { bookings, isPending, isError });
 
         if (isPending) {
-          console.log('Cart query is pending, waiting...');
+          console.log('Booking query is pending, waiting...');
           return;
         }
 
         if (isError) {
-          throw new Error('Failed to fetch cart or invalid cart data');
+          throw new Error('Failed to fetch booking or invalid booking data');
         }
 
-        if (!cart || !Array.isArray(cart.labs)) {
+        if (!bookings || !Array.isArray(bookings.labs)) {
           throw new Error('Invalid cart data: missing or invalid labs');
         }
 
-        const bookingItems = cart.labs
+        const bookingItems = bookings.labs
           .flatMap(lab => lab.items || [])
           .filter(item => item && item.test && item.labTestTestId);
 
@@ -76,7 +76,7 @@ export default function Checkout() {
 
         if (orderRequiredIds.length > 0) {
           const validateResponse = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/booking/test-order/validate?patientIdentifier=${patientIdentifier}&testIds=${orderRequiredIds.join(',')}`
+            `${process.env.NEXT_PUBLIC_API_URL}/api/test-checkout/test-order/validate?patientIdentifier=${patientIdentifier}&testIds=${orderRequiredIds.join(',')}`
           );
           if (!validateResponse.ok) {
             const errorData = await validateResponse.json();
@@ -127,8 +127,8 @@ export default function Checkout() {
       }
     }
 
-    loadCartAndTestOrders();
-  }, [patientIdentifier, cart, isPending, isError]);
+    loadBookingAndTestOrders();
+  }, [patientIdentifier, bookings, isPending, isError]);
 
   const handleInputChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -148,10 +148,10 @@ export default function Checkout() {
     }
   };
 
-  const handleDeliveryMethodChange = (value) => {
-    setForm({ ...form, deliveryMethod: value, address: value === 'lab_visit' ? '' : form.address });
+  const handleFulfillmentTypeChange = (value) => {
+    setForm({ ...form, fulfillmentType: value, address: value === 'lab_visit' ? '' : form.address });
     if (value === 'lab_visit') {
-      const hasValidAddresses = cart.labs.every(lab => lab.lab?.address);
+      const hasValidAddresses = bookings.labs.every(lab => lab.lab?.address);
       if (!hasValidAddresses) {
         setError('One or more lab addresses are unavailable for lab visit. Please select home collection or contact support.');
         toast.error('One or more lab addresses are unavailable for lab visit', { duration: 4000 });
@@ -178,7 +178,7 @@ export default function Checkout() {
   };
 
   const validateForm = () => {
-    if (!form.name || !form.email || !form.phone || !form.deliveryMethod) {
+    if (!form.name || !form.email || !form.phone || !form.fulfillmentType) {
       return 'All fields are required';
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
@@ -187,14 +187,14 @@ export default function Checkout() {
     if (!/^\+?\d{10,15}$/.test(form.phone)) {
       return 'Invalid phone number (10-15 digits)';
     }
-    if (form.deliveryMethod === 'home_collection' && !form.address) {
+    if (form.fulfillmentType === 'home_collection' && !form.address) {
       return 'Address is required for home collection';
     }
-    if (cart.labs.length === 0 || cart.totalPrice <= 0) {
-      return 'Cart is empty or invalid';
+    if (bookings.labs.length === 0 || bookings.totalPrice <= 0) {
+      return 'Booking is empty or invalid';
     }
-    if (form.deliveryMethod === 'lab_visit') {
-      const hasValidAddresses = cart.labs.every(lab => lab.lab?.address);
+    if (form.fulfillmentType === 'lab_visit') {
+      const hasValidAddresses = bookings.labs.every(lab => lab.lab?.address);
       if (!hasValidAddresses) {
         return 'One or more lab addresses are not available for lab visit';
       }
@@ -226,7 +226,7 @@ export default function Checkout() {
       formData.append('name', form.name);
       formData.append('email', form.email);
       formData.append('phone', form.phone);
-      formData.append('deliveryMethod', form.deliveryMethod);
+      formData.append('fulfillmentType', form.fulfillmentType);
       if (form.address) {
         formData.append('address', form.address);
       }
@@ -234,7 +234,7 @@ export default function Checkout() {
         formData.append('testOrder', testOrderFile);
       }
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/booking`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/test-checkout`, {
         method: 'POST',
         headers: { 'x-guest-id': patientIdentifier },
         body: formData,
@@ -276,7 +276,7 @@ export default function Checkout() {
           ref: data.transactionReference,
           onSuccess: (transaction) => {
             const primaryReference = data.paymentReferences[0];
-            router.push(`/confirmation?reference=${primaryReference}&session=${data.checkoutSessionId}`);
+            router.push(`/test/confirmation?reference=${primaryReference}&session=${data.checkoutSessionId}`);
             toast.success('Payment successful!', { duration: 4000 });
             if (typeof window !== 'undefined' && window.gtag) {
               window.gtag('event', 'checkout_complete', { transactionId: transaction.reference });
@@ -296,12 +296,12 @@ export default function Checkout() {
     }
   };
 
-  const calculateItemPrice = (item) => item.quantity * item.price;
+  const calculateItemPrice = (item) => item.price;
 
   const getUniqueLabAddresses = () => {
     const addresses = [];
     const seen = new Set();
-    cart.labs.forEach(lab => {
+    bookings.labs.forEach(lab => {
       const address = lab.lab?.address;
       const labName = lab.lab?.name;
       if (address && labName && !seen.has(address)) {
@@ -331,15 +331,15 @@ export default function Checkout() {
               <Loader2 className="h-12 w-12 text-primary animate-spin" aria-label="Loading checkout" />
             </div>
           ) : isError ? (
-            <ErrorMessage error={mapErrorMessage('Failed to fetch cart or invalid cart data')} />
-          ) : cart.labs.length === 0 ? (
-            <EmptyCart />
+            <ErrorMessage error={mapErrorMessage('Failed to fetch booking or invalid booking data')} />
+          ) : bookings.labs.length === 0 ? (
+            <EmptyBooking />
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <CheckoutDialog
                 showCheckoutDialog={showCheckoutDialog}
                 setShowCheckoutDialog={setShowCheckoutDialog}
-                cart={cart}
+                bookings={bookings}
                 requiresUpload={requiresUpload}
                 testOrderFile={testOrderFile}
                 confirmCheckout={confirmCheckout}
@@ -353,19 +353,19 @@ export default function Checkout() {
                 setTestOrderFile={setTestOrderFile}
                 fileInputRef={fileInputRef}
               />
-              <BookingSummary cart={cart} calculateItemPrice={calculateItemPrice} testOrderStatuses={testOrderStatuses} />
+              <BookingSummary bookings={bookings} calculateItemPrice={calculateItemPrice} testOrderStatuses={testOrderStatuses} />
               <CheckoutForm
                 form={form}
                 setForm={setForm}
                 handleInputChange={handleInputChange}
                 handleFileChange={handleFileChange}
-                handleDeliveryMethodChange={handleDeliveryMethodChange}
+                handleFulfillmentTypeChange={handleFulfillmentTypeChange}
                 handleCheckout={handleCheckout}
                 requiresUpload={requiresUpload}
                 testOrderStatuses={testOrderStatuses}
                 testOrderFile={testOrderFile}
                 fileInputRef={fileInputRef}
-                cart={cart}
+                bookings={bookings}
                 getUniqueLabAddresses={getUniqueLabAddresses}
                 loading={loading}
               />

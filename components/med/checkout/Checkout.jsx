@@ -76,7 +76,7 @@ export default function Checkout() {
 
         if (prescriptionRequiredIds.length > 0) {
           const validateResponse = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/checkout/prescription/validate?patientIdentifier=${patientIdentifier}&medicationIds=${prescriptionRequiredIds.join(',')}`
+            `${process.env.NEXT_PUBLIC_API_URL}/api/med-checkout/prescription/validate?patientIdentifier=${patientIdentifier}&medicationIds=${prescriptionRequiredIds.join(',')}`
           );
           if (!validateResponse.ok) {
             const errorData = await validateResponse.json();
@@ -235,7 +235,7 @@ export default function Checkout() {
         formData.append('prescription', prescriptionFile);
       }
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/checkout`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/med-checkout`, {
         method: 'POST',
         headers: { 'x-guest-id': patientIdentifier },
         body: formData,
@@ -277,7 +277,7 @@ export default function Checkout() {
           ref: data.transactionReference,
           onSuccess: (transaction) => {
             const primaryReference = data.paymentReferences[0];
-            router.push(`/confirmation?reference=${primaryReference}&session=${data.checkoutSessionId}`);
+            router.push(`/med/confirmation?reference=${primaryReference}&session=${data.checkoutSessionId}`);
             toast.success('Payment successful!', { duration: 4000 });
             if (typeof window !== 'undefined' && window.gtag) {
               window.gtag('event', 'checkout_complete', { transactionId: transaction.reference });

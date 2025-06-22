@@ -35,7 +35,7 @@ export default function BookingDetails() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/booking/resume/${bookingId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/test-checkout/resume/${bookingId}`, {
         headers: { 'x-guest-id': guestId },
       });
       if (!response.ok) {
@@ -46,7 +46,7 @@ export default function BookingDetails() {
           errorMessage = errorData.message || errorMessage;
         } else {
           const text = await response.text();
-          console.error('Non-JSON response from /api/booking/resume:', text);
+          console.error('Non-JSON response from /api/test-checkout/resume:', text);
           errorMessage = 'Server returned an unexpected response';
         }
         throw new Error(errorMessage);
@@ -72,7 +72,7 @@ export default function BookingDetails() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/booking/resume-bookings/${bookingId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/test-checkout/resume-bookings/${bookingId}`, {
         headers: { 'x-guest-id': guestId },
       });
       if (!response.ok) {
@@ -83,7 +83,7 @@ export default function BookingDetails() {
           errorMessage = errorData.message || errorMessage;
         } else {
           const text = await response.text();
-          console.error('Non-JSON response from /api/booking/resume-bookings:', text);
+          console.error('Non-JSON response from /api/test-checkout/resume-bookings:', text);
           errorMessage = 'Server returned an unexpected response';
         }
         throw new Error(errorMessage);
@@ -111,7 +111,7 @@ export default function BookingDetails() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/booking/resume/${bookingId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/test-checkout/resume/${bookingId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -127,7 +127,7 @@ export default function BookingDetails() {
           errorMessage = errorData.message || errorMessage;
         } else {
           const text = await response.text();
-          console.error('Non-JSON response from /api/booking/resume POST:', text);
+          console.error('Non-JSON response from /api/test-checkout/resume POST:', text);
           errorMessage = 'Server returned an unexpected response';
         }
         throw new Error(errorMessage);
@@ -150,7 +150,7 @@ export default function BookingDetails() {
         ref: data.transactionReference,
         onSuccess: (transaction) => {
           const primaryReference = data.paymentReferences[0];
-          router.push(`/confirmation?reference=${primaryReference}&session=${checkoutSessionId}`);
+          router.push(`/test/confirmation?reference=${primaryReference}&session=${checkoutSessionId}`);
           toast.success('Payment successful!', { duration: 4000 });
           window.gtag?.('event', 'booking_payment_complete', { transactionId: transaction.reference });
         },

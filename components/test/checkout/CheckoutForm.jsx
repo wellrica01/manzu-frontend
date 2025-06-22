@@ -13,13 +13,13 @@ const CheckoutForm = ({
   setForm,
   handleInputChange,
   handleFileChange,
-  handleDeliveryMethodChange,
+  handleFulfillmentTypeChange,
   handleCheckout,
   requiresUpload,
   testOrderStatuses,
   testOrderFile,
   fileInputRef,
-  cart,
+  bookings,
   getUniqueLabAddresses,
   loading,
 }) => {
@@ -49,8 +49,8 @@ const CheckoutForm = ({
   };
 
   const bookingItems = useMemo(() => {
-    return cart.labs?.flatMap(lab => lab.items) || [];
-  }, [cart.labs]);
+    return bookings.labs?.flatMap(lab => lab.items) || [];
+  }, [bookings.labs]);
 
   const needsUpload = useMemo(() => {
     if (!requiresUpload) return false;
@@ -160,8 +160,8 @@ const CheckoutForm = ({
               Service Method
             </Label>
             <RadioGroup
-              value={form.deliveryMethod}
-              onValueChange={handleDeliveryMethodChange}
+              value={form.fulfillmentType}
+              onValueChange={handleFulfillmentTypeChange}
               className="flex flex-col sm:flex-row gap-4 sm:gap-6 mt-3"
               aria-label="Service method"
             >
@@ -174,11 +174,11 @@ const CheckoutForm = ({
                 <Label htmlFor="home_collection" className="text-gray-900 text-base font-medium">Home Collection</Label>
               </div>
             </RadioGroup>
-            {form.deliveryMethod === 'home_collection' && (
+            {form.fulfillmentType === 'home_collection' && (
               <p className="text-sm text-gray-600 mt-2">Home collection scheduled within 1-2 days. Additional fees may apply.</p>
             )}
           </div>
-          {form.deliveryMethod === 'home_collection' && (
+          {form.fulfillmentType === 'home_collection' && (
             <div>
               <Label htmlFor="address" className="text-sm font-semibold text-primary uppercase tracking-wider">
                 Collection Address
@@ -194,7 +194,7 @@ const CheckoutForm = ({
               />
             </div>
           )}
-          {form.deliveryMethod === 'lab_visit' && cart.labs.length > 0 && (
+          {form.fulfillmentType === 'lab_visit' && bookings.labs.length > 0 && (
             <div>
               <Label className="text-sm font-semibold text-primary uppercase tracking-wider">
                 Lab Addresses

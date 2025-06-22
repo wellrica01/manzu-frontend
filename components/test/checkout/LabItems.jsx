@@ -1,10 +1,10 @@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Info } from 'lucide-react';
 
-const LabItems = ({ cart, calculateItemPrice, testOrderStatuses }) => {
+const LabItems = ({ bookings, calculateItemPrice, testOrderStatuses }) => {
   return (
     <>
-      {cart.labs.map((lab) => (
+      {bookings.labs.map((lab) => (
         <div key={lab.lab.id} className="mb-6">
           <h3 className="text-base sm:text-lg font-semibold text-gray-900">{lab.lab.name}</h3>
           {lab.items.map((item) => (
@@ -26,9 +26,7 @@ const LabItems = ({ cart, calculateItemPrice, testOrderStatuses }) => {
                   </TooltipProvider>
                 )}
               </div>
-              <p className="text-gray-600 text-xs sm:text-sm font-medium">Quantity: {item.quantity}</p>
-              <p className="text-gray-600 text-xs sm:text-sm font-medium">Unit Price: ₦{item.price.toLocaleString()}</p>
-              <p className="text-gray-600 text-xs sm:text-sm font-medium">Total: ₦{calculateItemPrice(item).toLocaleString()}</p>
+              <p className="text-gray-600 text-xs sm:text-sm font-medium">Price: ₦{calculateItemPrice(item).toLocaleString()}</p>
             </div>
           ))}
           <p className="text-gray-900 text-sm sm:text-base font-semibold">

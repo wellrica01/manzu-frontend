@@ -91,7 +91,7 @@ const CheckoutDialog = ({
                   <p className="text-sm text-gray-500 mt-2">
                     Verification takes 24-48 hours. You’ll be notified by email when ready. Track progress on the{' '}
                     <a
-                      href="/"
+                      href="/med"
                       className="text-primary hover:text-primary/80 font-semibold underline"
                       aria-label="Track prescription status"
                     >

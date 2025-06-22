@@ -1,4 +1,4 @@
-import Booking from '@/components/lab/booking/Booking';
+import Booking from '@/components/test/booking/Booking';
 
      export default function BookingPage() {
        return (

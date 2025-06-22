@@ -39,7 +39,7 @@ export default function Track() {
       setError(null);
       setBookings([]);
       setLoading(true);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/lab/track?trackingCode=${encodeURIComponent(trackingCode)}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/test-track?trackingCode=${encodeURIComponent(trackingCode)}`);
       if (!response.ok) {
         const errorData = await response.json();
         const errorMsg = errorData.message === 'Bookings not found or test order still under review' ? (
@@ -78,17 +78,15 @@ export default function Track() {
     formRef.current?.focus();
   };
 
-  const calculateItemPrice = (item) => item.quantity * item.price;
-
   const getUniqueLabAddresses = (booking) => {
-    if (booking.lab && booking.deliveryMethod === 'lab_visit') {
+    if (booking.lab && booking.fulfillmentType === 'lab_visit') {
       return [{ name: booking.lab.name, address: booking.lab.address }];
     }
     return [];
   };
 
   const handleBackToHome = () => {
-    router.push('/');
+    router.push('/test');
   };
 
   const getStatusProgress = (status) => {
@@ -151,7 +149,7 @@ export default function Track() {
             {error.includes('not ready for tracking') && (
               <p className="text-gray-600 text-sm mt-2">
                 Try checking your booking status with your email or phone number on the{' '}
-                <Link href="/lab/status-check" className="text-blue-600 underline">Status Check</Link> page.
+                <Link href="/test/status-check" className="text-blue-600 underline">Status Check</Link> page.
               </p>
             )}
           </Card>
@@ -273,7 +271,7 @@ export default function Track() {
                             <div className="mt-1 space-y-1">
                               {booking.testOrder.tests.map((test, index) => (
                                 <p key={index} className="text-gray-600 text-sm truncate">
-                                  {test.name} {test.description ? `(${test.description})` : ''} - Quantity: {test.quantity || 'N/A'}
+                                  {test.name} {test.description ? `(${test.description})` : ''}
                                 </p>
                               ))}
                             </div>
@@ -288,9 +286,7 @@ export default function Track() {
                           {item.labTest.test.name} {item.labTest.test.description ? `(${item.labTest.test.description})` : ''} {item.labTest.test.orderRequired ? '(Test Order Required)' : ''}
                         </p>
                         <p className="text-gray-600 text-sm font-medium truncate">Lab: {item.labTest.lab.name}</p>
-                        <p className="text-gray-600 text-sm font-medium">Quantity: {item.quantity}</p>
-                        <p className="text-gray-600 text-sm font-medium">Unit Price: ₦{item.price.toLocaleString()}</p>
-                        <p className="text-gray-600 text-sm font-medium">Total: ₦{calculateItemPrice(item).toLocaleString()}</p>
+                        <p className="text-gray-600 text-sm font-medium">Price: ₦{item.price.toLocaleString()}</p>
                       </div>
                     ))}
                     {booking.status === 'cancelled' && (

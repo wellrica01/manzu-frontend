@@ -35,7 +35,7 @@ export default function OrderDetails() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/checkout/resume/${orderId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/med-checkout/resume/${orderId}`, {
         headers: { 'x-guest-id': guestId },
       });
       if (!response.ok) {
@@ -46,7 +46,7 @@ export default function OrderDetails() {
           errorMessage = errorData.message || errorMessage;
         } else {
           const text = await response.text();
-          console.error('Non-JSON response from /api/checkout/resume:', text);
+          console.error('Non-JSON response from /api/med-checkout/resume:', text);
           errorMessage = 'Server returned an unexpected response';
         }
         throw new Error(errorMessage);
@@ -72,7 +72,7 @@ export default function OrderDetails() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/checkout/resume-orders/${orderId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/med-checkout/resume-orders/${orderId}`, {
         headers: { 'x-guest-id': guestId },
       });
       if (!response.ok) {
@@ -83,7 +83,7 @@ export default function OrderDetails() {
           errorMessage = errorData.message || errorMessage;
         } else {
           const text = await response.text();
-          console.error('Non-JSON response from /api/confirmation:', text);
+          console.error('Non-JSON response from /api/med-checkout/resume-orders:', text);
           errorMessage = 'Server returned an unexpected response';
         }
         throw new Error(errorMessage);
@@ -111,7 +111,7 @@ export default function OrderDetails() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/checkout/resume/${orderId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/med-checkout/resume/${orderId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -127,7 +127,7 @@ export default function OrderDetails() {
           errorMessage = errorData.message || errorMessage;
         } else {
           const text = await response.text();
-          console.error('Non-JSON response from /api/checkout/resume POST:', text);
+          console.error('Non-JSON response from /api/med-checkout/resume POST:', text);
           errorMessage = 'Server returned an unexpected response';
         }
         throw new Error(errorMessage);
@@ -150,7 +150,7 @@ export default function OrderDetails() {
         ref: data.transactionReference,
         onSuccess: (transaction) => {
           const primaryReference = data.paymentReferences[0];
-          router.push(`/confirmation?reference=${primaryReference}&session=${checkoutSessionId}`);
+          router.push(`/med/confirmation?reference=${primaryReference}&session=${checkoutSessionId}`);
           toast.success('Payment successful!', { duration: 4000 });
           window.gtag?.('event', 'order_payment_complete', { transactionId: transaction.reference });
         },

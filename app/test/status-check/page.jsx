@@ -33,7 +33,7 @@ export default function StatusCheck() {
     setStatus('loading');
     setError(null);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/test-order/guest-order/${patientId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/test-order/guest-test/${patientId}`, {
         headers: { 'x-guest-id': patientId },
       });
       if (!response.ok) {
@@ -55,7 +55,7 @@ export default function StatusCheck() {
       }
 
       if (fetchedBookingId) {
-        const bookingResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/booking/resume/${fetchedBookingId}`, {
+        const bookingResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/test-checkout/resume/${fetchedBookingId}`, {
           headers: { 'x-guest-id': patientId },
         });
         console.log('Booking API response:', { status: bookingResponse.status, ok: bookingResponse.ok });
@@ -72,7 +72,7 @@ export default function StatusCheck() {
 
         switch (bookingStatus) {
           case 'pending':
-            router.push(`/booking/resume/${fetchedBookingId}`);
+            router.push(`/test/checkout/resume/${fetchedBookingId}`);
             break;
           case 'pending_test_order':
             setTestOrder({ ...testOrderMetadata, booking: { id: fetchedBookingId } });
@@ -93,7 +93,7 @@ export default function StatusCheck() {
               duration: 6000,
               action: {
                 label: 'Track Now',
-                onClick: () => router.push(`/track?trackingCode=${encodeURIComponent(trackingCode)}`),
+                onClick: () => router.push(`/test/track?trackingCode=${encodeURIComponent(trackingCode)}`),
               },
             });
             break;
@@ -108,7 +108,7 @@ export default function StatusCheck() {
       } else if (testOrderMetadata.status === 'verified') {
         if (tests.some(test => test.availability?.length && test.availability[0].price > 0)) {
           await new Promise(resolve => setTimeout(resolve, 500));
-          router.push(`/guest-test/${patientId}`);
+          router.push(`/test/guest-test/${patientId}`);
         } else {
           setTestOrder({ ...testOrderMetadata });
           setStatus('success');
@@ -130,7 +130,7 @@ export default function StatusCheck() {
     setStatus('loading');
     setError(null);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/booking/session/retrieve`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/test-checkout/session/retrieve`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -168,7 +168,7 @@ export default function StatusCheck() {
     <div className="min-h-screen bg-gradient-to-b from-gray-50/95 to-gray-100/95 py-10 px-4 sm:px-6 lg:px-8 animate-in fade-in-20 duration-500">
       <div className="container mx-auto max-w-5xl">
         <h1 className="text-4xl sm:text-5xl font-extrabold text-primary mb-8 text-center tracking-tight animate-in slide-in-from-top-10 duration-700">
-          Check Test Order Status
+          Check Your LabRequest Status
         </h1>
 
         {/* Form Section */}
@@ -287,7 +287,7 @@ export default function StatusCheck() {
                       Booking {testOrder.status}. Track your booking with code:{' '}
                       <span className="font-semibold">{testOrder.booking.trackingCode}</span>.{' '}
                       <Link
-                        href={`/track?trackingCode=${encodeURIComponent(testOrder.booking.trackingCode)}`}
+                        href={`/test/track?trackingCode=${encodeURIComponent(testOrder.booking.trackingCode)}`}
                         className="text-blue-600 underline"
                       >
                         Track Now

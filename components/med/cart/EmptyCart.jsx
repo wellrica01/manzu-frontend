@@ -8,7 +8,7 @@ const EmptyCart = () => {
     >
       <p className="text-gray-600 text-lg font-medium">
         Your cart is empty.{' '}
-        <Link href="/" className="text-primary hover:text-primary/80 font-semibold underline transition-colors duration-200">
+        <Link href="/med" className="text-primary hover:text-primary/80 font-semibold underline transition-colors duration-200">
           Start shopping
         </Link>
       </p>

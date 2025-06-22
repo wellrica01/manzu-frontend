@@ -33,7 +33,7 @@ export default function StatusCheck() {
     setStatus('loading');
     setError(null);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/prescription/guest-order/${patientId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/prescription/guest-med/${patientId}`, {
         headers: { 'x-guest-id': patientId },
       });
       if (!response.ok) {
@@ -55,7 +55,7 @@ export default function StatusCheck() {
       }
 
       if (fetchedOrderId) {
-        const orderResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/checkout/resume/${fetchedOrderId}`, {
+        const orderResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/med-checkout/resume/${fetchedOrderId}`, {
           headers: { 'x-guest-id': patientId },
         });
         console.log('Order API response:', { status: orderResponse.status, ok: orderResponse.ok });
@@ -72,7 +72,7 @@ export default function StatusCheck() {
 
         switch (orderStatus) {
           case 'pending':
-            router.push(`/checkout/resume/${fetchedOrderId}`);
+            router.push(`/med/checkout/resume/${fetchedOrderId}`);
             break;
           case 'pending_prescription':
             setPrescription({ ...prescriptionMetadata, order: { id: fetchedOrderId } });
@@ -94,7 +94,7 @@ export default function StatusCheck() {
               duration: 6000,
               action: {
                 label: 'Track Now',
-                onClick: () => router.push(`/track?trackingCode=${encodeURIComponent(trackingCode)}`),
+                onClick: () => router.push(`/med/track?trackingCode=${encodeURIComponent(trackingCode)}`),
               },
             });
             break;
@@ -109,7 +109,7 @@ export default function StatusCheck() {
       } else if (prescriptionMetadata.status === 'verified') {
         if (medications.some(med => med.availability?.length && med.availability[0].price > 0)) {
           await new Promise(resolve => setTimeout(resolve, 500));
-          router.push(`/guest-order/${patientId}`);
+          router.push(`/med/guest-med/${patientId}`);
         } else {
           setPrescription({ ...prescriptionMetadata });
           setStatus('success');
@@ -131,7 +131,7 @@ export default function StatusCheck() {
     setStatus('loading');
     setError(null);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/checkout/session/retrieve`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/med-checkout/session/retrieve`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -169,7 +169,7 @@ export default function StatusCheck() {
     <div className="min-h-screen bg-gradient-to-b from-gray-50/95 to-gray-100/95 py-10 px-4 sm:px-6 lg:px-8 animate-in fade-in-20 duration-500">
       <div className="container mx-auto max-w-5xl">
         <h1 className="text-4xl sm:text-5xl font-extrabold text-primary mb-8 text-center tracking-tight animate-in slide-in-from-top-10 duration-700">
-          Check Prescription Status
+          Check Your Prescription Status
         </h1>
 
         {/* Form Section */}
@@ -288,7 +288,7 @@ export default function StatusCheck() {
                       Order {prescription.status}. Track your order with code:{' '}
                       <span className="font-semibold">{prescription.order.trackingCode}</span>.{' '}
                       <Link
-                        href={`/track?trackingCode=${encodeURIComponent(prescription.order.trackingCode)}`}
+                        href={`/med/track?trackingCode=${encodeURIComponent(prescription.order.trackingCode)}`}
                         className="text-blue-600 underline"
                       >
                         Track Now

@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { ShoppingCart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const LabTable = ({ availability, testId, handleAddToCart, isInCart, name }) => {
+const LabTable = ({ availability, testId, handleAddToBooking, isInBooking, name }) => {
   if (!availability || availability.length === 0) {
     return (
       <p className="text-gray-500 text-base italic p-4 hidden sm:block">
@@ -84,18 +84,18 @@ const LabTable = ({ availability, testId, handleAddToCart, isInCart, name }) => 
                   <td className="p-4">
                     <Button
                       id={`add-to-cart-${testId}-${avail.labId}`}
-                      onClick={() => handleAddToCart(testId, avail.labId, name)}
-                      disabled={isInCart(testId, avail.labId)}
+                      onClick={() => handleAddToBooking(testId, avail.labId, name)}
+                      disabled={isInBooking(testId, avail.labId)}
                       className={cn(
                         'h-10 px-5 text-sm font-semibold rounded-full transition-all duration-300',
-                        isInCart(testId, avail.labId)
+                        isInBooking(testId, avail.labId)
                           ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
                           : 'bg-primary text-white hover:bg-primary/90 hover:shadow-[0_0_15px_rgba(59,130,246,0.5)] animate-pulse'
                       )}
-                      aria-label={isInCart(testId, avail.labId) ? 'Added to cart' : 'Add to cart'}
+                      aria-label={isInBooking(testId, avail.labId) ? 'Added to booking' : 'Add to booking'}
                     >
                       <ShoppingCart className="h-5 w-5 mr-2" aria-hidden="true" />
-                      {isInCart(testId, avail.labId) ? 'Added' : 'Add to Cart'}
+                      {isInBooking(testId, avail.labId) ? 'Added' : 'Add to Booking'}
                     </Button>
                   </td>
                 </tr>

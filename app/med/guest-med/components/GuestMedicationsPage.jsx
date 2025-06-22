@@ -12,7 +12,7 @@ import Link from 'next/link';
 import MedicationCard from './MedicationCard';
 import { useCart } from '@/hooks/useCart';
 
-export default function GuestOrder() {
+export default function GuestMed() {
   const [medications, setMedications] = useState([]);
   const [prescriptionMetadata, setPrescriptionMetadata] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -31,7 +31,7 @@ export default function GuestOrder() {
     if (typeof window !== 'undefined' && window.gtag) {
       window.gtag('event', 'page_view', {
         page_title: 'Guest Medications',
-        page_path: `/guest-order/${patientIdentifier}`,
+        page_path: `/med/guest-med/${patientIdentifier}`,
       });
     }
   }, [patientIdentifier]);
@@ -62,7 +62,7 @@ export default function GuestOrder() {
         queryParams.append('lng', userLocation.lng);
         queryParams.append('radius', '10');
       }
-      const url = `http://localhost:5000/api/prescription/guest-order/${patientIdentifier}?${queryParams.toString()}`;
+      const url = `http://localhost:5000/api/prescription/guest-med/${patientIdentifier}?${queryParams.toString()}`;
       const response = await fetch(url, {
         headers: { 'x-guest-id': guestId },
       });
@@ -404,7 +404,7 @@ export default function GuestOrder() {
               disabled={cartItems.length === 0}
               aria-label="View cart"
             >
-              <Link href="/cart">View Cart</Link>
+              <Link href="/med/cart">View Cart</Link>
             </Button>
             <Button
               variant="ghost"
