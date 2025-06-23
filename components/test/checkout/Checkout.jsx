@@ -3,10 +3,9 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Script from 'next/script';
 import { toast } from 'sonner';
-import { getGuestId } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
 import ErrorMessage from '@/components/ErrorMessage';
-import EmptyBooking from '@/components/test/booking//EmptyBooking';
+import EmptyBooking from '@/components/test/booking/EmptyBooking';
 import PendingMessage from './PendingMessage';
 import CheckoutDialog from './CheckoutDialog';
 import TestOrderUploadDialog from './TestOrderUploadDialog';
@@ -24,21 +23,14 @@ export default function Checkout() {
   const [requiresUpload, setRequiresUpload] = useState(false);
   const [showCheckoutDialog, setShowCheckoutDialog] = useState(false);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
-  const [patientIdentifier, setPatientIdentifier] = useState('');
   const [testOrderStatuses, setTestOrderStatuses] = useState({});
   const router = useRouter();
   const fileInputRef = useRef(null);
   const { bookings, fetchBookings, guestId, isPending, isError } = useBooking();
 
   useEffect(() => {
-    const id = getGuestId();
-    console.log('Setting patientIdentifier:', id);
-    setPatientIdentifier(id);
-  }, []);
-
-  useEffect(() => {
     async function loadBookingAndTestOrders() {
-      if (!patientIdentifier) {
+      if (!guestId) {
         setError('Guest ID not found');
         toast.error('Guest ID not found', { duration: 4000 });
         setLoading(false);
@@ -76,7 +68,7 @@ export default function Checkout() {
 
         if (orderRequiredIds.length > 0) {
           const validateResponse = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/test-checkout/test-order/validate?patientIdentifier=${patientIdentifier}&testIds=${orderRequiredIds.join(',')}`
+            `${process.env.NEXT_PUBLIC_API_URL}/api/test-checkout/test-order/validate?patientIdentifier=${guestId}&testIds=${orderRequiredIds.join(',')}`
           );
           if (!validateResponse.ok) {
             const errorData = await validateResponse.json();
@@ -87,8 +79,8 @@ export default function Checkout() {
           setRequiresUpload(validateData.requiresUpload);
 
           const statusResponse = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/test-order/status?patientIdentifier=${patientIdentifier}&testIds=${orderRequiredIds.join(',')}`,
-            { headers: { 'x-guest-id': patientIdentifier } }
+            `${process.env.NEXT_PUBLIC_API_URL}/api/test-order/status?patientIdentifier=${guestId}&testIds=${orderRequiredIds.join(',')}`,
+            { headers: { 'x-guest-id': guestId } }
           );
           if (statusResponse.ok) {
             const statusData = await statusResponse.json();
@@ -128,7 +120,7 @@ export default function Checkout() {
     }
 
     loadBookingAndTestOrders();
-  }, [patientIdentifier, bookings, isPending, isError]);
+  }, [guestId, bookings, isPending, isError]);
 
   const handleInputChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -236,7 +228,7 @@ export default function Checkout() {
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/test-checkout`, {
         method: 'POST',
-        headers: { 'x-guest-id': patientIdentifier },
+        headers: { 'x-guest-id': guestId },
         body: formData,
       });
 

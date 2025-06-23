@@ -4,10 +4,11 @@ const PendingMessage = ({ message }) => {
   if (!message) return null;
   return (
     <Card
-      className="bg-green-50/95 border border-green-100/50 rounded-2xl shadow-md mb-6 p-4 animate-in slide-in-from-top-10 duration-500"
+      className="relative bg-white/95 border border-[#1ABA7F]/20 rounded-2xl shadow-xl backdrop-blur-sm mb-6 p-4 animate-in slide-in-from-top duration-500"
       role="alert"
     >
-      <p className="text-green-700 text-base font-medium">{message}</p>
+      <div className="absolute top-0 left-0 w-12 h-12 bg-[#1ABA7F]/20 rounded-br-3xl" />
+      <p className="text-[#1ABA7F] text-base font-medium">{message}</p>
     </Card>
   );
 };

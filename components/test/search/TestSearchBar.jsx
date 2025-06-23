@@ -5,8 +5,8 @@ import dynamic from 'next/dynamic';
 import { toast } from 'sonner';
 import { Card } from '@/components/ui/card';
 import { useBooking } from '@/hooks/useBooking';
-import SearchInput from '../../med/search/SearchInput';
-import FilterControls from '../../med/search/FilterControls';
+import SearchInput from './SearchInput';
+import FilterControls from './FilterControls';
 const TestCard = dynamic(() => import('./TestCard'), { ssr: false });
 import BookingDialog from './BookingDialog';
 import ErrorMessage from '@/components/ErrorMessage';
@@ -41,12 +41,12 @@ export default function TestSearchBar() {
 
   useEffect(() => {
     fetch('/data/full.json')
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         setGeoData(data);
-        setStates(data.map(state => ({ value: state.state, label: state.state })));
+        setStates(data.map((state) => ({ value: state.state, label: state.state })));
       })
-      .catch(err => {
+      .catch((err) => {
         console.error('Failed to load geo data:', err);
         toast.error('Failed to load location filters', { duration: 4000 });
       });
@@ -54,8 +54,8 @@ export default function TestSearchBar() {
 
   const updateLgas = (state) => {
     if (!geoData) return;
-    const stateData = geoData.find(s => s.state === state);
-    setLgas(stateData ? stateData.lgas.map(lga => ({ value: lga.name, label: lga.name })) : []);
+    const stateData = geoData.find((s) => s.state === state);
+    setLgas(stateData ? stateData.lgas.map((lga) => ({ value: lga.name, label: lga.name })) : []);
     setWards([]);
     setFilterLga('');
     setFilterWard('');
@@ -63,9 +63,9 @@ export default function TestSearchBar() {
 
   const updateWards = (state, lga) => {
     if (!geoData) return;
-    const stateData = geoData.find(s => s.state === state);
-    const lgaData = stateData?.lgas.find(l => l.name === lga);
-    setWards(lgaData ? lgaData.wards.map(ward => ({ value: ward.name, label: ward.name })) : []);
+    const stateData = geoData.find((s) => s.state === state);
+    const lgaData = stateData?.lgas.find((l) => l.name === lga);
+    setWards(lgaData ? lgaData.wards.map((ward) => ({ value: ward.name, label: ward.name })) : []);
     setFilterWard('');
   };
 
@@ -96,7 +96,7 @@ export default function TestSearchBar() {
   }, []);
 
   useEffect(() => {
-    setBookingItems(bookings.labs?.flatMap(l => l.items) || []);
+    setBookingItems(bookings.labs?.flatMap((l) => l.items) || []);
   }, [bookings]);
 
   useEffect(() => {
@@ -115,7 +115,9 @@ export default function TestSearchBar() {
     }
     try {
       setIsLoadingSuggestions(true);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tests/test-suggestions?q=${encodeURIComponent(query)}`);
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/tests/test-suggestions?q=${encodeURIComponent(query)}`
+      );
       if (!response.ok) throw new Error('Failed to fetch suggestions');
       const data = await response.json();
       setSuggestions(data);
@@ -143,7 +145,9 @@ export default function TestSearchBar() {
       if (filterLga) queryParams.append('lga', filterLga);
       if (filterWard) queryParams.append('ward', filterWard);
       queryParams.append('sortBy', sortBy);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tests/search?${queryParams.toString()}`);
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/tests/search?${queryParams.toString()}`
+      );
       if (!response.ok) throw new Error('Search failed');
       const data = await response.json();
       setResults(data);
@@ -173,7 +177,9 @@ export default function TestSearchBar() {
       if (filterLga) queryParams.append('lga', filterLga);
       if (filterWard) queryParams.append('ward', filterWard);
       queryParams.append('sortBy', sortBy);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tests/search?${queryParams.toString()}`);
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/tests/search?${queryParams.toString()}`
+      );
       if (!response.ok) throw new Error('Search failed');
       const data = await response.json();
       setResults(data);
@@ -189,8 +195,8 @@ export default function TestSearchBar() {
     const itemKey = `${testId}-${labId}`;
     try {
       if (!testId || !labId) throw new Error('Invalid test or lab');
-      setIsAddingToBooking(prev => ({ ...prev, [itemKey]: true }));
-      setBookingItems(prev => [
+      setIsAddingToBooking((prev) => ({ ...prev, [itemKey]: true }));
+      setBookingItems((prev) => [
         ...prev,
         {
           labTestTestId: testId,
@@ -218,25 +224,25 @@ export default function TestSearchBar() {
       await fetchBookings();
     } catch (err) {
       toast.error(`Error: ${err.message}`);
-      setBookingItems(prev => prev.filter(item => 
-        !(item.labTestTestId === testId && item.labTestLabId === labId)
-      ));
+      setBookingItems((prev) =>
+        prev.filter(
+          (item) => !(item.labTestTestId === testId && item.labTestLabId === labId)
+        )
+      );
     } finally {
-      setIsAddingToBooking(prev => ({ ...prev, [itemKey]: false }));
+      setIsAddingToBooking((prev) => ({ ...prev, [itemKey]: false }));
     }
   };
 
   const isInBooking = (testId, labId) => {
     if (!Array.isArray(bookingItems)) return false;
     return bookingItems.some(
-      (item) =>
-        item.labTestTestId === testId &&
-        item.labTestLabId === labId
+      (item) => item.labTestTestId === testId && item.labTestLabId === labId
     );
   };
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-6 sm:p-8">
       <BookingDialog
         openBookingDialog={openBookingDialog}
         setOpenBookingDialog={setOpenBookingDialog}
@@ -254,10 +260,11 @@ export default function TestSearchBar() {
         focusedSuggestionIndex={focusedSuggestionIndex}
         setFocusedSuggestionIndex={setFocusedSuggestionIndex}
         handleSearch={handleSearch}
-        handleSelectMedication={handleSelectTest}
+        handleSelectTest={handleSelectTest}
         dropdownRef={dropdownRef}
         inputRef={inputRef}
         suggestionRefs={suggestionRefs}
+        className="border-[#1ABA7F]/20 rounded-2xl text-gray-900 bg-white/95 focus:border-[#1ABA7F]/50 focus:shadow-[0_0_15px_rgba(26,186,127,0.3)] transition-all duration-200"
       />
       <FilterControls
         filterState={filterState}
@@ -279,19 +286,20 @@ export default function TestSearchBar() {
         searchTerm={searchTerm}
         showFilters={showFilters}
         setShowFilters={setShowFilters}
+        className="bg-white/95 border-[#1ABA7F]/20 rounded-2xl shadow-md"
       />
-      <ErrorMessage error={error} />
+      <ErrorMessage className="text-red-600 text-center text-lg font-medium" />
       <div className="space-y-8">
         {results.length === 0 && !error && searchTerm ? (
-          <Card className="shadow-xl border border-gray-100/50 rounded-2xl text-center py-10 bg-gradient-to-br from-white to-gray-50 backdrop-blur-sm">
-            <div className="absolute top-0 left-0 w-12 h-12 bg-primary/20 rounded-br-full" />
+          <Card className="relative bg-white/95 border border-[#1ABA7F]/20 rounded-2xl shadow-xl text-center py-10 backdrop-blur-md transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:ring-2 hover:ring-[#1ABA7F]/100">
+            <div className="absolute top-0 left-0 w-16 h-16 bg-[#1ABA7F]/20 rounded-br-3xl" />
             <p className="text-gray-600 text-xl font-medium">
               No tests found for "{searchTerm}"
             </p>
           </Card>
         ) : results.length === 0 && !searchTerm ? (
-          <Card className="shadow-xl border border-gray-100/50 rounded-2xl text-center py-10 bg-gradient-to-br from-white to-gray-50 backdrop-blur-sm">
-            <div className="absolute top-0 left-0 w-12 h-12 bg-primary/20 rounded-br-full" />
+          <Card className="relative bg-white/95 border border-[#1ABA7F]/20 rounded-2xl shadow-xl text-center py-10 backdrop-blur-md transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:ring-2 hover:ring-[#1ABA7F]/30">
+            <div className="absolute top-0 left-0 w-16 h-16 bg-[#1ABA7F]/20 rounded-br-3xl" />
             <p className="text-gray-600 text-xl font-medium">
               Enter a test name to compare labs
             </p>
@@ -304,6 +312,7 @@ export default function TestSearchBar() {
               handleAddToBooking={handleAddToBooking}
               isInBooking={isInBooking}
               isAddingToBooking={isAddingToBooking}
+              className="relative bg-white/95 border border-[#1ABA7F]/20 rounded-2xl shadow-xl backdrop-blur-md transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:ring-2 hover:ring-[#1ABA7F]/30"
             />
           ))
         )}

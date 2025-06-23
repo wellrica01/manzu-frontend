@@ -9,12 +9,10 @@ const PharmacyCartCard = ({
   calculateItemPrice,
 }) => {
   return (
-    <Card
-      className="shadow-2xl border border-gray-100/30 rounded-3xl overflow-hidden bg-gradient-to-br from-white/60 to-gray-50/60 backdrop-blur-md transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_10px_30px_rgba(59,130,246,0.2)]"
-    >
-      <div className="absolute top-0 left-0 w-12 h-12 bg-primary/20 rounded-br-full" />
-      <CardHeader className="bg-primary/10 p-6 sm:p-8">
-        <CardTitle className="text-xl sm:text-2xl font-extrabold text-primary truncate">
+    <Card className="relative bg-white/95 border border-[#1ABA7F]/20 rounded-2xl shadow-xl overflow-hidden backdrop-blur-sm transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:ring-2 hover:ring-[#1ABA7F]/30">
+      <div className="absolute top-0 left-0 w-16 h-16 bg-[#1ABA7F]/20 rounded-br-3xl" />
+      <CardHeader className="bg-[#1ABA7F]/10 p-6 sm:p-8">
+        <CardTitle className="text-xl sm:text-2xl font-bold text-[#225F91] truncate">
           {pharmacy.pharmacy.name}
         </CardTitle>
         <p className="text-gray-600 text-base font-medium truncate">{pharmacy.pharmacy.address}</p>
@@ -30,7 +28,7 @@ const PharmacyCartCard = ({
             calculateItemPrice={calculateItemPrice}
           />
         ))}
-        <p className="text-lg font-semibold text-primary mt-4">
+        <p className="text-lg font-semibold text-[#225F91] mt-4">
           Subtotal for {pharmacy.pharmacy.name}: ₦{pharmacy.subtotal.toLocaleString()}
         </p>
       </CardContent>

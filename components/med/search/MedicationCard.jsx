@@ -5,17 +5,17 @@ import PharmacyCards from './PharmacyCards';
 const MedicationCard = ({ med, handleAddToCart, isInCart, isAddingToCart }) => {
   return (
     <Card
-      className="relative shadow-2xl border border-gray-100/30 rounded-3xl overflow-hidden bg-gradient-to-br from-white/90 to-gray-50/90 backdrop-blur-md transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_10px_30px_rgba(59,130,246,0.2)]"
+      className="relative shadow-xl border border-[#1ABA7F]/20 rounded-2xl overflow-hidden bg-white/95 backdrop-blur-sm transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:ring-2 hover:ring-[#1ABA7F]/30"
     >
-      <div className="absolute top-0 left-0 w-12 h-12 bg-primary/20 rounded-br-full" />
-      <CardHeader className="p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-gradient-to-r from-primary/5 to-transparent">
+      <div className="absolute top-0 left-0 w-12 h-12 bg-[#1ABA7F]/20 rounded-br-full" />
+      <CardHeader className="p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-gradient-to-r from-[#1ABA7F]/10 to-transparent">
         <div className="flex-1">
-          <CardTitle className="text-3xl font-extrabold text-primary tracking-tight leading-tight">
+          <CardTitle className="text-2xl sm:text-3xl font-bold text-[#225F91] tracking-tight leading-tight">
             {med.displayName}
           </CardTitle>
           <div className="flex items-center gap-2 mt-2">
             {med.prescriptionRequired && (
-              <span className="inline-flex items-center px-3 py-1 text-sm font-semibold text-blue-600 bg-blue-100 rounded-full animate-pulse">
+              <span className="inline-flex items-center px-3 py-1 text-sm font-semibold text-[#225F91] bg-[#225F91]/10 rounded-full">
                 Prescription Needed
               </span>
             )}
@@ -34,14 +34,13 @@ const MedicationCard = ({ med, handleAddToCart, isInCart, isAddingToCart }) => {
             <img
               src={med.imageUrl}
               alt={med.displayName}
-              className="w-full h-full object-cover rounded-2xl border border-gray-200/50 shadow-md transition-transform duration-300 hover:scale-110"
+              className="w-full h-full object-cover rounded-xl border border-[#1ABA7F]/20 shadow-md transition-transform duration-300 hover:scale-105"
             />
           </div>
         )}
       </CardHeader>
       <CardContent className="p-6">
-        <h3 className="text-xl font-bold text-primary mb-4">Compare Pharmacies</h3>
-        {/* Mobile Pharmacy Cards */}
+        <h3 className="text-xl font-bold text-[#225F91] mb-4">Compare Pharmacies</h3>
         <PharmacyCards
           availability={med.availability}
           medId={med.id}
@@ -50,7 +49,6 @@ const MedicationCard = ({ med, handleAddToCart, isInCart, isAddingToCart }) => {
           displayName={med.displayName}
           isAddingToCart={isAddingToCart}
         />
-        {/* Desktop Pharmacy Table */}
         <PharmacyTable
           availability={med.availability}
           medId={med.id}

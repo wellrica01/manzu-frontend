@@ -285,15 +285,15 @@ export default function SearchBar() {
       <ErrorMessage error={error} />
       <div className="space-y-8">
         {results.length === 0 && !error && searchTerm ? (
-          <Card className="shadow-xl border border-gray-100/50 rounded-2xl text-center py-10 bg-gradient-to-br from-white to-gray-50 backdrop-blur-sm">
-            <div className="absolute top-0 left-0 w-12 h-12 bg-primary/20 rounded-br-full" />
+          <Card className="shadow-xl border border-[#1ABA7F]/20 rounded-2xl text-center py-10 bg-white/95 backdrop-blur-sm">
+            <div className="absolute top-0 left-0 w-12 h-12 bg-[#1ABA7F]/20 rounded-br-full" />
             <p className="text-gray-600 text-xl font-medium">
               No medications found for "{searchTerm}"
             </p>
           </Card>
         ) : results.length === 0 && !searchTerm ? (
-          <Card className="shadow-xl border border-gray-100/50 rounded-2xl text-center py-10 bg-gradient-to-br from-white to-gray-50 backdrop-blur-sm">
-            <div className="absolute top-0 left-0 w-12 h-12 bg-primary/20 rounded-br-full" />
+          <Card className="shadow-xl border border-[#1ABA7F]/20 rounded-2xl text-center py-10 bg-white/95 backdrop-blur-sm">
+            <div className="absolute top-0 left-0 w-12 h-12 bg-[#1ABA7F]/20 rounded-br-full" />
             <p className="text-gray-600 text-xl font-medium">
               Enter a medication name to compare pharmacies
             </p>

@@ -1,4 +1,5 @@
 'use client';
+
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -50,7 +51,18 @@ export default function ConfirmationInner() {
         trackingCode: data.trackingCode,
         checkoutSessionId: data.checkoutSessionId,
       });
-      toast.success('Order confirmed! You’ll receive an email with your tracking code.', { duration: 6000 });
+      toast.success('Order confirmed! You’ll receive an email with your tracking code.', {
+        duration: 6000,
+        style: {
+          background: 'rgba(255,255,255,0.95)',
+          color: '#225F91',
+          border: '1px solid rgba(26,186,127,0.3)',
+          borderRadius: '0.5rem',
+          boxShadow: '0 4px 20px rgba(26,186,127,0.2)',
+          padding: '1rem',
+          backdropFilter: 'blur(8px)',
+        },
+      });
       if (typeof window !== 'undefined' && window.gtag) {
         window.gtag('event', 'order_confirmed', {
           trackingCode: data.trackingCode,
@@ -59,7 +71,18 @@ export default function ConfirmationInner() {
       }
     } catch (err) {
       setError(err.message);
-      toast.error(err.message, { duration: 4000 });
+      toast.error(err.message, {
+        duration: 4000,
+        style: {
+          background: 'rgba(255,85,85,0.95)',
+          color: '#ffffff',
+          border: '1px solid rgba(34,95,145,0.3)',
+          boxShadow: '0 4px 20px rgba(34,95,145,0.2)',
+          borderRadius: '0.5rem',
+          padding: '1rem',
+          backdropFilter: 'blur(8px)',
+        },
+      });
       setLoading(false);
     } finally {
       setLoading(false);
@@ -71,7 +94,18 @@ export default function ConfirmationInner() {
       fetchConfirmation();
     } else {
       setError('Missing guest ID or session ID');
-      toast.error('Missing guest ID or session ID', { duration: 4000 });
+      toast.error('Missing guest ID or session ID', {
+        duration: 4000,
+        style: {
+          background: 'rgba(255,85,85,0.95)',
+          color: '#ffffff',
+          border: '1px solid rgba(34,95,145,0.3)',
+          boxShadow: '0 4px 20px rgba(34,95,145,0.2)',
+          borderRadius: '0.5rem',
+          padding: '1rem',
+          backdropFilter: 'blur(8px)',
+        },
+      });
       setLoading(false);
     }
   }, [reference, session]);
@@ -86,28 +120,39 @@ export default function ConfirmationInner() {
     if (confirmationData.trackingCode) {
       router.push(`/med/track?trackingCode=${encodeURIComponent(confirmationData.trackingCode)}`);
     } else {
-      toast.error('Tracking code not available.', { duration: 4000 });
+      toast.error('Tracking code not available.', {
+        duration: 4000,
+        style: {
+          background: 'rgba(255,85,85,0.95)',
+          color: '#ffffff',
+          border: '1px solid rgba(34,95,145,0.3)',
+          boxShadow: '0 4px 20px rgba(34,95,145,0.2)',
+          borderRadius: '0.5rem',
+          padding: '1rem',
+          backdropFilter: 'blur(8px)',
+        },
+      });
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50/95 to-gray-100/95">
-        <Loader2 className="h-10 w-10 text-primary animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#1ABA7F]/10 via-gray-50/50 to-white/80">
+        <Loader2 className="h-10 w-10 text-[#225F91] animate-spin" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-50/95 to-gray-100/95 py-10 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 via-gray-50/50 to-white/80 py-10 px-4 sm:px-6 lg:px-8">
         <div className="container mx-auto max-w-5xl">
-          <Card className="bg-red-50/95 border border-red-100/50 rounded-2xl shadow-md mb-6 p-4">
-            <p className="text-red-600 text-base font-medium">{error}</p>
+          <Card className="bg-white/95 border border-[#225F91]/20 rounded-2xl shadow-xl backdrop-blur-sm p-6 animate-in zoom-in-50 duration-500">
+            <p className="text-[#225F91] text-base font-medium">{error}</p>
             <Button
               asChild
               variant="outline"
-              className="mt-4 h-10 px-4 rounded-full border-primary text-primary hover:bg-primary/10"
+              className="mt-4 h-10 px-4 rounded-full border-[#1ABA7F] text-[#1ABA7F] hover:bg-[#1ABA7F]/10 hover:shadow-lg transition-all duration-300"
             >
               <Link href="/med/status-check">Check Status</Link>
             </Button>
@@ -118,16 +163,17 @@ export default function ConfirmationInner() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50/95 to-gray-100/95 py-10 px-4 sm:px-6 lg:px-8 animate-in fade-in-20 duration-500">
+    <div className="min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 via-gray-50/50 to-white/80 py-10 px-4 sm:px-6 lg:px-8 relative overflow-hidden animate-in fade-in-20 duration-500">
+      <div className="absolute inset-0 bg-[url('/svg/pattern-dots.svg')] opacity-10 pointer-events-none" aria-hidden="true" />
       <div className="container mx-auto max-w-5xl">
-        <h1 className="text-4xl sm:text-5xl font-extrabold text-primary mb-8 text-center tracking-tight animate-in slide-in-from-top-10 duration-700">
+        <h1 className="text-4xl sm:text-5xl font-bold text-[#225F91] mb-8 text-center tracking-tight animate-in slide-in-from-top duration-700">
           Order Confirmed!
         </h1>
-        <Card className="shadow-2xl border border-gray-100/30 rounded-3xl bg-gradient-to-br from-white/90 to-gray-50/90 backdrop-blur-md">
-          <div className="absolute top-0 left-0 w-12 h-12 bg-primary/20 rounded-br-full" />
-          <CardHeader className="bg-primary/10 p-6 sm:p-8">
-            <CardTitle className="text-xl sm:text-2xl font-extrabold text-primary flex items-center gap-2">
-              <CheckCircle className="h-6 w-6 text-green-500" />
+        <Card className="relative bg-white/95 border border-[#1ABA7F]/20 rounded-2xl shadow-xl overflow-hidden backdrop-blur-sm transition-all duration-500 hover:ring-2 hover:ring-[#1ABA7F]/30">
+          <div className="absolute top-0 left-0 w-16 h-16 bg-[#1ABA7F]/20 rounded-br-3xl" />
+          <CardHeader className="bg-[#225F91]/10 p-6 sm:p-8">
+            <CardTitle className="text-xl sm:text-2xl font-bold text-[#225F91] flex items-center gap-2">
+              <CheckCircle className="h-6 w-6 text-[#1ABA7F]" />
               Thank You for Your Order!
             </CardTitle>
           </CardHeader>
@@ -141,12 +187,12 @@ export default function ConfirmationInner() {
               </p>
             </div>
             {confirmationData.pharmacies.map((pharmacy, index) => (
-              <div key={pharmacy.pharmacy.id} className="border-t border-gray-200/50 pt-4">
-                <h3 className="text-lg font-semibold text-primary">{pharmacy.pharmacy.name}</h3>
+              <div key={pharmacy.pharmacy.id} className="border-t border-[#1ABA7F]/20 pt-4">
+                <h3 className="text-lg font-semibold text-[#225F91]">{pharmacy.pharmacy.name}</h3>
                 <p className="text-gray-600 text-sm">{pharmacy.pharmacy.address}</p>
                 {pharmacy.orders.map((order) => (
                   <div key={order.id} className="mt-4">
-                    <p className="text-sm font-semibold">Order #{order.id} | Status: {order.status.charAt(0).toUpperCase() + order.status.slice(1)}</p>
+                    <p className="text-sm font-semibold text-[#225F91]">Order #{order.id} | Status: {order.status.charAt(0).toUpperCase() + order.status.slice(1)}</p>
                     {order.items.map((item) => (
                       <div key={item.id} className="mt-2">
                         <p className="text-gray-900 text-sm font-medium">{item.medication.name}</p>
@@ -157,13 +203,13 @@ export default function ConfirmationInner() {
                     <p className="text-gray-900 text-base font-semibold mt-2">Order Total: ₦{order.totalPrice.toLocaleString()}</p>
                   </div>
                 ))}
-                <p className="text-lg font-extrabold text-primary mt-4">Subtotal: ₦{pharmacy.subtotal.toLocaleString()}</p>
+                <p className="text-lg font-bold text-[#225F91] mt-4">Subtotal: ₦{pharmacy.subtotal.toLocaleString()}</p>
               </div>
             ))}
             <div className="flex flex-col sm:flex-row gap-4 justify-center mt-6">
               <Button
                 onClick={handleTrackOrder}
-                className="h-12 px-6 text-sm font-semibold rounded-full bg-primary text-white hover:bg-primary/90 hover:shadow-[0_0_15px_rgba(59,130,246,0.5)] animate-pulse"
+                className="h-12 px-6 text-base font-semibold rounded-full bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_20px_rgba(34,95,145,0.3)] transition-all duration-300"
                 disabled={!confirmationData.trackingCode}
                 aria-label="Track order"
               >
@@ -172,7 +218,7 @@ export default function ConfirmationInner() {
               <Button
                 onClick={handleBackToHome}
                 variant="outline"
-                className="h-12 px-6 text-sm font-semibold rounded-full border-gray-200/50 text-gray-700 hover:bg-gray-100/50 hover:border-gray-300/50"
+                className="h-12 px-6 text-base font-semibold rounded-full border-[#1ABA7F] text-[#1ABA7F] hover:bg-[#1ABA7F]/10 hover:shadow-lg transition-all duration-300"
                 aria-label="Back to home"
               >
                 <Home className="h-5 w-5 mr-2" />

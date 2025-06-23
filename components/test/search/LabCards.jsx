@@ -36,7 +36,7 @@ const LabCards = ({ availability, testId, handleAddToBooking, isInBooking, displ
         }, [validDistances, avail.distance_km]);
 
         return (
-          <Card key={index} className="p-4 border border-gray-100/50 rounded-xl">
+          <Card key={index} className="p-4 border border-[#1ABA7F]/20 rounded-2xl bg-white/95 backdrop-blur-sm shadow-md">
             <div className="flex justify-between items-center">
               <p className="text-base font-semibold text-gray-900 truncate max-w-[200px]">
                 {avail.labName}
@@ -46,10 +46,10 @@ const LabCards = ({ availability, testId, handleAddToBooking, isInBooking, displ
                 onClick={() => handleAddToBooking(testId, avail.labId, displayName)}
                 disabled={isInBooking(testId, avail.labId) || isAddingToBooking[`${testId}-${avail.labId}`]}
                 className={cn(
-                  'h-8 px-3 text-sm rounded-full',
+                  'h-8 px-3 text-sm font-semibold rounded-full',
                   isInBooking(testId, avail.labId)
                     ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                    : 'bg-primary text-white hover:bg-primary/90'
+                    : 'bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_10px_rgba(34,95,145,0.3)]'
                 )}
                 aria-label={isInBooking(testId, avail.labId) ? 'Added to booking' : 'Add to booking'}
               >
@@ -72,7 +72,7 @@ const LabCards = ({ availability, testId, handleAddToBooking, isInBooking, displ
             <div className="flex items-center gap-2 mt-1">
               <span className="text-base font-bold text-gray-800">₦{avail.price.toLocaleString()}</span>
               {isCheapest && (
-                <span className="inline-flex items-center px-2 py-1 text-xs font-bold text-green-600 bg-green-100 rounded-full animate-bounce">
+                <span className="inline-flex items-center px-2 py-1 text-xs font-bold text-[#1ABA7F] bg-[#1ABA7F]/10 rounded-full animate-bounce">
                   Cheapest
                 </span>
               )}
@@ -84,7 +84,7 @@ const LabCards = ({ availability, testId, handleAddToBooking, isInBooking, displ
                   : 'N/A'}
               </span>
               {isClosest && (
-                <span className="inline-flex items-center px-2 py-1 text-xs font-bold text-blue-600 bg-blue-100 rounded-full animate-bounce">
+                <span className="inline-flex items-center px-2 py-1 text-xs font-bold text-[#225F91] bg-[#225F91]/10 rounded-full animate-bounce">
                   Closest
                 </span>
               )}

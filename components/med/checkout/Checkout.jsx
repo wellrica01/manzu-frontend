@@ -1,9 +1,9 @@
 'use client';
+
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Script from 'next/script';
 import { toast } from 'sonner';
-import { getGuestId } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
 import ErrorMessage from '@/components/ErrorMessage';
 import EmptyCart from '@/components/med/cart/EmptyCart';
@@ -24,21 +24,14 @@ export default function Checkout() {
   const [requiresUpload, setRequiresUpload] = useState(false);
   const [showCheckoutDialog, setShowCheckoutDialog] = useState(false);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
-  const [patientIdentifier, setPatientIdentifier] = useState('');
   const [prescriptionStatuses, setPrescriptionStatuses] = useState({});
   const router = useRouter();
   const fileInputRef = useRef(null);
   const { cart, fetchCart, guestId, isPending, isError } = useCart();
 
   useEffect(() => {
-    const id = getGuestId();
-    console.log('Setting patientIdentifier:', id);
-    setPatientIdentifier(id);
-  }, []);
-
-  useEffect(() => {
     async function loadCartAndPrescriptions() {
-      if (!patientIdentifier) {
+      if (!guestId) {
         setError('Guest ID not found');
         toast.error('Guest ID not found', { duration: 4000 });
         setLoading(false);
@@ -63,20 +56,20 @@ export default function Checkout() {
         }
 
         const orderItems = cart.pharmacies
-          .flatMap(pharmacy => pharmacy.items || [])
-          .filter(item => item && item.medication && item.pharmacyMedicationMedicationId);
+          .flatMap((pharmacy) => pharmacy.items || [])
+          .filter((item) => item && item.medication && item.pharmacyMedicationMedicationId);
 
         console.log('Processed orderItems:', orderItems);
 
         const prescriptionRequiredIds = orderItems
-          .filter(item => item.medication?.prescriptionRequired)
-          .map(item => item.pharmacyMedicationMedicationId.toString());
+          .filter((item) => item.medication?.prescriptionRequired)
+          .map((item) => item.pharmacyMedicationMedicationId.toString());
 
         console.log('Prescription required IDs:', prescriptionRequiredIds);
 
         if (prescriptionRequiredIds.length > 0) {
           const validateResponse = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/med-checkout/prescription/validate?patientIdentifier=${patientIdentifier}&medicationIds=${prescriptionRequiredIds.join(',')}`
+            `${process.env.NEXT_PUBLIC_API_URL}/api/med-checkout/prescription/validate?patientIdentifier=${guestId}&medicationIds=${prescriptionRequiredIds.join(',')}`
           );
           if (!validateResponse.ok) {
             const errorData = await validateResponse.json();
@@ -87,16 +80,15 @@ export default function Checkout() {
           setRequiresUpload(validateData.requiresUpload);
 
           const statusResponse = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/prescription/status?patientIdentifier=${patientIdentifier}&medicationIds=${prescriptionRequiredIds.join(',')}`,
-            { headers: { 'x-guest-id': patientIdentifier } }
+            `${process.env.NEXT_PUBLIC_API_URL}/api/prescription/status?patientIdentifier=${guestId}&medicationIds=${prescriptionRequiredIds.join(',')}`,
+            { headers: { 'x-guest-id': guestId } }
           );
           if (statusResponse.ok) {
             const statusData = await statusResponse.json();
             console.log('Prescription statuses:', statusData);
             setPrescriptionStatuses(statusData && typeof statusData === 'object' ? statusData : {});
-            // Fallback: If all prescriptions are verified, override requiresUpload
             const allVerified = prescriptionRequiredIds.every(
-              id => (statusData[id] || 'none') === 'verified'
+              (id) => (statusData[id] || 'none') === 'verified'
             );
             if (allVerified && validateData.requiresUpload) {
               console.log('All prescriptions verified, overriding requiresUpload to false');
@@ -108,9 +100,9 @@ export default function Checkout() {
           } else {
             console.warn('Prescription status API failed:', statusResponse.statusText);
             setPrescriptionStatuses(
-              Object.fromEntries(prescriptionRequiredIds.map(id => [id, 'none']))
+              Object.fromEntries(prescriptionRequiredIds.map((id) => [id, 'none']))
             );
-            setRequiresUpload(true); // Assume upload required if status check fails
+            setRequiresUpload(true);
           }
         } else {
           console.log('No prescription required, setting requiresUpload to false');
@@ -129,7 +121,7 @@ export default function Checkout() {
     }
 
     loadCartAndPrescriptions();
-  }, [patientIdentifier, cart, isPending, isError]);
+  }, [guestId, cart, isPending, isError]);
 
   const handleInputChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -152,7 +144,7 @@ export default function Checkout() {
   const handleDeliveryMethodChange = (value) => {
     setForm({ ...form, deliveryMethod: value, address: value === 'pickup' ? '' : form.address });
     if (value === 'pickup') {
-      const hasValidAddresses = cart.pharmacies.every(pharmacy => pharmacy.pharmacy?.address);
+      const hasValidAddresses = cart.pharmacies.every((pharmacy) => pharmacy.pharmacy?.address);
       if (!hasValidAddresses) {
         setError('One or more pharmacy addresses are unavailable for pickup. Please select delivery or contact support.');
         toast.error('One or more pharmacy addresses are unavailable for pickup', { duration: 4000 });
@@ -173,7 +165,7 @@ export default function Checkout() {
       'Invalid transaction parameters': 'Payment couldn’t be processed. Please check your details and try again.',
       'Failed to fetch cart or invalid cart data': 'Unable to load cart. Please try again or contact support.',
       'Invalid cart data: missing or invalid pharmacies': 'Unable to load cart. Please try again or contact support.',
-      'Guest ID not found': 'Unable to identify user. Please try again or contact support.'
+      'Guest ID not found': 'Unable to identify user. Please try again or contact support.',
     };
     return errorMap[error] || error || 'An unexpected error occurred.';
   };
@@ -195,7 +187,7 @@ export default function Checkout() {
       return 'Cart is empty or invalid';
     }
     if (form.deliveryMethod === 'pickup') {
-      const hasValidAddresses = cart.pharmacies.every(pharmacy => pharmacy.pharmacy?.address);
+      const hasValidAddresses = cart.pharmacies.every((pharmacy) => pharmacy.pharmacy?.address);
       if (!hasValidAddresses) {
         return 'One or more pharmacy addresses are not available for pickup';
       }
@@ -237,7 +229,7 @@ export default function Checkout() {
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/med-checkout`, {
         method: 'POST',
-        headers: { 'x-guest-id': patientIdentifier },
+        headers: { 'x-guest-id': guestId },
         body: formData,
       });
 
@@ -248,12 +240,13 @@ export default function Checkout() {
 
       const data = await response.json();
       console.log('Checkout response:', data);
-      const hasPrescriptionOrders = data.orders.some(order => order.status === 'pending_prescription');
+      const hasPrescriptionOrders = data.orders.some((order) => order.status === 'pending_prescription');
       const hasPayableOrders = data.paymentReferences && data.paymentReferences.length > 0 && data.paymentUrl;
 
       let message = '';
       if (hasPayableOrders && hasPrescriptionOrders) {
-        message = 'Proceeding to payment for over-the-counter and verified prescription items. Unverified prescription items are awaiting verification.';
+        message =
+          'Proceeding to payment for over-the-counter and verified prescription items. Unverified prescription items are awaiting verification.';
       } else if (hasPayableOrders) {
         message = 'Proceeding to payment for your order.';
       } else if (hasPrescriptionOrders) {
@@ -272,7 +265,7 @@ export default function Checkout() {
           key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
           email: form.email,
           amount: data.orders
-            .filter(order => order.status === 'pending')
+            .filter((order) => order.status === 'pending')
             .reduce((sum, order) => sum + order.totalPrice, 0) * 100,
           ref: data.transactionReference,
           onSuccess: (transaction) => {
@@ -302,7 +295,7 @@ export default function Checkout() {
   const getUniquePharmacyAddresses = () => {
     const addresses = [];
     const seen = new Set();
-    cart.pharmacies.forEach(pharmacy => {
+    cart.pharmacies.forEach((pharmacy) => {
       const address = pharmacy.pharmacy?.address;
       const pharmacyName = pharmacy.pharmacy?.name;
       if (address && pharmacyName && !seen.has(address)) {
@@ -320,23 +313,24 @@ export default function Checkout() {
         strategy="afterInteractive"
         onError={() => toast.error('Failed to load Paystack', { duration: 4000 })}
       />
-      <div className="min-h-screen bg-gradient-to-b from-gray-50/95 to-gray-100/95 py-10 px-4 sm:px-6 lg:px-8 animate-in fade-in-20 duration-500">
+      <div className="min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 via-gray-50/50 to-white/80 py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[url('/svg/pattern-dots.svg')] opacity-10 pointer-events-none" aria-hidden="true" />
         <div className="container mx-auto max-w-5xl">
-          <h1 className="text-4xl sm:text-5xl font-extrabold text-primary mb-8 text-center tracking-tight animate-in slide-in-from-top-10 duration-700">
+          <h1 className="text-4xl sm:text-5xl font-bold text-[#225F91] mb-8 text-center tracking-tight animate-in slide-in-from-top duration-700">
             Checkout
           </h1>
           <ErrorMessage error={error} onReupload={() => fileInputRef.current.click()} />
           <PendingMessage message={pendingMessage} />
-          {(isPending || loading) ? (
+          {isPending || loading ? (
             <div className="flex justify-center items-center h-64">
-              <Loader2 className="h-12 w-12 text-primary animate-spin" aria-label="Loading checkout" />
+              <Loader2 className="h-12 w-12 text-[#225F91] animate-spin" aria-label="Loading checkout" />
             </div>
           ) : isError ? (
             <ErrorMessage error={mapErrorMessage('Failed to fetch cart or invalid cart data')} />
           ) : cart.pharmacies.length === 0 ? (
             <EmptyCart />
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <CheckoutDialog
                 showCheckoutDialog={showCheckoutDialog}
                 setShowCheckoutDialog={setShowCheckoutDialog}

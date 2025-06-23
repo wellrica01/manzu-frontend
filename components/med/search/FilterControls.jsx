@@ -8,15 +8,15 @@ import Select from 'react-select';
 const customSelectStyles = {
   control: (provided, state) => ({
     ...provided,
-    border: `1px solid ${state.isFocused ? 'rgba(59,130,246,0.5)' : 'rgba(209,213,219,0.5)'}`,
-    boxShadow: state.isFocused ? '0 0 10px rgba(59,130,246,0.3)' : 'none',
+    border: `1px solid ${state.isFocused ? 'rgba(26,186,127,0.5)' : 'rgba(26,186,127,0.3)'}`,
+    boxShadow: state.isFocused ? '0 0 10px rgba(26,186,127,0.3)' : 'none',
     background: 'rgba(255,255,255,0.95)',
-    borderRadius: '1rem',
+    borderRadius: '0.5rem',
     padding: '0.25rem',
     transition: 'all 0.3s ease',
     '&:hover': {
-      borderColor: 'rgba(59,130,246,0.5)',
-      boxShadow: '0 0 15px rgba(59,130,246,0.2)',
+      borderColor: 'rgba(26,186,127,0.5)',
+      boxShadow: '0 0 15px rgba(26,186,127,0.2)',
     },
   }),
   input: (provided) => ({
@@ -38,8 +38,8 @@ const customSelectStyles = {
     ...provided,
     background: 'rgba(255,255,255,0.95)',
     backdropFilter: 'blur(8px)',
-    border: '1px solid rgba(209,213,219,0.5)',
-    borderRadius: '1rem',
+    border: '1px solid rgba(26,186,127,0.3)',
+    borderRadius: '0.5rem',
     boxShadow: '0 10px 20px rgba(0,0,0,0.1)',
     marginTop: '0.25rem',
     zIndex: 20,
@@ -48,7 +48,7 @@ const customSelectStyles = {
     ...provided,
     fontSize: '1rem',
     color: '#1f2937',
-    backgroundColor: state.isSelected ? '#3b82f6' : state.isFocused ? '#f9fafb' : '#ffffff',
+    backgroundColor: state.isSelected ? '#225F91' : state.isFocused ? '#f9fafb' : '#ffffff',
     '&:hover': { backgroundColor: '#f9fafb' },
   }),
   clearIndicator: (provided) => ({
@@ -81,19 +81,19 @@ const FilterControls = ({
 }) => {
   return (
     <Card
-      className="shadow-2xl border border-gray-100/30 rounded-3xl overflow-hidden bg-gradient-to-br from-white/90 to-gray-50/90 backdrop-blur-md transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_10px_30px_rgba(59,130,246,0.2)]"
+      className="shadow-xl border border-[#1ABA7F]/20 rounded-2xl overflow-hidden bg-white/95 backdrop-blur-sm transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:ring-2 hover:ring-[#1ABA7F]/30"
     >
-      <div className="absolute top-0 left-0 w-12 h-12 bg-primary/20 rounded-br-full" />
+      <div className="absolute top-0 left-0 w-12 h-12 bg-[#1ABA7F]/20 rounded-br-full" />
       <div
-        className="flex justify-between items-center px-6 py-4 bg-gradient-to-r from-primary/10 to-transparent cursor-pointer hover:bg-primary/20 transition-colors duration-300"
+        className="flex justify-between items-center px-6 py-4 bg-gradient-to-r from-[#1ABA7F]/10 to-transparent cursor-pointer hover:bg-[#1ABA7F]/20 transition-colors duration-300"
         onClick={() => setShowFilters(!showFilters)}
         role="button"
         aria-expanded={showFilters}
         aria-controls="filter-content"
       >
         <div className="flex items-center gap-3">
-          <Filter className="h-6 w-6 text-primary transition-transform duration-300 group-hover:scale-110" />
-          <span className="text-lg font-bold text-primary tracking-tight">
+          <Filter className="h-6 w-6 text-[#225F91]" />
+          <span className="text-lg font-bold text-[#225F91] tracking-tight">
             {showFilters ? 'Hide Filters' : 'Refine Your Search'}
           </span>
         </div>
@@ -115,7 +115,7 @@ const FilterControls = ({
       {showFilters && (
         <CardContent
           id="filter-content"
-          className="px-8 py-6 space-y-6 bg-transparent animate-in slide-in-from-top-10 fade-in-20 duration-500"
+          className="px-6 py-6 space-y-6 bg-transparent animate-in slide-in-from-top-10 fade-in-20 duration-500"
         >
           <p className="text-base font-medium text-gray-600 tracking-wide">
             Tailor your search to find the best pharmacies
@@ -124,7 +124,7 @@ const FilterControls = ({
             <div className="space-y-2">
               <Label
                 htmlFor="state-filter"
-                className="text-sm font-semibold text-primary uppercase tracking-wider"
+                className="text-sm font-semibold text-[#225F91] uppercase tracking-wider"
               >
                 State
               </Label>
@@ -154,7 +154,7 @@ const FilterControls = ({
             <div className="space-y-2">
               <Label
                 htmlFor="lga-filter"
-                className="text-sm font-semibold text-primary uppercase tracking-wider"
+                className="text-sm font-semibold text-[#225F91] uppercase tracking-wider"
               >
                 LGA
               </Label>
@@ -183,7 +183,7 @@ const FilterControls = ({
             <div className="space-y-2">
               <Label
                 htmlFor="ward-filter"
-                className="text-sm font-semibold text-primary uppercase tracking-wider"
+                className="text-sm font-semibold text-[#225F91] uppercase tracking-wider"
               >
                 Ward
               </Label>
@@ -205,7 +205,7 @@ const FilterControls = ({
             </div>
           </div>
           <div className="space-y-2">
-            <Label className="text-sm font-semibold text-primary uppercase tracking-wider">
+            <Label className="text-sm font-semibold text-[#225F91] uppercase tracking-wider">
               Sort By
             </Label>
             <div className="flex gap-4 pt-2">
@@ -218,10 +218,10 @@ const FilterControls = ({
                     if (searchTerm) handleSearch(searchTerm);
                   }}
                   className={cn(
-                    'h-10 px-6 text-sm font-semibold rounded-full transition-all duration-300',
+                    'h-10 px-6 text-base font-semibold rounded-full transition-all duration-300',
                     sortBy === value
-                      ? 'bg-primary text-white shadow-[0_0_15px_rgba(59,130,246,0.5)]'
-                      : 'border-gray-200 text-gray-700 hover:bg-primary/10 hover:border-primary/50'
+                      ? 'bg-[#225F91] text-white shadow-[0_0_15px_rgba(34,95,145,0.5)]'
+                      : 'border-[#1ABA7F] text-[#225F91] hover:bg-[#1ABA7F]/10 hover:border-[#1ABA7F]/50'
                   )}
                   aria-label={`Sort by ${value}`}
                 >
@@ -234,14 +234,14 @@ const FilterControls = ({
             <Button
               variant="outline"
               onClick={clearFilters}
-              className="h-12 px-6 text-sm font-semibold rounded-full border-gray-200/50 text-gray-700 hover:bg-red-100/50 hover:border-red-500/50 hover:text-red-600 transition-all duration-300"
+              className="h-12 px-6 text-base font-semibold rounded-full border-[#1ABA7F] text-[#225F91] hover:bg-[#1ABA7F]/10 hover:border-[#1ABA7F]/50 transition-all duration-300"
               aria-label="Clear all filters"
             >
               Clear
             </Button>
             <Button
               onClick={() => handleSearch(searchTerm)}
-              className="h-12 px-6 text-sm font-semibold rounded-full bg-primary text-white hover:bg-primary/90 hover:shadow-[0_0_20px_rgba(59,130,246,0.6)] animate-pulse transition-all duration-300"
+              className="h-12 px-6 text-base font-semibold rounded-full bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_20px_rgba(34,95,145,0.6)] transition-all duration-300"
             >
               Apply Filters
             </Button>

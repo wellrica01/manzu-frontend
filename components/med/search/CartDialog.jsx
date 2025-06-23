@@ -7,15 +7,15 @@ const CartDialog = ({ openCartDialog, setOpenCartDialog, lastAddedItem }) => {
   return (
     <Dialog open={openCartDialog} onOpenChange={setOpenCartDialog}>
       <DialogContent
-        className="sm:max-w-md p-8 border border-gray-100/30 rounded-3xl bg-gradient-to-br from-white/90 to-gray-50/90 backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.2)] animate-in slide-in-from-top-10 fade-in-20 duration-300"
+        className="sm:max-w-md p-8 border border-[#1ABA7F]/20 rounded-2xl bg-white/95 backdrop-blur-sm shadow-xl animate-in slide-in-from-top-10 fade-in-20 duration-300"
       >
-        <div className="absolute top-0 left-0 w-12 h-12 bg-primary/20 rounded-br-full" />
+        <div className="absolute top-0 left-0 w-12 h-12 bg-[#1ABA7F]/20 rounded-br-full" />
         <DialogHeader className="flex flex-col items-center gap-3">
           <CheckCircle
-            className="h-12 w-12 text-green-500 animate-[pulse_1s_ease-in-out_infinite]"
+            className="h-12 w-12 text-[#1ABA7F] animate-[pulse_1s_ease-in-out_infinite]"
             aria-hidden="true"
           />
-          <DialogTitle className="text-2xl font-extrabold text-primary tracking-tight text-center">
+          <DialogTitle className="text-2xl font-bold text-[#225F91] tracking-tight text-center">
             Added to Cart!
           </DialogTitle>
         </DialogHeader>
@@ -26,14 +26,14 @@ const CartDialog = ({ openCartDialog, setOpenCartDialog, lastAddedItem }) => {
           <Button
             variant="outline"
             onClick={() => setOpenCartDialog(false)}
-            className="h-12 px-6 text-sm font-semibold rounded-full border-gray-200/50 text-gray-700 hover:bg-gray-100/50 hover:border-gray-300/50 hover:shadow-[0_0_10px_rgba(0,0,0,0.1)] transition-all duration-300"
+            className="h-12 px-6 text-base font-semibold rounded-full border-[#1ABA7F] text-[#225F91] hover:bg-[#1ABA7F]/10 hover:shadow-[0_0_10px_rgba(26,186,127,0.3)] transition-all duration-300"
             aria-label="Continue shopping"
           >
             Continue Shopping
           </Button>
           <Button
             asChild
-            className="h-12 px-6 text-sm font-semibold rounded-full bg-primary text-white hover:bg-primary/90 hover:shadow-[0_0_15px_rgba(59,130,246,0.5)] animate-pulse transition-all duration-300"
+            className="h-12 px-6 text-base font-semibold rounded-full bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_15px_rgba(34,95,145,0.5)] transition-all duration-300"
           >
             <Link href="/med/cart" aria-label="View cart">
               View Cart

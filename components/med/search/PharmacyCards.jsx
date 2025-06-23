@@ -35,7 +35,7 @@ const PharmacyCards = ({ availability, medId, handleAddToCart, isInCart, display
         }, [validDistances, avail.distance_km]);
 
         return (
-          <Card key={index} className="p-4 border border-gray-100/50 rounded-xl">
+          <Card key={index} className="p-4 border border-[#1ABA7F]/20 rounded-xl bg-white/95 backdrop-blur-sm">
             <div className="flex justify-between items-center">
               <p className="text-base font-semibold text-gray-900 truncate max-w-[200px]">
                 {avail.pharmacyName}
@@ -48,7 +48,7 @@ const PharmacyCards = ({ availability, medId, handleAddToCart, isInCart, display
                   'h-8 px-3 text-sm rounded-full',
                   isInCart(medId, avail.pharmacyId)
                     ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                    : 'bg-primary text-white hover:bg-primary/90'
+                    : 'bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_15px_rgba(34,95,145,0.5)]'
                 )}
                 aria-label={isInCart(medId, avail.pharmacyId) ? 'Added to cart' : 'Add to cart'}
               >
@@ -71,7 +71,7 @@ const PharmacyCards = ({ availability, medId, handleAddToCart, isInCart, display
             <div className="flex items-center gap-2 mt-1">
               <span className="text-base font-bold text-gray-800">₦{avail.price.toLocaleString()}</span>
               {isCheapest && (
-                <span className="inline-flex items-center px-2 py-1 text-xs font-bold text-green-600 bg-green-100 rounded-full animate-bounce">
+                <span className="inline-flex items-center px-2 py-1 text-xs font-bold text-[#1ABA7F] bg-[#1ABA7F]/20 rounded-full">
                   Cheapest
                 </span>
               )}
@@ -83,7 +83,7 @@ const PharmacyCards = ({ availability, medId, handleAddToCart, isInCart, display
                   : 'N/A'}
               </span>
               {isClosest && (
-                <span className="inline-flex items-center px-2 py-1 text-xs font-bold text-blue-600 bg-blue-100 rounded-full animate-bounce">
+                <span className="inline-flex items-center px-2 py-1 text-xs font-bold text-[#225F91] bg-[#225F91]/20 rounded-full">
                   Closest
                 </span>
               )}

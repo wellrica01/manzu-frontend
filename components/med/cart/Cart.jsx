@@ -1,4 +1,5 @@
 'use client';
+
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -40,7 +41,7 @@ export default function Cart() {
       return;
     }
     if (newQuantity < 1) return;
-    setIsUpdating(prev => ({ ...prev, [orderItemId]: true }));
+    setIsUpdating((prev) => ({ ...prev, [orderItemId]: true }));
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart/update`, {
         method: 'PUT',
@@ -54,7 +55,7 @@ export default function Cart() {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to update quantity');
       }
-      await fetchCart(); // Refetch to update cart
+      await fetchCart();
       setQuantityUpdate({ id: orderItemId, name: itemName, quantity: newQuantity });
       if (typeof window !== 'undefined' && window.gtag) {
         window.gtag('event', 'update_cart_quantity', { orderItemId, quantity: newQuantity });
@@ -62,7 +63,7 @@ export default function Cart() {
     } catch (err) {
       toast.error(err.message, { duration: 4000 });
     } finally {
-      setIsUpdating(prev => ({ ...prev, [orderItemId]: false }));
+      setIsUpdating((prev) => ({ ...prev, [orderItemId]: false }));
     }
   };
 
@@ -71,7 +72,7 @@ export default function Cart() {
       toast.error('Invalid item ID', { duration: 4000 });
       return;
     }
-    setIsUpdating(prev => ({ ...prev, [removeItem.id]: true }));
+    setIsUpdating((prev) => ({ ...prev, [removeItem.id]: true }));
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart/remove/${removeItem.id}`, {
         method: 'DELETE',
@@ -81,7 +82,7 @@ export default function Cart() {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to remove item');
       }
-      await fetchCart(); // Refetch to update cart
+      await fetchCart();
       setRemoveItem(null);
       if (typeof window !== 'undefined' && window.gtag) {
         window.gtag('event', 'remove_from_cart', { orderItemId: removeItem.id });
@@ -89,7 +90,7 @@ export default function Cart() {
     } catch (err) {
       toast.error(err.message, { duration: 4000 });
     } finally {
-      setIsUpdating(prev => ({ ...prev, [removeItem.id]: false }));
+      setIsUpdating((prev) => ({ ...prev, [removeItem.id]: false }));
     }
   };
 
@@ -100,16 +101,17 @@ export default function Cart() {
   const calculateItemPrice = (item) => item.quantity * item.price;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50/95 to-gray-100/95 py-10 px-4 sm:px-6 lg:px-8 animate-in fade-in-20 duration-500">
+    <div className="min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 via-gray-50/50 to-white/80 py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      <div className="absolute inset-0 bg-[url('/svg/pattern-dots.svg')] opacity-10 pointer-events-none" aria-hidden="true" />
       <div className="container mx-auto max-w-5xl">
-        <h1 className="text-4xl sm:text-5xl font-extrabold text-primary mb-8 text-center tracking-tight animate-in slide-in-from-top-10 duration-700">
+        <h1 className="text-4xl sm:text-5xl font-bold text-[#225F91] mb-8 text-center tracking-tight animate-in slide-in-from-top duration-700">
           Your Cart
         </h1>
         <ErrorMessage error={error} />
         {!isFetched ? null : cart.pharmacies.length === 0 ? (
           <EmptyCart />
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-8">
             <RemoveItemDialog
               removeItem={removeItem}
               setRemoveItem={setRemoveItem}
@@ -121,7 +123,7 @@ export default function Cart() {
               setQuantityUpdate={setQuantityUpdate}
               handleCheckout={handleCheckout}
             />
-            {cart.pharmacies.map((pharmacy, index) => (
+            {cart.pharmacies.map((pharmacy) => (
               <PharmacyCartCard
                 key={pharmacy.pharmacy.id}
                 pharmacy={pharmacy}
