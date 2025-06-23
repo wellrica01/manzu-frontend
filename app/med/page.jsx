@@ -10,7 +10,9 @@ import PrescriptionUploadForm from '@/components/med/PrescriptionUploadForm';
 export default function MedPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 via-gray-50/50 to-white/80 py-8 px-4 sm:px-6 lg:px-8 animate-in fade-in-20 duration-500">
-      <div className="container mx-auto max-w-5xl">
+      {/* Subtle Background Pattern */}
+      <div className="absolute inset-0 bg-[url('/svg/pattern-dots.svg')] opacity-10 pointer-events-none" aria-hidden="true" />
+      <div className="container mx-auto max-w-6xl">
         <header className="text-center mb-12 sm:mb-16">
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 tracking-tight animate-in slide-in-from-top-10 duration-700">
             Medication Services with{' '}

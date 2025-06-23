@@ -1,4 +1,5 @@
 'use client';
+
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Script from 'next/script';
@@ -27,7 +28,18 @@ export default function OrderDetails() {
       fetchCheckoutSessionId(id);
     } else {
       setError('Guest ID not found. Please check your status again.');
-      toast.error('Guest ID not found', { duration: 4000 });
+      toast.error('Guest ID not found', {
+        duration: 4000,
+        style: {
+          background: 'rgba(255,85,85,0.95)',
+          color: '#ffffff',
+          border: '1px solid rgba(34,95,145,0.3)',
+          borderRadius: '0.5rem',
+          boxShadow: '0 4px 20px rgba(34,95,145,0.2)',
+          padding: '1rem',
+          backdropFilter: 'blur(8px)',
+        },
+      });
     }
   }, []);
 
@@ -61,7 +73,18 @@ export default function OrderDetails() {
       fetchOrders(guestId, data.checkoutSessionId);
     } catch (err) {
       setError(err.message);
-      toast.error(err.message, { duration: 4000 });
+      toast.error(err.message, {
+        duration: 4000,
+        style: {
+          background: 'rgba(255,85,85,0.95)',
+          color: '#ffffff',
+          border: '1px solid rgba(34,95,145,0.3)',
+          borderRadius: '0.5rem',
+          boxShadow: '0 4px 20px rgba(34,95,145,0.2)',
+          padding: '1rem',
+          backdropFilter: 'blur(8px)',
+        },
+      });
       console.error('fetchCheckoutSessionId error:', err);
     } finally {
       setLoading(false);
@@ -100,7 +123,18 @@ export default function OrderDetails() {
       }
     } catch (err) {
       setError(err.message);
-      toast.error(err.message, { duration: 4000 });
+      toast.error(err.message, {
+        duration: 4000,
+        style: {
+          background: 'rgba(255,85,85,0.95)',
+          color: '#ffffff',
+          border: '1px solid rgba(34,95,145,0.3)',
+          borderRadius: '0.5rem',
+          boxShadow: '0 4px 20px rgba(34,95,145,0.2)',
+          padding: '1rem',
+          backdropFilter: 'blur(8px)',
+        },
+      });
       console.error('fetchOrders error:', err);
     } finally {
       setLoading(false);
@@ -151,50 +185,99 @@ export default function OrderDetails() {
         onSuccess: (transaction) => {
           const primaryReference = data.paymentReferences[0];
           router.push(`/med/confirmation?reference=${primaryReference}&session=${checkoutSessionId}`);
-          toast.success('Payment successful!', { duration: 4000 });
+          toast.success('Payment successful!', {
+            duration: 4000,
+            style: {
+              background: 'rgba(255,255,255,0.95)',
+              color: '#225F91',
+              border: '1px solid rgba(26,186,127,0.3)',
+              borderRadius: '0.5rem',
+              boxShadow: '0 4px 20px rgba(26,186,127,0.2)',
+              padding: '1rem',
+              backdropFilter: 'blur(8px)',
+            },
+          });
           window.gtag?.('event', 'order_payment_complete', { transactionId: transaction.reference });
         },
         onCancel: () => {
           setError('Payment cancelled');
-          toast.error('Payment cancelled', { duration: 4000 });
+          toast.error('Payment cancelled', {
+            duration: 4000,
+            style: {
+              background: 'rgba(255,85,85,0.95)',
+              color: '#ffffff',
+              border: '1px solid rgba(34,95,145,0.3)',
+              borderRadius: '0.5rem',
+              boxShadow: '0 4px 20px rgba(34,95,145,0.2)',
+              padding: '1rem',
+              backdropFilter: 'blur(8px)',
+            },
+          });
         },
       });
     } catch (err) {
       setError(err.message);
-      toast.error(err.message, { duration: 4000 });
+      toast.error(err.message, {
+        duration: 4000,
+        style: {
+          background: 'rgba(255,85,85,0.95)',
+          color: '#ffffff',
+          border: '1px solid rgba(34,95,145,0.3)',
+          borderRadius: '0.5rem',
+          boxShadow: '0 4px 20px rgba(34,95,145,0.2)',
+          padding: '1rem',
+          backdropFilter: 'blur(8px)',
+        },
+      });
       console.error('handlePayment error:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  if (!pharmacies.length && !error) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>;
+  if (!pharmacies.length && !error) return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#1ABA7F]/10 via-gray-50/50 to-white/80">
+      <Loader2 className="h-10 w-10 text-[#225F91] animate-spin" />
+    </div>
+  );
 
   return (
     <>
       <Script
         src="https://js.paystack.co/v2/inline.js"
         strategy="afterInteractive"
-        onError={() => toast.error('Failed to load Paystack', { duration: 4000 })}
+        onError={() => toast.error('Failed to load Paystack', {
+          duration: 4000,
+          style: {
+            background: 'rgba(255,85,85,0.95)',
+            color: '#ffffff',
+            border: '1px solid rgba(34,95,145,0.3)',
+            borderRadius: '0.5rem',
+            boxShadow: '0 4px 20px rgba(34,95,145,0.2)',
+            padding: '1rem',
+            backdropFilter: 'blur(8px)',
+          },
+        })}
       />
-      <div className="min-h-screen bg-gradient-to-b from-gray-50/95 to-gray-100/95 py-10 px-4 sm:px-6 lg:px-8 animate-in fade-in-20 duration-500">
+      <div className="min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 via-gray-50/50 to-white/80 py-10 px-4 sm:px-6 lg:px-8 relative overflow-hidden animate-in fade-in-20 duration-500">
+        <div className="absolute inset-0 bg-[url('/svg/pattern-dots.svg')] opacity-10 pointer-events-none" aria-hidden="true" />
         <div className="container mx-auto max-w-5xl">
-          <h1 className="text-4xl sm:text-5xl font-extrabold text-primary mb-8 text-center tracking-tight animate-in slide-in-from-top-10 duration-700">
+          <h1 className="text-4xl sm:text-5xl font-bold text-[#225F91] mb-8 text-center tracking-tight animate-in slide-in-from-top duration-700">
             Order Summary
           </h1>
           {error && (
-            <Card className="bg-red-50/95 border border-red-100/400 rounded-2xl shadow-md mb-6 flex items-center gap-4 p-4 animate-in slide-in-from-top-10 duration-500" role="alert">
-              <AlertCircle className="h-6 w-6 text-red-600" />
-              <p className="text-red-600 text-base font-medium">{error}</p>
+            <Card className="bg-white/95 border border-[#225F91]/20 rounded-2xl shadow-xl backdrop-blur-sm p-6 mb-6 flex items-center gap-4 animate-in zoom-in-50 duration-500" role="alert">
+              <AlertCircle className="h-6 w-6 text-[#225F91]" />
+              <p className="text-[#225F91] text-base font-medium">{error}</p>
             </Card>
           )}
           {pharmacies.length > 0 && (
             <div className="space-y-6">
               {pharmacies.map((pharmacy) => (
-                <Card key={pharmacy.pharmacy.id} className="shadow-xl border border-gray-200 rounded-2xl bg-white">
-                  <div className="absolute top-0 left-0 w-12 h-12 bg-primary/10 rounded-br-full" />
-                  <CardHeader className="bg-gray-50 p-6">
-                    <CardTitle className="text-xl font-bold text-gray-800">{pharmacy.pharmacy.name}</CardTitle>
+                <Card key={pharmacy.pharmacy.id} className="relative bg-white/95 border border-[#1ABA7F]/20 rounded-2xl shadow-xl backdrop-blur-sm transition-all duration-500 hover:ring-2 hover:ring-[#1ABA7F]/30 animate-in fade-in-20">
+                  <div className="absolute top-0 left-0 w-16 h-16 bg-[#1ABA7F]/20 rounded-br-3xl" />
+                  <CardHeader className="bg-[#225F91]/10 p-6">
+                    <CardTitle className="text-xl font-bold text-[#225F91]">{pharmacy.pharmacy.name}</CardTitle>
                   </CardHeader>
                   <CardContent className="p-6">
                     <div className="mb-6">
@@ -202,38 +285,39 @@ export default function OrderDetails() {
                     </div>
                     {pharmacy.orders.map((order) => (
                       <div key={order.id} className="mb-6">
-                        <p className="text-sm font-semibold">Order #{order.id} | Status: {order.status}</p>
-                        <table className="w-full text-sm mt-2 border-t border-gray-200">
+                        <p className="text-sm font-semibold text-[#225F91]">Order #{order.id} | Status: {order.status}</p>
+                        <table className="w-full text-sm mt-2 border-t border-[#1ABA7F]/20">
                           <thead>
-                            <tr className="bg-gray-50">
-                              <th className="p-2 text-left font-medium">Medication</th>
-                              <th className="p-2 text-left font-medium">Qty</th>
-                              <th className="p-2 text-left font-medium">Price</th>
-                              <th className="p-2 text-left font-medium">Total</th>
+                            <tr className="bg-[#225F91]/5">
+                              <th className="p-2 text-left font-medium text-[#225F91]">Medication</th>
+                              <th className="p-2 text-left font-medium text-[#225F91]">Qty</th>
+                              <th className="p-2 text-left font-medium text-[#225F91]">Price</th>
+                              <th className="p-2 text-left font-medium text-[#225F91]">Total</th>
                             </tr>
                           </thead>
                           <tbody>
                             {order.items.map((item) => (
-                              <tr key={item.id} className="border-b border-gray-100">
-                                <td className="p-2">{item.medication.name}</td>
-                                <td className="p-2">{item.quantity}</td>
-                                <td className="p-2">₦{item.price.toLocaleString()}</td>
-                                <td className="p-2">₦{(item.price * item.quantity).toLocaleString()}</td>
+                              <tr key={item.id} className="border-b border-[#1ABA7F]/10">
+                                <td className="p-2 text-gray-900">{item.medication.name}</td>
+                                <td className="p-2 text-gray-600">{item.quantity}</td>
+                                <td className="p-2 text-gray-600">₦{item.price.toLocaleString()}</td>
+                                <td className="p-2 text-gray-600">₦{(item.price * item.quantity).toLocaleString()}</td>
                               </tr>
                             ))}
                           </tbody>
                         </table>
-                        <p className="text-right text-sm font-semibold text-gray-700 mt-2">Subtotal: ₦{order.totalPrice.toLocaleString()}</p>
+                        <p className="text-right text-sm font-semibold text-[#225F91] mt-2">Subtotal: ₦{order.totalPrice.toLocaleString()}</p>
                       </div>
                     ))}
                   </CardContent>
                 </Card>
               ))}
               {prescription && (
-                <Card className="shadow-xl border border-gray-200 rounded-2xl bg-white p-6">
+                <Card className="relative bg-white/95 border border-[#1ABA7F]/20 rounded-2xl shadow-xl backdrop-blur-sm p-6 transition-all duration-500 hover:ring-2 hover:ring-[#1ABA7F]/30 animate-in fade-in-20">
+                  <div className="absolute top-0 left-0 w-16 h-16 bg-[#1ABA7F]/20 rounded-br-3xl" />
                   <div className="flex items-center gap-2">
-                    <FileText className="h-5 w-5 text-primary" />
-                    <h3 className="text-lg font-semibold text-gray-800">Prescription</h3>
+                    <FileText className="h-5 w-5 text-[#1ABA7F]" />
+                    <h3 className="text-lg font-semibold text-[#225F91]">Prescription</h3>
                   </div>
                   <p className="text-gray-600 text-sm mt-2">ID: {prescription.id}</p>
                   <p className="text-gray-600 text-sm">Status: {prescription.status}</p>
@@ -242,18 +326,18 @@ export default function OrderDetails() {
               )}
               <div className="text-right">
                 {totalPrice === 0 ? (
-                  <Card className="bg-yellow-50 text-yellow-600 rounded-2xl shadow-md p-4 mb-4 flex items-center gap-4">
-                    <AlertCircle className="h-6 w-6" />
-                    <p className="text-sm font-medium">
+                  <Card className="bg-white/95 border border-[#1ABA7F]/20 rounded-2xl shadow-xl backdrop-blur-sm p-4 mb-4 flex items-center gap-4 animate-in zoom-in-50 duration-500">
+                    <AlertCircle className="h-6 w-6 text-[#225F91]" />
+                    <p className="text-sm font-medium text-[#225F91]">
                       No orders are ready for payment. Prescription may be pending verification or orders are already processed.
                     </p>
                   </Card>
                 ) : (
-                  <p className="text-xl font-bold text-primary mb-4">Total: ₦{totalPrice.toLocaleString()}</p>
+                  <p className="text-xl font-bold text-[#225F91] mb-4">Total: ₦{totalPrice.toLocaleString()}</p>
                 )}
                 <Button
                   onClick={handlePayment}
-                  className="h-12 px-6 rounded-full bg-primary text-white hover:bg-primary/90 transition-colors duration-200"
+                  className="h-12 px-6 text-base font-semibold rounded-full bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_20px_rgba(34,95,145,0.3)] transition-all duration-300"
                   disabled={loading || totalPrice === 0 || pharmacies.some(p => p.orders.some(o => o.status !== 'pending'))}
                   aria-label="Complete payment"
                 >

@@ -78,6 +78,8 @@ const FilterControls = ({
   searchTerm,
   showFilters,
   setShowFilters,
+  filterHomeCollection,
+  setFilterHomeCollection,
 }) => {
   return (
     <Card className="relative bg-white/95 border border-[#1ABA7F]/20 rounded-2xl shadow-xl overflow-hidden backdrop-blur-sm transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:ring-2 hover:ring-[#1ABA7F]/30">
@@ -95,7 +97,7 @@ const FilterControls = ({
             {showFilters ? 'Hide Filters' : 'Refine Your Search'}
           </span>
         </div>
-        {(filterState || filterLga || filterWard || sortBy !== 'cheapest') && (
+        {(filterState || filterLga || filterWard || sortBy !== 'cheapest' || filterHomeCollection) && (
           <Button
             variant="ghost"
             size="sm"
@@ -115,7 +117,7 @@ const FilterControls = ({
           <p className="text-base font-medium text-gray-600 tracking-wide">
             Tailor your search to find the best labs
           </p>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             <div className="space-y-2">
               <Label htmlFor="state-filter" className="text-sm font-semibold text-[#225F91] uppercase tracking-wider">
                 State
@@ -189,6 +191,30 @@ const FilterControls = ({
                 aria-label="Select ward"
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="home-collection-filter" className="text-sm font-semibold text-[#225F91] uppercase tracking-wider">
+                Home Collection
+              </Label>
+              <Select
+                inputId="home-collection-filter"
+                options={[
+                  { value: 'true', label: 'Home Collection Available' },
+                  { value: '', label: 'All Labs' },
+                ]}
+                onChange={(selected) => {
+                  setFilterHomeCollection(selected?.value === 'true' || false);
+                  if (searchTerm) handleSearch(searchTerm);
+                }}
+                value={
+                  filterHomeCollection
+                    ? { value: 'true', label: 'Home Collection Available' }
+                    : { value: '', label: 'All Labs' }
+                }
+                styles={customSelectStyles}
+                className="text-base"
+                aria-label="Select home collection preference"
+              />
+            </div>
           </div>
           <div className="space-y-2">
             <Label className="text-sm font-semibold text-[#225F91] uppercase tracking-wider">
@@ -199,7 +225,7 @@ const FilterControls = ({
                 <Button
                   key={value}
                   variant={sortBy === value ? 'default' : 'outline'}
-                  onClick={() => {
+                  onChange={() => {
                     setSortBy(value);
                     if (searchTerm) handleSearch(searchTerm);
                   }}

@@ -1,4 +1,5 @@
 'use client';
+
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -27,12 +28,34 @@ export default function Track() {
     e.preventDefault();
     if (!trackingCode) {
       setError('Please enter a tracking code');
-      toast.error('Please enter a tracking code', { duration: 4000 });
+      toast.error('Please enter a tracking code', {
+        duration: 4000,
+        style: {
+          background: 'rgba(255,85,85,0.95)',
+          color: '#ffffff',
+          border: '1px solid rgba(34,95,145,0.3)',
+          borderRadius: '0.5rem',
+          boxShadow: '0 4px 20px rgba(34,95,145,0.2)',
+          padding: '1rem',
+          backdropFilter: 'blur(8px)',
+        },
+      });
       return;
     }
     if (!validateTrackingCode(trackingCode)) {
       setError('Invalid tracking code format (e.g., TRK-SESSION-15-1747421013936)');
-      toast.error('Invalid tracking code format', { duration: 4000 });
+      toast.error('Invalid tracking code format', {
+        duration: 4000,
+        style: {
+          background: 'rgba(255,85,85,0.95)',
+          color: '#ffffff',
+          border: '1px solid rgba(34,95,145,0.3)',
+          borderRadius: '0.5rem',
+          boxShadow: '0 4px 20px rgba(34,95,145,0.2)',
+          padding: '1rem',
+          backdropFilter: 'blur(8px)',
+        },
+      });
       return;
     }
     try {
@@ -45,7 +68,7 @@ export default function Track() {
         const errorMsg = errorData.message === 'Orders not found or prescription still under review' ? (
           <>
             Orders not found or not ready for tracking. Please check your tracking code or{' '}
-            <Link href="/med/status-check" className="text-blue-600 underline">check order status</Link>.
+            <Link href="/med/status-check" className="text-[#225F91] underline">check order status</Link>.
           </>
         ) : errorData.message;
         setError(errorMsg);
@@ -55,12 +78,33 @@ export default function Track() {
             label: 'Retry',
             onClick: () => formRef.current?.requestSubmit(),
           },
+          style: {
+            background: 'rgba(255,85,85,0.95)',
+            color: '#ffffff',
+            border: '1px solid rgba(34,95,145,0.3)',
+            borderRadius: '0.5rem',
+            boxShadow: '0 4px 20px rgba(34,95,145,0.2)',
+            padding: '1rem',
+            backdropFilter: 'blur(8px)',
+          },
         });
         throw new Error(errorData.message);
       }
       const data = await response.json();
       setOrders(data.orders);
       setShowTrackDialog(true);
+      toast.success('Order details found!', {
+        duration: 6000,
+        style: {
+          background: 'rgba(255,255,255,0.95)',
+          color: '#225F91',
+          border: '1px solid rgba(26,186,127,0.3)',
+          borderRadius: '0.5rem',
+          boxShadow: '0 4px 20px rgba(26,186,127,0.2)',
+          padding: '1rem',
+          backdropFilter: 'blur(8px)',
+        },
+      });
       if (typeof window !== 'undefined' && window.gtag) {
         window.gtag('event', 'track_order', { trackingCode });
       }
@@ -94,33 +138,34 @@ export default function Track() {
   const getStatusProgress = (status) => {
     const steps = ['confirmed', 'processing', 'shipped', 'delivered', 'ready_for_pickup'];
     const index = steps.indexOf(status);
-    return index >= 0 ? (index + 1) / steps.length * 100 : 0;
+    return index >= 0 ? ((index + 1) / steps.length) * 100 : 0;
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50/95 to-gray-100/95 py-10 px-4 sm:px-6 lg:px-8 animate-in fade-in-20 duration-500">
+    <div className="min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 via-gray-50/50 to-white/80 py-10 px-4 sm:px-6 lg:px-8 relative overflow-hidden animate-in fade-in-20 duration-500">
+      <div className="absolute inset-0 bg-[url('/svg/pattern-dots.svg')] opacity-10 pointer-events-none" aria-hidden="true" />
       <div className="container mx-auto max-w-5xl">
-        <h1 className="text-4xl sm:text-5xl font-extrabold text-primary mb-8 text-center tracking-tight animate-in slide-in-from-top-10 duration-700">
+        <h1 className="text-4xl sm:text-5xl font-bold text-[#225F91] mb-8 text-center tracking-tight animate-in slide-in-from-top duration-700">
           Track Your Order
         </h1>
-        <Card className="shadow-2xl border border-gray-100/30 rounded-3xl overflow-hidden bg-gradient-to-br from-white/90 to-gray-50/90 backdrop-blur-md transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_10px_30px_rgba(59,130,246,0.2)] mb-6">
-          <div className="absolute top-0 left-0 w-12 h-12 bg-primary/20 rounded-br-full" />
-          <CardHeader className="bg-primary/10 p-6 sm:p-8">
-            <CardTitle className="text-xl sm:text-2xl font-extrabold text-primary">
+        <Card className="relative bg-white/95 border border-[#1ABA7F]/20 rounded-2xl shadow-xl overflow-hidden backdrop-blur-sm transition-all duration-500 hover:ring-2 hover:ring-[#1ABA7F]/30 mb-6">
+          <div className="absolute top-0 left-0 w-16 h-16 bg-[#1ABA7F]/20 rounded-br-3xl" />
+          <CardHeader className="bg-[#225F91]/10 p-6 sm:p-8">
+            <CardTitle className="text-xl sm:text-2xl font-bold text-[#225F91]">
               Enter Tracking Code
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6 sm:p-8">
             <form onSubmit={handleTrack} className="space-y-6" role="form" aria-labelledby="track-form-title" ref={formRef}>
               <div>
-                <Label htmlFor="trackingCode" className="text-sm font-semibold text-primary uppercase tracking-wider">
+                <Label htmlFor="trackingCode" className="text-sm font-semibold text-[#225F91] uppercase tracking-wider">
                   Tracking Code
                 </Label>
                 <Input
                   id="trackingCode"
                   value={trackingCode}
                   onChange={(e) => setTrackingCode(e.target.value)}
-                  className="mt-2 h-12 text-lg font-medium rounded-2xl border-gray-200/50 bg-white/95 text-gray-900 placeholder:text-gray-400 focus:ring-0 focus:border-primary/50 focus:shadow-[0_0_15px_rgba(59,130,246,0.3)] transition-all duration-300"
+                  className="mt-2 h-12 text-lg font-medium rounded-2xl border-[#1ABA7F]/20 bg-white/95 text-gray-900 placeholder:text-gray-400 focus:ring-0 focus:border-[#1ABA7F]/50 focus:shadow-[0_0_15px_rgba(26,186,127,0.3)] transition-all duration-300"
                   placeholder="e.g., TRK-SESSION-15-1747421013936"
                   required
                   aria-required="true"
@@ -129,7 +174,7 @@ export default function Track() {
               </div>
               <Button
                 type="submit"
-                className="w-full h-14 px-8 text-lg font-semibold rounded-2xl bg-primary text-white hover:bg-primary/90 hover:shadow-[0_0_20px_rgba(59,130,246,0.6)] animate-pulse disabled:opacity-50 disabled:cursor-not-allowed disabled:animate-none transition-all duration-300"
+                className="w-full h-14 px-8 text-lg font-semibold rounded-full bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_20px_rgba(34,95,145,0.3)] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={loading}
                 aria-label="Track order"
               >
@@ -146,12 +191,12 @@ export default function Track() {
           </CardContent>
         </Card>
         {error && (
-          <Card className="bg-red-50/95 border border-red-100/50 rounded-2xl shadow-md mb-6 p-4 animate-in slide-in-from-top-10 duration-500" id="tracking-error" role="alert">
-            <p className="text-red-600 text-base font-medium">{error}</p>
+          <Card className="bg-white/95 border border-[#225F91]/20 rounded-2xl shadow-xl backdrop-blur-sm p-6 animate-in zoom-in-50 duration-500" id="tracking-error" role="alert">
+            <p className="text-[#225F91] text-base font-medium">{error}</p>
             {error.includes('not ready for tracking') && (
               <p className="text-gray-600 text-sm mt-2">
                 Try checking your order status with your email or phone number on the{' '}
-                <Link href="/med/status-check" className="text-blue-600 underline">Status Check</Link> page.
+                <Link href="/med/status-check" className="text-[#225F91] underline">Status Check</Link> page.
               </p>
             )}
           </Card>
@@ -159,11 +204,11 @@ export default function Track() {
         {orders.length > 0 && (
           <>
             <Dialog open={showTrackDialog} onOpenChange={setShowTrackDialog}>
-              <DialogContent className="sm:max-w-md p-8 border border-gray-100/30 rounded-3xl bg-gradient-to-br from-white/90 to-gray-50/90 backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.2)] animate-in slide-in-from-top-10 fade-in-20 duration-300">
-                <div className="absolute top-0 left-0 w-12 h-12 bg-primary/20 rounded-br-full" />
-                <CheckCircle className="h-10 w-10 text-green-500 mx-auto mb-4 animate-[pulse_1s_ease-in-out_infinite]" aria-hidden="true" />
+              <DialogContent className="sm:max-w-md p-8 border border-[#1ABA7F]/20 rounded-2xl bg-white/95 backdrop-blur-sm shadow-xl animate-in slide-in-from-top duration-500">
+                <div className="absolute top-0 left-0 w-16 h-16 bg-[#1ABA7F]/20 rounded-br-3xl" />
+                <CheckCircle className="h-10 w-10 text-[#1ABA7F] mx-auto mb-4 animate-[pulse_1s_ease-in-out_infinite]" aria-hidden="true" />
                 <DialogHeader>
-                  <DialogTitle className="text-2xl font-extrabold text-primary text-center tracking-tight">
+                  <DialogTitle className="text-2xl font-bold text-[#225F91] text-center tracking-tight">
                     Order Details Found
                   </DialogTitle>
                 </DialogHeader>
@@ -177,14 +222,14 @@ export default function Track() {
                   <Button
                     variant="outline"
                     onClick={handleTrackAnother}
-                    className="h-12 px-6 text-sm font-semibold rounded-full border-gray-200/50 text-gray-700 hover:bg-gray-100/50 hover:border-gray-300/50 hover:shadow-[0_0_10px_rgba(0,0,0,0.1)] transition-all duration-300"
+                    className="h-12 px-6 text-base font-semibold rounded-full border-[#1ABA7F] text-[#1ABA7F] hover:bg-[#1ABA7F]/10 hover:shadow-lg transition-all duration-300"
                     aria-label="Track another order"
                   >
                     Track Another
                   </Button>
                   <Button
                     onClick={() => setShowTrackDialog(false)}
-                    className="h-12 px-6 text-sm font-semibold rounded-full bg-primary text-white hover:bg-primary/90 hover:shadow-[0_0_15px_rgba(59,130,246,0.5)] animate-pulse transition-all duration-300"
+                    className="h-12 px-6 text-base font-semibold rounded-full bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_20px_rgba(34,95,145,0.3)] transition-all duration-300"
                     aria-label="View order details"
                   >
                     View Details
@@ -196,18 +241,18 @@ export default function Track() {
               {orders.map((order, index) => (
                 <Card
                   key={order.id}
-                  className="shadow-2xl border border-gray-100/30 rounded-3xl overflow-hidden bg-gradient-to-br from-white/90 to-gray-50/90 backdrop-blur-md transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_10px_30px_rgba(59,130,246,0.2)] animate-in fade-in-20"
+                  className="relative bg-white/95 border border-[#1ABA7F]/20 rounded-2xl shadow-xl overflow-hidden backdrop-blur-sm transition-all duration-500 hover:ring-2 hover:ring-[#1ABA7F]/30 animate-in fade-in-20"
                   style={{ animationDelay: `${0.2 * index}s` }}
                 >
-                  <div className="absolute top-0 left-0 w-12 h-12 bg-primary/20 rounded-br-full" />
-                  <CardHeader className="bg-primary/10 p-6 sm:p-8">
-                    <CardTitle className="text-xl sm:text-2xl font-extrabold text-primary">
+                  <div className="absolute top-0 left-0 w-16 h-16 bg-[#1ABA7F]/20 rounded-br-3xl" />
+                  <CardHeader className="bg-[#225F91]/10 p-6 sm:p-8">
+                    <CardTitle className="text-xl sm:text-2xl font-bold text-[#225F91]">
                       Order #{order.id}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-6 sm:p-8 space-y-4">
                     <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4">
-                      <div className="bg-primary h-2.5 rounded-full" style={{ width: `${getStatusProgress(order.status)}%` }}></div>
+                      <div className="bg-[#225F91] h-2.5 rounded-full" style={{ width: `${getStatusProgress(order.status)}%` }}></div>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-gray-600 text-base font-medium">
                       <p>
@@ -252,7 +297,7 @@ export default function Track() {
                     </div>
                     {order.prescription && (
                       <div>
-                        <h3 className="text-lg font-semibold text-primary mt-4">Prescription Details</h3>
+                        <h3 className="text-lg font-semibold text-[#225F91] mt-4">Prescription Details</h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-gray-600 text-sm font-medium mt-2">
                           <p>
                             <strong className="text-gray-900">Prescription ID:</strong> {order.prescription.id || 'N/A'}
@@ -281,7 +326,7 @@ export default function Track() {
                         )}
                       </div>
                     )}
-                    <h3 className="text-lg font-semibold text-primary mt-4">Order Items</h3>
+                    <h3 className="text-lg font-semibold text-[#225F91] mt-4">Order Items</h3>
                     {order.items?.map((item) => (
                       <div key={item.id} className="mb-3 mt-2">
                         <p className="text-gray-900 text-base font-medium truncate">
@@ -297,21 +342,21 @@ export default function Track() {
                       </div>
                     ))}
                     {order.status === 'cancelled' && (
-                      <div className="mt-4 flex items-center gap-2 text-red-600">
+                      <div className="mt-4 flex items-center gap-2 text-[#225F91]">
                         <AlertCircle className="h-5 w-5" />
                         <p className="text-base font-medium">
-                          This order was cancelled. Contact <Link href="/support" className="text-blue-600 underline">support</Link> for assistance.
+                          This order was cancelled. Contact <Link href="/support" className="text-[#225F91] underline">support</Link> for assistance.
                         </p>
                       </div>
                     )}
-                    <p className="text-xl font-extrabold text-primary text-right mt-2">
+                    <p className="text-xl font-bold text-[#225F91] text-right mt-2">
                       Total: ₦{order.totalPrice.toLocaleString()}
                     </p>
                   </CardContent>
                 </Card>
               ))}
               <Button
-                className="w-full h-14 px-8 text-lg font-semibold rounded-2xl bg-primary text-white hover:bg-primary/90 hover:shadow-[0_0_20px_rgba(59,130,246,0.6)] animate-pulse transition-all duration-300"
+                className="w-full h-14 px-8 text-lg font-semibold rounded-full bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_20px_rgba(34,95,145,0.3)] transition-all duration-300"
                 onClick={handleBackToHome}
                 aria-label="Back to home"
               >

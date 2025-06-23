@@ -1,3 +1,5 @@
+'use client';
+
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 import LabCards from './LabCards';
 import LabTable from './LabTable';
@@ -17,9 +19,7 @@ const TestCard = ({ test, handleAddToBooking, isInBooking, isAddingToBooking }) 
                 Order Required
               </span>
             )}
-            <span className="text-sm text-gray-500">
-              {test.testType || 'Type N/A'}
-            </span>
+            <span className="text-sm text-gray-500">{test.testType || 'Type N/A'}</span>
           </div>
           <div className="mt-2">
             <p className="text-gray-600 text-base">
@@ -33,11 +33,20 @@ const TestCard = ({ test, handleAddToBooking, isInBooking, isAddingToBooking }) 
               src={test.imageUrl}
               alt={test.displayName}
               className="w-full h-full object-cover rounded-2xl border border-[#1ABA7F]/20 shadow-md transition-transform duration-300 hover:scale-105"
+              aria-describedby={`test-desc-${test.id}`}
             />
           </div>
         )}
       </CardHeader>
       <CardContent className="p-6">
+        {test.prepInstructions && (
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold text-[#225F91]" id={`test-desc-${test.id}`}>
+              Preparation Instructions
+            </h3>
+            <p className="text-gray-600 text-base">{test.prepInstructions}</p>
+          </div>
+        )}
         <h3 className="text-xl font-bold text-[#225F91] mb-4">Compare Labs</h3>
         <LabCards
           availability={test.availability}

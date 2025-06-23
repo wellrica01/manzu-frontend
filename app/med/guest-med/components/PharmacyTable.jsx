@@ -3,10 +3,10 @@ import { Button } from '@/components/ui/button';
 import { ShoppingCart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const PharmacyTable = ({ availability, medId, handleAddToCart, isInCart, displayName }) => {
+const PharmacyTable = React.memo(({ availability, medId, handleAddToCart, isInCart, displayName, isAddingToCart }) => {
   if (!availability || availability.length === 0) {
     return (
-      <p className="text-gray-500 text-base italic p-4 hidden sm:block">
+      <p className="text-gray-500 text-base italic p-4">
         Not available at any verified pharmacy
       </p>
     );
@@ -20,7 +20,7 @@ const PharmacyTable = ({ availability, medId, handleAddToCart, isInCart, display
             Comparison of pharmacies for {displayName}
           </caption>
           <thead>
-            <tr className="bg-primary/5 text-sm font-semibold text-gray-700">
+            <tr className="bg-[#1ABA7F]/10 text-sm font-semibold text-[#225F91]">
               <th className="p-4 rounded-tl-xl">Pharmacy</th>
               <th className="p-4">Price</th>
               <th className="p-4">Distance</th>
@@ -41,7 +41,7 @@ const PharmacyTable = ({ availability, medId, handleAddToCart, isInCart, display
               return (
                 <tr
                   key={index}
-                  className="border-t border-gray-100/50 hover:bg-primary/10 transition-colors duration-200"
+                  className="border-t border-[#1ABA7F]/20 hover:bg-[#1ABA7F]/10 transition-colors duration-200"
                 >
                   <td className="p-4">
                     <p className="text-base font-semibold text-gray-900 truncate max-w-[200px]">
@@ -59,7 +59,7 @@ const PharmacyTable = ({ availability, medId, handleAddToCart, isInCart, display
                         ₦{avail.price.toLocaleString()}
                       </span>
                       {isCheapest && (
-                        <span className="inline-flex items-center px-2 py-1 text-xs font-bold text-green-600 bg-green-100 rounded-full animate-bounce">
+                        <span className="inline-flex items-center px-2 py-1 text-xs font-bold text-[#1ABA7F] bg-[#1ABA7F]/20 rounded-full">
                           Cheapest
                         </span>
                       )}
@@ -72,40 +72,54 @@ const PharmacyTable = ({ availability, medId, handleAddToCart, isInCart, display
                           {avail.distance_km.toFixed(1)} km
                         </span>
                         {isClosest && (
-                          <span className="inline-flex items-center px-2 py-1 text-xs font-bold text-blue-600 bg-blue-100 rounded-full animate-bounce">
-                          Closest
-                        </span>
-                      )}
-                    </div>
-                  ) : (
-                    <span className="text-gray-500 text-base">N/A</span>
-                  )}
-                </td>
-                <td className="p-4">
-                  <Button
-                    id={`add-to-cart-${medId}-${avail.pharmacyId}`}
-                    onClick={() => handleAddToCart(medId, avail.pharmacyId, displayName)}
-                    disabled={isInCart(medId, avail.pharmacyId)}
-                    className={cn(
-                      'h-10 px-5 text-sm font-semibold rounded-full transition-all duration-300',
-                      isInCart(medId, avail.pharmacyId)
-                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                        : 'bg-primary text-white hover:bg-primary/90 hover:shadow-[0_0_15px_rgba(59,130,246,0.5)] animate-pulse'
+                          <span className="inline-flex items-center px-2 py-1 text-xs font-bold text-[#225F91] bg-[#225F91]/20 rounded-full">
+                            Closest
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-gray-500 text-base">N/A</span>
                     )}
-                    aria-label={isInCart(medId, avail.pharmacyId) ? 'Added to cart' : 'Add to cart'}
-                  >
-                    <ShoppingCart className="h-5 w-5 mr-2" aria-hidden="true" />
-                    {isInCart(medId, avail.pharmacyId) ? 'Added' : 'Add to Cart'}
-                  </Button>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+                  </td>
+                  <td className="p-4">
+                    <Button
+                      id={`add-to-cart-${medId}-${avail.pharmacyId}`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleAddToCart(medId, avail.pharmacyId, displayName);
+                      }}
+                      disabled={isInCart(medId, avail.pharmacyId) || isAddingToCart[`${medId}-${avail.pharmacyId}`]}
+                      className={cn(
+                        'h-10 px-5 text-base font-semibold rounded-full transition-all duration-300',
+                        isInCart(medId, avail.pharmacyId)
+                          ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                          : 'bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_15px_rgba(34,95,145,0.5)]'
+                      )}
+                      aria-label={isInCart(medId, avail.pharmacyId) ? 'Added to cart' : 'Add to cart'}
+                    >
+                      {isAddingToCart[`${medId}-${avail.pharmacyId}`] ? (
+                        <svg
+                          className="animate-spin h-5 w-5 mr-2"
+                          viewBox="0 0 24 24"
+                          aria-hidden="true"
+                        >
+                          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                          <path fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                        </svg>
+                      ) : (
+                        <ShoppingCart className="h-5 w-5 mr-2" aria-hidden="true" />
+                      )}
+                      {isInCart(medId, avail.pharmacyId) ? 'Added' : 'Add to Cart'}
+                    </Button>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
-  </div>
-);
-};
+  );
+});
 
 export default PharmacyTable;

@@ -223,10 +223,9 @@ export default function PrescriptionDetails() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          medications: medicationInputs.map(({ medicationId, quantity, pharmacyId }) => ({
+          medications: medicationInputs.map(({ medicationId, quantity }) => ({
             medicationId,
             quantity,
-            pharmacyId: pharmacyId || null,
           })),
         }),
       });

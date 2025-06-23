@@ -20,12 +20,18 @@ export default function TestPage() {
             </span>
           </h1>
           <p className="mt-4 text-lg sm:text-xl text-gray-600 font-medium max-w-2xl mx-auto animate-in slide-in-from-bottom duration-700 delay-200">
-            Book lab tests or imaging services from trusted labs with transparent pricing.
+            Book lab tests or imaging services from trusted labs with transparent pricing and home collection options.
           </p>
+          <Button
+            asChild
+            className="mt-6 h-12 px-8 text-base font-semibold rounded-full bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-lg transition-all duration-300"
+          >
+            <Link href="/track-test">Track Your Test</Link>
+          </Button>
         </header>
         <div className="flex flex-col gap-8">
           <Suspense fallback={<p className="text-center text-gray-600 text-lg">Loading search...</p>}>
-            <Card className="relative bg-white/95 border border-[#1ABA7F]/20 rounded-2xl shadow-xl overflow-hidden backdrop-blur-sm transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:ring-2 hover:ring-[#1ABA7F]/30">
+            <Card className="shadow-xl border border-[#1ABA7F]/20 rounded-2xl overflow-hidden bg-white/95 backdrop-blur-sm transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:ring-2 hover:ring-[#1ABA7F]/30">
               <div className="absolute top-0 left-0 w-16 h-16 bg-[#1ABA7F]/20 rounded-br-3xl" />
               <CardHeader className="p-6 sm:p-8">
                 <CardTitle className="text-2xl sm:text-3xl font-bold text-[#225F91] tracking-tight">
@@ -47,6 +53,27 @@ export default function TestPage() {
               </CardHeader>
               <CardContent className="p-6 sm:p-8">
                 <TestOrderUploadForm />
+              </CardContent>
+            </Card>
+          </Suspense>
+          <Suspense fallback={<p className="text-center text-gray-600 text-lg">Loading packages...</p>}>
+            <Card className="relative bg-white/95 border border-[#1ABA7F]/20 rounded-2xl shadow-xl overflow-hidden backdrop-blur-sm transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:ring-2 hover:ring-[#1ABA7F]/30">
+              <div className="absolute top-0 left-0 w-16 h-16 bg-[#1ABA7F]/20 rounded-br-3xl" />
+              <CardHeader className="p-6 sm:p-8">
+                <CardTitle className="text-2xl sm:text-3xl font-bold text-[#225F91] tracking-tight">
+                  Health Packages
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6 sm:p-8">
+                <p className="text-base sm:text-lg text-gray-600 font-medium mb-6 max-w-2xl">
+                  Explore comprehensive health checkup packages tailored to your wellness needs.
+                </p>
+                <Button
+                  asChild
+                  className="h-12 px-6 text-base font-semibold rounded-full bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_15px_rgba(34,95,145,0.5)] transition-all duration-300"
+                >
+                  <Link href="/packages">View Packages</Link>
+                </Button>
               </CardContent>
             </Card>
           </Suspense>

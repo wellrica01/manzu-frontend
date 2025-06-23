@@ -2,6 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Microscope } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 const LabTable = ({ availability, testId, handleAddToBooking, isInBooking, displayName, isAddingToBooking }) => {
   if (!availability || availability.length === 0) {
@@ -24,6 +25,8 @@ const LabTable = ({ availability, testId, handleAddToBooking, isInBooking, displ
               <th className="p-4 rounded-tl-xl">Lab</th>
               <th className="p-4">Price</th>
               <th className="p-4">Distance</th>
+              <th className="p-4">Home Collection</th>
+              <th className="p-4">Result Time</th>
               <th className="p-4 rounded-tr-xl">Action</th>
             </tr>
           </thead>
@@ -38,6 +41,16 @@ const LabTable = ({ availability, testId, handleAddToBooking, isInBooking, displ
                 typeof avail.distance_km === 'number' &&
                 !isNaN(avail.distance_km) &&
                 avail.distance_km === Math.min(...validDistances);
+
+              const handleClick = async () => {
+                try {
+                  await handleAddToBooking(testId, avail.labId, displayName);
+                  toast.success(`${displayName} added to booking!`);
+                } catch (error) {
+                  toast.error('Failed to add to booking.');
+                }
+              };
+
               return (
                 <tr
                   key={index}
@@ -82,9 +95,21 @@ const LabTable = ({ availability, testId, handleAddToBooking, isInBooking, displ
                     )}
                   </td>
                   <td className="p-4">
+                    {avail.homeCollectionAvailable ? (
+                      <span className="text-[#1ABA7F] font-semibold">Yes</span>
+                    ) : (
+                      <span className="text-gray-500">No</span>
+                    )}
+                  </td>
+                  <td className="p-4">
+                    <span className="text-base text-gray-600">
+                      {avail.resultTurnaroundHours || 'N/A'} hours
+                    </span>
+                  </td>
+                  <td className="p-4">
                     <Button
                       id={`add-to-booking-${testId}-${avail.labId}`}
-                      onClick={() => handleAddToBooking(testId, avail.labId, displayName)}
+                      onClick={handleClick}
                       disabled={isInBooking(testId, avail.labId) || isAddingToBooking[`${testId}-${avail.labId}`]}
                       className={cn(
                         'h-10 px-5 text-sm font-semibold rounded-full transition-all duration-300',

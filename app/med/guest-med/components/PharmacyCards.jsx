@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-const PharmacyCards = ({ availability, medId, handleAddToCart, isInCart, displayName }) => {
+const PharmacyCards = React.memo(({ availability, medId, handleAddToCart, isInCart, displayName, isAddingToCart }) => {
   if (!availability || availability.length === 0) {
     return (
       <p className="text-gray-500 text-base italic p-4 block sm:hidden">
@@ -35,23 +35,36 @@ const PharmacyCards = ({ availability, medId, handleAddToCart, isInCart, display
         }, [validDistances, avail.distance_km]);
 
         return (
-          <Card key={index} className="p-4 border border-gray-100/50 rounded-xl">
+          <Card key={index} className="p-4 border border-[#1ABA7F]/20 rounded-xl bg-white/95 backdrop-blur-sm">
             <div className="flex justify-between items-center">
               <p className="text-base font-semibold text-gray-900 truncate max-w-[200px]">
                 {avail.pharmacyName}
               </p>
               <Button
                 id={`add-to-cart-${medId}-${avail.pharmacyId}`}
-                onClick={() => handleAddToCart(medId, avail.pharmacyId, displayName)}
-                disabled={isInCart(medId, avail.pharmacyId)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleAddToCart(medId, avail.pharmacyId, displayName);
+                }}
+                disabled={isInCart(medId, avail.pharmacyId) || isAddingToCart[`${medId}-${avail.pharmacyId}`]}
                 className={cn(
                   'h-8 px-3 text-sm rounded-full',
                   isInCart(medId, avail.pharmacyId)
                     ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                    : 'bg-primary text-white hover:bg-primary/90'
+                    : 'bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_15px_rgba(34,95,145,0.5)]'
                 )}
                 aria-label={isInCart(medId, avail.pharmacyId) ? 'Added to cart' : 'Add to cart'}
               >
+                {isAddingToCart[`${medId}-${avail.pharmacyId}`] ? (
+                  <svg
+                    className="animate-spin h-4 w-4 mr-1"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                  </svg>
+                ) : null}
                 {isInCart(medId, avail.pharmacyId) ? 'Added' : 'Add'}
               </Button>
             </div>
@@ -61,7 +74,7 @@ const PharmacyCards = ({ availability, medId, handleAddToCart, isInCart, display
             <div className="flex items-center gap-2 mt-1">
               <span className="text-base font-bold text-gray-800">₦{avail.price.toLocaleString()}</span>
               {isCheapest && (
-                <span className="inline-flex items-center px-2 py-1 text-xs font-bold text-green-600 bg-green-100 rounded-full animate-bounce">
+                <span className="inline-flex items-center px-2 py-1 text-xs font-bold text-[#1ABA7F] bg-[#1ABA7F]/20 rounded-full">
                   Cheapest
                 </span>
               )}
@@ -73,7 +86,7 @@ const PharmacyCards = ({ availability, medId, handleAddToCart, isInCart, display
                   : 'N/A'}
               </span>
               {isClosest && (
-                <span className="inline-flex items-center px-2 py-1 text-xs font-bold text-blue-600 bg-blue-100 rounded-full animate-bounce">
+                <span className="inline-flex items-center px-2 py-1 text-xs font-bold text-[#225F91] bg-[#225F91]/20 rounded-full">
                   Closest
                 </span>
               )}
@@ -83,6 +96,6 @@ const PharmacyCards = ({ availability, medId, handleAddToCart, isInCart, display
       })}
     </div>
   );
-};
+});
 
 export default PharmacyCards;

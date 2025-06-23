@@ -27,6 +27,7 @@ export default function TestSearchBar() {
   const [filterState, setFilterState] = useState('');
   const [filterLga, setFilterLga] = useState('');
   const [filterWard, setFilterWard] = useState('');
+  const [filterHomeCollection, setFilterHomeCollection] = useState(false); 
   const [sortBy, setSortBy] = useState('cheapest');
   const [states, setStates] = useState([]);
   const [lgas, setLgas] = useState([]);
@@ -74,6 +75,7 @@ export default function TestSearchBar() {
     setFilterLga('');
     setFilterWard('');
     setSortBy('cheapest');
+    setFilterHomeCollection(false);
     setLgas([]);
     setWards([]);
     if (searchTerm) handleSearch(searchTerm);
@@ -144,6 +146,7 @@ export default function TestSearchBar() {
       if (filterState) queryParams.append('state', filterState);
       if (filterLga) queryParams.append('lga', filterLga);
       if (filterWard) queryParams.append('ward', filterWard);
+      if (filterHomeCollection) queryParams.append('homeCollection', 'true');
       queryParams.append('sortBy', sortBy);
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/tests/search?${queryParams.toString()}`
@@ -176,6 +179,7 @@ export default function TestSearchBar() {
       if (filterState) queryParams.append('state', filterState);
       if (filterLga) queryParams.append('lga', filterLga);
       if (filterWard) queryParams.append('ward', filterWard);
+      if (filterHomeCollection) queryParams.append('homeCollection', 'true')
       queryParams.append('sortBy', sortBy);
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/tests/search?${queryParams.toString()}`
@@ -273,6 +277,7 @@ export default function TestSearchBar() {
         setFilterLga={setFilterLga}
         filterWard={filterWard}
         setFilterWard={setFilterWard}
+        filterHomeCollection={filterHomeCollection}
         sortBy={sortBy}
         setSortBy={setSortBy}
         states={states}

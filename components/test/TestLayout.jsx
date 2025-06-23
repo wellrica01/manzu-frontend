@@ -5,7 +5,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Menu, X, Twitter, Instagram, Microscope } from 'lucide-react';
+import { Menu, X, Twitter, Instagram, Facebook, Microscope, User } from 'lucide-react';
 import Image from 'next/image';
 import { useBooking } from '@/hooks/useBooking';
 
@@ -16,6 +16,15 @@ export default function TestLayout({ children }) {
   useEffect(() => {
     fetchBookings(); // Initial fetch, cached by react-query
   }, [fetchBookings]);
+
+  const navItems = [
+    { name: 'Home', href: '/' },
+    { name: 'Test Services', href: '/test' },
+    { name: 'Booking', href: '/test/booking', icon: Microscope },
+    { name: 'Track Test', href: '/track-test' },
+    { name: 'Results', href: '/test/results' },
+    { name: 'Profile', href: '/profile', icon: User },
+  ];
 
   return (
     <div className="flex flex-col min-h-screen bg-[#1ABA7F]/10">
@@ -40,22 +49,16 @@ export default function TestLayout({ children }) {
             />
           </Link>
           <div className="hidden md:flex items-center gap-8">
-            {['Home', 'Test Services', 'Track Test', 'Booking'].map((item) => (
+            {navItems.map((item) => (
               <Link
-                key={item}
-                href={
-                  item === 'Home'
-                    ? '/'
-                    : item === 'Booking'
-                    ? '/test/booking'
-                    : `/${item.toLowerCase().replace(' ', '-')}`
-                }
+                key={item.name}
+                href={item.href}
                 className="text-base font-medium text-[#225F91] hover:text-[#1ABA7F] hover:bg-[#1ABA7F]/20 px-4 py-2 rounded-full transition-all duration-300 hover:shadow-sm relative flex items-center gap-2"
-                aria-label={item === 'Booking' ? `Booking with ${bookingItemCount} items` : item}
+                aria-label={item.name === 'Booking' ? `Booking with ${bookingItemCount} items` : item.name}
               >
-                {item === 'Booking' && <Microscope className="h-5 w-5" aria-hidden="true" />}
-                {item}
-                {item === 'Booking' && bookingItemCount > 0 && (
+                {item.icon && <item.icon className="h-5 w-5" aria-hidden="true" />}
+                {item.name}
+                {item.name === 'Booking' && bookingItemCount > 0 && (
                   <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
                     {bookingItemCount}
                   </span>
@@ -89,25 +92,17 @@ export default function TestLayout({ children }) {
                 </Button>
               </SheetHeader>
               <div className="flex flex-col gap-4 mt-12 px-4">
-                {['Home', 'Test Services', 'Booking', 'Track Test'].map((item) => (
+                {navItems.map((item) => (
                   <Link
-                    key={item}
-                    href={
-                      item === 'Home'
-                        ? '/'
-                        : item === 'Booking'
-                        ? '/test/booking'
-                        : `/${item.toLowerCase().replace(' ', '-')}`
-                    }
+                    key={item.name}
+                    href={item.href}
                     className="text-lg font-medium text-[#225F91] hover:bg-[#1ABA7F]/20 hover:text-[#1ABA7F] px-4 py-3 rounded-full transition-all duration-300 relative"
-                    aria-label={item === 'Booking' ? `Booking with ${bookingItemCount} items` : item}
+                    aria-label={item.name === 'Booking' ? `Booking with ${bookingItemCount} items` : item.name}
                     onClick={() => setIsOpen(false)}
                   >
-                    {item === 'Booking' && (
-                      <Microscope className="h-5 w-5 inline-block mr-2" aria-hidden="true" />
-                    )}
-                    {item}
-                    {item === 'Booking' && bookingItemCount > 0 && (
+                    {item.icon && <item.icon className="h-5 w-5 inline-block mr-2" aria-hidden="true" />}
+                    {item.name}
+                    {item.name === 'Booking' && bookingItemCount > 0 && (
                       <span className="absolute top-4 right-4 bg-red-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
                         {bookingItemCount}
                       </span>
@@ -139,7 +134,7 @@ export default function TestLayout({ children }) {
             </div>
             <div className="flex flex-col items-center md:items-start">
               <h3 className="text-lg font-semibold text-white mb-4">Quick Links</h3>
-              {['About', 'Contact', 'Privacy Policy'].map((item) => (
+              {['About', 'Contact', 'Privacy Policy', 'How Tests Work'].map((item) => (
                 <Link
                   key={item}
                   href={`/${item.toLowerCase().replace(' ', '-')}`}
@@ -156,6 +151,7 @@ export default function TestLayout({ children }) {
                 {[
                   { name: 'Twitter', href: 'https://twitter.com/manzu_pharmacy', icon: Twitter },
                   { name: 'Instagram', href: 'https://instagram.com/manzu_pharmacy', icon: Instagram },
+                  { name: 'Facebook', href: 'https://facebook.com/manzu.pharmacy', icon: Facebook },
                 ].map((social) => (
                   <a
                     key={social.name}

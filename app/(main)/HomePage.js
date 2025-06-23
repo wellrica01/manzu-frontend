@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Suspense, useState, useEffect } from 'react';
 import ConsentModal from '@/components/ConsentModal';
+import { Pill, TestTube2 } from 'lucide-react';
 
 export default function HomePage() {
   const router = useRouter();
@@ -49,7 +50,7 @@ export default function HomePage() {
             </Button>
             <Button
               onClick={() => router.push('/test')}
-              className="h-12 px-8 text-base font-semibold rounded-full bg-transparent border-2 border-[#1ABA7F] text-[#1ABA7F] hover:bg-[#1ABA7F]/10 hover:shadow-lg transition-all duration-300"
+              className="h-12 px-8 text-base font-semibold rounded-full bg-transparent border-2 border-[#1ABA7F] text-[#1ABA7] hover:bg-[#1ABA7F]/10 hover:shadow-lg transition-all duration-300"
             >
               Book Tests
             </Button>
@@ -62,12 +63,15 @@ export default function HomePage() {
             <Card className="relative bg-white/95 border border-gray-100/50 rounded-2xl shadow-xl overflow-hidden backdrop-blur-sm transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:ring-2 hover:ring-[#1ABA7F]/30">
               <div className="absolute top-0 left-0 w-16 h-16 bg-[#1ABA7F]/20 rounded-br-3xl" />
               <CardHeader className="p-6 sm:p-8">
-                <CardTitle className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
+                <div className="flex justify-center mb-4">
+                  <Pill className="w-10 h-10 text-[#1ABA7F] animate-in zoom-in-50 duration-500" aria-hidden="true" />
+                </div>
+                <CardTitle className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight text-center">
                   Medication Services
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-6 sm:p-8">
-                <p className="text-base sm:text-lg text-gray-600 font-medium mb-6 leading-relaxed">
+                <p className="text-base sm:text-lg text-gray-600 font-medium mb-6 leading-relaxed text-center">
                   Order safe, authentic medications from verified pharmacies with seamless delivery.
                 </p>
                 <Button
@@ -81,12 +85,15 @@ export default function HomePage() {
             <Card className="relative bg-white/95 border border-gray-100/50 rounded-2xl shadow-xl overflow-hidden backdrop-blur-sm transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:ring-2 hover:ring-[#1ABA7F]/30">
               <div className="absolute top-0 left-0 w-16 h-16 bg-[#1ABA7F]/20 rounded-br-3xl" />
               <CardHeader className="p-6 sm:p-8">
-                <CardTitle className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
+                <div className="flex justify-center mb-4">
+                  <TestTube2 className="w-10 h-10 text-[#1ABA7F] animate-in zoom-in-50 duration-500" aria-hidden="true" />
+                </div>
+                <CardTitle className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight text-center">
                   Diagnostic Services
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-6 sm:p-8">
-                <p className="text-base sm:text-lg text-gray-600 font-medium mb-6 leading-relaxed">
+                <p className="text-base sm:text-lg text-gray-600 font-medium mb-6 leading-relaxed text-center">
                   Book lab tests and imaging services from trusted providers with transparent pricing.
                 </p>
                 <Button

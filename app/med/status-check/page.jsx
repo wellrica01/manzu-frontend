@@ -1,4 +1,5 @@
 'use client';
+
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -50,7 +51,18 @@ export default function StatusCheck() {
       if (['pending', 'pending_admin', 'pending_action'].includes(prescriptionMetadata.status)) {
         setPrescription({ ...prescriptionMetadata, order: fetchedOrderId ? { id: fetchedOrderId } : null });
         setStatus('success');
-        toast.info('Your prescription is under review. You’ll be notified when it’s ready.', { duration: 4000 });
+        toast.info('Your prescription is under review. You’ll be notified when it’s ready.', {
+          duration: 4000,
+          style: {
+            background: 'rgba(255,255,255,0.95)',
+            color: '#225F91',
+            border: '1px solid rgba(26,186,127,0.3)',
+            borderRadius: '0.5rem',
+            boxShadow: '0 4px 20px rgba(26,186,127,0.2)',
+            padding: '1rem',
+            backdropFilter: 'blur(8px)',
+          },
+        });
         return;
       }
 
@@ -77,7 +89,18 @@ export default function StatusCheck() {
           case 'pending_prescription':
             setPrescription({ ...prescriptionMetadata, order: { id: fetchedOrderId } });
             setStatus('success');
-            toast.info('Your prescription is under review for this order. You’ll be notified when it’s ready.', { duration: 4000 });
+            toast.info('Your prescription is under review for this order. You’ll be notified when it’s ready.', {
+              duration: 4000,
+              style: {
+                background: 'rgba(255,255,255,0.95)',
+                color: '#225F91',
+                border: '1px solid rgba(26,186,127,0.3)',
+                borderRadius: '0.5rem',
+                boxShadow: '0 4px 20px rgba(26,186,127,0.2)',
+                padding: '1rem',
+                backdropFilter: 'blur(8px)',
+              },
+            });
             break;
           case 'confirmed':
           case 'processing':
@@ -96,12 +119,32 @@ export default function StatusCheck() {
                 label: 'Track Now',
                 onClick: () => router.push(`/med/track?trackingCode=${encodeURIComponent(trackingCode)}`),
               },
+              style: {
+                background: 'rgba(255,255,255,0.95)',
+                color: '#225F91',
+                border: '1px solid rgba(26,186,127,0.3)',
+                borderRadius: '0.5rem',
+                boxShadow: '0 4px 20px rgba(26,186,127,0.2)',
+                padding: '1rem',
+                backdropFilter: 'blur(8px)',
+              },
             });
             break;
           case 'cancelled':
             setPrescription({ ...prescriptionMetadata, order: { id: fetchedOrderId }, status: 'cancelled' });
             setStatus('success');
-            toast.error('Your order has been cancelled. Please contact support or start a new order.', { duration: 4000 });
+            toast.error('Your order has been cancelled. Please contact support or start a new order.', {
+              duration: 4000,
+              style: {
+                background: 'rgba(255,85,85,0.95)',
+                color: '#ffffff',
+                border: '1px solid rgba(34,95,145,0.3)',
+                borderRadius: '0.5rem',
+                boxShadow: '0 4px 20px rgba(34,95,145,0.2)',
+                padding: '1rem',
+                backdropFilter: 'blur(8px)',
+              },
+            });
             break;
           default:
             throw new Error(`Unknown order status: ${orderStatus}`);
@@ -113,7 +156,18 @@ export default function StatusCheck() {
         } else {
           setPrescription({ ...prescriptionMetadata });
           setStatus('success');
-          toast.info('No medications available for this prescription. Please contact support or start a new order.', { duration: 4000 });
+          toast.info('No medications available for this prescription. Please contact support or start a new order.', {
+            duration: 4000,
+            style: {
+              background: 'rgba(255,255,255,0.95)',
+              color: '#225F91',
+              border: '1px solid rgba(26,186,127,0.3)',
+              borderRadius: '0.5rem',
+              boxShadow: '0 4px 20px rgba(26,186,127,0.2)',
+              padding: '1rem',
+              backdropFilter: 'blur(8px)',
+            },
+          });
         }
       } else {
         throw new Error('Invalid prescription status');
@@ -121,7 +175,18 @@ export default function StatusCheck() {
     } catch (err) {
       setError(err.message);
       setStatus('error');
-      toast.error(err.message, { duration: 4000 });
+      toast.error(err.message, {
+        duration: 4000,
+        style: {
+          background: 'rgba(255,85,85,0.95)',
+          color: '#ffffff',
+          border: '1px solid rgba(34,95,145,0.3)',
+          borderRadius: '0.5rem',
+          boxShadow: '0 4px 20px rgba(34,95,145,0.2)',
+          padding: '1rem',
+          backdropFilter: 'blur(8px)',
+        },
+      });
       setPrescription(null);
     }
   };
@@ -153,7 +218,18 @@ export default function StatusCheck() {
     } catch (err) {
       setError(err.message);
       setStatus('error');
-      toast.error(err.message, { duration: 4000 });
+      toast.error(err.message, {
+        duration: 4000,
+        style: {
+          background: 'rgba(255,85,85,0.95)',
+          color: '#ffffff',
+          border: '1px solid rgba(34,95,145,0.3)',
+          borderRadius: '0.5rem',
+          boxShadow: '0 4px 20px rgba(34,95,145,0.2)',
+          padding: '1rem',
+          backdropFilter: 'blur(8px)',
+        },
+      });
     }
   };
 
@@ -166,19 +242,21 @@ export default function StatusCheck() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50/95 to-gray-100/95 py-10 px-4 sm:px-6 lg:px-8 animate-in fade-in-20 duration-500">
+    <div className="min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 via-gray-50/50 to-white/80 py-10 px-4 sm:px-6 lg:px-8 relative overflow-hidden animate-in fade-in-20 duration-500">
+      <div className="absolute inset-0 bg-[url('/svg/pattern-dots.svg')] opacity-10 pointer-events-none" aria-hidden="true" />
       <div className="container mx-auto max-w-5xl">
-        <h1 className="text-4xl sm:text-5xl font-extrabold text-primary mb-8 text-center tracking-tight animate-in slide-in-from-top-10 duration-700">
+        <h1 className="text-4xl sm:text-5xl font-bold text-[#225F91] mb-8 text-center tracking-tight animate-in slide-in-from-top duration-700">
           Check Your Prescription Status
         </h1>
 
         {/* Form Section */}
         {(status === 'idle' || status === 'error' || (status === 'loading' && !patientIdentifier)) && (
-          <Card className="shadow-2xl border border-gray-100/30 rounded-3xl bg-gradient-to-br from-white/90 to-gray-50/90 backdrop-blur-md p-6 mb-6 transition-opacity duration-300">
-            <h2 className="text-2xl font-extrabold text-primary mb-4 text-center">Enter Your Details</h2>
+          <Card className="relative bg-white/95 border border-[#1ABA7F]/20 rounded-2xl shadow-xl backdrop-blur-sm p-6 mb-6 transition-all duration-500 hover:ring-2 hover:ring-[#1ABA7F]/30 animate-in zoom-in-50 duration-500">
+            <div className="absolute top-0 left-0 w-16 h-16 bg-[#1ABA7F]/20 rounded-br-3xl" />
+            <h2 className="text-2xl font-bold text-[#225F91] mb-4 text-center">Enter Your Details</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <Label htmlFor="identifier" className="text-sm font-semibold text-primary uppercase tracking-wider">
+                <Label htmlFor="identifier" className="text-sm font-semibold text-[#225F91] uppercase tracking-wider">
                   Email or Phone
                 </Label>
                 <Input
@@ -186,7 +264,7 @@ export default function StatusCheck() {
                   name="identifier"
                   value={form.identifier}
                   onChange={handleInputChange}
-                  className="mt-2 h-12 text-lg font-medium rounded-2xl border-gray-200/50 bg-white/95 text-gray-900 placeholder:text-gray-400 focus:ring-0 focus:border-primary/50 focus:shadow-[0_0_15px_rgba(59,130,246,0.3)]"
+                  className="mt-2 h-12 text-lg font-medium rounded-2xl border-[#1ABA7F]/20 bg-white/95 text-gray-900 placeholder:text-gray-400 focus:ring-0 focus:border-[#1ABA7F]/50 focus:shadow-[0_0_15px_rgba(26,186,127,0.3)] transition-all duration-300"
                   placeholder="Enter email or phone number"
                   required
                   aria-required="true"
@@ -194,7 +272,7 @@ export default function StatusCheck() {
                 />
               </div>
               {error && (
-                <div className="flex items-center gap-2 text-red-600">
+                <div className="flex items-center gap-2 text-[#225F91]">
                   <AlertCircle className="h-5 w-5" />
                   <p className="text-base font-medium">{error}</p>
                 </div>
@@ -202,7 +280,7 @@ export default function StatusCheck() {
               <div className="flex justify-center">
                 <Button
                   type="submit"
-                  className="h-12 px-6 text-sm font-semibold rounded-full bg-primary text-white hover:bg-primary/90 hover:shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-all duration-300"
+                  className="h-12 px-6 text-base font-semibold rounded-full bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_20px_rgba(34,95,145,0.3)] transition-all duration-300"
                   disabled={status === 'loading'}
                   aria-label="Check status"
                 >
@@ -222,26 +300,28 @@ export default function StatusCheck() {
 
         {/* Loading Section */}
         {status === 'loading' && patientIdentifier && (
-          <Card className="shadow-2xl border border-gray-100/30 rounded-3xl bg-gradient-to-br from-white/90 to-gray-50/90 backdrop-blur-md p-6 transition-opacity duration-300 animate-pulse">
+          <Card className="relative bg-white/95 border border-[#1ABA7F]/20 rounded-2xl shadow-xl backdrop-blur-sm p-6 transition-all duration-500 hover:ring-2 hover:ring-[#1ABA7F]/30 animate-pulse">
+            <div className="absolute top-0 left-0 w-16 h-16 bg-[#1ABA7F]/20 rounded-br-3xl" />
             <div className="flex justify-center items-center h-32">
-              <Loader2 className="h-12 w-12 text-primary animate-spin" aria-label="Loading prescription status" />
+              <Loader2 className="h-12 w-12 text-[#225F91] animate-spin" aria-label="Loading prescription status" />
             </div>
             <div className="text-center text-gray-600">Fetching your prescription details...</div>
             {/* Skeleton UI */}
             <div className="mt-4 space-y-2">
-              <div className="h-6 bg-gray-200/50 rounded w-1/3"></div>
-              <div className="h-4 bg-gray-200/50 rounded w-2/3"></div>
-              <div className="h-4 bg-gray-200/50 rounded w-1/2"></div>
+              <div className="h-6 bg-gray-200/50 rounded w-1/3 mx-auto"></div>
+              <div className="h-4 bg-gray-200/50 rounded w-2/3 mx-auto"></div>
+              <div className="h-4 bg-gray-200/50 rounded w-1/2 mx-auto"></div>
             </div>
           </Card>
         )}
 
         {/* Prescription Section */}
         {status === 'success' && prescription && (
-          <Card className="shadow-2xl border border-gray-100/30 rounded-3xl bg-gradient-to-br from-white/90 to-gray-50/90 backdrop-blur-md p-6 transition-opacity duration-300">
-            <h2 className="text-2xl font-extrabold text-primary mb-4">Your Prescription</h2>
-            <div className="p-4 border-b border-gray-100/50">
-              <p className="text-base font-semibold">
+          <Card className="relative bg-white/95 border border-[#1ABA7F]/20 rounded-2xl shadow-xl backdrop-blur-sm p-6 transition-all duration-500 hover:ring-2 hover:ring-[#1ABA7F]/30 animate-in zoom-in-50 duration-500">
+            <div className="absolute top-0 left-0 w-16 h-16 bg-[#1ABA7F]/20 rounded-br-3xl" />
+            <h2 className="text-2xl font-bold text-[#225F91] mb-4">Your Prescription</h2>
+            <div className="p-4 border-b border-[#1ABA7F]/20">
+              <p className="text-base font-semibold text-[#225F91]">
                 Prescription #{prescription.id} | Uploaded: {new Date(prescription.uploadedAt).toLocaleDateString()}
               </p>
               <p className="text-base text-gray-600">
@@ -257,17 +337,17 @@ export default function StatusCheck() {
               {prescription.order && prescription.status === 'verified' && prescription.order.status === 'pending' && (
                 <Button
                   asChild
-                  className="mt-2 h-10 px-4 rounded-full bg-primary text-white hover:bg-primary/90"
+                  className="mt-2 h-10 px-4 rounded-full bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_20px_rgba(34,95,145,0.3)] transition-all duration-300"
                 >
                   <Link href={`/order/${prescription.order.id}`}>View Order</Link>
                 </Button>
               )}
               {prescription.status === 'cancelled' && (
-                <div className="mt-4 flex items-center gap-2 text-red-600">
+                <div className="mt-4 flex items-center gap-2 text-[#225F91]">
                   <AlertCircle className="h-5 w-5" />
                   <p className="text-base font-medium">
                     This order was cancelled. Contact{' '}
-                    <Link href="/support" className="text-blue-600 underline">
+                    <Link href="/support" className="text-[#225F91] underline">
                       support
                     </Link>{' '}
                     for assistance.
@@ -275,21 +355,21 @@ export default function StatusCheck() {
                 </div>
               )}
               {prescription.order && prescription.status === 'pending' && (
-                <div className="mt-4 flex items-center gap-2 text-yellow-600">
+                <div className="mt-4 flex items-center gap-2 text-[#1ABA7F]">
                   <AlertCircle className="h-5 w-5" />
                   <p className="text-base font-medium">Your order is waiting for prescription verification.</p>
                 </div>
               )}
               {prescription.order?.trackingCode &&
                 ['confirmed', 'processing', 'shipped', 'delivered', 'ready_for_pickup'].includes(prescription.status) && (
-                  <div className="mt-4 flex items-center gap-2 text-blue-600">
-                    <CheckCircle className="h-5 w-5" />
+                  <div className="mt-4 flex items-center gap-2 text-[#225F91]">
+                    <CheckCircle className="h-5 w-5 text-[#1ABA7F]" />
                     <p className="text-base font-medium">
                       Order {prescription.status}. Track your order with code:{' '}
                       <span className="font-semibold">{prescription.order.trackingCode}</span>.{' '}
                       <Link
                         href={`/med/track?trackingCode=${encodeURIComponent(prescription.order.trackingCode)}`}
-                        className="text-blue-600 underline"
+                        className="text-[#225F91] underline"
                       >
                         Track Now
                       </Link>
@@ -301,7 +381,7 @@ export default function StatusCheck() {
               <Button
                 onClick={resetForm}
                 variant="outline"
-                className="h-10 px-4 rounded-full border-primary text-primary hover:bg-primary/10"
+                className="h-10 px-4 rounded-full border-[#1ABA7F] text-[#1ABA7F] hover:bg-[#1ABA7F]/10 hover:shadow-lg transition-all duration-300"
                 aria-label="Check another prescription"
               >
                 Check Another
@@ -309,7 +389,7 @@ export default function StatusCheck() {
               <Button
                 asChild
                 variant="outline"
-                className="h-10 px-4 rounded-full border-primary text-primary hover:bg-primary/10"
+                className="h-10 px-4 rounded-full border-[#1ABA7F] text-[#1ABA7F] hover:bg-[#1ABA7F]/10 hover:shadow-lg transition-all duration-300"
               >
                 <Link href="/prescriptions">View All Prescriptions</Link>
               </Button>

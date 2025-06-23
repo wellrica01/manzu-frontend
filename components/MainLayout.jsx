@@ -5,7 +5,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Menu, X, Twitter, Instagram } from 'lucide-react';
+import { Menu, X, Twitter, Instagram, Facebook } from 'lucide-react';
 import Image from 'next/image';
 
 export default function MainLayout({ children }) {
@@ -14,7 +14,7 @@ export default function MainLayout({ children }) {
   return (
     <div className="flex flex-col min-h-screen bg-[#1ABA7F]/10">
       <nav
-        className="sticky top-0 bg-white/95 z-50 border-b border-[#1ABA7F]/20 backdrop-blur-lg shadow-[0_2px_10px_rgba(26,186,127,0.05)] animate-in slide-in-from-top duration-300"
+        className="sticky top-0 bg-white/15 z-50 border-b border-[#1ABA7F]/30 backdrop-blur-xl shadow-[0_4px_20px_rgba(26,186,127,0.15)] animate-in slide-in-from-top duration-300"
         role="navigation"
         aria-label="Main navigation"
       >
@@ -57,7 +57,7 @@ export default function MainLayout({ children }) {
             </SheetTrigger>
             <SheetContent
               side="right"
-              className="w-[280px] sm:w-[340px] bg-white/95 backdrop-blur-lg border-l border-[#1ABA7F]/20"
+              className="w-[280px] sm:w-[340px] bg-white/45 backdrop-blur-lg border-l border-[#1ABA7F]/20"
             >
               <SheetHeader>
                 <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
@@ -124,6 +124,7 @@ export default function MainLayout({ children }) {
                 {[
                   { name: 'Twitter', href: 'https://twitter.com/manzu_pharmacy', icon: Twitter },
                   { name: 'Instagram', href: 'https://instagram.com/manzu_pharmacy', icon: Instagram },
+                  { name: 'Facebook', href: 'https://facebook.com/manzu.pharmacy', icon: Facebook },
                 ].map((social) => (
                   <a
                     key={social.name}
