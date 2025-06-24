@@ -18,12 +18,11 @@ export default function TestLayout({ children }) {
   }, [fetchBookings]);
 
   const navItems = [
-    { name: 'Home', href: '/' },
+    { name: 'Home', href: '/test' },
     { name: 'Test Services', href: '/test' },
     { name: 'Booking', href: '/test/booking', icon: Microscope },
     { name: 'Track Test', href: '/track-test' },
     { name: 'Results', href: '/test/results' },
-    { name: 'Profile', href: '/profile', icon: User },
   ];
 
   return (

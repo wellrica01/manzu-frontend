@@ -12,7 +12,7 @@ export default function TestPage() {
     <div className="min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 via-gray-50/50 to-white/80 py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       <div className="absolute inset-0 bg-[url('/svg/pattern-dots.svg')] opacity-10 pointer-events-none" aria-hidden="true" />
       <div className="container mx-auto max-w-6xl">
-        <header className="text-center mb-16 sm:mb-20">
+        <header className="text-center justify-center mb-16 sm:mb-20">
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 tracking-tight animate-in slide-in-from-top duration-700">
             Test Services with{' '}
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#1ABA7F] to-[#225F91]">
