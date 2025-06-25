@@ -1,4 +1,5 @@
 'use client';
+
 import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -15,10 +16,18 @@ import { Upload, CheckCircle, File as FileIcon, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import { getGuestId } from '@/lib/utils';
 import Link from 'next/link';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 export default function PrescriptionUploadForm() {
   const [file, setFile] = useState(null);
   const [contact, setContact] = useState('');
+  const [type, setType] = useState('medication');
   const [isUploading, setIsUploading] = useState(false);
   const [openSuccessDialog, setOpenSuccessDialog] = useState(false);
   const [patientIdentifier, setPatientIdentifier] = useState('');
@@ -42,10 +51,11 @@ export default function PrescriptionUploadForm() {
 
   const validateForm = () => {
     const newErrors = {};
-    if (!file) newErrors.file = 'Please select a prescription file';
+    if (!file) newErrors.file = 'Please select a prescription or test order file';
     if (!contact) newErrors.contact = 'Please provide an email or phone number';
     if (contact && !validateContact(contact))
       newErrors.contact = 'Please enter a valid email or phone number (10-15 digits)';
+    if (!type) newErrors.type = 'Please select a type';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -89,10 +99,11 @@ export default function PrescriptionUploadForm() {
     const formData = new FormData();
     formData.append('prescriptionFile', file);
     formData.append('contact', contact);
+    formData.append('type', type);
 
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/prescription/upload`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/prescriptions`,
         {
           method: 'POST',
           headers: { 'x-guest-id': patientIdentifier },
@@ -110,10 +121,11 @@ export default function PrescriptionUploadForm() {
       setSubmittedContact(contact);
       setOpenSuccessDialog(true);
       if (typeof window !== 'undefined' && window.gtag) {
-        window.gtag('event', 'upload_prescription', { patientIdentifier });
+        window.gtag('event', 'upload_prescription', { patientIdentifier, type });
       }
       setFile(null);
       setContact('');
+      setType('medication');
       fileInputRef.current.value = '';
       setErrors({});
     } catch (err) {
@@ -128,12 +140,13 @@ export default function PrescriptionUploadForm() {
     setSubmittedContact('');
     setFile(null);
     setContact('');
+    setType('medication');
     fileInputRef.current.value = '';
     setErrors({});
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 sm:p-8">
       <Dialog open={openSuccessDialog} onOpenChange={setOpenSuccessDialog}>
         <DialogContent
           className="sm:max-w-md p-8 border border-[#1ABA7F]/20 rounded-2xl bg-white/95 backdrop-blur-sm shadow-xl animate-in slide-in-from-top-10 fade-in-20 duration-300"
@@ -149,7 +162,7 @@ export default function PrescriptionUploadForm() {
             </DialogTitle>
           </DialogHeader>
           <p className="mt-4 text-base font-medium text-center text-gray-600">
-            Your prescription has been successfully submitted. We’ll notify you at{' '}
+            Your {type === 'medication' ? 'prescription' : 'test order'} has been successfully submitted. We’ll notify you at{' '}
             <span className="font-semibold text-gray-900" aria-label="Contact method">
               {submittedContact}
             </span>{' '}
@@ -158,9 +171,9 @@ export default function PrescriptionUploadForm() {
           <p className="mt-3 text-base font-medium text-center text-gray-600">
             Verification usually takes a few minutes. You can also{' '}
             <Link
-              href="/status-check"
+              href="/check-status"
               className="font-semibold text-[#225F91] hover:text-[#1A4971] underline transition-colors duration-200"
-              aria-label="Check prescription status"
+              aria-label="Check status"
             >
               check your status here
             </Link>
@@ -171,15 +184,15 @@ export default function PrescriptionUploadForm() {
               variant="outline"
               onClick={handleUploadAnother}
               className="h-12 px-6 text-base font-semibold rounded-full border-[#1ABA7F] text-[#1ABA7F] hover:bg-[#1ABA7F]/10 hover:shadow-[0_0_10px_rgba(26,186,127,0.3)] transition-all duration-300"
-              aria-label="Upload another prescription"
+              aria-label="Upload another"
             >
               Upload Another
             </Button>
             <Button
               asChild
-              className="h-12 px-6 text-base font-semibold rounded-full bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_15px_rgba(34,95,145,0.5)] transition-all duration-300"
+              className="h-12 px-6 text-base font-semibold rounded-full bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_15px_rgba(34,95,145,0.5)] animate-pulse transition-all duration-300"
             >
-              <Link href="/track" aria-label="Track order">
+              <Link href="/track-order" aria-label="Track order">
                 Track Order
               </Link>
             </Button>
@@ -191,10 +204,10 @@ export default function PrescriptionUploadForm() {
         className="shadow-xl border border-[#1ABA7F]/20 rounded-2xl overflow-hidden bg-white/95 backdrop-blur-sm transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:ring-2 hover:ring-[#1ABA7F]/30"
       >
         <div className="absolute top-0 left-0 w-12 h-12 bg-[#1ABA7F]/20 rounded-br-full" />
-        <CardContent className="p-6">
+        <CardContent className="p-6 sm:p-8">
           <form
             onSubmit={handleSubmit}
-            className="space-y-6"
+            className="space-y-8"
             role="form"
             aria-labelledby="form-title"
           >
@@ -202,8 +215,41 @@ export default function PrescriptionUploadForm() {
               id="form-title"
               className="text-2xl font-bold text-[#225F91] tracking-tight"
             >
-              Upload Your Prescription
+              Upload Your Prescription or Test Order
             </h2>
+            <div>
+              <Label
+                htmlFor="type"
+                className="text-sm font-semibold text-[#225F91] uppercase tracking-wider"
+              >
+                Type
+              </Label>
+              <Select
+                id="type"
+                value={type}
+                onValueChange={(value) => {
+                  setType(value);
+                  setErrors((prev) => ({ ...prev, type: null }));
+                }}
+              >
+                <SelectTrigger
+                  className="mt-2 h-14 text-lg font-medium rounded-2xl border border-[#1ABA7F]/20 bg-white/95 text-gray-900 focus:ring-0 focus:border-[#1ABA7F]/50 focus:shadow-[0_0_15px_rgba(26,186,127,0.3)] transition-all duration-300"
+                  aria-invalid={!!errors.type}
+                  aria-describedby={errors.type ? 'type-error' : undefined}
+                >
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="medication">Medication Prescription</SelectItem>
+                  <SelectItem value="diagnostic">Diagnostic Test Order</SelectItem>
+                </SelectContent>
+              </Select>
+              {errors.type && (
+                <p id="type-error" className="mt-2 text-sm text-red-600 font-medium">
+                  {errors.type}
+                </p>
+              )}
+            </div>
             <div>
               <Label
                 htmlFor="contact"
@@ -225,7 +271,7 @@ export default function PrescriptionUploadForm() {
                     setErrors((prev) => ({ ...prev, contact: null }));
                   }}
                   placeholder="Enter your email or phone number"
-                  className="h-12 pl-12 text-base font-medium rounded-xl border border-[#1ABA7F]/20 bg-white/95 text-gray-900 placeholder:text-gray-400 focus:ring-0 focus:border-[#1ABA7F]/50 focus:shadow-[0_0_15px_rgba(26,186,127,0.3)] transition-all duration-300"
+                  className="h-14 pl-12 text-lg font-medium rounded-2xl border border-[#1ABA7F]/20 bg-white/95 text-gray-900 placeholder:text-gray-400 focus:ring-0 focus:border-[#1ABA7F]/50 focus:shadow-[0_0_15px_rgba(26,186,127,0.3)] transition-all duration-300"
                   aria-invalid={!!errors.contact}
                   aria-describedby={errors.contact ? 'contact-error' : undefined}
                 />
@@ -241,14 +287,14 @@ export default function PrescriptionUploadForm() {
                 htmlFor="fileInput"
                 className="text-sm font-semibold text-[#225F91] uppercase tracking-wider"
               >
-                Prescription File
+                Prescription or Test Order File
               </Label>
               <div
                 onDrop={handleDrop}
                 onDragOver={(e) => e.preventDefault()}
-                className="mt-3 p-6 border-2 border-dashed border-[#1ABA7F]/20 rounded-xl text-center bg-white/95 hover:border-[#1ABA7F]/50 hover:shadow-[0_0_15px_rgba(26,186,127,0.2)] transition-all duration-300"
+                className="mt-3 p-8 border-2 border-dashed border-[#1ABA7F]/20 rounded-2xl text-center bg-white/95 hover:border-[#1ABA7F]/50 hover:shadow-[0_0_15px_rgba(26,186,127,0.2)] transition-all duration-300"
                 role="region"
-                aria-label="Drag and drop prescription file"
+                aria-label="Drag and drop prescription or test order file"
               >
                 <Input
                   id="fileInput"
@@ -260,7 +306,7 @@ export default function PrescriptionUploadForm() {
                 />
                 <div className="flex flex-col items-center gap-3">
                   <Upload
-                    className="h-8 w-8 text-[#225F91]/70"
+                    className="h-10 w-10 text-[#225F91]/70"
                     aria-hidden="true"
                   />
                   {file ? (
@@ -295,8 +341,8 @@ export default function PrescriptionUploadForm() {
             </div>
             <Button
               type="submit"
-              disabled={isUploading || !file || !contact}
-              className="w-full h-12 px-6 text-base font-semibold rounded-xl bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_20px_rgba(34,95,145,0.6)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+              disabled={isUploading || !file || !contact || !type}
+              className="w-full h-14 px-6 text-lg font-semibold rounded-2xl bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_20px_rgba(34,95,145,0.6)] animate-pulse disabled:opacity-50 disabled:cursor-not-allowed disabled:animate-none transition-all duration-300"
             >
               {isUploading ? (
                 <span className="flex items-center justify-center gap-2">

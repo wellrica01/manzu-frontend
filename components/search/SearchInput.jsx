@@ -16,11 +16,18 @@ const SearchInput = ({
   focusedSuggestionIndex,
   setFocusedSuggestionIndex,
   handleSearch,
-  handleSelectTest,
+  handleSelectService,
   dropdownRef,
   inputRef,
   suggestionRefs,
+  serviceType,
 }) => {
+  const placeholder = {
+    medication: 'Search for medications...',
+    diagnostic: 'Search for tests...',
+    diagnostic_package: 'Search for packages...',
+  }[serviceType] || 'Search for services...';
+
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && focusedSuggestionIndex === -1 && searchTerm) {
       e.preventDefault();
@@ -44,7 +51,7 @@ const SearchInput = ({
       });
     } else if (e.key === 'Enter' && focusedSuggestionIndex >= 0) {
       e.preventDefault();
-      handleSelectTest(suggestions[focusedSuggestionIndex]);
+      handleSelectService(suggestions[focusedSuggestionIndex]);
     } else if (e.key === 'Escape') {
       setShowDropdown(false);
       setFocusedSuggestionIndex(-1);
@@ -71,7 +78,7 @@ const SearchInput = ({
           <Input
             ref={inputRef}
             type="text"
-            placeholder="Search for tests..."
+            placeholder={placeholder}
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value);
@@ -104,26 +111,31 @@ const SearchInput = ({
                   <span className="text-base font-medium text-gray-600">Loading...</span>
                 </div>
               ) : suggestions.length > 0 ? (
-                suggestions.map((test, index) => (
+                suggestions.map((service, index) => (
                   <div
-                    key={test.id}
+                    key={service.id}
                     ref={(el) => (suggestionRefs.current[index] = el)}
                     className={cn(
                       'px-5 py-3 cursor-pointer flex items-center gap-3 text-base font-medium text-gray-900 hover:bg-[#1ABA7F]/10 transition-all duration-200',
                       index === focusedSuggestionIndex && 'bg-[#1ABA7F]/15 shadow-inner'
                     )}
-                    onClick={() => handleSelectTest(test)}
+                    onClick={() => handleSelectService(service)}
                     role="option"
                     aria-selected={index === focusedSuggestionIndex}
                   >
                     <Search className="h-4 w-4 text-[#225F91]/50" aria-hidden="true" />
-                    <span className="truncate">{test.displayName}</span>
+                    <div>
+                      <span className="truncate">{service.displayName}</span>
+                      {serviceType === 'medication' && service.genericName && (
+                        <span className="block text-sm text-gray-500">{service.genericName}</span>
+                      )}
+                    </div>
                   </div>
                 ))
               ) : (
                 searchTerm && (
                   <div className="px-5 py-4 text-gray-500 text-base font-medium">
-                    No tests found for "{searchTerm}"
+                    No {serviceType === 'medication' ? 'medications' : serviceType === 'diagnostic' ? 'tests' : 'packages'} found for "{searchTerm}"
                   </div>
                 )
               )}

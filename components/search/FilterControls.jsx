@@ -11,7 +11,7 @@ const customSelectStyles = {
     border: `1px solid ${state.isFocused ? 'rgba(26,186,127,0.5)' : 'rgba(26,186,127,0.3)'}`,
     boxShadow: state.isFocused ? '0 0 10px rgba(26,186,127,0.3)' : 'none',
     background: 'rgba(255,255,255,0.95)',
-    borderRadius: '0.5rem',
+    borderRadius: '1rem',
     padding: '0.25rem',
     transition: 'all 0.3s ease',
     '&:hover': {
@@ -39,7 +39,7 @@ const customSelectStyles = {
     background: 'rgba(255,255,255,0.95)',
     backdropFilter: 'blur(8px)',
     border: '1px solid rgba(26,186,127,0.3)',
-    borderRadius: '0.5rem',
+    borderRadius: '1rem',
     boxShadow: '0 10px 20px rgba(0,0,0,0.1)',
     marginTop: '0.25rem',
     zIndex: 20,
@@ -65,6 +65,8 @@ const FilterControls = ({
   setFilterLga,
   filterWard,
   setFilterWard,
+  filterHomeCollection,
+  setFilterHomeCollection,
   sortBy,
   setSortBy,
   states,
@@ -78,12 +80,16 @@ const FilterControls = ({
   searchTerm,
   showFilters,
   setShowFilters,
+  serviceType,
 }) => {
+  const isMedication = serviceType === 'medication';
+  const providerType = isMedication ? 'pharmacies' : 'labs';
+
   return (
     <Card
-      className="shadow-xl border border-[#1ABA7F]/20 rounded-2xl overflow-hidden bg-white/95 backdrop-blur-sm transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:ring-2 hover:ring-[#1ABA7F]/30"
+      className="relative bg-white/95 border border-[#1ABA7F]/20 rounded-2xl shadow-xl overflow-hidden backdrop-blur-sm transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:ring-2 hover:ring-[#1ABA7F]/30"
     >
-      <div className="absolute top-0 left-0 w-12 h-12 bg-[#1ABA7F]/20 rounded-br-full" />
+      <div className="absolute top-0 left-0 w-16 h-16 bg-[#1ABA7F]/20 rounded-br-3xl" />
       <div
         className="flex justify-between items-center px-6 py-4 bg-gradient-to-r from-[#1ABA7F]/10 to-transparent cursor-pointer hover:bg-[#1ABA7F]/20 transition-colors duration-300"
         onClick={() => setShowFilters(!showFilters)}
@@ -92,12 +98,12 @@ const FilterControls = ({
         aria-controls="filter-content"
       >
         <div className="flex items-center gap-3">
-          <Filter className="h-6 w-6 text-[#225F91]" />
+          <Filter className="h-6 w-6 text-[#225F91] transition-transform duration-300 group-hover:scale-110" />
           <span className="text-lg font-bold text-[#225F91] tracking-tight">
             {showFilters ? 'Hide Filters' : 'Refine Your Search'}
           </span>
         </div>
-        {(filterState || filterLga || filterWard || sortBy !== 'cheapest') && (
+        {(filterState || filterLga || filterWard || sortBy !== 'cheapest' || filterHomeCollection) && (
           <Button
             variant="ghost"
             size="sm"
@@ -115,12 +121,12 @@ const FilterControls = ({
       {showFilters && (
         <CardContent
           id="filter-content"
-          className="px-6 py-6 space-y-6 bg-transparent animate-in slide-in-from-top-10 fade-in-20 duration-500"
+          className="px-6 sm:px-8 py-6 space-y-6 bg-transparent animate-in slide-in-from-top duration-500"
         >
           <p className="text-base font-medium text-gray-600 tracking-wide">
-            Tailor your search to find the best pharmacies
+            Tailor your search to find the best {providerType}
           </p>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             <div className="space-y-2">
               <Label
                 htmlFor="state-filter"
@@ -203,9 +209,40 @@ const FilterControls = ({
                 aria-label="Select ward"
               />
             </div>
+            {!isMedication && (
+              <div className="space-y-2">
+                <Label
+                  htmlFor="home-collection-filter"
+                  className="text-sm font-semibold text-[#225F91] uppercase tracking-wider"
+                >
+                  Home Collection
+                </Label>
+                <Select
+                  inputId="home-collection-filter"
+                  options={[
+                    { value: 'true', label: 'Home Collection Available' },
+                    { value: '', label: 'All Labs' },
+                  ]}
+                  onChange={(selected) => {
+                    setFilterHomeCollection(selected?.value === 'true' || false);
+                    if (searchTerm) handleSearch(searchTerm);
+                  }}
+                  value={
+                    filterHomeCollection
+                      ? { value: 'true', label: 'Home Collection Available' }
+                      : { value: '', label: 'All Labs' }
+                  }
+                  styles={customSelectStyles}
+                  className="text-base"
+                  aria-label="Select home collection preference"
+                />
+              </div>
+            )}
           </div>
           <div className="space-y-2">
-            <Label className="text-sm font-semibold text-[#225F91] uppercase tracking-wider">
+            <Label
+              className="text-sm font-semibold text-[#225F91] uppercase tracking-wider"
+            >
               Sort By
             </Label>
             <div className="flex gap-4 pt-2">
@@ -234,7 +271,7 @@ const FilterControls = ({
             <Button
               variant="outline"
               onClick={clearFilters}
-              className="h-12 px-6 text-base font-semibold rounded-full border-[#1ABA7F] text-[#225F91] hover:bg-[#1ABA7F]/10 hover:border-[#1ABA7F]/50 transition-all duration-300"
+              className="h-12 px-6 text-base font-semibold rounded-full border-[#1ABA7F] text-[#225F91] hover:bg-red-100/50 hover:border-red-500/50 hover:text-red-600 transition-all duration-300"
               aria-label="Clear all filters"
             >
               Clear

@@ -1,15 +1,44 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Toaster } from '@/components/ui/sonner';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Menu, X, Twitter, Instagram, Facebook } from 'lucide-react';
+import { Menu, X, Twitter, Instagram, Facebook, ShoppingCart } from 'lucide-react';
 import Image from 'next/image';
+import { useOrder } from '@/hooks/useOrder';
+
+export const metadata = {
+  title: 'Manzu - Trusted Healthcare for Every Nigerian',
+  description: 'Discover medications and diagnostic services with ease across Nigeria.',
+  openGraph: {
+    title: 'Manzu',
+    description: 'Discover medications and diagnostic services with ease across Nigeria.',
+    url: 'https://manzu.com',
+    images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: 'Manzu Platform' }],
+  },
+  icons: {
+    icon: '/favicon.ico',
+  },
+};
 
 export default function MainLayout({ children }) {
+  const { orderItemCount, fetchOrder } = useOrder();
   const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    fetchOrder();
+  }, [fetchOrder]);
+
+  const navItems = [
+    { name: 'Home', href: '/' },
+    { name: 'Services', href: '/services' },
+    { name: 'Cart', href: '/cart', icon: ShoppingCart },
+    { name: 'Track Order', href: '/track-order' },
+    { name: 'Results', href: '/results' },
+    { name: 'Check Status', href: '/check-status' },
+  ];
 
   return (
     <div className="flex flex-col min-h-screen bg-[#1ABA7F]/10">
@@ -34,14 +63,20 @@ export default function MainLayout({ children }) {
             />
           </Link>
           <div className="hidden md:flex items-center gap-8">
-            {['Home', 'Med Services', 'Test Services', 'Check Status'].map((item) => (
+            {navItems.map((item) => (
               <Link
-                key={item}
-                href={item === 'Home' ? '/' : `/${item.toLowerCase().replace(' ', '-')}`}
-                className="text-base font-medium text-[#225F91] hover:text-[#1ABA7F] hover:bg-[#1ABA7F]/20 px-4 py-2 rounded-full transition-all duration-300 hover:shadow-sm"
-                aria-label={item}
+                key={item.name}
+                href={item.href}
+                className="text-base font-medium text-[#225F91] hover:text-[#1ABA7F] hover:bg-[#1ABA7F]/20 px-4 py-2 rounded-full transition-all duration-300 hover:shadow-sm relative flex items-center gap-2"
+                aria-label={item.name === 'Cart' ? `Cart with ${orderItemCount} items` : item.name}
               >
-                {item}
+                {item.icon && <item.icon className="h-5 w-5" aria-hidden="true" />}
+                {item.name}
+                {item.name === 'Cart' && orderItemCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-[#1ABA7F] text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                    {orderItemCount}
+                  </span>
+                )}
               </Link>
             ))}
           </div>
@@ -71,15 +106,21 @@ export default function MainLayout({ children }) {
                 </Button>
               </SheetHeader>
               <div className="flex flex-col gap-4 mt-12 px-4">
-                {['Home', 'Med Services', 'Test Services', 'Check Status'].map((item) => (
+                {navItems.map((item) => (
                   <Link
-                    key={item}
-                    href={item === 'Home' ? '/' : `/${item.toLowerCase().replace(' ', '-')}`}
-                    className="text-lg font-medium text-[#225F91] hover:bg-[#1ABA7F]/20 hover:text-[#1ABA7F] px-4 py-3 rounded-full transition-all duration-300"
-                    aria-label={item}
+                    key={item.name}
+                    href={item.href}
+                    className="text-lg font-medium text-[#225F91] hover:bg-[#1ABA7F]/20 hover:text-[#1ABA7F] px-4 py-3 rounded-full transition-all duration-300 relative"
+                    aria-label={item.name === 'Cart' ? `Cart with ${orderItemCount} items` : item.name}
                     onClick={() => setIsOpen(false)}
                   >
-                    {item}
+                    {item.icon && <item.icon className="h-5 w-5 inline-block mr-2" aria-hidden="true" />}
+                    {item.name}
+                    {item.name === 'Cart' && orderItemCount > 0 && (
+                      <span className="absolute top-4 right-4 bg-[#1ABA7F] text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                        {orderItemCount}
+                      </span>
+                    )}
                   </Link>
                 ))}
               </div>
@@ -102,12 +143,12 @@ export default function MainLayout({ children }) {
                 className="h-10 w-auto object-contain mb-4"
               />
               <p className="text-sm text-white/80 font-medium max-w-xs">
-                Manzu: Your trusted platform for medications and diagnostic tests across Nigeria.
+                Manzu: Your trusted platform for medications and diagnostic services across Nigeria.
               </p>
             </div>
             <div className="flex flex-col items-center md:items-start">
               <h3 className="text-lg font-semibold text-white mb-4">Quick Links</h3>
-              {['About', 'Contact', 'Privacy Policy'].map((item) => (
+              {['About', 'Contact', 'Privacy Policy', 'How It Works'].map((item) => (
                 <Link
                   key={item}
                   href={`/${item.toLowerCase().replace(' ', '-')}`}
@@ -162,7 +203,7 @@ export default function MainLayout({ children }) {
           },
           error: {
             style: {
-              backgroundColor: 'rgba(255,85,85,0.95)',
+              background: 'rgba(255,85,85,0.95)',
               color: '#ffffff',
               border: '1px solid rgba(34,95,145,0.3)',
               boxShadow: '0 4px 20px rgba(34,95,145,0.2)',
