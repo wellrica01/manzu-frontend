@@ -11,26 +11,22 @@ export function useOrder() {
   const { data: orderData, isPending, isError, error, refetch: fetchOrder } = useQuery({
     queryKey: ['order', guestId],
     queryFn: async () => {
-      console.log('Fetching order for guestId:', guestId);
       try {
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/orders`, {
           headers: { 'x-guest-id': guestId },
         });
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-          console.error('Order API error:', response.status, errorData);
           throw new Error(errorData.message || `Failed to fetch order: ${response.status}`);
         }
         const data = await response.json();
-        console.log('Order API response:', data);
         return data;
       } catch (error) {
-        console.error('Order fetch error:', error.message);
         throw error;
       }
     },
     enabled: !!guestId,
-    staleTime: 5 * 1000,
+    staleTime: 30 * 1000,
     refetchOnWindowFocus: false,
     retry: 1,
     retryDelay: 1000,
@@ -60,7 +56,7 @@ export function useOrder() {
       return response.json();
     },
     onSuccess: (data) => {
-      queryClient.setQueryData(['order', guestId], data);
+      queryClient.invalidateQueries(['order', guestId]);
       const typeLabel = {
         medication: 'Medication',
         diagnostic: 'Test',
@@ -68,7 +64,7 @@ export function useOrder() {
       }[data.type] || 'Service';
       toast.success(`${typeLabel} added to order!`, { duration: 4000 });
       if (typeof window !== 'undefined' && window.gtag) {
-        window.gtag('event', 'add_to_order', { serviceId, providerId, type, quantity });
+        window.gtag('event', 'add_to_order', { serviceId: data.orderItem.serviceId, providerId: data.orderItem.providerId, type: data.type, quantity: data.orderItem.quantity });
       }
     },
     onError: (error) => {
@@ -126,19 +122,34 @@ export function useOrder() {
   });
 
   const fetchTimeSlots = useMutation({
-    mutationFn: async ({ providerId }) => {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/orders/slots?providerId=${providerId}`, {
+    mutationFn: async ({ providerId, serviceId, fulfillmentType = 'in_person', date }) => {
+      const queryParams = new URLSearchParams({ providerId });
+      if (serviceId) queryParams.append('serviceId', serviceId);
+      if (fulfillmentType) queryParams.append('fulfillmentType', fulfillmentType);
+      if (date) queryParams.append('date', date);
+      const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/orders/slots?${queryParams.toString()}`;
+      console.log('Fetching time slots from:', apiUrl, 'Client timezone:', Intl.DateTimeFormat().resolvedOptions().timeZone);
+      const response = await fetch(apiUrl, {
         headers: { 'x-guest-id': guestId },
       });
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to fetch time slots');
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Fetch time slots error details:', errorData);
+        throw new Error(errorData.message || 'Server error');
       }
-      return response.json();
+      const data = await response.json();
+      console.log('Time slots response:', data);
+      return data;
+    },
+    onError: (error) => {
+      console.error('Fetch time slots error:', error.message);
+      toast.error(error.message, { duration: 4000 });
     },
   });
 
-  console.log('useOrder state:', { isPending, isError, error: error?.message, order });
+  if (process.env.NODE_ENV === 'development') {
+    console.log('useOrder state:', { isPending, isError, error: error?.message, order });
+  }
 
   return {
     orderItemCount,
@@ -147,10 +158,10 @@ export function useOrder() {
     guestId,
     isPending,
     isError,
-    addToOrder: addToOrder.mutate,
+    addToOrder: addToOrder.mutateAsync,
     updateOrderDetails: updateOrderDetails.mutate,
     removeFromOrder: removeFromOrder.mutate,
-    fetchTimeSlots: fetchTimeSlots.mutate,
+    fetchTimeSlots,
   };
 }
 

@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card';
 import { useOrder } from '@/hooks/useOrder';
 import SearchInput from './SearchInput';
 import FilterControls from './FilterControls';
-const ServiceCard = dynamic(() => import('./ServiceCard'), { ssr: false });
+import ServiceCard from './ServiceCard';
 import OrderDialog from './OrderDialog';
 import ErrorMessage from '@/components/ErrorMessage';
 import {
@@ -31,6 +31,7 @@ export default function ServiceSearchBar() {
   const [focusedSuggestionIndex, setFocusedSuggestionIndex] = useState(-1);
   const [openOrderDialog, setOpenOrderDialog] = useState(false);
   const [lastAddedItem, setLastAddedItem] = useState(null);
+  const [lastAddedItemDetails, setLastAddedItemDetails] = useState(null); // New state for item details
   const [filterState, setFilterState] = useState('');
   const [filterLga, setFilterLga] = useState('');
   const [filterWard, setFilterWard] = useState('');
@@ -156,30 +157,12 @@ export default function ServiceSearchBar() {
       if (filterWard) queryParams.append('ward', filterWard);
       if (filterHomeCollection && serviceType !== 'medication') queryParams.append('homeCollection', 'true');
       queryParams.append('sortBy', sortBy);
-      // TODO: Add pagination support with page and limit query params
       const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/services/search?${queryParams.toString()}`;
       console.log('Fetching services from:', apiUrl);
       const response = await fetch(apiUrl);
       if (!response.ok) throw new Error('Failed to search services');
       const data = await response.json();
-      // Normalize and validate data
-      const normalizedResults = Array.isArray(data)
-        ? data
-        : Array.isArray(data.sampleService)
-        ? data.sampleService
-        : [data.sampleService].filter(Boolean);
-      // Log invalid services
-      const validResults = normalizedResults.filter((s) => s && s.id);
-      if (normalizedResults.length !== validResults.length) {
-        console.warn('Invalid services detected (missing ID):', normalizedResults.filter((s) => !s || !s.id));
-      }
-      // Check for duplicate IDs
-      const ids = validResults.map((s) => s.id);
-      const uniqueIds = new Set(ids);
-      if (ids.length !== uniqueIds.size) {
-        console.warn('Duplicate service IDs detected:', validResults);
-      }
-      setResults(validResults);
+      setResults(data);
       setShowDropdown(false);
       setFocusedSuggestionIndex(-1);
       await fetchOrder();
@@ -207,30 +190,12 @@ export default function ServiceSearchBar() {
       if (filterWard) queryParams.append('ward', filterWard);
       if (filterHomeCollection && serviceType !== 'medication') queryParams.append('homeCollection', 'true');
       queryParams.append('sortBy', sortBy);
-      // TODO: Add pagination support with page and limit query params
       const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/services/search?${queryParams.toString()}`;
       console.log('Fetching services from:', apiUrl);
       const response = await fetch(apiUrl);
       if (!response.ok) throw new Error('Failed to search services');
       const data = await response.json();
-      // Normalize and validate data
-      const normalizedResults = Array.isArray(data)
-        ? data
-        : Array.isArray(data.sampleService)
-        ? data.sampleService
-        : [data.sampleService].filter(Boolean);
-      // Log invalid services
-      const validResults = normalizedResults.filter((s) => s && s.id);
-      if (normalizedResults.length !== validResults.length) {
-        console.warn('Invalid services detected (missing ID):', normalizedResults.filter((s) => !s || !s.id));
-      }
-      // Check for duplicate IDs
-      const ids = validResults.map((s) => s.id);
-      const uniqueIds = new Set(ids);
-      if (ids.length !== uniqueIds.size) {
-        console.warn('Duplicate service IDs detected:', validResults);
-      }
-      setResults(validResults);
+      setResults(data);
       await fetchOrder();
     } catch (err) {
       setError(err.message);
@@ -242,22 +207,41 @@ export default function ServiceSearchBar() {
   const handleAddToOrder = async (serviceId, providerId, serviceName, quantity) => {
     const itemKey = `${serviceId}-${providerId}`;
     try {
-      if (!serviceId || !providerId) throw new Error('Invalid service or provider');
+      // Validate serviceId and providerId
+      if (!serviceId || isNaN(parseInt(serviceId))) {
+        throw new Error('Invalid service ID');
+      }
+      if (!providerId || isNaN(parseInt(providerId))) {
+        console.error('Invalid providerId received:', providerId);
+        throw new Error('Invalid provider ID');
+      }
+      console.log('Adding to order:', { serviceId, providerId, serviceName, quantity, serviceType });
       setIsAddingToOrder((prev) => ({ ...prev, [itemKey]: true }));
       setOrderItems((prev) => [
         ...prev,
         {
-          serviceId,
-          providerId,
+          serviceId: serviceId,
+          providerId: providerId,
           quantity: quantity || 1,
           service: { displayName: serviceName },
         },
       ]);
-      await addToOrder({ serviceId, providerId, type: serviceType, quantity: quantity || 1 });
+      const result = await addToOrder({
+        serviceId: serviceId,
+        providerId: providerId,
+        type: serviceType,
+        quantity: quantity || 1,
+      });
       setLastAddedItem(serviceName);
-      setOpenOrderDialog(true);
+      setLastAddedItemDetails({
+        providerId: result.orderItem.providerId,
+        serviceId: result.orderItem.serviceId,
+        itemId: result.orderItem.id,
+      });
       await fetchOrder();
+      setOpenOrderDialog(true);
     } catch (err) {
+      console.error('Add to order error:', err);
       toast.error(`Error: ${err.message}`);
       setOrderItems((prev) =>
         prev.filter((item) => !(item.serviceId === serviceId && item.providerId === providerId))
@@ -281,6 +265,7 @@ export default function ServiceSearchBar() {
         setOpenOrderDialog={setOpenOrderDialog}
         lastAddedItem={lastAddedItem}
         serviceType={serviceType}
+        lastAddedItemDetails={lastAddedItemDetails} // Pass the new prop
       />
       <div>
         <label
@@ -373,7 +358,7 @@ export default function ServiceSearchBar() {
             </p>
           </Card>
         ) : (
-          results.map((service, index) => (
+          results.map((service) => (
             <ServiceCard
               key={service.id}
               service={service}
@@ -381,7 +366,6 @@ export default function ServiceSearchBar() {
               handleAddToOrder={handleAddToOrder}
               isInOrder={isInOrder}
               isAddingToOrder={isAddingToOrder}
-              className="relative bg-white/95 border border-[#1ABA7F]/20 rounded-2xl shadow-xl backdrop-blur-lg transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:ring-2 hover:ring-[#1ABA7F]/30"
             />
           ))
         )}

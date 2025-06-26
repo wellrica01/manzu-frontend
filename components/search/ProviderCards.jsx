@@ -37,15 +37,6 @@ const ProviderCards = ({ availability, serviceId, handleAddToOrder, isInOrder, i
           );
         }, [validDistances, avail.distance_km]);
 
-        const handleClick = async () => {
-          try {
-            await handleAddToOrder(serviceId, avail.providerId, displayName, isMedication ? undefined : 1);
-            toast.success(`${displayName} added to ${isMedication ? 'cart' : 'booking'}!`);
-          } catch (error) {
-            toast.error(`Failed to add to ${isMedication ? 'cart' : 'booking'}.`);
-          }
-        };
-
         return (
           <Card key={index} className="p-4 border border-[#1ABA7F]/20 rounded-2xl bg-white/95 backdrop-blur-sm shadow-md">
             <div className="flex justify-between items-center">
@@ -54,7 +45,7 @@ const ProviderCards = ({ availability, serviceId, handleAddToOrder, isInOrder, i
               </p>
               <Button
                 id={`add-to-order-${serviceId}-${avail.providerId}`}
-                onClick={handleClick}
+                onClick={() => handleAddToOrder(serviceId, avail.providerId, displayName)}
                 disabled={isInOrder(serviceId, avail.providerId) || isAddingToOrder[`${serviceId}-${avail.providerId}`]}
                 className={cn(
                   'h-8 px-3 text-sm font-semibold rounded-full',

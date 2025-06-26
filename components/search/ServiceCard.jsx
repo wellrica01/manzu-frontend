@@ -7,15 +7,7 @@ import ProviderCards from './ProviderCards'; // To be unified
 import ProviderTable from './ProviderTable'; // To be unified
 
 const ServiceCard = ({ service, serviceType, handleAddToOrder, isInOrder, isAddingToOrder }) => {
-  const [quantity, setQuantity] = useState(1);
   const isMedication = serviceType === 'medication';
-
-  const handleQuantityChange = (e) => {
-    const value = parseInt(e.target.value, 10);
-    if (!isNaN(value) && value > 0) {
-      setQuantity(value);
-    }
-  };
 
   return (
     <Card
@@ -66,33 +58,13 @@ const ServiceCard = ({ service, serviceType, handleAddToOrder, isInOrder, isAddi
             <p className="text-gray-600 text-base">{service.prepInstructions}</p>
           </div>
         )}
-        {isMedication && (
-          <div className="mb-4">
-            <label
-              htmlFor={`quantity-${service.id}`}
-              className="text-sm font-semibold text-[#225F91] uppercase tracking-wider"
-            >
-              Quantity
-            </label>
-            <Input
-              id={`quantity-${service.id}`}
-              type="number"
-              min="1"
-              value={quantity}
-              onChange={handleQuantityChange}
-              className="mt-2 w-24 h-10 border-[#1ABA7F]/20 rounded-xl text-gray-900 bg-white/95 focus:border-[#1ABA7F]/50 focus:shadow-[0_0_10px_rgba(26,186,127,0.3)]"
-            />
-          </div>
-        )}
         <h3 className="text-xl font-bold text-[#225F91] mb-4">
           Compare {isMedication ? 'Pharmacies' : 'Labs'}
         </h3>
         <ProviderCards
           availability={service.availability}
           serviceId={service.id}
-          handleAddToOrder={(providerId, displayName) =>
-            handleAddToOrder(service.id, providerId, displayName, quantity)
-          }
+          handleAddToOrder={handleAddToOrder}
           isInOrder={isInOrder}
           isMedication={isMedication}
           displayName={service.displayName}
@@ -101,9 +73,7 @@ const ServiceCard = ({ service, serviceType, handleAddToOrder, isInOrder, isAddi
         <ProviderTable
           availability={service.availability}
           serviceId={service.id}
-          handleAddToOrder={(providerId, displayName) =>
-            handleAddToOrder(service.id, providerId, displayName, quantity)
-          }
+          handleAddToOrder={handleAddToOrder}
           isInOrder={isInOrder}
           isMedication={isMedication}
           displayName={service.displayName}

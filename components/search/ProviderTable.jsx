@@ -43,15 +43,6 @@ const ProviderTable = ({ availability, serviceId, handleAddToOrder, isInOrder, i
                 !isNaN(avail.distance_km) &&
                 avail.distance_km === Math.min(...validDistances);
 
-              const handleClick = async () => {
-                try {
-                  await handleAddToOrder(serviceId, avail.providerId, displayName, isMedication ? undefined : 1);
-                  toast.success(`${displayName} added to ${isMedication ? 'cart' : 'booking'}!`);
-                } catch (error) {
-                  toast.error(`Failed to add to ${isMedication ? 'cart' : 'booking'}.`);
-                }
-              };
-
               return (
                 <tr
                   key={index}
@@ -114,7 +105,7 @@ const ProviderTable = ({ availability, serviceId, handleAddToOrder, isInOrder, i
                   <td className="p-4">
                     <Button
                       id={`add-to-order-${serviceId}-${avail.providerId}`}
-                      onClick={handleClick}
+                      onClick={() => handleAddToOrder(serviceId, avail.providerId, displayName)}
                       disabled={isInOrder(serviceId, avail.providerId) || isAddingToOrder[`${serviceId}-${avail.providerId}`]}
                       className={cn(
                         'h-10 px-5 text-sm font-semibold rounded-full transition-all duration-300',
