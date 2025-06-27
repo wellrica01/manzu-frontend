@@ -68,11 +68,11 @@ export default function MainLayout({ children }) {
                 key={item.name}
                 href={item.href}
                 className="text-base font-medium text-[#225F91] hover:text-[#1ABA7F] hover:bg-[#1ABA7F]/20 px-4 py-2 rounded-full transition-all duration-300 hover:shadow-sm relative flex items-center gap-2"
-                aria-label={item.name === 'Cart' ? `Cart with ${orderItemCount} items` : item.name}
+                aria-label={item.name === 'Order' ? `Order with ${orderItemCount} items` : item.name}
               >
                 {item.icon && <item.icon className="h-5 w-5" aria-hidden="true" />}
                 {item.name}
-                {item.name === 'Cart' && orderItemCount > 0 && (
+                {item.name === 'Order' && orderItemCount > 0 && (
                   <span className="absolute -top-2 -right-2 bg-[#1ABA7F] text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
                     {orderItemCount}
                   </span>
@@ -111,12 +111,12 @@ export default function MainLayout({ children }) {
                     key={item.name}
                     href={item.href}
                     className="text-lg font-medium text-[#225F91] hover:bg-[#1ABA7F]/20 hover:text-[#1ABA7F] px-4 py-3 rounded-full transition-all duration-300 relative"
-                    aria-label={item.name === 'Cart' ? `Cart with ${orderItemCount} items` : item.name}
+                    aria-label={item.name === 'Order' ? `Order with ${orderItemCount} items` : item.name}
                     onClick={() => setIsOpen(false)}
                   >
                     {item.icon && <item.icon className="h-5 w-5 inline-block mr-2" aria-hidden="true" />}
                     {item.name}
-                    {item.name === 'Cart' && orderItemCount > 0 && (
+                    {item.name === 'Order' && orderItemCount > 0 && (
                       <span className="absolute top-4 right-4 bg-[#1ABA7F] text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
                         {orderItemCount}
                       </span>

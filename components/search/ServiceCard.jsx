@@ -69,6 +69,7 @@ const ServiceCard = ({ service, serviceType, handleAddToOrder, isInOrder, isAddi
           isMedication={isMedication}
           displayName={service.displayName}
           isAddingToOrder={isAddingToOrder}
+          service={service}
         />
         <ProviderTable
           availability={service.availability}
@@ -78,6 +79,7 @@ const ServiceCard = ({ service, serviceType, handleAddToOrder, isInOrder, isAddi
           isMedication={isMedication}
           displayName={service.displayName}
           isAddingToOrder={isAddingToOrder}
+          service={service}
         />
       </CardContent>
     </Card>

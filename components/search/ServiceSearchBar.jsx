@@ -205,10 +205,9 @@ export default function ServiceSearchBar() {
     }
   };
 
-  const handleAddToOrder = async (serviceId, providerId, serviceName, quantity) => {
+const handleAddToOrder = async (serviceId, providerId, serviceName, quantity) => {
     const itemKey = `${serviceId}-${providerId}`;
     try {
-      // Validate serviceId and providerId
       if (!serviceId || isNaN(parseInt(serviceId))) {
         throw new Error('Invalid service ID');
       }
@@ -216,14 +215,15 @@ export default function ServiceSearchBar() {
         console.error('Invalid providerId received:', providerId);
         throw new Error('Invalid provider ID');
       }
-      console.log('Adding to order:', { serviceId, providerId, serviceName, quantity, serviceType });
+      const finalQuantity = serviceType === 'medication' ? (quantity || 1) : 1;
+      console.log('Adding to order:', { serviceId, providerId, serviceName, quantity: finalQuantity, serviceType });
       setIsAddingToOrder((prev) => ({ ...prev, [itemKey]: true }));
       setOrderItems((prev) => [
         ...prev,
         {
           serviceId: serviceId,
           providerId: providerId,
-          quantity: quantity || 1,
+          quantity: finalQuantity,
           service: { displayName: serviceName },
         },
       ]);
@@ -231,8 +231,9 @@ export default function ServiceSearchBar() {
         serviceId: serviceId,
         providerId: providerId,
         type: serviceType,
-        quantity: quantity || 1,
+        quantity: finalQuantity,
       });
+      console.log('Add to order response:', { orderItem: result.orderItem, orderTotalPrice: result.order.totalPrice });
       setLastAddedItem(serviceName);
       setLastAddedItemDetails({
         providerId: result.orderItem.providerId,
@@ -253,6 +254,7 @@ export default function ServiceSearchBar() {
     }
   };
 
+
   const isInOrder = (serviceId, providerId) => {
     if (!Array.isArray(orderItems)) return false;
     return orderItems.some(
@@ -267,7 +269,9 @@ export default function ServiceSearchBar() {
         setOpenOrderDialog={setOpenOrderDialog}
         lastAddedItem={lastAddedItem}
         serviceType={serviceType}
-        lastAddedItemDetails={lastAddedItemDetails} // Pass the new prop
+        lastAddedItemDetails={lastAddedItemDetails} 
+        fetchOrder={fetchOrder}
+        isEditMode={false}
       />
       <div>
         <label

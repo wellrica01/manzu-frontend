@@ -1,10 +1,12 @@
 import React from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ShoppingCart, Microscope } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
-const ProviderTable = ({ availability, serviceId, handleAddToOrder, isInOrder, isMedication, displayName, isAddingToOrder }) => {
+const ProviderTable = ({ availability, service, serviceId, handleAddToOrder, isInOrder, isMedication, displayName, isAddingToOrder }) => {
+  const [quantity, setQuantity] = useState(1);
 
   if (!availability || availability.length === 0) {
     return (
@@ -28,6 +30,7 @@ const ProviderTable = ({ availability, serviceId, handleAddToOrder, isInOrder, i
               <th className="p-4">Distance</th>
               {!isMedication && <th className="p-4">Home Collection</th>}
               {!isMedication && <th className="p-4">Result Time</th>}
+              {isMedication && <th className="p-4">Quantity</th>}
               <th className="p-4 rounded-tr-xl">Action</th>
             </tr>
           </thead>
@@ -102,10 +105,22 @@ const ProviderTable = ({ availability, serviceId, handleAddToOrder, isInOrder, i
                       </span>
                     </td>
                   )}
+                  {isMedication && (
+                    <td className="p-4">
+                      <input
+                      id={`quantity-${service.id}`}
+                      type="number"
+                      min="1"
+                      value={quantity}
+                      onChange={(e) => setQuantity(parseInt(e.target.value))}
+                      className="w-16 p-1 border border-[#1ABA7F]/20 rounded-md text-center"
+                    />
+                    </td>
+                  )}
                   <td className="p-4">
                     <Button
                       id={`add-to-order-${serviceId}-${avail.providerId}`}
-                      onClick={() => handleAddToOrder(serviceId, avail.providerId, displayName)}
+                      onClick={() => handleAddToOrder(serviceId, avail.providerId, displayName, quantity)}
                       disabled={isInOrder(serviceId, avail.providerId) || isAddingToOrder[`${serviceId}-${avail.providerId}`]}
                       className={cn(
                         'h-10 px-5 text-sm font-semibold rounded-full transition-all duration-300',

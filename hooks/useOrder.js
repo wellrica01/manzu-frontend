@@ -30,11 +30,9 @@ export function useOrder() {
       }
     },
     enabled: !!guestId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchOnMount: false, // Prevent refetch on mount
-    refetchOnWindowFocus: false, // Prevent refetch on window focus
-    retry: 3, // Allow a few retries
-    retryDelay: 1000,
+    staleTime: 5 * 1000,
+    refetchOnWindowFocus: false,
+    retry: 2,
     placeholderData: { providers: [], totalPrice: 0, items: [], orderId: null },
     onError: (err) => {
       toast.error(`Failed to load order: ${err.message}`, { duration: 4000 });
@@ -77,6 +75,31 @@ export function useOrder() {
     },
   });
 
+  const updateOrderItem = useMutation({
+    mutationFn: async ({ itemId, quantity, type }) => {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/orders/update/${itemId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-guest-id': guestId,
+        },
+        body: JSON.stringify({ quantity, type }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update order item');
+      }
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries(['order', guestId]);
+      toast.success('Order item quantity updated!', { duration: 4000 });
+    },
+    onError: (error) => {
+      toast.error(error.message, { duration: 4000 });
+    },
+  });
+
   const updateOrderDetails = useMutation({
     mutationFn: async ({ itemId, timeSlotStart, fulfillmentType }) => {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/orders/update-details/${itemId}`, {
@@ -94,7 +117,7 @@ export function useOrder() {
       return response.json();
     },
     onSuccess: (data) => {
-      queryClient.setQueryData(['order', guestId], data);
+      queryClient.invalidateQueries(['order', guestId]);
       toast.success('Order details updated!', { duration: 4000 });
     },
     onError: (error) => {
@@ -115,7 +138,7 @@ export function useOrder() {
       return response.json();
     },
     onSuccess: (data) => {
-      queryClient.setQueryData(['order', guestId], data);
+      queryClient.invalidateQueries(['order', guestId]);
       toast.success('Item removed from order!', { duration: 4000 });
       if (typeof window !== 'undefined' && window.gtag) {
         window.gtag('event', 'remove_from_order', { itemId });
@@ -127,7 +150,7 @@ export function useOrder() {
   });
 
   const fetchTimeSlots = useMutation({
-    mutationFn: async ({ providerId, serviceId, fulfillmentType = 'in_person', date }) => {
+    mutationFn: async ({ providerId, serviceId, fulfillmentType = 'lab_visit', date }) => {
       const queryParams = new URLSearchParams({ providerId });
       if (serviceId) queryParams.append('serviceId', serviceId);
       if (fulfillmentType) queryParams.append('fulfillmentType', fulfillmentType);
@@ -164,6 +187,7 @@ export function useOrder() {
     isPending,
     isError,
     addToOrder: addToOrder.mutateAsync,
+    updateOrderItem: updateOrderItem.mutateAsync,
     updateOrderDetails: updateOrderDetails.mutate,
     removeFromOrder: removeFromOrder.mutate,
     fetchTimeSlots,
