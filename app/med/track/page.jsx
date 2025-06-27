@@ -125,7 +125,7 @@ export default function Track() {
   const calculateItemPrice = (item) => item.quantity * item.price;
 
   const getUniquePharmacyAddresses = (order) => {
-    if (order.pharmacy && order.deliveryMethod === 'pickup') {
+    if (order.pharmacy && order.fulfillmentMethod === 'pick_up') {
       return [{ name: order.pharmacy.name, address: order.pharmacy.address }];
     }
     return [];
@@ -276,9 +276,9 @@ export default function Track() {
                         </p>
                       )}
                       <p>
-                        <strong className="text-gray-900">Delivery Method:</strong> {order.deliveryMethod === 'pickup' ? 'Pickup' : 'Delivery'}
+                        <strong className="text-gray-900">Delivery Method:</strong> {order.fulfillmentMethod === 'pick_up' ? 'Pickup' : 'Delivery'}
                       </p>
-                      {order.deliveryMethod === 'pickup' && getUniquePharmacyAddresses(order).length > 0 ? (
+                      {order.fulfillmentMethod === 'pick_up' && getUniquePharmacyAddresses(order).length > 0 ? (
                         <div>
                           <strong className="text-gray-900">Pickup Address:</strong>
                           <div className="mt-1 space-y-1">

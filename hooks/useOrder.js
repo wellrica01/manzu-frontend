@@ -1,12 +1,16 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { toast } from 'sonner';
 import { getGuestId } from '@/lib/utils';
 
 export function useOrder() {
   const queryClient = useQueryClient();
   const guestId = getGuestId();
+  useEffect(() => {
+    console.log('Guest ID:', guestId);
+  }, [guestId]);
 
   const { data: orderData, isPending, isError, error, refetch: fetchOrder } = useQuery({
     queryKey: ['order', guestId],
@@ -26,9 +30,10 @@ export function useOrder() {
       }
     },
     enabled: !!guestId,
-    staleTime: 30 * 1000,
-    refetchOnWindowFocus: false,
-    retry: 1,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnMount: false, // Prevent refetch on mount
+    refetchOnWindowFocus: false, // Prevent refetch on window focus
+    retry: 3, // Allow a few retries
     retryDelay: 1000,
     placeholderData: { providers: [], totalPrice: 0, items: [], orderId: null },
     onError: (err) => {

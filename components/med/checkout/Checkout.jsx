@@ -1,4 +1,4 @@
-'use client';
+/*'use client';
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
@@ -16,7 +16,7 @@ import { useCart } from '@/hooks/useCart';
 const OrderSummary = dynamic(() => import('./OrderSummary'), { ssr: false });
 
 export default function Checkout() {
-  const [form, setForm] = useState({ name: '', email: '', phone: '', address: '', deliveryMethod: 'pickup' });
+  const [form, setForm] = useState({ name: '', email: '', phone: '', address: '', fulfillmentMethod: 'pickup' });
   const [prescriptionFile, setPrescriptionFile] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -141,8 +141,8 @@ export default function Checkout() {
     }
   };
 
-  const handleDeliveryMethodChange = (value) => {
-    setForm({ ...form, deliveryMethod: value, address: value === 'pickup' ? '' : form.address });
+  const handlefulfillmentMethodChange = (value) => {
+    setForm({ ...form, fulfillmentMethod: value, address: value === 'pickup' ? '' : form.address });
     if (value === 'pickup') {
       const hasValidAddresses = cart.pharmacies.every((pharmacy) => pharmacy.pharmacy?.address);
       if (!hasValidAddresses) {
@@ -171,7 +171,7 @@ export default function Checkout() {
   };
 
   const validateForm = () => {
-    if (!form.name || !form.email || !form.phone || !form.deliveryMethod) {
+    if (!form.name || !form.email || !form.phone || !form.fulfillmentMethod) {
       return 'All fields are required';
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
@@ -180,13 +180,13 @@ export default function Checkout() {
     if (!/^\+?\d{10,15}$/.test(form.phone)) {
       return 'Invalid phone number (10-15 digits)';
     }
-    if (form.deliveryMethod === 'delivery' && !form.address) {
+    if (form.fulfillmentMethod === 'delivery' && !form.address) {
       return 'Address is required for delivery';
     }
     if (cart.pharmacies.length === 0 || cart.totalPrice <= 0) {
       return 'Cart is empty or invalid';
     }
-    if (form.deliveryMethod === 'pickup') {
+    if (form.fulfillmentMethod === 'pickup') {
       const hasValidAddresses = cart.pharmacies.every((pharmacy) => pharmacy.pharmacy?.address);
       if (!hasValidAddresses) {
         return 'One or more pharmacy addresses are not available for pickup';
@@ -219,7 +219,7 @@ export default function Checkout() {
       formData.append('name', form.name);
       formData.append('email', form.email);
       formData.append('phone', form.phone);
-      formData.append('deliveryMethod', form.deliveryMethod);
+      formData.append('fulfillmentMethod', form.fulfillmentMethod);
       if (form.address) {
         formData.append('address', form.address);
       }
@@ -354,7 +354,7 @@ export default function Checkout() {
                 setForm={setForm}
                 handleInputChange={handleInputChange}
                 handleFileChange={handleFileChange}
-                handleDeliveryMethodChange={handleDeliveryMethodChange}
+                handlefulfillmentMethodChange={handlefulfillmentMethodChange}
                 handleCheckout={handleCheckout}
                 requiresUpload={requiresUpload}
                 prescriptionStatuses={prescriptionStatuses}
@@ -371,3 +371,4 @@ export default function Checkout() {
     </>
   );
 }
+  */

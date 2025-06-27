@@ -34,7 +34,7 @@ export default function MainLayout({ children }) {
   const navItems = [
     { name: 'Home', href: '/' },
     { name: 'Services', href: '/services' },
-    { name: 'Cart', href: '/cart', icon: ShoppingCart },
+    { name: 'Order', href: '/order', icon: ShoppingCart },
     { name: 'Track Order', href: '/track-order' },
     { name: 'Results', href: '/results' },
     { name: 'Check Status', href: '/check-status' },

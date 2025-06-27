@@ -131,6 +131,7 @@ export default function ServiceSearchBar() {
       );
       if (!response.ok) throw new Error('Failed to fetch suggestions');
       const data = await response.json();
+      console.log('Suggestions fetched:', data);
       setSuggestions(data);
       setShowDropdown(true);
       setFocusedSuggestionIndex(-1);
@@ -237,6 +238,7 @@ export default function ServiceSearchBar() {
         providerId: result.orderItem.providerId,
         serviceId: result.orderItem.serviceId,
         itemId: result.orderItem.id,
+        serviceType,
       });
       await fetchOrder();
       setOpenOrderDialog(true);
@@ -278,11 +280,14 @@ export default function ServiceSearchBar() {
           id="serviceType"
           value={serviceType}
           onValueChange={(value) => {
-            setServiceType(value);
-            setSearchTerm('');
-            setResults([]);
-            setSuggestions([]);
-            setFilterHomeCollection(false);
+            console.log('Select value changed:', value);
+            if (value !== serviceType) {
+              setServiceType(value);
+              if (searchTerm !== '') setSearchTerm('');
+              if (results.length > 0) setResults([]);
+              if (suggestions.length > 0) setSuggestions([]);
+              if (filterHomeCollection) setFilterHomeCollection(false);
+            }
           }}
         >
           <SelectTrigger

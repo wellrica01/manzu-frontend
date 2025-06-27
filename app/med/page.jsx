@@ -1,4 +1,4 @@
-'use client';
+/*'use client';
 
 import { Suspense } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +10,6 @@ import PrescriptionUploadForm from '@/components/PrescriptionUploadForm';
 export default function MedPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 via-gray-50/50 to-white/80 py-8 px-4 sm:px-6 lg:px-8 animate-in fade-in-20 duration-500">
-      {/* Subtle Background Pattern */}
       <div className="absolute inset-0 bg-[url('/svg/pattern-dots.svg')] opacity-10 pointer-events-none" aria-hidden="true" />
       <div className="container mx-auto max-w-6xl">
         <header className="text-center mb-12 sm:mb-16">
@@ -88,3 +87,4 @@ export default function MedPage() {
     </div>
   );
 }
+*/

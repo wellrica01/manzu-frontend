@@ -116,7 +116,7 @@ export default function OrderDetails() {
             <p className="text-foreground"><strong>Patient Identifier:</strong> {order.patientIdentifier || '-'}</p>
             <p className="text-foreground"><strong>Status:</strong> {order.status}</p>
             <p className="text-foreground"><strong>Total Price:</strong> ₦{order.totalPrice.toLocaleString()}</p>
-            <p className="text-foreground"><strong>Delivery Method:</strong> {order.deliveryMethod || '-'}</p>
+            <p className="text-foreground"><strong>Delivery Method:</strong> {order.fulfillmentMethod || '-'}</p>
             <p className="text-foreground"><strong>Address:</strong> {order.address || '-'}</p>
             <p className="text-foreground"><strong>Email:</strong> {order.email || '-'}</p>
             <p className="text-foreground"><strong>Phone:</strong> {order.phone || '-'}</p>

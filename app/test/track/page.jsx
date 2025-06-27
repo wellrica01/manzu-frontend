@@ -229,9 +229,9 @@ export default function Track() {
                         </p>
                       )}
                       <p>
-                        <strong className="text-gray-900">Delivery Method:</strong> {booking.deliveryMethod === 'lab_visit' ? 'Lab Visit' : 'Home Collection'}
+                        <strong className="text-gray-900">Delivery Method:</strong> {booking.fulfillmentMethod === 'lab_visit' ? 'Lab Visit' : 'Home Collection'}
                       </p>
-                      {booking.deliveryMethod === 'lab_visit' && getUniqueLabAddresses(booking).length > 0 ? (
+                      {booking.fulfillmentMethod === 'lab_visit' && getUniqueLabAddresses(booking).length > 0 ? (
                         <div>
                           <strong className="text-gray-900">Lab Address:</strong>
                           <div className="mt-1 space-y-1">

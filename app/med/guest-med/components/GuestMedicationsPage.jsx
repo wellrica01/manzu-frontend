@@ -1,3 +1,4 @@
+/*
 'use client';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
@@ -404,3 +405,4 @@ const GuestMed = React.memo(() => {
 });
 
 export default GuestMed;
+*/

@@ -1,4 +1,4 @@
-'use client';
+/*'use client';
 
 import { useState, useEffect } from 'react';
 import { Toaster } from '@/components/ui/sonner';
@@ -199,3 +199,4 @@ export default function MedLayout({ children }) {
     </div>
   );
 }
+  */

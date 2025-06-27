@@ -1,4 +1,4 @@
-'use client';
+/*'use client';
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { Card } from '@/components/ui/card';
@@ -417,3 +417,4 @@ export default function GuestTest() {
     </div>
   );
 }
+  */

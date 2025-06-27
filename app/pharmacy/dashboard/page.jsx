@@ -327,10 +327,10 @@ export default function PharmacyDashboard() {
     editForm.reset();
   };
 
-  const getNextStatuses = (status, deliveryMethod) => {
+  const getNextStatuses = (status, fulfillmentMethod) => {
     const nextStatuses = {
       confirmed: ['processing'],
-      processing: deliveryMethod === 'pickup' ? ['ready_for_pickup'] : ['shipped'],
+      processing: fulfillmentMethod === 'pick_up' ? ['ready_for_pickup'] : ['shipped'],
       shipped: ['delivered'],
       ready_for_pickup: [],
       delivered: [],
@@ -645,7 +645,7 @@ export default function PharmacyDashboard() {
                         {order.patientIdentifier}
                       </TableCell>
                       <TableCell className="text-base font-medium text-gray-900 py-4">
-                        {order.deliveryMethod === 'pickup' ? 'Pickup' : 'Delivery'}
+                        {order.fulfillmentMethod === 'pick_up' ? 'Pickup' : 'Delivery'}
                       </TableCell>
                       <TableCell
                         className="text-base font-medium text-gray-900 truncate max-w-[180px] py-4"
@@ -680,7 +680,7 @@ export default function PharmacyDashboard() {
                               data: { orderId: order.id, status: value },
                             })
                           }
-                          disabled={!getNextStatuses(order.status, order.deliveryMethod).length}
+                          disabled={!getNextStatuses(order.status, order.fulfillmentMethod).length}
                         >
                           <SelectTrigger
                             className="w-[140px] h-10 rounded-xl bg-white/95 border-gray-200/30 text-gray-900 focus:ring-0 focus:border-primary/50 focus:shadow-[0_0_10px_rgba(59,130,246,0.3)] transition-all duration-300"
@@ -689,7 +689,7 @@ export default function PharmacyDashboard() {
                             <SelectValue placeholder="Update" />
                           </SelectTrigger>
                           <SelectContent className="bg-white/95 backdrop-blur-md border-gray-100/30 rounded-xl shadow-lg">
-                            {getNextStatuses(order.status, order.deliveryMethod).map((status) => (
+                            {getNextStatuses(order.status, order.fulfillmentMethod).map((status) => (
                               <SelectItem
                                 key={status}
                                 value={status}

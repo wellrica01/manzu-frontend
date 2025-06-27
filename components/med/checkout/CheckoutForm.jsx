@@ -13,7 +13,7 @@ const CheckoutForm = ({
   setForm,
   handleInputChange,
   handleFileChange,
-  handleDeliveryMethodChange,
+  handlefulfillmentMethodChange,
   handleCheckout,
   requiresUpload,
   prescriptionStatuses,
@@ -166,8 +166,8 @@ const CheckoutForm = ({
               Delivery Method
             </Label>
             <RadioGroup
-              value={form.deliveryMethod}
-              onValueChange={handleDeliveryMethodChange}
+              value={form.fulfillmentMethod}
+              onValueChange={handlefulfillmentMethodChange}
               className="flex flex-col sm:flex-row gap-4 sm:gap-6 mt-3"
               aria-label="Delivery method"
             >
@@ -180,11 +180,11 @@ const CheckoutForm = ({
                 <Label htmlFor="delivery" className="text-gray-900 text-base font-medium">Delivery</Label>
               </div>
             </RadioGroup>
-            {form.deliveryMethod === 'delivery' && (
+            {form.fulfillmentMethod === 'home_delivery' && (
               <p className="text-sm text-gray-600 mt-2">Estimated delivery: 2-5 business days. Additional delivery fees may apply.</p>
             )}
           </div>
-          {form.deliveryMethod === 'delivery' && (
+          {form.fulfillmentMethod === 'home_delivery' && (
             <div>
               <Label htmlFor="address" className="text-sm font-semibold text-[#225F91] uppercase tracking-wider">
                 Delivery Address
@@ -200,7 +200,7 @@ const CheckoutForm = ({
               />
             </div>
           )}
-          {form.deliveryMethod === 'pickup' && cart.pharmacies.length > 0 && (
+          {form.fulfillmentMethod === 'pick_up' && cart.pharmacies.length > 0 && (
             <div>
               <Label className="text-sm font-semibold text-[#225F91] uppercase tracking-wider">
                 Pickup Addresses
