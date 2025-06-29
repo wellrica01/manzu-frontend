@@ -1,4 +1,4 @@
-import { Card, CardContent } from '@/components/ui/card';
+import { CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { ArrowDown, MapPin } from 'lucide-react';
@@ -12,7 +12,10 @@ const customSelectStyles = {
     boxShadow: state.isFocused ? '0 0 10px rgba(26,186,127,0.3)' : 'none',
     background: 'rgba(255,255,255,0.95)',
     borderRadius: '1rem',
-    padding: '0.25rem',
+    padding: '0.125rem',
+    height: '2.5rem',
+    minHeight: '2.5rem',
+    fontSize: '0.875rem',
     transition: 'all 0.3s ease',
     '&:hover': {
       borderColor: 'rgba(26,186,127,0.5)',
@@ -21,17 +24,17 @@ const customSelectStyles = {
   }),
   input: (provided) => ({
     ...provided,
-    fontSize: '1rem',
+    fontSize: '0.875rem',
     color: '#1f2937',
   }),
   placeholder: (provided) => ({
     ...provided,
-    fontSize: '1rem',
+    fontSize: '0.875rem',
     color: '#9ca3af',
   }),
   singleValue: (provided) => ({
     ...provided,
-    fontSize: '1rem',
+    fontSize: '0.875rem',
     color: '#1f2937',
   }),
   menu: (provided) => ({
@@ -46,7 +49,7 @@ const customSelectStyles = {
   }),
   option: (provided, state) => ({
     ...provided,
-    fontSize: '1rem',
+    fontSize: '0.875rem',
     color: '#1f2937',
     backgroundColor: state.isSelected ? '#225F91' : state.isFocused ? '#f9fafb' : '#ffffff',
     '&:hover': { backgroundColor: '#f9fafb' },
@@ -72,7 +75,6 @@ const FilterControls = ({
   states,
   lgas,
   wards,
-  geoData,
   updateLgas,
   updateWards,
   clearFilters,
@@ -84,180 +86,175 @@ const FilterControls = ({
   const providerType = isMedication ? 'pharmacies' : 'labs';
 
   return (
-    <Card
-      className="relative bg-white/95 border border-[#1ABA7F]/20 rounded-2xl shadow-xl overflow-hidden backdrop-blur-lg transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:ring-2 hover:ring-[#1ABA7F]/30"
-    >
-      <div className="absolute top-0 left-0 w-12 h-12 bg-[#1ABA7F]/20 rounded-br-3xl" />
-      <CardContent
-        id="filter-content"
-        className="p-4 sm:p-6 space-y-6 bg-transparent animate-in slide-in-from-top duration-500"
-      >
-        <p className="text-base font-medium text-gray-600 tracking-wide">
-          Tailor your search to find the best {providerType}
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-          <div className="space-y-2">
-            <Label
-              htmlFor="state-filter"
-              className="text-sm font-semibold text-[#225F91] uppercase tracking-wider"
-            >
-              State
-            </Label>
-            <Select
-              inputId="state-filter"
-              options={states}
-              onChange={(selected) => {
-                const newState = selected?.value || '';
-                setFilterState(newState);
-                updateLgas(newState);
-                if (!newState) {
-                  setFilterLga('');
-                  setFilterWard('');
-                  setLgas([]);
-                  setWards([]);
-                }
-                if (searchTerm) handleSearch(searchTerm);
-              }}
-              value={states.find((option) => option.value === filterState) || null}
-              placeholder="Select a state"
-              isClearable
-              styles={customSelectStyles}
-              className="text-base"
-              aria-label="Select state"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label
-              htmlFor="lga-filter"
-              className="text-sm font-semibold text-[#225F91] uppercase tracking-wider"
-            >
-              LGA
-            </Label>
-            <Select
-              inputId="lga-filter"
-              options={lgas}
-              onChange={(selected) => {
-                const newLga = selected?.value || '';
-                setFilterLga(newLga);
-                updateWards(filterState, newLga);
-                if (!newLga) {
-                  setFilterWard('');
-                  setWards([]);
-                }
-                if (searchTerm) handleSearch(searchTerm);
-              }}
-              value={lgas.find((option) => option.value === filterLga) || null}
-              placeholder="Select an LGA"
-              isClearable
-              isDisabled={!filterState}
-              styles={customSelectStyles}
-              className="text-base"
-              aria-label="Select LGA"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label
-              htmlFor="ward-filter"
-              className="text-sm font-semibold text-[#225F91] uppercase tracking-wider"
-            >
-              Ward
-            </Label>
-            <Select
-              inputId="ward-filter"
-              options={wards}
-              onChange={(selected) => {
-                setFilterWard(selected?.value || '');
-                if (searchTerm) handleSearch(searchTerm);
-              }}
-              value={wards.find((option) => option.value === filterWard) || null}
-              placeholder="Select a ward"
-              isClearable
-              isDisabled={!filterLga}
-              styles={customSelectStyles}
-              className="text-base"
-              aria-label="Select ward"
-            />
-          </div>
-          {!isMedication && (
-            <div className="space-y-2">
-              <Label
-                htmlFor="home-collection-filter"
-                className="text-sm font-semibold text-[#225F91] uppercase tracking-wider"
-              >
-                Home Collection
-              </Label>
-              <Select
-                inputId="home-collection-filter"
-                options={[
-                  { value: 'true', label: 'Home Collection Available' },
-                  { value: '', label: 'All Labs' },
-                ]}
-                onChange={(selected) => {
-                  setFilterHomeCollection(selected?.value === 'true' || false);
-                  if (searchTerm) handleSearch(searchTerm);
-                }}
-                value={
-                  filterHomeCollection
-                    ? { value: 'true', label: 'Home Collection Available' }
-                    : { value: '', label: 'All Labs' }
-                }
-                styles={customSelectStyles}
-                className="text-base"
-                aria-label="Select home collection preference"
-              />
-            </div>
-          )}
-        </div>
-        <div className="space-y-2">
+    <CardContent className="p-4 space-y-4" role="region" aria-label="Search filters">
+      <p className="text-sm font-medium text-gray-600 tracking-wide">
+        Filter {providerType}
+      </p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="space-y-1">
           <Label
-            className="text-sm font-semibold text-[#225F91] uppercase tracking-wider"
+            htmlFor="state-filter"
+            className="text-xs font-semibold text-[#225F91] uppercase tracking-wider"
           >
-            Sort By
+            State
           </Label>
-          <div className="flex gap-4 pt-2">
-            {[
-              { value: 'cheapest', label: 'Cheapest', icon: ArrowDown },
-              { value: 'closest', label: 'Closest', icon: MapPin },
-            ].map(({ value, label, icon: Icon }) => (
-              <Button
-                key={value}
-                variant={sortBy === value ? 'default' : 'outline'}
-                onClick={() => {
-                  setSortBy(value);
-                  if (searchTerm) handleSearch(searchTerm);
-                }}
-                className={cn(
-                  'h-10 px-6 text-base font-semibold rounded-full transition-all duration-300',
-                  sortBy === value
-                    ? 'bg-[#225F91] text-white shadow-[0_0_15px_rgba(34,95,145,0.5)]'
-                    : 'border-[#1ABA7F] text-[#225F91] hover:bg-[#1ABA7F]/10 hover:border-[#1ABA7F]/50'
-                )}
-                aria-label={`Sort by ${value}`}
-              >
-                <Icon className="h-5 w-5 mr-2" aria-hidden="true" />
-                {label}
-              </Button>
-            ))}
+          <Select
+            inputId="state-filter"
+            instanceId="state-filter"
+            options={states}
+            onChange={(selected) => {
+              const newState = selected?.value || '';
+              setFilterState(newState);
+              updateLgas(newState);
+              if (!newState) {
+                setFilterLga('');
+                setFilterWard('');
+                setLgas([]);
+                setWards([]);
+              }
+              if (searchTerm) handleSearch(searchTerm);
+            }}
+            value={states.find((option) => option.value === filterState) || null}
+            placeholder="Select a state"
+            isClearable
+            styles={customSelectStyles}
+            className="text-sm"
+            aria-label="Select state"
+          />
+        </div>
+        <div className="space-y-1">
+          <Label
+            htmlFor="lga-filter"
+            className="text-xs font-semibold text-[#225F91] uppercase tracking-wider"
+          >
+            LGA
+          </Label>
+          <Select
+            inputId="lga-filter"
+            instanceId="lga-filter"
+            options={lgas}
+            onChange={(selected) => {
+              const newLga = selected?.value || '';
+              setFilterLga(newLga);
+              updateWards(filterState, newLga);
+              if (!newLga) {
+                setFilterWard('');
+                setWards([]);
+              }
+              if (searchTerm) handleSearch(searchTerm);
+            }}
+            value={lgas.find((option) => option.value === filterLga) || null}
+            placeholder="Select an LGA"
+            isClearable
+            isDisabled={!filterState}
+            styles={customSelectStyles}
+            className="text-sm"
+            aria-label="Select LGA"
+          />
+        </div>
+        <div className="space-y-1">
+          <Label
+            htmlFor="ward-filter"
+            className="text-xs font-semibold text-[#225F91] uppercase tracking-wider"
+          >
+            Ward
+          </Label>
+          <Select
+            inputId="ward-filter"
+            instanceId="ward-filter"
+            options={wards}
+            onChange={(selected) => {
+              setFilterWard(selected?.value || '');
+              if (searchTerm) handleSearch(searchTerm);
+            }}
+            value={wards.find((option) => option.value === filterWard) || null}
+            placeholder="Select a ward"
+            isClearable
+            isDisabled={!filterLga}
+            styles={customSelectStyles}
+            className="text-sm"
+            aria-label="Select ward"
+          />
+        </div>
+        {!isMedication && (
+          <div className="space-y-1">
+            <Label
+              htmlFor="home-collection-filter"
+              className="text-xs font-semibold text-[#225F91] uppercase tracking-wider"
+            >
+              Home Collection
+            </Label>
+            <Select
+              inputId="home-collection-filter"
+              instanceId="home-collection-filter"
+              options={[
+                { value: 'true', label: 'Home Collection Available' },
+                { value: '', label: 'All Labs' },
+              ]}
+              onChange={(selected) => {
+                setFilterHomeCollection(selected?.value === 'true' || false);
+                if (searchTerm) handleSearch(searchTerm);
+              }}
+              value={
+                filterHomeCollection
+                  ? { value: 'true', label: 'Home Collection Available' }
+                  : { value: '', label: 'All Labs' }
+              }
+              styles={customSelectStyles}
+              className="text-sm"
+              aria-label="Select home collection preference"
+            />
           </div>
+        )}
+      </div>
+      <div className="space-y-1">
+        <Label className="text-xs font-semibold text-[#225F91] uppercase tracking-wider">
+          Sort By
+        </Label>
+        <div className="flex gap-3 pt-1">
+          {[
+            { value: 'cheapest', label: 'Cheapest', icon: ArrowDown },
+            { value: 'closest', label: 'Closest', icon: MapPin },
+          ].map(({ value, label, icon: Icon }) => (
+            <Button
+              key={value}
+              variant={sortBy === value ? 'default' : 'outline'}
+              onClick={() => {
+                setSortBy(value);
+                if (searchTerm) handleSearch(searchTerm);
+              }}
+              className={cn(
+                'h-10 px-4 text-sm font-semibold rounded-full transition-all duration-300',
+                sortBy === value
+                  ? 'bg-[#225F91] text-white shadow-[0_0_15px_rgba(34,95,145,0.5)]'
+                  : 'border-[#1ABA7F] text-[#225F91] hover:bg-[#1ABA7F]/10 hover:border-[#1ABA7F]/50'
+              )}
+              aria-label={`Sort by ${value}`}
+            >
+              <Icon className="h-4 w-4 mr-1" aria-hidden="true" />
+              {label}
+            </Button>
+          ))}
         </div>
-        <div className="flex justify-end gap-4 pt-4">
-          <Button
-            variant="outline"
-            onClick={clearFilters}
-            className="h-12 px-6 text-base font-semibold rounded-full border-[#1ABA7F] text-[#225F91] hover:bg-red-100/50 hover:border-red-500/50 hover:text-red-600 transition-all duration-300"
-            aria-label="Clear all filters"
-          >
-            Clear Filters
-          </Button>
-          <Button
-            onClick={() => handleSearch(searchTerm)}
-            className="h-12 px-6 text-base font-semibold rounded-full bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_20px_rgba(34,95,145,0.6)] transition-all duration-300"
-          >
-            Apply Filters
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+      </div>
+      <div className="flex justify-end gap-3 pt-1">
+        <Button
+          variant="outline"
+          onClick={clearFilters}
+          className="h-10 px-4 text-sm font-semibold rounded-full border-[#1ABA7F] text-[#225F91] hover:bg-red-100/50 hover:border-red-500/50 hover:text-red-600 transition-all duration-300"
+          aria-label="Clear all filters"
+        >
+          Clear Filters
+        </Button>
+        <Button
+          onClick={() => handleSearch(searchTerm)}
+          className="h-10 px-4 text-sm font-semibold rounded-full bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_20px_rgba(34,95,145,0.6)] transition-all duration-300"
+          aria-label="Apply filters"
+        >
+          Apply Filters
+        </Button>
+      </div>
+    </CardContent>
   );
 };
 

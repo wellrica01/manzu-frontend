@@ -283,50 +283,41 @@ export default function ServiceSearchBar() {
   };
 
   return (
-    <div className="space-y-6 p-4 sm:p-6 lg:p-8">
-      <Card className="relative bg-white/95 border border-[#1ABA7F]/20 rounded-2xl shadow-xl backdrop-blur-lg transition-all duration-500 hover:shadow-2xl hover:ring-2 hover:ring-[#1ABA7F]/30">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <Card className="relative bg-white/95 border border-[#1ABA7F]/20 rounded-2xl shadow-xl overflow-hidden backdrop-blur-lg transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:ring-2 hover:ring-[#1ABA7F]/30">
         <div className="absolute top-0 left-0 w-12 h-12 bg-[#1ABA7F]/20 rounded-br-3xl" />
-        <div className="flex flex-col md:flex-row md:items-center gap-4 p-6">
-          <div className="flex-1 min-w-0">
-            <label
-              htmlFor="serviceType"
-              className="text-sm font-semibold text-[#225F91] uppercase tracking-wider"
-            >
-              Service Type
-            </label>
-            <Select
-              id="serviceType"
-              value={serviceType}
-              onValueChange={(value) => {
-                console.log('Select value changed:', value);
-                if (value !== serviceType) {
+        <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="service-type" className="text-sm font-semibold text-[#225F91] uppercase tracking-wider">
+                Service Type
+              </label>
+              <Select
+                id="service-type"
+                value={serviceType}
+                onValueChange={(value) => {
                   setServiceType(value);
-                  if (searchTerm !== '' || results.length > 0 || suggestions.length > 0) {
-                    setSearchTerm('');
-                    setResults([]);
-                    setSuggestions([]);
-                    toast.info(`Switched to ${value === 'medication' ? 'Medications' : value === 'diagnostic' ? 'Diagnostic Tests' : 'Diagnostic Packages'}. Please enter a new search term.`, {
-                      duration: 4000,
-                    });
-                  }
-                  if (filterHomeCollection) setFilterHomeCollection(false);
-                }
-              }}
-            >
-              <SelectTrigger
-                className="mt-2 h-12 text-base font-medium rounded-2xl border border-[#1ABA7F]/20 bg-white/95 text-gray-900 focus:ring-0 focus:border-[#1ABA7F]/50 focus:shadow-[0_0_15px_rgba(26,186,127,0.3)] transition-all duration-300"
-                aria-label="Select service type for search"
+                  setSearchTerm('');
+                  setResults([]);
+                  setSuggestions([]);
+                  setShowDropdown(false);
+                  setFocusedSuggestionIndex(-1);
+                  clearFilters();
+                }}
               >
-                <SelectValue placeholder="Select service type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="medication">Medication</SelectItem>
-                <SelectItem value="diagnostic">Diagnostic Test</SelectItem>
-                <SelectItem value="diagnostic_package">Diagnostic Package</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex-[2] min-w-0">
+                <SelectTrigger
+                  className="mt-2 h-10 text-base rounded-2xl border border-[#1ABA7F]/20 bg-white/95 focus:ring-0 focus:border-[#1ABA7F]/50 focus:shadow-[0_0_10px_rgba(26,186,127,0.3)] transition-all duration-300"
+                  aria-label="Select service type"
+                >
+                  <SelectValue placeholder="Select service type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="medication">Medication</SelectItem>
+                  <SelectItem value="diagnostic">Diagnostic</SelectItem>
+                  <SelectItem value="diagnostic_package">Diagnostic Package</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <SearchInput
               searchTerm={searchTerm}
               setSearchTerm={setSearchTerm}
@@ -344,51 +335,35 @@ export default function ServiceSearchBar() {
               inputRef={inputRef}
               suggestionRefs={suggestionRefs}
               serviceType={serviceType}
-              className="border-[#1ABA7F]/20 rounded-2xl text-gray-900 bg-white/95 shadow-xl h-12"
+            />
+          </div>
+          <div className="space-y-4" role="region" aria-label="Search filters">
+            <FilterControls
+              filterState={filterState}
+              setFilterState={setFilterState}
+              filterLga={filterLga}
+              setFilterLga={setFilterLga}
+              filterWard={filterWard}
+              setFilterWard={setFilterWard}
+              filterHomeCollection={filterHomeCollection}
+              setFilterHomeCollection={setFilterHomeCollection}
+              sortBy={sortBy}
+              setSortBy={setSortBy}
+              states={states}
+              lgas={lgas}
+              wards={wards}
+              updateLgas={updateLgas}
+              updateWards={updateWards}
+              clearFilters={clearFilters}
+              handleSearch={handleSearch}
+              searchTerm={searchTerm}
+              serviceType={serviceType}
             />
           </div>
         </div>
       </Card>
-      <div className="flex justify-between items-center">
-        <Button
-          variant="ghost"
-          className="h-12 px-4 rounded-full bg-[#1ABA7F]/20 text-[#225F91] hover:bg-[#1ABA7F]/30 hover:text-[#1ABA7F] transition-all duration-300"
-          onClick={() => setShowFilters(!showFilters)}
-          aria-label={showFilters ? 'Hide filters' : 'Show filters'}
-        >
-          <Filter className="h-5 w-5 mr-2" aria-hidden="true" />
-          {showFilters ? 'Hide Filters' : 'Show Filters'}
-        </Button>
-      </div>
-      {showFilters && (
-        <FilterControls
-          filterState={filterState}
-          setFilterState={setFilterState}
-          filterLga={filterLga}
-          setFilterLga={setFilterLga}
-          filterWard={filterWard}
-          setFilterWard={setFilterWard}
-          filterHomeCollection={filterHomeCollection}
-          setFilterHomeCollection={setFilterHomeCollection}
-          sortBy={sortBy}
-          setSortBy={setSortBy}
-          states={states}
-          lgas={lgas}
-          wards={wards}
-          geoData={geoData}
-          updateLgas={updateLgas}
-          updateWards={updateWards}
-          clearFilters={clearFilters}
-          handleSearch={handleSearch}
-          searchTerm={searchTerm}
-          showFilters={showFilters}
-          setShowFilters={setShowFilters}
-          serviceType={serviceType}
-          className="bg-white/95 rounded-xl border-[#1ABA7F]/20 shadow-md backdrop-blur-lg"
-        />
-      )}
       <ErrorMessage error={error} className="text-red-600 text-center text-lg font-semibold" />
-      <div className="space-y-8">
+      <div className="mt-8 space-y-6">
         {isLoadingResults ? (
           <Card className="relative bg-white/95 border border-[#1ABA7F]/20 rounded-2xl shadow-xl text-center py-12 backdrop-blur-lg transition-all duration-500 hover:shadow-2xl hover:ring-2 hover:ring-[#1ABA7F]/30">
             <div className="absolute top-0 left-0 w-12 h-12 bg-[#1ABA7F]/20 rounded-br-3xl" />
