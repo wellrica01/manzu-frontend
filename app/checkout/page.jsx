@@ -1,4 +1,4 @@
-import Checkout from '@/components/med/checkout/Checkout';
+import Checkout from '@/components/checkout/Checkout';
    export default function CheckoutPage() {
      return <Checkout />;
    }

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { CheckCircle, Edit2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useOrder } from '@/hooks/useOrder';
+import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -18,7 +19,7 @@ const OrderDialog = ({
   serviceType,
   lastAddedItemDetails,
   isEditMode = false,
-  fetchOrder,
+  fetchOrders,
 }) => {
   const router = useRouter();
   const isMedication = serviceType === 'medication';
@@ -39,7 +40,7 @@ const OrderDialog = ({
       ? 'Save Delivery Method'
       : 'Save Booking';
 
-  const { fetchTimeSlots, updateOrderDetails, order } = useOrder();
+  const { fetchTimeSlots, updateOrderDetails, orders } = useOrder();
 
   const [timeSlots, setTimeSlots] = useState([]);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState('');
@@ -50,10 +51,11 @@ const OrderDialog = ({
 
   const lastItemRef = useRef(null);
 
-  // Prefill dialog with current OrderItem values in edit mode
   useEffect(() => {
-    if (isEditMode && lastAddedItemDetails?.itemId) {
-      const orderItem = order.items?.find((item) => item.id === lastAddedItemDetails.itemId);
+    if (isEditMode && lastAddedItemDetails?.itemId && Array.isArray(orders)) {
+      const orderItem = orders
+        .flatMap((order) => order.items)
+        .find((item) => item.id === lastAddedItemDetails.itemId);
       if (orderItem) {
         setFulfillmentType(orderItem.fulfillmentMethod || (isMedication ? 'pick_up' : 'lab_visit'));
         if (!isMedication && orderItem.timeSlotStart) {
@@ -63,29 +65,22 @@ const OrderDialog = ({
         }
       }
     }
-  }, [isEditMode, lastAddedItemDetails, order, isMedication]);
+  }, [isEditMode, lastAddedItemDetails, orders, isMedication]);
 
-  // Fetch time slots only for diagnostic items
   useEffect(() => {
-    const lastItem = order.items?.[order.items.length - 1];
-    const targetItem = lastAddedItemDetails || lastItem;
-
-    if (
-      !isMedication &&
-      openOrderDialog &&
-      targetItem?.providerId &&
-      targetItem?.serviceId &&
-      (lastItemRef.current?.itemId !== targetItem.itemId || !lastItemRef.current)
-    ) {
-      lastItemRef.current = targetItem;
-      fetchAndSetTimeSlots({
-        providerId: targetItem.providerId,
-        serviceId: targetItem.serviceId,
-        fulfillmentType: fulfillmentType === 'pick_up' || fulfillmentType === 'home_delivery' ? 'lab_visit' : fulfillmentType,
-        date: format(selectedDate, 'yyyy-MM-dd'),
-      });
+    if (!isMedication && openOrderDialog && lastAddedItemDetails?.providerId && lastAddedItemDetails?.serviceId) {
+      const targetItem = lastAddedItemDetails;
+      if (lastItemRef.current?.itemId !== targetItem.itemId || !lastItemRef.current) {
+        lastItemRef.current = targetItem;
+        fetchAndSetTimeSlots({
+          providerId: targetItem.providerId,
+          serviceId: targetItem.serviceId,
+          fulfillmentType: fulfillmentType === 'pick_up' || fulfillmentType === 'home_delivery' ? 'lab_visit' : fulfillmentType,
+          date: format(selectedDate, 'yyyy-MM-dd'),
+        });
+      }
     }
-  }, [openOrderDialog, fulfillmentType, selectedDate, lastAddedItemDetails, order, isMedication]);
+  }, [openOrderDialog, fulfillmentType, selectedDate, lastAddedItemDetails, isMedication]);
 
   const fetchAndSetTimeSlots = async (params) => {
     setIsLoadingSlots(true);
@@ -126,18 +121,18 @@ const OrderDialog = ({
 
   const handleSave = async () => {
     if (isMedication && !fulfillmentType) {
-      toast.error('Please select a delivery method');
+      toast.error('Please select a delivery method', { duration: 4000 });
       return;
     }
     if (!isMedication && (!selectedTimeSlot || !fulfillmentType)) {
-      toast.error('Please select a date, time slot, and fulfillment type');
+      toast.error('Please select a date, time slot, and fulfillment type', { duration: 4000 });
       return;
     }
 
     const targetItem = lastAddedItemDetails;
 
     if (!targetItem?.itemId) {
-      toast.error('No valid item found');
+      toast.error('No valid item found', { duration: 4000 });
       return;
     }
 
@@ -154,15 +149,17 @@ const OrderDialog = ({
             fulfillmentType,
           };
       await updateOrderDetails(updates);
-      await fetchOrder(); // Ensure order state is updated
+      await fetchOrders();
       setOpenOrderDialog(false);
-      toast.success(isMedication ? 'Delivery method updated!' : 'Booking updated successfully!');
+      toast.success(isMedication ? 'Delivery method updated!' : 'Booking updated successfully!', {
+        duration: 4000,
+      });
       if (!isEditMode) {
-        router.push('/order'); // Only redirect for add mode
+        router.push('/order');
       }
     } catch (error) {
       console.error('Failed to save details:', error);
-      toast.error('Failed to save details');
+      toast.error('Failed to save details', { duration: 4000 });
     }
   };
 
@@ -171,12 +168,12 @@ const OrderDialog = ({
       <DialogContent
         className={`sm:max-w-md p-8 border ${
           isEditMode ? 'border-[#225F91]/30 bg-[#225F91]/5' : 'border-[#1ABA7F]/20 bg-white/95'
-        } rounded-2xl backdrop-blur-sm shadow-xl animate-in slide-in-from-top-10 fade-in-20 duration-300`}
+        } rounded-2xl backdrop-blur-lg shadow-xl animate-in slide-in-from-top-10 fade-in-20 duration-300`}
       >
         <div
           className={`absolute top-0 left-0 w-12 h-12 ${
             isEditMode ? 'bg-[#225F91]/20' : 'bg-[#1ABA7F]/20'
-          } rounded-br-full`}
+          } rounded-br-3xl`}
         />
         <DialogHeader className="flex flex-col items-center gap-3">
           {isEditMode ? (
@@ -203,7 +200,7 @@ const OrderDialog = ({
         {isMedication ? (
           <div className="mt-4 space-y-4">
             <div>
-              <label htmlFor="delivery-method" className={`text-sm font-semibold ${isEditMode ? 'text-[#225F91]' : 'text-[#225F91]'} uppercase tracking-wider`}>
+              <label htmlFor="delivery-method" className="text-sm font-semibold text-[#225F91] uppercase tracking-wider">
                 Delivery Method
               </label>
               <Select
@@ -212,9 +209,10 @@ const OrderDialog = ({
                 onValueChange={setFulfillmentType}
               >
                 <SelectTrigger
-                  className={`mt-2 h-12 text-base rounded-xl border ${
+                  className={`mt-2 h-12 text-base rounded-2xl border ${
                     isEditMode ? 'border-[#225F91]/30 focus:border-[#225F91]/50' : 'border-[#1ABA7F]/20 focus:border-[#1ABA7F]/50'
-                  } bg-white/95 focus:shadow-[0_0_10px_rgba(26,186,127,0.3)]`}
+                  } bg-white/95 focus:shadow-[0_0_10px_rgba(26,186,127,0.3)] transition-all duration-300`}
+                  aria-label="Select delivery method"
                 >
                   <SelectValue placeholder="Choose delivery method" />
                 </SelectTrigger>
@@ -228,7 +226,7 @@ const OrderDialog = ({
         ) : (
           <div className="mt-4 space-y-4">
             <div>
-              <label htmlFor="date-picker" className={`text-sm font-semibold ${isEditMode ? 'text-[#225F91]' : 'text-[#225F91]'} uppercase tracking-wider`}>
+              <label htmlFor="date-picker" className="text-sm font-semibold text-[#225F91] uppercase tracking-wider">
                 Select Date
               </label>
               <DatePicker
@@ -236,51 +234,60 @@ const OrderDialog = ({
                 selected={selectedDate}
                 onChange={(date) => setSelectedDate(date)}
                 minDate={new Date()}
-                className={`mt-2 h-12 w-full rounded-xl border ${
+                className={`mt-2 h-12 w-full rounded-2xl border ${
                   isEditMode ? 'border-[#225F91]/30 focus:border-[#225F91]/50' : 'border-[#1ABA7F]/20 focus:border-[#1ABA7F]/50'
-                } bg-white/95 focus:shadow-[0_0_10px_rgba(26,186,127,0.3)]`}
+                } bg-white/95 focus:shadow-[0_0_10px_rgba(26,186,127,0.3)] pl-4 text-base transition-all duration-300`}
+                wrapperClassName="w-full"
+                calendarClassName="bg-white/95 border-[#1ABA7F]/20 rounded-2xl shadow-xl"
+                dayClassName={() => 'text-gray-900 hover:bg-[#1ABA7F]/10 rounded-full'}
+                popperClassName="z-50"
               />
             </div>
             <div>
-              <label htmlFor="time-slot" className={`text-sm font-semibold ${isEditMode ? 'text-[#225F91]' : 'text-[#225F91]'} uppercase tracking-wider`}>
+              <label htmlFor="time-slot" className="text-sm font-semibold text-[#225F91] uppercase tracking-wider">
                 Select Time Slot
               </label>
               {isLoadingSlots ? (
-                <Skeleton className="h-12 w-full rounded-xl mt-2" />
+                <Skeleton className="h-12 w-full rounded-2xl mt-2" />
               ) : errorMessage ? (
                 <p className="text-red-600 text-sm mt-1" role="alert">
                   {errorMessage}
                 </p>
               ) : (
-                <div className="grid grid-cols-3 gap-2 mt-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
                   {formattedTimeSlots && formattedTimeSlots.length ? (
                     formattedTimeSlots.map((slot) => (
-                      <button
+                      <Button
                         key={slot.value}
                         onClick={() => setSelectedTimeSlot(slot.value)}
-                        className={`p-2 rounded-lg border text-sm ${
+                        className={cn(
+                          'h-10 px-4 text-sm font-semibold rounded-full transition-all duration-300',
                           selectedTimeSlot === slot.value
                             ? isEditMode
                               ? 'bg-[#225F91] text-white border-[#225F91]'
                               : 'bg-[#1ABA7F] text-white border-[#1ABA7F]'
-                            : 'bg-white border-[#1ABA7F]/20 hover:bg-[#1ABA7F]/10'
-                        } ${slot.availabilityStatus === 'limited' ? 'opacity-75' : ''}`}
+                            : 'bg-white border-[#1ABA7F]/20 hover:bg-[#1ABA7F]/10 hover:shadow-[0_0_10px_rgba(26,186,127,0.3)]',
+                          slot.availabilityStatus === 'limited' ? 'opacity-75' : ''
+                        )}
                         disabled={slot.availabilityStatus === 'booked'}
+                        aria-label={`Select time slot ${slot.label}`}
                       >
                         {slot.label}
                         {slot.availabilityStatus === 'limited' && (
                           <span className="ml-1 text-xs"> (Limited)</span>
                         )}
-                      </button>
+                      </Button>
                     ))
                   ) : (
-                    <p className="text-gray-600 text-sm mt-1">No available time slots. Try another date.</p>
+                    <p className="text-gray-600 text-sm mt-1" role="alert">
+                      No available time slots. Try another date.
+                    </p>
                   )}
                 </div>
               )}
             </div>
             <div>
-              <label htmlFor="fulfillment-type" className={`text-sm font-semibold ${isEditMode ? 'text-[#225F91]' : 'text-[#225F91]'} uppercase tracking-wider`}>
+              <label htmlFor="fulfillment-type" className="text-sm font-semibold text-[#225F91] uppercase tracking-wider">
                 Fulfillment Type
               </label>
               <Select
@@ -292,9 +299,10 @@ const OrderDialog = ({
                 }}
               >
                 <SelectTrigger
-                  className={`mt-2 h-12 text-base rounded-xl border ${
+                  className={`mt-2 h-12 text-base rounded-2xl border ${
                     isEditMode ? 'border-[#225F91]/30 focus:border-[#225F91]/50' : 'border-[#1ABA7F]/20 focus:border-[#1ABA7F]/50'
-                  } bg-white/95 focus:shadow-[0_0_10px_rgba(26,186,127,0.3)]`}
+                  } bg-white/95 focus:shadow-[0_0_10px_rgba(26,186,127,0.3)] transition-all duration-300`}
+                  aria-label="Select fulfillment type"
                 >
                   <SelectValue placeholder="Choose fulfillment type" />
                 </SelectTrigger>
@@ -310,18 +318,20 @@ const OrderDialog = ({
           <Button
             variant="outline"
             onClick={() => setOpenOrderDialog(false)}
-            className={`h-12 px-6 text-base font-semibold rounded-full border ${
+            className={`h-12 px-8 text-base font-semibold rounded-full border ${
               isEditMode ? 'border-[#225F91] text-[#225F91] hover:bg-[#225F91]/10' : 'border-[#1ABA7F] text-[#225F91] hover:bg-[#1ABA7F]/10'
             } hover:shadow-[0_0_10px_rgba(26,186,127,0.3)] transition-all duration-300`}
+            aria-label={isEditMode ? 'Cancel' : continueText}
           >
             {isEditMode ? 'Cancel' : continueText}
           </Button>
           <Button
             onClick={handleSave}
-            className={`h-12 px-6 text-base font-semibold rounded-full ${
+            className={`h-12 px-8 text-base font-semibold rounded-full ${
               isEditMode ? 'bg-[#225F91] hover:bg-[#1A4971]' : 'bg-[#225F91] hover:bg-[#1A4971]'
-            } text-white hover:shadow-[0_0_15px_rgba(34,95,145,0.5)] transition-all duration-300`}
+            } text-white hover:shadow-[0_0_15px_rgba(34,95,145,0.5)] transition-all duration-300 hover:scale-105`}
             disabled={isMedication ? !fulfillmentType : (!selectedTimeSlot || !fulfillmentType || isLoadingSlots)}
+            aria-label={saveButtonText}
           >
             {saveButtonText}
           </Button>

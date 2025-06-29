@@ -62,7 +62,9 @@ export default function Track() {
       setError(null);
       setOrders([]);
       setLoading(true);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/med-track?trackingCode=${encodeURIComponent(trackingCode)}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/med-track?trackingCode=${encodeURIComponent(trackingCode)}`, {
+        headers: { 'x-guest-id': localStorage.getItem('guestId') || '' },
+      });
       if (!response.ok) {
         const errorData = await response.json();
         const errorMsg = errorData.message === 'Orders not found or prescription still under review' ? (
@@ -109,7 +111,7 @@ export default function Track() {
         window.gtag('event', 'track_order', { trackingCode });
       }
     } catch (err) {
-      // Error already handled above
+      // Error handled above
     } finally {
       setLoading(false);
     }
@@ -125,8 +127,8 @@ export default function Track() {
   const calculateItemPrice = (item) => item.quantity * item.price;
 
   const getUniquePharmacyAddresses = (order) => {
-    if (order.pharmacy && order.fulfillmentMethod === 'pick_up') {
-      return [{ name: order.pharmacy.name, address: order.pharmacy.address }];
+    if (order.provider && order.fulfillmentMethod === 'pick_up') {
+      return [{ name: order.provider.name, address: order.provider.address }];
     }
     return [];
   };
@@ -294,51 +296,26 @@ export default function Track() {
                           <strong className="text-gray-900">Delivery Address:</strong> {order.address || 'Not specified'}
                         </p>
                       )}
+                      {order.status === 'partially_completed' && (
+                        <p>
+                          <strong className="text-gray-900">Note:</strong> This order includes non-prescription items only. Prescription items are pending verification.
+                        </p>
+                      )}
                     </div>
-                    {order.prescription && (
-                      <div>
-                        <h3 className="text-lg font-semibold text-[#225F91] mt-4">Prescription Details</h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-gray-600 text-sm font-medium mt-2">
-                          <p>
-                            <strong className="text-gray-900">Prescription ID:</strong> {order.prescription.id || 'N/A'}
-                          </p>
-                          <p>
-                            <strong className="text-gray-900">Status:</strong> {order.prescription.status || 'Pending'}
-                          </p>
-                          <p>
-                            <strong className="text-gray-900">Verified:</strong> {order.prescription.verified ? 'Yes' : 'No'}
-                          </p>
-                          <p>
-                            <strong className="text-gray-900">Uploaded:</strong> {order.prescription.createdAt ? new Date(order.prescription.createdAt).toLocaleString() : 'N/A'}
-                          </p>
-                        </div>
-                        {order.prescription.medications?.length > 0 && (
-                          <div className="mt-2">
-                            <strong className="text-gray-900 text-sm font-medium">Prescribed Medications:</strong>
-                            <div className="mt-1 space-y-1">
-                              {order.prescription.medications.map((med, index) => (
-                                <p key={index} className="text-gray-600 text-sm truncate">
-                                  {med.name} {med.genericName ? `(${med.genericName})` : ''} - Dosage: {med.dosage || 'N/A'}, Quantity: {med.quantity || 'N/A'}
-                                </p>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
                     <h3 className="text-lg font-semibold text-[#225F91] mt-4">Order Items</h3>
                     {order.items?.map((item) => (
                       <div key={item.id} className="mb-3 mt-2">
                         <p className="text-gray-900 text-base font-medium truncate">
-                          {item.medication.name} {item.medication.genericName ? `(${item.medication.genericName})` : ''} {item.medication.prescriptionRequired ? '(Prescription Required)' : ''}
+                          {item.service.displayName || item.service.name} {item.service.prescriptionRequired ? '(Prescription Required)' : ''}
                         </p>
-                        {item.medication.dosage && (
-                          <p className="text-gray-600 text-sm font-medium">Dosage: {item.medication.dosage}</p>
-                        )}
-                        <p className="text-gray-600 text-sm font-medium truncate">Pharmacy: {item.pharmacy.name}</p>
                         <p className="text-gray-600 text-sm font-medium">Quantity: {item.quantity}</p>
-                        <p className="text-gray-600 text-sm font-medium">Unit Price: ₦{item.price.toLocaleString()}</p>
-                        <p className="text-gray-600 text-sm font-medium">Total: ₦{calculateItemPrice(item).toLocaleString()}</p>
+                        <p className="text-gray-600 text-sm font-medium">Unit Price: ₦{(item.price / 100).toLocaleString('en-NG', { minimumFractionDigits: 2 })}</p>
+                        <p className="text-gray-600 text-sm font-medium">Total: ₦{(calculateItemPrice(item) / 100).toLocaleString('en-NG', { minimumFractionDigits: 2 })}</p>
+                        {item.service.prescriptionRequired && (
+                          <p className="text-gray-600 text-sm font-medium">
+                            Prescription Status: {item.prescriptions?.[0]?.status || 'Pending'}
+                          </p>
+                        )}
                       </div>
                     ))}
                     {order.status === 'cancelled' && (
@@ -350,7 +327,7 @@ export default function Track() {
                       </div>
                     )}
                     <p className="text-xl font-bold text-[#225F91] text-right mt-2">
-                      Total: ₦{order.totalPrice.toLocaleString()}
+                      Total: ₦{(order.totalPrice / 100).toLocaleString('en-NG', { minimumFractionDigits: 2 })}
                     </p>
                   </CardContent>
                 </Card>
@@ -360,7 +337,7 @@ export default function Track() {
                 onClick={handleBackToHome}
                 aria-label="Back to home"
               >
-                <Home className="h-5 w-5 mr-2" />
+                <Home className="h-5 w-5 life-2" />
                 Back to Home
               </Button>
             </div>

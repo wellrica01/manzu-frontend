@@ -12,7 +12,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { Upload, CheckCircle, File as FileIcon, Mail } from 'lucide-react';
+import { Upload, CheckCircle, File as FileIcon, Mail, Pill, Microscope, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { getGuestId } from '@/lib/utils';
 import Link from 'next/link';
@@ -33,6 +33,7 @@ export default function PrescriptionUploadForm() {
   const [patientIdentifier, setPatientIdentifier] = useState('');
   const [errors, setErrors] = useState({});
   const [submittedContact, setSubmittedContact] = useState('');
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -69,12 +70,13 @@ export default function PrescriptionUploadForm() {
       setFile(selectedFile);
       setErrors((prev) => ({ ...prev, file: null }));
     } else {
-      toast.error('Please upload a PDF, JPG, or PNG file');
+      toast.error('Please upload a PDF, JPG, or PNG file', { duration: 4000 });
     }
   };
 
   const handleDrop = (e) => {
     e.preventDefault();
+    setIsDragging(false);
     const droppedFile = e.dataTransfer.files[0];
     if (
       droppedFile &&
@@ -84,14 +86,14 @@ export default function PrescriptionUploadForm() {
       fileInputRef.current.files = e.dataTransfer.files;
       setErrors((prev) => ({ ...prev, file: null }));
     } else {
-      toast.error('Please upload a PDF, JPG, or PNG file');
+      toast.error('Please upload a PDF, JPG, or PNG file', { duration: 4000 });
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) {
-      toast.error('Please fix the errors before submitting');
+      toast.error('Please fix the errors before submitting', { duration: 4000 });
       return;
     }
     setIsUploading(true);
@@ -129,7 +131,7 @@ export default function PrescriptionUploadForm() {
       fileInputRef.current.value = '';
       setErrors({});
     } catch (err) {
-      toast.error(err.message || 'Upload failed. Please try again.');
+      toast.error(err.message || 'Upload failed. Please try again.', { duration: 4000 });
     } finally {
       setIsUploading(false);
     }
@@ -146,12 +148,12 @@ export default function PrescriptionUploadForm() {
   };
 
   return (
-    <div className="p-6 sm:p-8">
+    <div className="p-4 sm:p-6">
       <Dialog open={openSuccessDialog} onOpenChange={setOpenSuccessDialog}>
         <DialogContent
-          className="sm:max-w-md p-8 border border-[#1ABA7F]/20 rounded-2xl bg-white/95 backdrop-blur-sm shadow-xl animate-in slide-in-from-top-10 fade-in-20 duration-300"
+          className="sm:max-w-md p-8 border border-[#1ABA7F]/20 rounded-2xl bg-white/95 backdrop-blur-lg shadow-xl animate-in slide-in-from-top-10 fade-in-20 duration-300"
         >
-          <div className="absolute top-0 left-0 w-12 h-12 bg-[#1ABA7F]/20 rounded-br-full" />
+          <div className="absolute top-0 left-0 w-12 h-12 bg-[#1ABA7F]/20 rounded-br-3xl" />
           <DialogHeader className="flex flex-col items-center gap-3">
             <CheckCircle
               className="h-12 w-12 text-[#1ABA7F] animate-[pulse_1s_ease-in-out_infinite]"
@@ -183,14 +185,14 @@ export default function PrescriptionUploadForm() {
             <Button
               variant="outline"
               onClick={handleUploadAnother}
-              className="h-12 px-6 text-base font-semibold rounded-full border-[#1ABA7F] text-[#1ABA7F] hover:bg-[#1ABA7F]/10 hover:shadow-[0_0_10px_rgba(26,186,127,0.3)] transition-all duration-300"
-              aria-label="Upload another"
+              className="h-12 px-8 text-base font-semibold rounded-full border-[#1ABA7F] text-[#1ABA7F] hover:bg-[#1ABA7F]/10 hover:shadow-[0_0_10px_rgba(26,186,127,0.3)] hover:animate-pulse hover:scale-105 transition-all duration-300"
+              aria-label="Upload another prescription or test order"
             >
               Upload Another
             </Button>
             <Button
               asChild
-              className="h-12 px-6 text-base font-semibold rounded-full bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_15px_rgba(34,95,145,0.5)] animate-pulse transition-all duration-300"
+              className="h-12 px-8 text-base font-semibold rounded-full bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_15px_rgba(34,95,145,0.5)] hover:animate-pulse hover:scale-105 transition-all duration-300"
             >
               <Link href="/track-order" aria-label="Track order">
                 Track Order
@@ -201,10 +203,10 @@ export default function PrescriptionUploadForm() {
       </Dialog>
 
       <Card
-        className="shadow-xl border border-[#1ABA7F]/20 rounded-2xl overflow-hidden bg-white/95 backdrop-blur-sm transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:ring-2 hover:ring-[#1ABA7F]/30"
+        className="shadow-xl border border-[#1ABA7F]/20 rounded-2xl overflow-hidden bg-white/95 backdrop-blur-lg transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:ring-2 hover:ring-[#1ABA7F]/30"
       >
-        <div className="absolute top-0 left-0 w-12 h-12 bg-[#1ABA7F]/20 rounded-br-full" />
-        <CardContent className="p-6 sm:p-8">
+        <div className="absolute top-0 left-0 w-12 h-12 bg-[#1ABA7F]/20 rounded-br-3xl" />
+        <CardContent className="p-4 sm:p-6 space-y-8">
           <form
             onSubmit={handleSubmit}
             className="space-y-8"
@@ -233,19 +235,30 @@ export default function PrescriptionUploadForm() {
                 }}
               >
                 <SelectTrigger
-                  className="mt-2 h-14 text-lg font-medium rounded-2xl border border-[#1ABA7F]/20 bg-white/95 text-gray-900 focus:ring-0 focus:border-[#1ABA7F]/50 focus:shadow-[0_0_15px_rgba(26,186,127,0.3)] transition-all duration-300"
+                  className="mt-2 h-12 text-base font-medium rounded-2xl border border-[#1ABA7F]/20 bg-white/95 text-gray-900 focus:ring-0 focus:border-[#1ABA7F]/50 focus:shadow-[0_0_15px_rgba(26,186,127,0.3)] transition-all duration-300"
                   aria-invalid={!!errors.type}
                   aria-describedby={errors.type ? 'type-error' : undefined}
                 >
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="medication">Medication Prescription</SelectItem>
-                  <SelectItem value="diagnostic">Diagnostic Test Order</SelectItem>
+                  <SelectItem value="medication">
+                    <div className="flex items-center gap-2">
+                      <Pill className="h-4 w-4 text-[#225F91]" aria-hidden="true" />
+                      Medication Prescription
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="diagnostic">
+                    <div className="flex items-center gap-2">
+                      <Microscope className="h-4 w-4 text-[#225F91]" aria-hidden="true" />
+                      Diagnostic Test Order
+                    </div>
+                  </SelectItem>
                 </SelectContent>
               </Select>
               {errors.type && (
-                <p id="type-error" className="mt-2 text-sm text-red-600 font-medium">
+                <p id="type-error" className="mt-2 text-sm text-red-600 font-medium flex items-center gap-1">
+                  <AlertCircle className="h-4 w-4" aria-hidden="true" />
                   {errors.type}
                 </p>
               )}
@@ -271,13 +284,14 @@ export default function PrescriptionUploadForm() {
                     setErrors((prev) => ({ ...prev, contact: null }));
                   }}
                   placeholder="Enter your email or phone number"
-                  className="h-14 pl-12 text-lg font-medium rounded-2xl border border-[#1ABA7F]/20 bg-white/95 text-gray-900 placeholder:text-gray-400 focus:ring-0 focus:border-[#1ABA7F]/50 focus:shadow-[0_0_15px_rgba(26,186,127,0.3)] transition-all duration-300"
+                  className="h-12 pl-12 text-base font-medium rounded-2xl border border-[#1ABA7F]/20 bg-white/95 text-gray-900 placeholder:text-gray-400 focus:ring-0 focus:border-[#1ABA7F]/50 focus:shadow-[0_0_15px_rgba(26,186,127,0.3)] transition-all duration-300"
                   aria-invalid={!!errors.contact}
                   aria-describedby={errors.contact ? 'contact-error' : undefined}
                 />
               </div>
               {errors.contact && (
-                <p id="contact-error" className="mt-2 text-sm text-red-600 font-medium">
+                <p id="contact-error" className="mt-2 text-sm text-red-600 font-medium flex items-center gap-1">
+                  <AlertCircle className="h-4 w-4" aria-hidden="true" />
                   {errors.contact}
                 </p>
               )}
@@ -291,10 +305,19 @@ export default function PrescriptionUploadForm() {
               </Label>
               <div
                 onDrop={handleDrop}
-                onDragOver={(e) => e.preventDefault()}
-                className="mt-3 p-8 border-2 border-dashed border-[#1ABA7F]/20 rounded-2xl text-center bg-white/95 hover:border-[#1ABA7F]/50 hover:shadow-[0_0_15px_rgba(26,186,127,0.2)] transition-all duration-300"
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsDragging(true);
+                }}
+                onDragLeave={() => setIsDragging(false)}
+                className={`mt-3 p-6 border-2 border-dashed border-[#1ABA7F]/20 rounded-2xl text-center bg-white/95 transition-all duration-300 ${
+                  isDragging
+                    ? 'bg-[#1ABA7F]/10 border-[#1ABA7F]/50 animate-pulse'
+                    : 'hover:border-[#1ABA7F]/50 hover:shadow-[0_0_15px_rgba(26,186,127,0.2)]'
+                }`}
                 role="region"
                 aria-label="Drag and drop prescription or test order file"
+                aria-live="polite"
               >
                 <Input
                   id="fileInput"
@@ -323,6 +346,7 @@ export default function PrescriptionUploadForm() {
                         type="button"
                         onClick={() => fileInputRef.current.click()}
                         className="text-[#225F91] hover:text-[#1A4971] font-semibold underline transition-colors duration-200"
+                        aria-label="Browse for file"
                       >
                         browse
                       </button>
@@ -334,7 +358,8 @@ export default function PrescriptionUploadForm() {
                 </div>
               </div>
               {errors.file && (
-                <p id="file-error" className="mt-2 text-sm text-red-600 font-medium">
+                <p id="file-error" className="mt-2 text-sm text-red-600 font-medium flex items-center gap-1">
+                  <AlertCircle className="h-4 w-4" aria-hidden="true" />
                   {errors.file}
                 </p>
               )}
@@ -342,28 +367,16 @@ export default function PrescriptionUploadForm() {
             <Button
               type="submit"
               disabled={isUploading || !file || !contact || !type}
-              className="w-full h-14 px-6 text-lg font-semibold rounded-2xl bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_20px_rgba(34,95,145,0.6)] animate-pulse disabled:opacity-50 disabled:cursor-not-allowed disabled:animate-none transition-all duration-300"
+              className="w-full h-12 px-8 text-base font-semibold rounded-full bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_20px_rgba(34,95,145,0.6)] hover:animate-pulse hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:animate-none transition-all duration-300"
+              aria-label={isUploading ? 'Uploading prescription' : 'Upload prescription'}
             >
               {isUploading ? (
                 <span className="flex items-center justify-center gap-2">
-                  <svg
+                  <Loader2
                     className="animate-spin h-6 w-6"
-                    viewBox="0 0 24 24"
                     aria-hidden="true"
-                  >
-                    <circle
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                      fill="none"
-                    />
-                    <path
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                    />
-                  </svg>
+                    aria-label="Uploading prescription"
+                  />
                   Uploading...
                 </span>
               ) : (

@@ -8,7 +8,7 @@ const EmptyOrder = () => {
       <p className="text-gray-600 text-lg font-medium">
         Your order is empty.{' '}
         <Link
-          href="/med"
+          href="/"
           className="text-[#225F91] hover:text-[#1A4971] font-semibold underline transition-colors duration-300"
         >
           Start shopping

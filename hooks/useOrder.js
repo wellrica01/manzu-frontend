@@ -12,35 +12,64 @@ export function useOrder() {
     console.log('Guest ID:', guestId);
   }, [guestId]);
 
-  const { data: orderData, isPending, isError, error, refetch: fetchOrder } = useQuery({
-    queryKey: ['order', guestId],
-    queryFn: async () => {
+  const { data: ordersData, isPending, isError, error, refetch: fetchOrders } = useQuery({
+    queryKey: ['orders', guestId],
+    queryFn: async ({ queryKey }) => {
+      const [, guestId, orderId] = queryKey;
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/orders`, {
+        const url = orderId
+          ? `${process.env.NEXT_PUBLIC_API_URL}/api/orders?orderId=${orderId}`
+          : `${process.env.NEXT_PUBLIC_API_URL}/api/orders`;
+        const response = await fetch(url, {
           headers: { 'x-guest-id': guestId },
         });
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.message || `Failed to fetch order: ${response.status}`);
+          const message = errorData.message || response.status === 404 ? 'Order not found' : `Failed to fetch orders: ${response.status}`;
+          throw new Error(message);
         }
         const data = await response.json();
-        return data;
+        console.log('Fetched orders:', data);
+        return Array.isArray(data) ? data : [data];
       } catch (error) {
         throw error;
       }
     },
     enabled: !!guestId,
-    staleTime: 5 * 1000,
+    staleTime: 30 * 1000, // Increased from 5s to 30s
     refetchOnWindowFocus: false,
     retry: 2,
-    placeholderData: { providers: [], totalPrice: 0, items: [], orderId: null },
+    placeholderData: [],
     onError: (err) => {
-      toast.error(`Failed to load order: ${err.message}`, { duration: 4000 });
+      toast.error(err.message.includes('404') ? 'Order not found' : `Failed to load orders: ${err.message}`, { duration: 4000 });
     },
   });
 
-  const order = orderData || { providers: [], totalPrice: 0, items: [], orderId: null };
-  const orderItemCount = order.providers?.reduce((sum, provider) => sum + (provider.items?.length || 0), 0) || 0;
+  const orders = ordersData || [];
+
+  const fetchPrescriptionStatuses = useQuery({
+    queryKey: ['prescriptionStatuses', guestId],
+    queryFn: async () => {
+      const serviceIds = orders
+        .flatMap((order) => order.providers.flatMap((provider) => provider.items))
+        .filter((item) => item.service.prescriptionRequired)
+        .map((item) => item.serviceId)
+        .join(',');
+      if (!serviceIds) return {};
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/prescriptions/status?serviceIds=${serviceIds}`, {
+        headers: { 'x-guest-id': guestId },
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const message = errorData.message || response.status === 404 ? 'No prescription statuses found' : 'Failed to fetch prescription statuses';
+        throw new Error(message);
+      }
+      return response.json();
+    },
+    enabled: !!guestId && orders.length > 0,
+    staleTime: 30 * 1000, // Increased from 10s to 30s
+    retry: 2,
+  });
 
   const addToOrder = useMutation({
     mutationFn: async ({ serviceId, providerId, type, quantity }) => {
@@ -54,12 +83,13 @@ export function useOrder() {
       });
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to add to order');
+        throw new Error(errorData.message || response.status === 404 ? 'Service or provider not found' : 'Failed to add to order');
       }
       return response.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries(['order', guestId]);
+      queryClient.invalidateQueries(['orders', guestId]);
+      queryClient.invalidateQueries(['prescriptionStatuses', guestId]);
       const typeLabel = {
         medication: 'Medication',
         diagnostic: 'Test',
@@ -87,12 +117,13 @@ export function useOrder() {
       });
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to update order item');
+        throw new Error(errorData.message || response.status === 404 ? 'Item not found' : 'Failed to update order item');
       }
       return response.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries(['order', guestId]);
+      queryClient.invalidateQueries(['orders', guestId]);
+      queryClient.invalidateQueries(['prescriptionStatuses', guestId]);
       toast.success('Order item quantity updated!', { duration: 4000 });
     },
     onError: (error) => {
@@ -112,12 +143,12 @@ export function useOrder() {
       });
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to update order details');
+        throw new Error(errorData.message || response.status === 404 ? 'Item not found' : 'Failed to update order details');
       }
       return response.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries(['order', guestId]);
+      queryClient.invalidateQueries(['orders', guestId]);
       toast.success('Order details updated!', { duration: 4000 });
     },
     onError: (error) => {
@@ -133,12 +164,13 @@ export function useOrder() {
       });
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to remove item');
+        throw new Error(errorData.message || response.status === 404 ? 'Item not found' : 'Failed to remove item');
       }
       return response.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries(['order', guestId]);
+      queryClient.invalidateQueries(['orders', guestId]);
+      queryClient.invalidateQueries(['prescriptionStatuses', guestId]);
       toast.success('Item removed from order!', { duration: 4000 });
       if (typeof window !== 'undefined' && window.gtag) {
         window.gtag('event', 'remove_from_order', { itemId });
@@ -163,7 +195,7 @@ export function useOrder() {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         console.error('Fetch time slots error details:', errorData);
-        throw new Error(errorData.message || 'Server error');
+        throw new Error(errorData.message || response.status === 404 ? 'Time slots not found' : 'Failed to fetch time slots');
       }
       const data = await response.json();
       console.log('Time slots response:', data);
@@ -175,14 +207,43 @@ export function useOrder() {
     },
   });
 
+  const partialCheckout = useMutation({
+    mutationFn: async ({ orderId }) => {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/orders/partial-checkout`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-guest-id': guestId,
+        },
+        body: JSON.stringify({ orderId }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || response.status === 404 ? 'Order not found' : 'Failed to process partial checkout');
+      }
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries(['orders', guestId]);
+      queryClient.invalidateQueries(['prescriptionStatuses', guestId]);
+      toast.success('Partial checkout processed successfully!', { duration: 4000 });
+      return data;
+    },
+    onError: (error) => {
+      toast.error(error.message, { duration: 4000 });
+    },
+  });
+
   if (process.env.NODE_ENV === 'development') {
-    console.log('useOrder state:', { isPending, isError, error: error?.message, order });
+    console.log('useOrder state:', { isPending, isError, error: error?.message, orders });
   }
 
   return {
-    orderItemCount,
-    order,
-    fetchOrder,
+    orders,
+    fetchOrders: async (options = {}) => {
+      const { orderId } = options;
+      return fetchOrders({ queryKey: ['orders', guestId, orderId] });
+    },
     guestId,
     isPending,
     isError,
@@ -191,6 +252,9 @@ export function useOrder() {
     updateOrderDetails: updateOrderDetails.mutate,
     removeFromOrder: removeFromOrder.mutate,
     fetchTimeSlots,
+    partialCheckout: partialCheckout.mutateAsync,
+    prescriptionStatuses: fetchPrescriptionStatuses.data || {},
+    isFetchingPrescriptionStatuses: fetchPrescriptionStatuses.isPending,
   };
 }
 

@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import dynamic from 'next/dynamic';
 import { toast } from 'sonner';
 import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Filter, Loader2, Search, SearchX } from 'lucide-react';
 import { useOrder } from '@/hooks/useOrder';
 import SearchInput from './SearchInput';
 import FilterControls from './FilterControls';
@@ -27,11 +28,12 @@ export default function ServiceSearchBar() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [userLocation, setUserLocation] = useState(null);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  const [isLoadingResults, setIsLoadingResults] = useState(false);
   const [isAddingToOrder, setIsAddingToOrder] = useState({});
   const [focusedSuggestionIndex, setFocusedSuggestionIndex] = useState(-1);
   const [openOrderDialog, setOpenOrderDialog] = useState(false);
   const [lastAddedItem, setLastAddedItem] = useState(null);
-  const [lastAddedItemDetails, setLastAddedItemDetails] = useState(null); // New state for item details
+  const [lastAddedItemDetails, setLastAddedItemDetails] = useState(null);
   const [filterState, setFilterState] = useState('');
   const [filterLga, setFilterLga] = useState('');
   const [filterWard, setFilterWard] = useState('');
@@ -47,7 +49,7 @@ export default function ServiceSearchBar() {
   const dropdownRef = useRef(null);
   const inputRef = useRef(null);
   const suggestionRefs = useRef([]);
-  const { order, fetchOrder, addToOrder, guestId } = useOrder();
+  const { orders, fetchOrders, addToOrder, guestId } = useOrder();
 
   useEffect(() => {
     fetch('/data/full.json')
@@ -100,15 +102,21 @@ export default function ServiceSearchBar() {
           });
         },
         () => {
-          toast.error(`Unable to fetch location. Showing all ${serviceType === 'medication' ? 'pharmacies' : 'labs'}.`);
+          toast.error(`Unable to fetch location. Showing all ${serviceType === 'medication' ? 'pharmacies' : 'labs'}.`, {
+            duration: 4000,
+          });
         }
       );
     }
   }, [serviceType]);
 
   useEffect(() => {
-    setOrderItems(order.providers?.flatMap((p) => p.items) || []);
-  }, [order]);
+    if (Array.isArray(orders)) {
+      setOrderItems(orders.flatMap((order) => order.providers?.flatMap((p) => p.items) || []));
+    } else {
+      setOrderItems([]);
+    }
+  }, [orders]);
 
   useEffect(() => {
     const debounce = setTimeout(() => {
@@ -136,7 +144,7 @@ export default function ServiceSearchBar() {
       setShowDropdown(true);
       setFocusedSuggestionIndex(-1);
     } catch (err) {
-      toast.error('Failed to load suggestions. Please try again.');
+      toast.error('Failed to load suggestions. Please try again.', { duration: 4000 });
       setSuggestions([]);
       setShowDropdown(false);
     } finally {
@@ -147,6 +155,7 @@ export default function ServiceSearchBar() {
   const handleSearch = async (term) => {
     try {
       setError(null);
+      setIsLoadingResults(true);
       const queryParams = new URLSearchParams({ q: term, type: serviceType });
       if (userLocation) {
         queryParams.append('lat', userLocation.lat);
@@ -166,11 +175,13 @@ export default function ServiceSearchBar() {
       setResults(data);
       setShowDropdown(false);
       setFocusedSuggestionIndex(-1);
-      await fetchOrder();
+      await fetchOrders();
     } catch (err) {
       setError(err.message);
       setResults([]);
-      toast.error(err.message);
+      toast.error(err.message, { duration: 4000 });
+    } finally {
+      setIsLoadingResults(false);
     }
   };
 
@@ -180,6 +191,7 @@ export default function ServiceSearchBar() {
     setFocusedSuggestionIndex(-1);
     try {
       setError(null);
+      setIsLoadingResults(true);
       const queryParams = new URLSearchParams({ serviceId: service.id, type: serviceType });
       if (userLocation) {
         queryParams.append('lat', userLocation.lat);
@@ -197,15 +209,17 @@ export default function ServiceSearchBar() {
       if (!response.ok) throw new Error('Failed to search services');
       const data = await response.json();
       setResults(data);
-      await fetchOrder();
+      await fetchOrders();
     } catch (err) {
       setError(err.message);
       setResults([]);
-      toast.error(err.message);
+      toast.error(err.message, { duration: 4000 });
+    } finally {
+      setIsLoadingResults(false);
     }
   };
 
-const handleAddToOrder = async (serviceId, providerId, serviceName, quantity) => {
+  const handleAddToOrder = async (serviceId, providerId, serviceName, quantity) => {
     const itemKey = `${serviceId}-${providerId}`;
     try {
       if (!serviceId || isNaN(parseInt(serviceId))) {
@@ -241,11 +255,18 @@ const handleAddToOrder = async (serviceId, providerId, serviceName, quantity) =>
         itemId: result.orderItem.id,
         serviceType,
       });
-      await fetchOrder();
+      await fetchOrders();
       setOpenOrderDialog(true);
+      toast.success(`Added ${serviceName} to your order!`, {
+        action: {
+          label: 'View Order',
+          onClick: () => window.location.href = '/order',
+        },
+        duration: 4000,
+      });
     } catch (err) {
       console.error('Add to order error:', err);
-      toast.error(`Error: ${err.message}`);
+      toast.error(`Error: ${err.message}`, { duration: 4000 });
       setOrderItems((prev) =>
         prev.filter((item) => !(item.serviceId === serviceId && item.providerId === providerId))
       );
@@ -253,7 +274,6 @@ const handleAddToOrder = async (serviceId, providerId, serviceName, quantity) =>
       setIsAddingToOrder((prev) => ({ ...prev, [itemKey]: false }));
     }
   };
-
 
   const isInOrder = (serviceId, providerId) => {
     if (!Array.isArray(orderItems)) return false;
@@ -263,108 +283,139 @@ const handleAddToOrder = async (serviceId, providerId, serviceName, quantity) =>
   };
 
   return (
-    <div className="space-y-6 p-6 sm:p-8">
-      <OrderDialog
-        openOrderDialog={openOrderDialog}
-        setOpenOrderDialog={setOpenOrderDialog}
-        lastAddedItem={lastAddedItem}
-        serviceType={serviceType}
-        lastAddedItemDetails={lastAddedItemDetails} 
-        fetchOrder={fetchOrder}
-        isEditMode={false}
-      />
-      <div>
-        <label
-          htmlFor="serviceType"
-          className="text-sm font-semibold text-[#225F91] uppercase tracking-wider"
+    <div className="space-y-6 p-4 sm:p-6 lg:p-8">
+      <Card className="relative bg-white/95 border border-[#1ABA7F]/20 rounded-2xl shadow-xl backdrop-blur-lg transition-all duration-500 hover:shadow-2xl hover:ring-2 hover:ring-[#1ABA7F]/30">
+        <div className="absolute top-0 left-0 w-12 h-12 bg-[#1ABA7F]/20 rounded-br-3xl" />
+        <div className="flex flex-col md:flex-row md:items-center gap-4 p-6">
+          <div className="flex-1 min-w-0">
+            <label
+              htmlFor="serviceType"
+              className="text-sm font-semibold text-[#225F91] uppercase tracking-wider"
+            >
+              Service Type
+            </label>
+            <Select
+              id="serviceType"
+              value={serviceType}
+              onValueChange={(value) => {
+                console.log('Select value changed:', value);
+                if (value !== serviceType) {
+                  setServiceType(value);
+                  if (searchTerm !== '' || results.length > 0 || suggestions.length > 0) {
+                    setSearchTerm('');
+                    setResults([]);
+                    setSuggestions([]);
+                    toast.info(`Switched to ${value === 'medication' ? 'Medications' : value === 'diagnostic' ? 'Diagnostic Tests' : 'Diagnostic Packages'}. Please enter a new search term.`, {
+                      duration: 4000,
+                    });
+                  }
+                  if (filterHomeCollection) setFilterHomeCollection(false);
+                }
+              }}
+            >
+              <SelectTrigger
+                className="mt-2 h-12 text-base font-medium rounded-2xl border border-[#1ABA7F]/20 bg-white/95 text-gray-900 focus:ring-0 focus:border-[#1ABA7F]/50 focus:shadow-[0_0_15px_rgba(26,186,127,0.3)] transition-all duration-300"
+                aria-label="Select service type for search"
+              >
+                <SelectValue placeholder="Select service type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="medication">Medication</SelectItem>
+                <SelectItem value="diagnostic">Diagnostic Test</SelectItem>
+                <SelectItem value="diagnostic_package">Diagnostic Package</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex-[2] min-w-0">
+            <SearchInput
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              suggestions={suggestions}
+              setSuggestions={setSuggestions}
+              isLoadingSuggestions={isLoadingSuggestions}
+              setIsLoadingSuggestions={setIsLoadingSuggestions}
+              showDropdown={showDropdown}
+              setShowDropdown={setShowDropdown}
+              focusedSuggestionIndex={focusedSuggestionIndex}
+              setFocusedSuggestionIndex={setFocusedSuggestionIndex}
+              handleSearch={handleSearch}
+              handleSelectService={handleSelectService}
+              dropdownRef={dropdownRef}
+              inputRef={inputRef}
+              suggestionRefs={suggestionRefs}
+              serviceType={serviceType}
+              className="border-[#1ABA7F]/20 rounded-2xl text-gray-900 bg-white/95 shadow-xl h-12"
+            />
+          </div>
+        </div>
+      </Card>
+      <div className="flex justify-between items-center">
+        <Button
+          variant="ghost"
+          className="h-12 px-4 rounded-full bg-[#1ABA7F]/20 text-[#225F91] hover:bg-[#1ABA7F]/30 hover:text-[#1ABA7F] transition-all duration-300"
+          onClick={() => setShowFilters(!showFilters)}
+          aria-label={showFilters ? 'Hide filters' : 'Show filters'}
         >
-          Service Type
-        </label>
-        <Select
-          id="serviceType"
-          value={serviceType}
-          onValueChange={(value) => {
-            console.log('Select value changed:', value);
-            if (value !== serviceType) {
-              setServiceType(value);
-              if (searchTerm !== '') setSearchTerm('');
-              if (results.length > 0) setResults([]);
-              if (suggestions.length > 0) setSuggestions([]);
-              if (filterHomeCollection) setFilterHomeCollection(false);
-            }
-          }}
-        >
-          <SelectTrigger
-            className="mt-2 h-14 text-lg font-medium rounded-2xl border border-[#1ABA7F]/20 bg-white/95 text-gray-900 focus:ring-0 focus:border-[#1ABA7F]/50 focus:shadow-[0_0_15px_rgba(26,186,127,0.3)] transition-all duration-300"
-          >
-            <SelectValue placeholder="Select service type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="medication">Medication</SelectItem>
-            <SelectItem value="diagnostic">Diagnostic Test</SelectItem>
-            <SelectItem value="diagnostic_package">Diagnostic Package</SelectItem>
-          </SelectContent>
-        </Select>
+          <Filter className="h-5 w-5 mr-2" aria-hidden="true" />
+          {showFilters ? 'Hide Filters' : 'Show Filters'}
+        </Button>
       </div>
-      <SearchInput
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        suggestions={suggestions}
-        setSuggestions={setSuggestions}
-        isLoadingSuggestions={isLoadingSuggestions}
-        setIsLoadingSuggestions={setIsLoadingSuggestions}
-        showDropdown={showDropdown}
-        setShowDropdown={setShowDropdown}
-        focusedSuggestionIndex={focusedSuggestionIndex}
-        setFocusedSuggestionIndex={setFocusedSuggestionIndex}
-        handleSearch={handleSearch}
-        handleSelectService={handleSelectService}
-        dropdownRef={dropdownRef}
-        inputRef={inputRef}
-        suggestionRefs={suggestionRefs}
-        serviceType={serviceType}
-        className="border-[#1ABA7F]/20 rounded-2xl text-gray-900 bg-white/95 shadow-xl"
-      />
-      <FilterControls
-        filterState={filterState}
-        setFilterState={setFilterState}
-        filterLga={filterLga}
-        setFilterLga={setFilterLga}
-        filterWard={filterWard}
-        setFilterWard={setFilterWard}
-        filterHomeCollection={filterHomeCollection}
-        setFilterHomeCollection={setFilterHomeCollection}
-        sortBy={sortBy}
-        setSortBy={setSortBy}
-        states={states}
-        lgas={lgas}
-        wards={wards}
-        geoData={geoData}
-        updateLgas={updateLgas}
-        updateWards={updateWards}
-        clearFilters={clearFilters}
-        handleSearch={handleSearch}
-        searchTerm={searchTerm}
-        showFilters={showFilters}
-        setShowFilters={setShowFilters}
-        serviceType={serviceType}
-        className="bg-white/95 rounded-xl border-[#1ABA7F]/20 shadow-md"
-      />
+      {showFilters && (
+        <FilterControls
+          filterState={filterState}
+          setFilterState={setFilterState}
+          filterLga={filterLga}
+          setFilterLga={setFilterLga}
+          filterWard={filterWard}
+          setFilterWard={setFilterWard}
+          filterHomeCollection={filterHomeCollection}
+          setFilterHomeCollection={setFilterHomeCollection}
+          sortBy={sortBy}
+          setSortBy={setSortBy}
+          states={states}
+          lgas={lgas}
+          wards={wards}
+          geoData={geoData}
+          updateLgas={updateLgas}
+          updateWards={updateWards}
+          clearFilters={clearFilters}
+          handleSearch={handleSearch}
+          searchTerm={searchTerm}
+          showFilters={showFilters}
+          setShowFilters={setShowFilters}
+          serviceType={serviceType}
+          className="bg-white/95 rounded-xl border-[#1ABA7F]/20 shadow-md backdrop-blur-lg"
+        />
+      )}
       <ErrorMessage error={error} className="text-red-600 text-center text-lg font-semibold" />
       <div className="space-y-8">
-        {results.length === 0 && !error && searchTerm ? (
-          <Card className="relative bg-white/95 border border-[#1ABA7F]/20 rounded-2xl shadow-xl text-center py-12 backdrop-blur-lg transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:ring-2 hover:ring-[#1ABA7F]/30">
-            <div className="absolute top-0 left-0 w-16 h-16 bg-transparent border-t-4 border-l-4 border-[#1ABA7F]/20 rounded-br-3xl" />
-            <p className="text-gray-900 text-xl font-semibold">
-              No {serviceType === 'medication' ? 'medications' : serviceType === 'diagnostic' ? 'tests' : 'packages'} found for "{searchTerm}"
-            </p>
+        {isLoadingResults ? (
+          <Card className="relative bg-white/95 border border-[#1ABA7F]/20 rounded-2xl shadow-xl text-center py-12 backdrop-blur-lg transition-all duration-500 hover:shadow-2xl hover:ring-2 hover:ring-[#1ABA7F]/30">
+            <div className="absolute top-0 left-0 w-12 h-12 bg-[#1ABA7F]/20 rounded-br-3xl" />
+            <div className="flex justify-center items-center">
+              <Loader2 className="h-8 w-8 animate-spin text-[#1ABA7F]" aria-hidden="true" />
+              <p className="text-xl font-semibold text-[#225F91] ml-3">Loading results...</p>
+            </div>
+          </Card>
+        ) : results.length === 0 && !error && searchTerm ? (
+          <Card className="relative bg-white/95 border border-[#1ABA7F]/20 rounded-2xl shadow-xl text-center py-12 backdrop-blur-lg transition-all duration-500 hover:shadow-2xl hover:ring-2 hover:ring-[#1ABA7F]/30">
+            <div className="absolute top-0 left-0 w-12 h-12 bg-[#1ABA7F]/20 rounded-br-3xl" />
+            <div className="flex flex-col items-center">
+              <SearchX className="h-8 w-8 text-[#225F91] mb-2" aria-hidden="true" />
+              <p className="text-xl font-semibold text-[#225F91]" role="alert">
+                No {serviceType === 'medication' ? 'medications' : serviceType === 'diagnostic' ? 'tests' : 'packages'} found for "{searchTerm}"
+              </p>
+            </div>
           </Card>
         ) : results.length === 0 && !searchTerm ? (
-          <Card className="relative bg-white/95 border border-[#1ABA7F]/20 rounded-2xl shadow-xl text-center py-12 backdrop-blur-lg transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:ring-2 hover:ring-[#1ABA7F]/30">
-            <div className="absolute top-0 left-0 w-16 h-16 bg-transparent border-t-4 border-l-4 border-[#1ABA7F]/20 rounded-br-3xl" />
-            <p className="text-gray-900 text-xl font-semibold">
-              Enter a {serviceType === 'medication' ? 'medication' : serviceType === 'diagnostic' ? 'test' : 'package'} name to compare {serviceType === 'medication' ? 'pharmacies' : 'labs'}
-            </p>
+          <Card className="relative bg-white/95 border border-[#1ABA7F]/20 rounded-2xl shadow-xl text-center py-12 backdrop-blur-lg transition-all duration-500 hover:shadow-2xl hover:ring-2 hover:ring-[#1ABA7F]/30">
+            <div className="absolute top-0 left-0 w-12 h-12 bg-[#1ABA7F]/20 rounded-br-3xl" />
+            <div className="flex flex-col items-center">
+              <Search className="h-8 w-8 text-[#225F91] mb-2" aria-hidden="true" />
+              <p className="text-xl font-semibold text-[#225F91]" role="alert">
+                Enter a {serviceType === 'medication' ? 'medication' : serviceType === 'diagnostic' ? 'test' : 'package'} name to compare {serviceType === 'medication' ? 'pharmacies' : 'labs'}
+              </p>
+            </div>
           </Card>
         ) : (
           results.map((service) => (
@@ -379,6 +430,15 @@ const handleAddToOrder = async (serviceId, providerId, serviceName, quantity) =>
           ))
         )}
       </div>
+      <OrderDialog
+        openOrderDialog={openOrderDialog}
+        setOpenOrderDialog={setOpenOrderDialog}
+        lastAddedItem={lastAddedItem}
+        serviceType={serviceType}
+        lastAddedItemDetails={lastAddedItemDetails}
+        fetchOrders={fetchOrders}
+        isEditMode={false}
+      />
     </div>
   );
 }

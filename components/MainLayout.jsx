@@ -5,7 +5,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Menu, X, Twitter, Instagram, Facebook, ShoppingCart } from 'lucide-react';
+import { Menu, X, Twitter, Instagram, Facebook, Home, Stethoscope, ClipboardList, MapPin, FileText, Search } from 'lucide-react';
 import Image from 'next/image';
 import { useOrder } from '@/hooks/useOrder';
 
@@ -24,20 +24,27 @@ export const metadata = {
 };
 
 export default function MainLayout({ children }) {
-  const { orderItemCount, fetchOrder } = useOrder();
+  const { orders, fetchOrders } = useOrder();
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    fetchOrder();
-  }, [fetchOrder]);
+    fetchOrders();
+  }, [fetchOrders]);
+
+  // Calculate total number of unique items across all relevant orders
+  const orderItemCount = orders && Array.isArray(orders)
+    ? orders
+        .filter((order) => ['cart', 'pending_prescription', 'partially_completed'].includes(order.status))
+        .reduce((total, order) => total + order.items.length, 0)
+    : 0;
 
   const navItems = [
-    { name: 'Home', href: '/' },
-    { name: 'Services', href: '/services' },
-    { name: 'Order', href: '/order', icon: ShoppingCart },
-    { name: 'Track Order', href: '/track-order' },
-    { name: 'Results', href: '/results' },
-    { name: 'Check Status', href: '/check-status' },
+    { name: 'Home', href: '/', icon: Home },
+    { name: 'Services', href: '/services', icon: Stethoscope },
+    { name: 'Order', href: '/order', icon: ClipboardList },
+    { name: 'Track Order', href: '/track-order', icon: MapPin },
+    { name: 'Results', href: '/results', icon: FileText },
+    { name: 'Check Status', href: '/status-check', icon: Search },
   ];
 
   return (
@@ -110,11 +117,11 @@ export default function MainLayout({ children }) {
                   <Link
                     key={item.name}
                     href={item.href}
-                    className="text-lg font-medium text-[#225F91] hover:bg-[#1ABA7F]/20 hover:text-[#1ABA7F] px-4 py-3 rounded-full transition-all duration-300 relative"
+                    className="text-lg font-medium text-[#225F91] hover:bg-[#1ABA7F]/20 hover:text-[#1ABA7F] px-4 py-3 rounded-full transition-all duration-300 relative flex items-center gap-3"
                     aria-label={item.name === 'Order' ? `Order with ${orderItemCount} items` : item.name}
                     onClick={() => setIsOpen(false)}
                   >
-                    {item.icon && <item.icon className="h-5 w-5 inline-block mr-2" aria-hidden="true" />}
+                    {item.icon && <item.icon className="h-6 w-6" aria-hidden="true" />}
                     {item.name}
                     {item.name === 'Order' && orderItemCount > 0 && (
                       <span className="absolute top-4 right-4 bg-[#1ABA7F] text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
