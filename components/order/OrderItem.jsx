@@ -80,9 +80,9 @@ const OrderItem = ({
   };
 
   // Safeguard for price and item total
-  const unitPrice = item?.price !== undefined ? item.price / 100 : 0;
+  const unitPrice = item?.price !== undefined ? item.price / 1 : 0;
   const itemTotal = calculateItemPrice(item) !== undefined && !isNaN(calculateItemPrice(item)) 
-    ? calculateItemPrice(item) / 100 
+    ? calculateItemPrice(item) / 1
     : 0;
 
   if (item?.price === undefined || item?.quantity === undefined) {
@@ -99,7 +99,7 @@ const OrderItem = ({
               <div>
                 <h3 className="text-xl font-semibold text-[#225F91]">{displayName}</h3>
                 <p className="text-sm text-gray-600">{providerName}</p>
-                <p className="text-sm text-gray-600">₦{itemTotal.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                <p className="text-sm text-gray-600">₦{itemTotal}</p>
               </div>
             </div>
           </AccordionTrigger>
@@ -114,11 +114,11 @@ const OrderItem = ({
                 </p>
                 {!isDiagnostic && (
                   <p>
-                    <strong className="text-gray-900">Unit Price:</strong> ₦{unitPrice.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    <strong className="text-gray-900">Unit Price:</strong> ₦{unitPrice}
                   </p>
                 )}
                 <p>
-                  <strong className="text-gray-900">Item Total:</strong> ₦{itemTotal.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  <strong className="text-gray-900">Item Total:</strong> ₦{itemTotal}
                 </p>
                 <p>
                   <strong className="text-gray-900">Provider:</strong> {providerName}

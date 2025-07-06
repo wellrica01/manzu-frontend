@@ -15,7 +15,7 @@ const OrderSummary = ({ order, handleCheckout, handlePartialCheckout, hasPayable
         {getStatusSummary(allItems)}
       </p>
       <p className="text-xl font-bold text-[#225F91] mb-4">
-        Total: ₦{(order?.totalPrice / 100 || 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        Total: ₦{(order?.totalPrice / 1 || 0)}
       </p>
       <div className="flex flex-col sm:flex-row justify-end gap-4">
         {(hasPayableItems && !allPrescriptionsVerified) && (

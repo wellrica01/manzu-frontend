@@ -49,7 +49,7 @@ export default function HomePage() {
               onClick={() => router.push('/services')}
               className="h-12 px-8 text-base font-semibold rounded-full bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-lg transition-all duration-300"
             >
-              Explore Services
+              Check Your Result
             </Button>
             <Button
               onClick={() => router.push('/track-order')}

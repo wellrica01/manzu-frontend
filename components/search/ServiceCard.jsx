@@ -48,7 +48,7 @@ const ServiceCard = ({ service, serviceType, handleAddToOrder, isInOrder, isAddi
         {service.imageUrl && (
           <div className="relative w-24 h-24 sm:w-32 sm:h-32 flex-shrink-0">
             <img
-              src={service.imageUrl}
+              src='/liver.jpg'
               alt={service.displayName}
               className="w-full h-full object-cover rounded-xl border border-[#1ABA7F]/20 shadow-md transition-transform duration-300 hover:scale-105"
               aria-describedby={`service-desc-${service.id}`}

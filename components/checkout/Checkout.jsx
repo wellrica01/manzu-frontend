@@ -176,7 +176,7 @@ const Checkout = () => {
             )}
             <div className="text-right">
               <p className="text-xl font-bold text-[#225F91] mb-4">
-                Total: ₦{(totalPrice / 100 || 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                Total: ₦{(totalPrice / 1 || 0)}
               </p>
               <Button
                 className="h-12 px-8 text-base font-semibold rounded-full bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_15px_rgba(34,95,145,0.3)]"
