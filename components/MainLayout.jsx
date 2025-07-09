@@ -1,22 +1,28 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Toaster } from '@/components/ui/sonner';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Menu, X, Twitter, Instagram, Facebook } from 'lucide-react';
+import { Menu, X, Twitter, Instagram, Facebook, ShoppingCart, Home, FileText, MapPin, Search } from 'lucide-react';
 import Image from 'next/image';
+import { useCart } from '@/hooks/useCart';
 
 export default function MainLayout({ children }) {
+  const { cartItemCount, fetchCart } = useCart();
   const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    fetchCart();
+  }, [fetchCart]);
 
   return (
     <div className="flex flex-col min-h-screen bg-[#1ABA7F]/10">
       <nav
-        className="sticky top-0 bg-white/15 z-50 border-b border-[#1ABA7F]/30 backdrop-blur-xl shadow-[0_4px_20px_rgba(26,186,127,0.15)] animate-in slide-in-from-top duration-300"
+        className="sticky top-0 bg-white/15 z-50 border-b border-[#1ABA7F]/20 backdrop-blur-lg shadow-[0_2px_10px_rgba(26,186,127,0.05)] animate-in slide-in-from-top duration-300"
         role="navigation"
-        aria-label="Main navigation"
+        aria-label="Medication navigation"
       >
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <Link
@@ -34,14 +40,35 @@ export default function MainLayout({ children }) {
             />
           </Link>
           <div className="hidden md:flex items-center gap-8">
-            {['Home', 'Med Services', 'Test Services', 'Check Status'].map((item) => (
+            {[
+              { label: 'Home', icon: Home },
+              { label: 'Check Prescription Status', icon: Search },
+              { label: 'Track Order', icon: MapPin },
+              { label: 'Cart', icon: ShoppingCart },
+            ].map(({ label, icon: Icon }) => (
               <Link
-                key={item}
-                href={item === 'Home' ? '/' : `/${item.toLowerCase().replace(' ', '-')}`}
-                className="text-base font-medium text-[#225F91] hover:text-[#1ABA7F] hover:bg-[#1ABA7F]/20 px-4 py-2 rounded-full transition-all duration-300 hover:shadow-sm"
-                aria-label={item}
+                key={label}
+                href={
+                  label === 'Home'
+                    ? '/'
+                    : label === 'Check Prescription Status'
+                    ? '/check-prescription-status'
+                    : `/${label.toLowerCase().replace(/\s+/g, '-')}`
+                }
+                className="text-base font-medium text-[#225F91] hover:text-[#1ABA7F] hover:bg-[#1ABA7F]/20 px-4 py-2 rounded-full transition-all duration-300 hover:shadow-sm relative flex items-center gap-2"
+                aria-label={label === 'Cart' ? `Cart with ${cartItemCount} items` : label}
               >
-                {item}
+                <Icon className="h-5 w-5" aria-hidden="true" />
+                {label === 'Cart' && (
+                  <>
+                    {cartItemCount > 0 && (
+                      <span className="absolute -top-2 -right-2 bg-[#1ABA7F] text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                        {cartItemCount}
+                      </span>
+                    )}
+                  </>
+                )}
+                {label !== 'Cart' && label}
               </Link>
             ))}
           </div>
@@ -57,10 +84,10 @@ export default function MainLayout({ children }) {
             </SheetTrigger>
             <SheetContent
               side="right"
-              className="w-[280px] sm:w-[340px] bg-white/45 backdrop-blur-lg border-l border-[#1ABA7F]/20"
+              className="w-[280px] sm:w-[340px] bg-white/95 backdrop-blur-lg border-l border-[#1ABA7F]/20"
             >
               <SheetHeader>
-                <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+                <SheetTitle className="sr-only">Medication Navigation</SheetTitle>
                 <Button
                   variant="ghost"
                   className="absolute top-4 right-4 p-2 bg-[#1ABA7F]/20 rounded-full hover:bg-[#1ABA7F]/30"
@@ -71,15 +98,33 @@ export default function MainLayout({ children }) {
                 </Button>
               </SheetHeader>
               <div className="flex flex-col gap-4 mt-12 px-4">
-                {['Home', 'Med Services', 'Test Services', 'Check Status'].map((item) => (
+                {[
+                  { label: 'Home', icon: Home },
+                  { label: 'Check Prescription Status', icon: FileText },
+                  { label: 'Track Order', icon: MapPin },
+                  { label: 'Cart', icon: ShoppingCart },
+                ].map(({ label, icon: Icon }) => (
                   <Link
-                    key={item}
-                    href={item === 'Home' ? '/' : `/${item.toLowerCase().replace(' ', '-')}`}
-                    className="text-lg font-medium text-[#225F91] hover:bg-[#1ABA7F]/20 hover:text-[#1ABA7F] px-4 py-3 rounded-full transition-all duration-300"
-                    aria-label={item}
+                    key={label}
+                    href={
+                      label === 'Home'
+                        ? '/'
+                        : `/${label.toLowerCase().replace(/\s+/g, '-')}`
+                    }                    className="text-lg font-medium text-[#225F91] hover:bg-[#1ABA7F]/20 hover:text-[#1ABA7F] px-4 py-3 rounded-full transition-all duration-300 relative flex items-center gap-2"
+                    aria-label={label === 'Cart' ? `Cart with ${cartItemCount} items` : label}
                     onClick={() => setIsOpen(false)}
                   >
-                    {item}
+                    <Icon className="h-5 w-5" aria-hidden="true" />
+                    {label === 'Cart' && (
+                      <>
+                        {cartItemCount > 0 && (
+                          <span className="absolute top-4 right-4 bg-[#1ABA7F] text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                            {cartItemCount}
+                          </span>
+                        )}
+                      </>
+                    )}
+                    {label}
                   </Link>
                 ))}
               </div>
@@ -102,7 +147,7 @@ export default function MainLayout({ children }) {
                 className="h-10 w-auto object-contain mb-4"
               />
               <p className="text-sm text-white/80 font-medium max-w-xs">
-                Manzu: Your trusted platform for medications and diagnostic tests across Nigeria.
+                Manzu: Your trusted platform for medications across Nigeria.
               </p>
             </div>
             <div className="flex flex-col items-center md:items-start">
@@ -162,8 +207,8 @@ export default function MainLayout({ children }) {
           },
           error: {
             style: {
-              backgroundColor: 'rgba(255,85,85,0.95)',
-              color: '#ffffff',
+              background: 'rgba(239,68,68,0.95)',
+              color: 'white',
               border: '1px solid rgba(34,95,145,0.3)',
               boxShadow: '0 4px 20px rgba(34,95,145,0.2)',
             },
