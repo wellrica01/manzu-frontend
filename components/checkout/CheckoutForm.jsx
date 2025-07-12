@@ -1,236 +1,314 @@
-import React from 'react';
-import { useMemo } from 'react';
+'use client';
+
+import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Loader2 } from 'lucide-react';
-import PrescriptionUpload from './PrescriptionUpload';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { 
+  User, 
+  Mail, 
+  Phone, 
+  MapPin, 
+  Truck, 
+  Store, 
+  CheckCircle, 
+  AlertCircle,
+  Package,
+  Shield,
+  Info,
+  CreditCard,
+  ArrowRight,
+  Loader2
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const CheckoutForm = ({
   form,
   setForm,
   handleInputChange,
-  handleFileChange,
   handleDeliveryMethodChange,
   handleCheckout,
-  requiresUpload,
-  prescriptionStatuses,
-  prescriptionFile,
-  resumeOrderId,
-  fileInputRef,
-  cart,
+  segments,
   getUniquePharmacyAddresses,
   loading,
 }) => {
-  const [emailError, setEmailError] = React.useState('');
-  const [phoneError, setPhoneError] = React.useState('');
+  const [showUploadStatus, setShowUploadStatus] = useState(false);
 
-  const validateEmail = (email) => {
-    if (!email) return 'Email is required';
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return 'Invalid email address';
-    return '';
+  const validatePhone = () => {
+    if (!form.phone) return 'Phone number is required';
+    if (!/^\+?\d{10,15}$/.test(form.phone)) {
+      return 'Please enter a valid phone number';
+    }
+    return null;
   };
 
-  const validatePhone = (phone) => {
-    if (!phone) return 'Phone number is required';
-    if (!/^\+?\d{10,15}$/.test(phone)) return 'Invalid phone number (10-15 digits)';
-    return '';
+  const validateEmail = () => {
+    if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      return 'Please enter a valid email address';
+    }
+    return null;
   };
 
-  const onInputChange = (e) => {
-    handleInputChange(e);
-    const { name, value } = e.target;
-    if (name === 'email') {
-      setEmailError(validateEmail(value));
-    } else if (name === 'phone') {
-      setPhoneError(validatePhone(value));
+  const getOrderType = () => {
+    const hasOTC = segments.readyForCheckout.some(item => !item.medication.prescriptionRequired);
+    const hasPrescription = segments.readyForCheckout.some(item => item.medication.prescriptionRequired);
+
+    if (hasOTC && hasPrescription) {
+      return {
+        type: 'mixed',
+        title: 'Mixed Order - OTC + Verified Prescriptions',
+        description: 'All items are ready for immediate payment.',
+        buttonText: 'Pay Now',
+        buttonIcon: 'CreditCard',
+        infoColor: 'green'
+      };
+    } else if (hasOTC && !hasPrescription) {
+      return {
+        type: 'otc_only',
+        title: 'Over-the-Counter Order',
+        description: 'All items are ready for immediate payment.',
+        buttonText: 'Pay Now',
+        buttonIcon: 'CreditCard',
+        infoColor: 'green'
+      };
+    } else if (hasPrescription && !hasOTC) {
+      return {
+        type: 'prescription_verified',
+        title: 'Prescription Order - All Verified',
+        description: 'All prescription items are verified and ready for payment.',
+        buttonText: 'Pay Now',
+        buttonIcon: 'CreditCard',
+        infoColor: 'green'
+      };
+    } else {
+      return {
+        type: 'empty',
+        title: 'Review Your Order',
+        description: 'Please review your cart items.',
+        buttonText: 'Continue',
+        buttonIcon: 'ArrowRight',
+        infoColor: 'gray'
+      };
     }
   };
 
-  const orderItems = useMemo(() => {
-    return cart.pharmacies?.flatMap((pharmacy) => pharmacy.items) || [];
-  }, [cart.pharmacies]);
-
-  const needsUpload = useMemo(() => {
-    if (!requiresUpload || resumeOrderId) return false;
-    return orderItems.some(
-      (item) =>
-        item.medication?.prescriptionRequired &&
-        (prescriptionStatuses[item.pharmacyMedicationMedicationId.toString()] || 'none') !== 'verified'
-    );
-  }, [requiresUpload, prescriptionStatuses, orderItems, resumeOrderId]);
-
-  console.log('CheckoutForm upload rendering:', { requiresUpload, prescriptionStatuses, needsUpload });
-
-  const submitButtonText = useMemo(() => {
-    if (resumeOrderId) {
-      return 'Continue Payment';
-    }
-
-    const hasOTCItems = orderItems.some((item) => !item.medication?.prescriptionRequired);
-    const hasPrescriptionItems = orderItems.some((item) => item.medication?.prescriptionRequired);
-    const allPrescriptionsVerified =
-      hasPrescriptionItems &&
-      orderItems
-        .filter((item) => item.medication?.prescriptionRequired)
-        .every((item) => prescriptionStatuses[item.pharmacyMedicationMedicationId.toString()] === 'verified');
-
-    if (!hasOTCItems && !hasPrescriptionItems) {
-      return 'Submit Order';
-    }
-
-    if (hasPrescriptionItems && !allPrescriptionsVerified && needsUpload) {
-      if (hasOTCItems || allPrescriptionsVerified) {
-        return 'Pay Non-Prescription & Submit Prescription';
-      }
-      return 'Submit Prescription';
-    }
-
-    return 'Pay Now';
-  }, [orderItems, needsUpload, prescriptionStatuses, resumeOrderId]);
+  const orderType = getOrderType();
 
   return (
-    <Card className="relative bg-white/95 border border-[#1ABA7F]/20 rounded-2xl shadow-xl overflow-hidden backdrop-blur-sm transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:ring-2 hover:ring-[#1ABA7F]/30">
+    <Card className="bg-white/95 border border-[#1ABA7F]/20 rounded-2xl shadow-xl backdrop-blur-sm transition-all duration-500 hover:ring-2 hover:ring-[#1ABA7F]/30">
       <div className="absolute top-0 left-0 w-16 h-16 bg-[#1ABA7F]/20 rounded-br-3xl" />
-      <CardHeader className="bg-[#1ABA7F]/10 p-6 sm:p-8">
-        <CardTitle className="text-xl sm:text-2xl font-bold text-[#225F91]">
-          User Information
+      <CardHeader className="bg-[#225F91]/10 p-6 sm:p-8">
+        <CardTitle className="text-xl sm:text-2xl font-bold text-[#225F91] flex items-center gap-2">
+          <User className="h-6 w-6 text-[#1ABA7F]" />
+          Contact Information
         </CardTitle>
+        {/* Order Type Badge */}
+        <div className="mt-4">
+          <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${
+            orderType.infoColor === 'green' ? 'bg-green-100 text-green-800' :
+            orderType.infoColor === 'blue' ? 'bg-blue-100 text-blue-800' :
+            orderType.infoColor === 'orange' ? 'bg-orange-100 text-orange-800' :
+            'bg-gray-100 text-gray-800'
+          }`}>
+            <Package className="h-3 w-3" />
+            {orderType.title}
+          </div>
+        </div>
       </CardHeader>
-      <CardContent className="p-6 sm:p-8">
-        <form onSubmit={handleCheckout} className="space-y-6 flex flex-col" role="form" aria-labelledby="checkout-form-title">
-          <div>
-            <Label htmlFor="name" className="text-sm font-semibold text-[#225F91] uppercase tracking-wider">
-              Full Name
-            </Label>
-            <Input
-              id="name"
-              name="name"
-              value={form.name}
-              onChange={onInputChange}
-              className="mt-2 h-12 text-base font-medium rounded-xl border-[#1ABA7F]/20 bg-white/95 text-gray-900 placeholder:text-gray-400 focus:ring-0 focus:border-[#1ABA7F]/50 focus:shadow-[0_0_10px_rgba(26,186,127,0.3)] transition-all duration-300"
-              required
-              aria-required="true"
-            />
-          </div>
-          <div>
-            <Label htmlFor="email" className="text-sm font-semibold text-[#225F91] uppercase tracking-wider">
-              Email
-            </Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              value={form.email}
-              onChange={onInputChange}
-              className={`mt-2 h-12 text-base font-medium rounded-xl border-[#1ABA7F]/20 bg-white/95 text-gray-900 placeholder:text-gray-400 focus:ring-0 focus:border-[#1ABA7F]/50 focus:shadow-[0_0_10px_rgba(26,186,127,0.3)] transition-all duration-300 ${emailError ? 'border-red-500' : ''}`}
-              required
-              aria-required="true"
-              aria-invalid={emailError ? 'true' : 'false'}
-              aria-describedby={emailError ? 'email-error' : undefined}
-            />
-            {emailError && (
-              <p id="email-error" className="text-red-500 text-xs mt-1">{emailError}</p>
-            )}
-          </div>
-          <div>
-            <Label htmlFor="phone" className="text-sm font-semibold text-[#225F91] uppercase tracking-wider">
-              Phone
-            </Label>
-            <Input
-              id="phone"
-              name="phone"
-              value={form.phone}
-              onChange={onInputChange}
-              className={`mt-2 h-12 text-base font-medium rounded-xl border-[#1ABA7F]/20 bg-white/95 text-gray-900 placeholder:text-gray-400 focus:ring-0 focus:border-[#1ABA7F]/50 focus:shadow-[0_0_10px_rgba(26,186,127,0.3)] transition-all duration-300 ${phoneError ? 'border-red-500' : ''}`}
-              required
-              aria-required="true"
-              aria-invalid={phoneError ? 'true' : 'false'}
-              aria-describedby={phoneError ? 'phone-error' : undefined}
-            />
-            {phoneError && (
-              <p id="phone-error" className="text-red-500 text-xs mt-1">{phoneError}</p>
-            )}
-          </div>
-          {needsUpload && (
-            <PrescriptionUpload
-              handleFileChange={handleFileChange}
-              fileInputRef={fileInputRef}
-              prescriptionFile={prescriptionFile}
-            />
-          )}
-          <div>
-            <Label className="text-sm font-semibold text-[#225F91] uppercase tracking-wider">
-              Delivery Method
-            </Label>
-            <RadioGroup
-              value={form.deliveryMethod}
-              onValueChange={handleDeliveryMethodChange}
-              className="flex flex-col sm:flex-row gap-4 sm:gap-6 mt-3"
-              aria-label="Delivery method"
-            >
-              <div className="flex items-center space-x-3">
-                <RadioGroupItem value="pickup" id="pickup" className="h-5 w-5 text-[#225F91]" />
-                <Label htmlFor="pickup" className="text-gray-900 text-base font-medium">Pickup</Label>
+      <CardContent className="p-6 sm:p-8 space-y-6">
+        <form onSubmit={handleCheckout} className="space-y-6">
+          {/* Order Type Description */}
+          <div className={`p-4 rounded-xl border ${
+            orderType.infoColor === 'green' ? 'bg-green-50 border-green-200' :
+            orderType.infoColor === 'blue' ? 'bg-blue-50 border-blue-200' :
+            orderType.infoColor === 'orange' ? 'bg-orange-50 border-orange-200' :
+            'bg-gray-50 border-gray-200'
+          }`}>
+            <div className="flex items-start gap-3">
+              <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+              <div className="text-sm">
+                <p className="font-medium text-gray-900 mb-1">{orderType.description}</p>
+                <p className="text-gray-600">All items are ready for immediate checkout.</p>
               </div>
-              <div className="flex items-center space-x-3">
-                <RadioGroupItem value="delivery" id="delivery" className="h-5 w-5 text-[#225F91]" />
-                <Label htmlFor="delivery" className="text-gray-900 text-base font-medium">Delivery</Label>
-              </div>
-            </RadioGroup>
-            {form.deliveryMethod === 'delivery' && (
-              <p className="text-sm text-gray-600 mt-2">Estimated delivery: 2-5 business days. Additional delivery fees may apply.</p>
-            )}
-          </div>
-          {form.deliveryMethod === 'delivery' && (
-            <div>
-              <Label htmlFor="address" className="text-sm font-semibold text-[#225F91] uppercase tracking-wider">
-                Delivery Address
-              </Label>
-              <Input
-                id="address"
-                name="address"
-                value={form.address}
-                onChange={onInputChange}
-                className="mt-2 h-12 text-base font-medium rounded-xl border-[#1ABA7F]/20 bg-white/95 text-gray-900 placeholder:text-gray-400 focus:ring-0 focus:border-[#1ABA7F]/50 focus:shadow-[0_0_10px_rgba(26,186,127,0.3)] transition-all duration-300"
-                required
-                aria-required="true"
-              />
             </div>
-          )}
-          {form.deliveryMethod === 'pickup' && cart.pharmacies.length > 0 && (
-            <div>
-              <Label className="text-sm font-semibold text-[#225F91] uppercase tracking-wider">
-                Pickup Addresses
-              </Label>
-              <div className="mt-3 space-y-3">
-                {getUniquePharmacyAddresses().length > 0 ? (
-                  getUniquePharmacyAddresses().map((pharmacy, index) => (
-                    <p key={index} className="text-gray-600 text-base font-medium">
-                      <span className="font-semibold text-gray-900">{pharmacy.name}</span>: {pharmacy.address}
-                    </p>
-                  ))
-                ) : (
-                  <p className="text-red-500 text-base font-medium">Pharmacy address not available. Please select delivery or contact support.</p>
+          </div>
+
+          {/* Contact Information */}
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="name" className="text-sm font-medium text-gray-700">
+                  Full Name *
+                </Label>
+                <Input
+                  id="name"
+                  name="name"
+                  type="text"
+                  value={form.name}
+                  onChange={handleInputChange}
+                  placeholder="Enter your full name"
+                  className="border-[#1ABA7F]/20 focus:border-[#1ABA7F]/50 focus:shadow-[0_0_8px_rgba(26,186,127,0.3)] transition-all duration-300"
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="phone" className="text-sm font-medium text-gray-700">
+                  Phone Number *
+                </Label>
+                <Input
+                  id="phone"
+                  name="phone"
+                  type="tel"
+                  value={form.phone}
+                  onChange={handleInputChange}
+                  placeholder="+234 801 234 5678"
+                  className="border-[#1ABA7F]/20 focus:border-[#1ABA7F]/50 focus:shadow-[0_0_8px_rgba(26,186,127,0.3)] transition-all duration-300"
+                  required
+                />
+                {validatePhone() && (
+                  <p className="text-xs text-red-600">{validatePhone()}</p>
                 )}
               </div>
             </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+                Email Address (Optional)
+              </Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                value={form.email}
+                onChange={handleInputChange}
+                placeholder="your.email@example.com"
+                className="border-[#1ABA7F]/20 focus:border-[#1ABA7F]/50 focus:shadow-[0_0_8px_rgba(26,186,127,0.3)] transition-all duration-300"
+              />
+              {validateEmail() && (
+                <p className="text-xs text-red-600">{validateEmail()}</p>
+              )}
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Delivery Method */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <Truck className="h-5 w-5 text-[#1ABA7F]" />
+              Delivery Method
+            </h3>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <button
+                type="button"
+                onClick={() => handleDeliveryMethodChange('pickup')}
+                className={cn(
+                  "p-4 border-2 rounded-xl text-left transition-all duration-300",
+                  form.deliveryMethod === 'pickup'
+                    ? "border-[#1ABA7F] bg-[#1ABA7F]/10"
+                    : "border-gray-200 hover:border-[#1ABA7F]/30"
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  <Store className="h-5 w-5 text-[#1ABA7F]" />
+                  <div>
+                    <div className="font-medium text-gray-900">Pickup</div>
+                    <div className="text-sm text-gray-600">Collect from pharmacy</div>
+                  </div>
+                </div>
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => handleDeliveryMethodChange('delivery')}
+                className={cn(
+                  "p-4 border-2 rounded-xl text-left transition-all duration-300",
+                  form.deliveryMethod === 'delivery'
+                    ? "border-[#1ABA7F] bg-[#1ABA7F]/10"
+                    : "border-gray-200 hover:border-[#1ABA7F]/30"
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  <Truck className="h-5 w-5 text-[#1ABA7F]" />
+                  <div>
+                    <div className="font-medium text-gray-900">Delivery</div>
+                    <div className="text-sm text-gray-600">Delivered to your address</div>
+                  </div>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          {/* Delivery Address */}
+          {form.deliveryMethod === 'delivery' && (
+            <div className="space-y-2">
+              <Label htmlFor="address" className="text-sm font-medium text-gray-700">
+                Delivery Address *
+              </Label>
+              <textarea
+                id="address"
+                name="address"
+                value={form.address}
+                onChange={handleInputChange}
+                placeholder="Enter your complete delivery address"
+                rows={3}
+                className="w-full border border-[#1ABA7F]/20 rounded-lg px-3 py-2 focus:border-[#1ABA7F]/50 focus:shadow-[0_0_8px_rgba(26,186,127,0.3)] transition-all duration-300 resize-none"
+                required
+              />
+            </div>
           )}
+
+          {/* Pickup Information */}
+          {form.deliveryMethod === 'pickup' && (
+            <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
+              <div className="flex items-start gap-3">
+                <Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                <div className="text-sm text-blue-800">
+                  <p className="font-medium mb-1">Pickup Locations</p>
+                  <div className="space-y-1">
+                    {getUniquePharmacyAddresses().map((address, index) => (
+                      <p key={index} className="text-blue-700">{address}</p>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <Separator />
+
+          {/* Security Notice */}
+          <div className="p-4 bg-green-50 rounded-xl border border-green-200">
+            <div className="flex items-start gap-3">
+              <Shield className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+              <div className="text-sm text-green-800">
+                <p className="font-medium mb-1">Secure Checkout</p>
+                <p>Your payment information is encrypted and secure. We use industry-standard SSL encryption to protect your data.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Submit Button */}
           <Button
             type="submit"
-            className="w-full h-14 px-8 text-lg font-semibold rounded-full bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_15px_rgba(34,95,145,0.3)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
-            disabled={loading || emailError || phoneError}
-            aria-label={submitButtonText}
+            className="w-full h-14 text-lg font-semibold rounded-xl bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_20px_rgba(34,95,145,0.4)] transition-all duration-300"
+            disabled={loading}
           >
             {loading ? (
-              <span className="flex items-center justify-center gap-2">
-                <Loader2 className="h-5 w-5 animate-spin" />
+              <>
+                <Loader2 className="h-5 w-5 mr-2 animate-spin" />
                 Processing...
-              </span>
+              </>
             ) : (
-              submitButtonText
+              <>
+                <CreditCard className="h-5 w-5 mr-2" />
+                {orderType.buttonText}
+              </>
             )}
           </Button>
         </form>

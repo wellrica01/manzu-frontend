@@ -309,122 +309,124 @@ export default function MedicationDetails() {
           </Card>
         </div>
         <Dialog open={editOpen} onOpenChange={setEditOpen}>
-          <DialogContent className="card bg-card">
-            <DialogHeader>
+          <DialogContent className="card bg-card max-h-[90vh] flex flex-col">
+            <DialogHeader className="flex-shrink-0">
               <DialogTitle className="text-primary">Edit Medication</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
-              {formError && (
-                <div className="card bg-destructive/10 border-l-4 border-destructive p-2">
-                  <p className="text-destructive text-sm">{formError}</p>
-                </div>
-              )}
-              <div>
-                <Label className="block text-sm font-medium text-primary">Name *</Label>
-                <Input
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  placeholder="Enter medication name"
-                  required
-                  className="border-border"
-                />
-              </div>
-              <div>
-                <Label className="block text-sm font-medium text-primary">Generic Name *</Label>
-                <Input
-                  name="genericName"
-                  value={formData.genericName}
-                  onChange={handleInputChange}
-                  placeholder="Enter generic name"
-                  required
-                  className="border-border"
-                />
-              </div>
-              <div>
-                <Label className="block text-sm font-medium text-primary">Category</Label>
-                <Input
-                  name="category"
-                  value={formData.category}
-                  onChange={handleInputChange}
-                  placeholder="Enter category"
-                  className="border-border"
-                />
-              </div>
-              <div>
-                <Label className="block text-sm font-medium text-primary">Description</Label>
-                <Input
-                  name="description"
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  placeholder="Enter description"
-                  className="border-border"
-                />
-              </div>
-              <div>
-                <Label className="block text-sm font-medium text-primary">Manufacturer</Label>
-                <Input
-                  name="manufacturer"
-                  value={formData.manufacturer}
-                  onChange={handleInputChange}
-                  placeholder="Enter manufacturer"
-                  className="border-border"
-                />
-              </div>
-              <div>
-                <Label className="block text-sm font-medium text-primary">Form</Label>
-                <Input
-                  name="form"
-                  value={formData.form}
-                  onChange={handleInputChange}
-                  placeholder="Enter form (e.g., tablet)"
-                  className="border-border"
-                />
-              </div>
-              <div>
-                <Label className="block text-sm font-medium text-primary">Dosage</Label>
-                <Input
-                  name="dosage"
-                  value={formData.dosage}
-                  onChange={handleInputChange}
-                  placeholder="Enter dosage"
-                  className="border-border"
-                />
-              </div>
-              <div>
-                <Label className="block text-sm font-medium text-primary">NAFDAC Code</Label>
-                <Input
-                  name="nafdacCode"
-                  value={formData.nafdacCode}
-                  onChange={handleInputChange}
-                  placeholder="Enter NAFDAC code"
-                  className="border-border"
-                />
-              </div>
-              <div>
-                <label className="flex items-center">
+            <div className="flex-1 overflow-y-auto p-6">
+              <div className="space-y-4">
+                {formError && (
+                  <div className="card bg-destructive/10 border-l-4 border-destructive p-2">
+                    <p className="text-destructive text-sm">{formError}</p>
+                  </div>
+                )}
+                <div>
+                  <Label className="block text-sm font-medium text-primary">Name *</Label>
                   <Input
-                    type="checkbox"
-                    name="prescriptionRequired"
-                    checked={formData.prescriptionRequired}
+                    name="name"
+                    value={formData.name}
                     onChange={handleInputChange}
-                    className="mr-2"
+                    placeholder="Enter medication name"
+                    required
+                    className="border-border"
                   />
-                  <span className="text-primary font-medium">Prescription Required</span>
-                </label>
-              </div>
-              <div>
-                <Label className="block text-sm font-medium">Image URL</Label>
-                <Input
-                  name="imageUrl"
-                  value={formData.imageUrl}
-                  onChange={handleInputChange}
-                  placeholder="Enter image URL"
-                  className="border-border"
-                />
+                </div>
+                <div>
+                  <Label className="block text-sm font-medium text-primary">Generic Name *</Label>
+                  <Input
+                    name="genericName"
+                    value={formData.genericName}
+                    onChange={handleInputChange}
+                    placeholder="Enter generic name"
+                    required
+                    className="border-border"
+                  />
+                </div>
+                <div>
+                  <Label className="block text-sm font-medium text-primary">Category</Label>
+                  <Input
+                    name="category"
+                    value={formData.category}
+                    onChange={handleInputChange}
+                    placeholder="Enter category"
+                    className="border-border"
+                  />
+                </div>
+                <div>
+                  <Label className="block text-sm font-medium text-primary">Description</Label>
+                  <Input
+                    name="description"
+                    value={formData.description}
+                    onChange={handleInputChange}
+                    placeholder="Enter description"
+                    className="border-border"
+                  />
+                </div>
+                <div>
+                  <Label className="block text-sm font-medium text-primary">Manufacturer</Label>
+                  <Input
+                    name="manufacturer"
+                    value={formData.manufacturer}
+                    onChange={handleInputChange}
+                    placeholder="Enter manufacturer"
+                    className="border-border"
+                  />
+                </div>
+                <div>
+                  <Label className="block text-sm font-medium text-primary">Form</Label>
+                  <Input
+                    name="form"
+                    value={formData.form}
+                    onChange={handleInputChange}
+                    placeholder="Enter form (e.g., tablet)"
+                    className="border-border"
+                  />
+                </div>
+                <div>
+                  <Label className="block text-sm font-medium text-primary">Dosage</Label>
+                  <Input
+                    name="dosage"
+                    value={formData.dosage}
+                    onChange={handleInputChange}
+                    placeholder="Enter dosage"
+                    className="border-border"
+                  />
+                </div>
+                <div>
+                  <Label className="block text-sm font-medium text-primary">NAFDAC Code</Label>
+                  <Input
+                    name="nafdacCode"
+                    value={formData.nafdacCode}
+                    onChange={handleInputChange}
+                    placeholder="Enter NAFDAC code"
+                    className="border-border"
+                  />
+                </div>
+                <div>
+                  <label className="flex items-center">
+                    <Input
+                      type="checkbox"
+                      name="prescriptionRequired"
+                      checked={formData.prescriptionRequired}
+                      onChange={handleInputChange}
+                      className="mr-2"
+                    />
+                    <span className="text-primary font-medium">Prescription Required</span>
+                  </label>
+                </div>
+                <div>
+                  <Label className="block text-sm font-medium">Image URL</Label>
+                  <Input
+                    name="imageUrl"
+                    value={formData.imageUrl}
+                    onChange={handleInputChange}
+                    placeholder="Enter image URL"
+                    className="border-border"
+                  />
+                </div>
               </div>
             </div>
-            <DialogFooter>
+            <DialogFooter className="flex-shrink-0 p-6 pt-0">
               <Button
                 variant="outline"
                 onClick={() => setEditOpen(false)}

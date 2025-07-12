@@ -426,71 +426,73 @@ export default function PharmacyDetails() {
         </Tabs>
 
         <Dialog open={editOpen} onOpenChange={setEditOpen}>
-          <DialogContent className="card bg-card">
-            <DialogHeader>
+          <DialogContent className="card bg-card max-h-[90vh] flex flex-col">
+            <DialogHeader className="flex-shrink-0">
               <DialogTitle className="text-primary">Edit Pharmacy</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label className="text-primary font-medium">Name</Label>
-                <Input name="name" value={formData.name} onChange={handleInputChange} className="border-border" />
-              </div>
-              <div>
-                <Label className="text-primary font-medium">Address</Label>
-                <Input name="address" value={formData.address} onChange={handleInputChange} className="border-border" />
-              </div>
-              <div>
-                <Label className="text-primary font-medium">LGA</Label>
-                <Input name="lga" value={formData.lga} onChange={handleInputChange} className="border-border" />
-              </div>
-              <div>
-                <Label className="text-primary font-medium">State</Label>
-                <Input name="state" value={formData.state} onChange={handleInputChange} className="border-border" />
-              </div>
-              <div>
-                <Label className="text-primary font-medium">Phone</Label>
-                <Input name="phone" value={formData.phone} onChange={handleInputChange} className="border-border" />
-              </div>
-              <div>
-                <Label className="text-primary font-medium">License Number</Label>
-                <Input name="licenseNumber" value={formData.licenseNumber} onChange={handleInputChange} className="border-border" />
-              </div>
-              <div>
-                <Label className="text-primary font-medium">Status</Label>
-                <Select
-                  name="status"
-                  value={formData.status}
-                  onValueChange={(value) => setFormData((prev) => ({ ...prev, status: value }))}
-                  className="border-border"
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="verified">Verified</SelectItem>
-                    <SelectItem value="rejected">Rejected</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label className="text-primary font-medium">Logo URL</Label>
-                <Input name="logoUrl" value={formData.logoUrl} onChange={handleInputChange} className="border-border" />
-              </div>
-              <div>
-                <label className="flex items-center">
-                  <Input
-                    type="checkbox"
-                    name="isActive"
-                    checked={formData.isActive}
-                    onChange={handleInputChange}
-                    className="mr-2"
-                  />
-                  <span className="text-primary font-medium">Active</span>
-                </label>
+            <div className="flex-1 overflow-y-auto p-6">
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-primary font-medium">Name</Label>
+                  <Input name="name" value={formData.name} onChange={handleInputChange} className="border-border" />
+                </div>
+                <div>
+                  <Label className="text-primary font-medium">Address</Label>
+                  <Input name="address" value={formData.address} onChange={handleInputChange} className="border-border" />
+                </div>
+                <div>
+                  <Label className="text-primary font-medium">LGA</Label>
+                  <Input name="lga" value={formData.lga} onChange={handleInputChange} className="border-border" />
+                </div>
+                <div>
+                  <Label className="text-primary font-medium">State</Label>
+                  <Input name="state" value={formData.state} onChange={handleInputChange} className="border-border" />
+                </div>
+                <div>
+                  <Label className="text-primary font-medium">Phone</Label>
+                  <Input name="phone" value={formData.phone} onChange={handleInputChange} className="border-border" />
+                </div>
+                <div>
+                  <Label className="text-primary font-medium">License Number</Label>
+                  <Input name="licenseNumber" value={formData.licenseNumber} onChange={handleInputChange} className="border-border" />
+                </div>
+                <div>
+                  <Label className="text-primary font-medium">Status</Label>
+                  <Select
+                    name="status"
+                    value={formData.status}
+                    onValueChange={(value) => setFormData((prev) => ({ ...prev, status: value }))}
+                    className="border-border"
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="verified">Verified</SelectItem>
+                      <SelectItem value="rejected">Rejected</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-primary font-medium">Logo URL</Label>
+                  <Input name="logoUrl" value={formData.logoUrl} onChange={handleInputChange} className="border-border" />
+                </div>
+                <div>
+                  <label className="flex items-center">
+                    <Input
+                      type="checkbox"
+                      name="isActive"
+                      checked={formData.isActive}
+                      onChange={handleInputChange}
+                      className="mr-2"
+                    />
+                    <span className="text-primary font-medium">Active</span>
+                  </label>
+                </div>
               </div>
             </div>
-            <DialogFooter>
+            <DialogFooter className="flex-shrink-0 p-6 pt-0">
               <Button
                 variant="outline"
                 onClick={() => setEditOpen(false)}

@@ -11,6 +11,8 @@ import RemoveItemDialog from './RemoveItemDialog';
 import QuantityUpdateDialog from './QuantityUpdateDialog';
 import PharmacyCartCard from './PharmacyCartCard';
 import CartSummary from './CartSummary';
+import PrescriptionUploadSection from './PrescriptionUploadSection';
+import { getCartSegments, getCartStatus, canProceedToCheckout } from '@/lib/cartUtils';
 
 export default function Cart() {
   const [error, setError] = useState(null);
@@ -18,6 +20,7 @@ export default function Cart() {
   const [quantityUpdate, setQuantityUpdate] = useState(null);
   const [isUpdating, setIsUpdating] = useState({});
   const [isFetched, setIsFetched] = useState(false);
+  const [prescriptionStatuses, setPrescriptionStatuses] = useState({});
   const router = useRouter();
   const { cart, fetchCart, guestId } = useCart();
 
@@ -34,6 +37,39 @@ export default function Cart() {
     }
     loadCart();
   }, [fetchCart]);
+
+  // Load prescription statuses when cart is loaded
+  useEffect(() => {
+    async function loadPrescriptionStatuses() {
+      if (!guestId || !cart || !cart.pharmacies) return;
+
+      const prescriptionItems = cart.pharmacies
+        .flatMap(pharmacy => pharmacy.items || [])
+        .filter(item => item.medication?.prescriptionRequired);
+
+      if (prescriptionItems.length === 0) return;
+
+      try {
+        const medicationIds = prescriptionItems
+          .map(item => item.pharmacyMedicationMedicationId)
+          .join(',');
+
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/prescription/status?patientIdentifier=${guestId}&medicationIds=${medicationIds}`,
+          { headers: { 'x-guest-id': guestId } }
+        );
+
+        if (response.ok) {
+          const statusData = await response.json();
+          setPrescriptionStatuses(statusData || {});
+        }
+      } catch (err) {
+        console.error('Failed to load prescription statuses:', err);
+      }
+    }
+
+    loadPrescriptionStatuses();
+  }, [guestId, cart]);
 
   const handleQuantityChange = async (orderItemId, newQuantity, itemName) => {
     if (!orderItemId) {
@@ -98,20 +134,70 @@ export default function Cart() {
     router.push('/checkout');
   };
 
+  const handlePrescriptionUploadSuccess = async () => {
+    await fetchCart();
+    toast.success('Prescription uploaded successfully. Please wait for verification.', { duration: 4000 });
+  };
+
   const calculateItemPrice = (item) => item.quantity * item.price;
 
+  // Get cart segments and status
+  const segments = getCartSegments(cart);
+  const cartStatus = getCartStatus(segments);
+  const canCheckout = canProceedToCheckout(segments);
+
+  // Group items by pharmacy for display
+  const groupItemsByPharmacy = (items) => {
+    const grouped = {};
+    items.forEach(item => {
+      const pharmacyId = item.pharmacy.id;
+      if (!grouped[pharmacyId]) {
+        grouped[pharmacyId] = {
+          pharmacy: item.pharmacy,
+          items: [],
+          subtotal: 0
+        };
+      }
+      grouped[pharmacyId].items.push(item);
+      grouped[pharmacyId].subtotal += item.price * item.quantity;
+    });
+    return Object.values(grouped);
+  };
+
+  const readyPharmacies = groupItemsByPharmacy(segments.readyForCheckout);
+  const prescriptionPharmacies = groupItemsByPharmacy(segments.needsPrescription);
+
+  // Get cart type for better UX
+  const getCartType = () => {
+    const hasOTC = segments.readyForCheckout.some(item => !item.medication.prescriptionRequired);
+    const hasPrescription = segments.needsPrescription.length > 0;
+    const hasVerified = segments.readyForCheckout.some(item => item.medication.prescriptionRequired);
+
+    if (hasOTC && hasPrescription) return 'mixed';
+    if (hasOTC && !hasPrescription) return 'otc_only';
+    if (hasPrescription && !hasOTC) return 'prescription_only';
+    return 'empty';
+  };
+
+  const cartType = getCartType();
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 via-gray-50/50 to-white/80 py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      <div className="absolute inset-0 bg-[url('/svg/pattern-dots.svg')] opacity-10 pointer-events-none" aria-hidden="true" />
-      <div className="container mx-auto max-w-5xl">
-        <h1 className="text-4xl sm:text-5xl font-bold text-[#225F91] mb-8 text-center tracking-tight animate-in slide-in-from-top duration-700">
+    <div className="min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 via-gray-50/50 to-white/80 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="container mx-auto max-w-4xl">
+        <h1 className="text-3xl sm:text-4xl font-bold text-[#225F91] mb-6 text-center">
           Your Cart
         </h1>
+        
         <ErrorMessage error={error} />
-        {!isFetched ? null : cart.pharmacies.length === 0 ? (
+        
+        {!isFetched ? (
+          <div className="flex justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1ABA7F]"></div>
+          </div>
+        ) : cart.pharmacies.length === 0 ? (
           <EmptyCart />
         ) : (
-          <div className="space-y-8">
+          <div className="space-y-6">
             <RemoveItemDialog
               removeItem={removeItem}
               setRemoveItem={setRemoveItem}
@@ -123,17 +209,87 @@ export default function Cart() {
               setQuantityUpdate={setQuantityUpdate}
               handleCheckout={handleCheckout}
             />
-            {cart.pharmacies.map((pharmacy) => (
-              <PharmacyCartCard
-                key={pharmacy.pharmacy.id}
-                pharmacy={pharmacy}
-                handleQuantityChange={handleQuantityChange}
-                setRemoveItem={setRemoveItem}
-                isUpdating={isUpdating}
-                calculateItemPrice={calculateItemPrice}
-              />
-            ))}
-            <CartSummary cart={cart} handleCheckout={handleCheckout} />
+
+            {/* Cart Type Indicator */}
+            {cartType !== 'empty' && (
+              <div className="text-center mb-6">
+                <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${
+                  cartType === 'otc_only' ? 'bg-green-100 text-green-800' :
+                  cartType === 'prescription_only' ? 'bg-orange-100 text-orange-800' :
+                  'bg-blue-100 text-blue-800'
+                }`}>
+                  {cartType === 'otc_only' && '🛒 All items ready for checkout'}
+                  {cartType === 'prescription_only' && '📋 Prescription upload required'}
+                  {cartType === 'mixed' && '🔄 Mixed order - some items ready, others need prescriptions'}
+                </div>
+              </div>
+            )}
+
+            {/* Ready for Checkout Section */}
+            {readyPharmacies.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-2 h-6 bg-green-500 rounded-full"></div>
+                  <h2 className="text-xl font-semibold text-green-800">Ready for Checkout</h2>
+                  <span className="text-sm text-green-600 bg-green-100 px-2 py-1 rounded-full">
+                    {segments.readyItemsCount} items
+                  </span>
+                </div>
+                
+                {readyPharmacies.map((pharmacy) => (
+                  <PharmacyCartCard
+                    key={pharmacy.pharmacy.id}
+                    pharmacy={pharmacy}
+                    handleQuantityChange={handleQuantityChange}
+                    setRemoveItem={setRemoveItem}
+                    isUpdating={isUpdating}
+                    calculateItemPrice={calculateItemPrice}
+                    segment="ready"
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Prescription Required Section */}
+            {prescriptionPharmacies.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-2 h-6 bg-orange-500 rounded-full"></div>
+                  <h2 className="text-xl font-semibold text-orange-800">Prescription Required</h2>
+                  <span className="text-sm text-orange-600 bg-orange-100 px-2 py-1 rounded-full">
+                    {segments.prescriptionItemsCount} items
+                  </span>
+                </div>
+
+                {prescriptionPharmacies.map((pharmacy) => (
+                  <PharmacyCartCard
+                    key={pharmacy.pharmacy.id}
+                    pharmacy={pharmacy}
+                    handleQuantityChange={handleQuantityChange}
+                    setRemoveItem={setRemoveItem}
+                    isUpdating={isUpdating}
+                    calculateItemPrice={calculateItemPrice}
+                    segment="prescription"
+                  />
+                ))}
+
+                <PrescriptionUploadSection
+                  items={segments.needsPrescription}
+                  guestId={guestId}
+                  onUploadSuccess={handlePrescriptionUploadSuccess}
+                  prescriptionStatuses={prescriptionStatuses}
+                />
+              </div>
+            )}
+
+            {/* Cart Summary */}
+            <CartSummary 
+              cart={cart} 
+              segments={segments}
+              handleCheckout={handleCheckout}
+              canCheckout={canCheckout}
+              cartType={cartType}
+            />
           </div>
         )}
       </div>

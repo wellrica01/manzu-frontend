@@ -1,7 +1,9 @@
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Filter, X } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Filter, X, Save, Bookmark, TrendingUp, MapPin, DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Select from 'react-select';
 
@@ -79,13 +81,85 @@ const FilterControls = ({
   showFilters,
   setShowFilters,
 }) => {
+  const [savedFilters, setSavedFilters] = useState([]);
+  const [activeFilters, setActiveFilters] = useState(0);
+
+  // Load saved filters from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('savedFilters');
+    if (saved) {
+      setSavedFilters(JSON.parse(saved));
+    }
+  }, []);
+
+  // Count active filters
+  useEffect(() => {
+    let count = 0;
+    if (filterState) count++;
+    if (filterLga) count++;
+    if (filterWard) count++;
+    if (sortBy !== 'cheapest') count++;
+    setActiveFilters(count);
+  }, [filterState, filterLga, filterWard, sortBy]);
+
+  const saveCurrentFilter = () => {
+    const currentFilter = {
+      id: Date.now(),
+      name: `Filter ${savedFilters.length + 1}`,
+      filterState,
+      filterLga,
+      filterWard,
+      sortBy,
+      timestamp: new Date().toISOString(),
+    };
+    const newSavedFilters = [...savedFilters, currentFilter].slice(-5); // Keep only last 5
+    setSavedFilters(newSavedFilters);
+    localStorage.setItem('savedFilters', JSON.stringify(newSavedFilters));
+  };
+
+  const applySavedFilter = (filter) => {
+    setFilterState(filter.filterState);
+    setFilterLga(filter.filterLga);
+    setFilterWard(filter.filterWard);
+    setSortBy(filter.sortBy);
+    updateLgas(filter.filterState);
+    updateWards(filter.filterState, filter.filterLga);
+    if (searchTerm) handleSearch(searchTerm);
+  };
+
+  const deleteSavedFilter = (filterId) => {
+    const newSavedFilters = savedFilters.filter(f => f.id !== filterId);
+    setSavedFilters(newSavedFilters);
+    localStorage.setItem('savedFilters', JSON.stringify(newSavedFilters));
+  };
+
+  const quickFilters = [
+    { id: 'nearest', label: 'Nearest', icon: MapPin, sortBy: 'closest' },
+    { id: 'cheapest', label: 'Cheapest', icon: DollarSign, sortBy: 'cheapest' },
+  ];
+
   return (
     <Card
       className="shadow-xl border border-[#1ABA7F]/20 rounded-2xl overflow-hidden bg-white/95 backdrop-blur-sm transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:ring-2 hover:ring-[#1ABA7F]/30"
     >
+      {/* Enhanced gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[#1ABA7F]/5 to-[#225F91]/5 opacity-50" />
+      
+      {/* Decorative elements */}
+      <div className="absolute top-0 left-0 w-16 h-16 bg-gradient-to-br from-[#1ABA7F]/10 to-[#225F91]/10 rounded-br-2xl" />
+      <div className="absolute top-4 right-4">
+        <div className="w-2 h-2 bg-gradient-to-r from-[#1ABA7F] to-[#225F91] rounded-full animate-pulse" />
+      </div>
+      
+      {/* Floating particles */}
+      <div className="absolute top-1/4 right-1/4 w-1 h-1 bg-[#1ABA7F]/30 rounded-full animate-bounce" style={{ animationDelay: '0.5s' }} />
+      <div className="absolute bottom-1/4 left-1/4 w-1.5 h-1.5 bg-[#225F91]/30 rounded-full animate-pulse" style={{ animationDelay: '1s' }} />
+      
       <div className="absolute top-0 left-0 w-12 h-12 bg-[#1ABA7F]/20 rounded-br-full" />
+      
+      {/* Header */}
       <div
-        className="flex justify-between items-center px-6 py-4 bg-gradient-to-r from-[#1ABA7F]/10 to-transparent cursor-pointer hover:bg-[#1ABA7F]/20 transition-colors duration-300"
+        className="flex justify-between items-center px-6 py-4 bg-gradient-to-r from-[#1ABA7F]/10 to-transparent cursor-pointer hover:bg-[#1ABA7F]/20 transition-colors duration-300 relative z-10"
         onClick={() => setShowFilters(!showFilters)}
         role="button"
         aria-expanded={showFilters}
@@ -94,32 +168,109 @@ const FilterControls = ({
         <div className="flex items-center gap-3">
           <Filter className="h-6 w-6 text-[#225F91]" />
           <span className="text-lg font-bold text-[#225F91] tracking-tight">
-            {showFilters ? 'Hide Filters' : 'Refine Your Search'}
+            {showFilters ? 'Hide Filters' : 'Advanced Filters'}
           </span>
+          {activeFilters > 0 && (
+            <Badge variant="secondary" className="bg-[#1ABA7F]/20 text-[#1ABA7F] border-[#1ABA7F]/30">
+              {activeFilters} active
+            </Badge>
+          )}
         </div>
-        {(filterState || filterLga || filterWard || sortBy !== 'cheapest') && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              clearFilters();
-            }}
-            className="text-red-500 hover:text-red-600 hover:bg-red-100/50 p-2 rounded-full transition-all duration-200"
-            aria-label="Clear all filters"
-          >
-            <X className="h-5 w-5" />
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {!showFilters && activeFilters === 0 && (
+            <span className="text-xs text-gray-500 hidden sm:block">
+              Location & Sort options
+            </span>
+          )}
+          {activeFilters > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                clearFilters();
+              }}
+              className="text-red-500 hover:text-red-600 hover:bg-red-100/50 p-2 rounded-full transition-all duration-200"
+              aria-label="Clear all filters"
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          )}
+        </div>
       </div>
+
       {showFilters && (
         <CardContent
           id="filter-content"
-          className="px-6 py-6 space-y-6 bg-transparent animate-in slide-in-from-top-10 fade-in-20 duration-500"
+          className="px-6 py-6 space-y-6 bg-transparent animate-in slide-in-from-top-10 fade-in-20 duration-500 relative z-10"
         >
+          {/* Sort Options */}
+          <div className="space-y-3">
+            <Label className="text-sm font-semibold text-[#225F91] uppercase tracking-wider">
+              Sort Results
+            </Label>
+            <div className="flex gap-3">
+              {quickFilters.map((filter) => (
+                <Button
+                  key={filter.id}
+                  variant={sortBy === filter.sortBy ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => {
+                    setSortBy(filter.sortBy);
+                    if (searchTerm) handleSearch(searchTerm);
+                  }}
+                  className={cn(
+                    'h-9 px-4 text-sm font-medium rounded-full transition-all duration-300',
+                    sortBy === filter.sortBy
+                      ? 'bg-[#225F91] text-white shadow-[0_0_10px_rgba(34,95,145,0.3)]'
+                      : 'border-[#1ABA7F] text-[#225F91] hover:bg-[#1ABA7F]/10 hover:border-[#1ABA7F]/50'
+                  )}
+                >
+                  <filter.icon className="h-4 w-4 mr-1" />
+                  {filter.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* Saved Filters */}
+          {savedFilters.length > 0 && (
+            <div className="space-y-3">
+              <Label className="text-sm font-semibold text-[#225F91] uppercase tracking-wider">
+                Saved Filters
+              </Label>
+              <div className="flex gap-2 flex-wrap">
+                {savedFilters.map((filter) => (
+                  <div key={filter.id} className="flex items-center gap-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => applySavedFilter(filter)}
+                      className="h-8 px-3 text-xs border-[#1ABA7F]/20 text-[#225F91] hover:bg-[#1ABA7F]/10"
+                    >
+                      <Bookmark className="h-3 w-3 mr-1" />
+                      {filter.name}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => deleteSavedFilter(filter.id)}
+                      className="h-8 w-8 p-0 text-gray-400 hover:text-red-500"
+                      aria-label="Delete saved filter"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <p className="text-base font-medium text-gray-600 tracking-wide">
-            Tailor your search to find the best pharmacies
+            Filter by location and sort results to find the best pharmacies
           </p>
+
+          {/* Location Filters */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="space-y-2">
               <Label
@@ -204,41 +355,30 @@ const FilterControls = ({
               />
             </div>
           </div>
-          <div className="space-y-2">
-            <Label className="text-sm font-semibold text-[#225F91] uppercase tracking-wider">
-              Sort By
-            </Label>
-            <div className="flex gap-4 pt-2">
-              {['cheapest', 'closest'].map((value) => (
+
+          {/* Action Buttons */}
+          <div className="flex justify-between items-center pt-4">
+            <div className="flex gap-4">
+              <Button
+                variant="outline"
+                onClick={clearFilters}
+                className="h-12 px-6 text-base font-semibold rounded-full border-[#1ABA7F] text-[#225F91] hover:bg-[#1ABA7F]/10 hover:border-[#1ABA7F]/50 transition-all duration-300"
+                aria-label="Clear all filters"
+              >
+                Clear
+              </Button>
+              {activeFilters > 0 && (
                 <Button
-                  key={value}
-                  variant={sortBy === value ? 'default' : 'outline'}
-                  onClick={() => {
-                    setSortBy(value);
-                    if (searchTerm) handleSearch(searchTerm);
-                  }}
-                  className={cn(
-                    'h-10 px-6 text-base font-semibold rounded-full transition-all duration-300',
-                    sortBy === value
-                      ? 'bg-[#225F91] text-white shadow-[0_0_15px_rgba(34,95,145,0.5)]'
-                      : 'border-[#1ABA7F] text-[#225F91] hover:bg-[#1ABA7F]/10 hover:border-[#1ABA7F]/50'
-                  )}
-                  aria-label={`Sort by ${value}`}
+                  variant="outline"
+                  onClick={saveCurrentFilter}
+                  className="h-12 px-6 text-base font-semibold rounded-full border-[#1ABA7F] text-[#225F91] hover:bg-[#1ABA7F]/10 hover:border-[#1ABA7F]/50 transition-all duration-300"
+                  aria-label="Save current filter"
                 >
-                  {value.charAt(0).toUpperCase() + value.slice(1)}
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Filter
                 </Button>
-              ))}
+              )}
             </div>
-          </div>
-          <div className="flex justify-end gap-4 pt-4">
-            <Button
-              variant="outline"
-              onClick={clearFilters}
-              className="h-12 px-6 text-base font-semibold rounded-full border-[#1ABA7F] text-[#225F91] hover:bg-[#1ABA7F]/10 hover:border-[#1ABA7F]/50 transition-all duration-300"
-              aria-label="Clear all filters"
-            >
-              Clear
-            </Button>
             <Button
               onClick={() => handleSearch(searchTerm)}
               className="h-12 px-6 text-base font-semibold rounded-full bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_20px_rgba(34,95,145,0.6)] transition-all duration-300"
