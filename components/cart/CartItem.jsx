@@ -1,158 +1,274 @@
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Trash2, Minus, Plus, CheckCircle, FileText } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { 
+  Plus, 
+  Minus, 
+  Trash2, 
+  Clock, 
+  CheckCircle, 
+  AlertCircle, 
+  FileText,
+  Package,
+  Star,
+  AlertTriangle,
+  Edit3
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const CartItem = ({ item, handleQuantityChange, setRemoveItem, isUpdating, calculateItemPrice, segment = 'ready' }) => {
-  const isPrescriptionRequired = item.medication.prescriptionRequired;
+const CartItem = ({ 
+  item, 
+  handleQuantityChange, 
+  setRemoveItem, 
+  isUpdating, 
+  calculateItemPrice,
+  segment = 'ready'
+}) => {
+  const [showQuantityDialog, setShowQuantityDialog] = useState(false);
 
-  // Segment-specific styling
-  const getSegmentStyles = () => {
-    switch (segment) {
-      case 'prescription':
+  const getItemStatus = () => {
+    if (item.medication?.prescriptionRequired) {
+      if (item.prescriptionStatus === 'verified') {
         return {
-          border: 'border-orange-200',
-          bg: 'bg-orange-50/80',
-          badge: 'border-[#225F91]/20 text-[#225F91]',
-          price: 'text-orange-800',
-          button: 'bg-orange-600 hover:bg-orange-700'
+          status: 'verified',
+          icon: CheckCircle,
+          color: 'text-[#1ABA7F]',
+          bgColor: 'bg-[#1ABA7F]/10',
+          borderColor: 'border-[#1ABA7F]/20',
+          text: 'Verified',
+          description: 'Ready for checkout'
         };
-      case 'ready':
-      default:
+      } else if (item.prescriptionStatus === 'pending') {
         return {
-          border: 'border-[#1ABA7F]/20',
-          bg: 'bg-white/50',
-          badge: 'border-[#225F91]/20 text-[#225F91]',
-          price: 'text-[#225F91]',
-          button: 'bg-[#225F91] hover:bg-[#1A4971]'
+          status: 'pending',
+          icon: Clock,
+          color: 'text-orange-600',
+          bgColor: 'bg-orange-100',
+          borderColor: 'border-orange-200',
+          text: 'Under Review',
+          description: 'Being verified'
         };
+      } else if (item.prescriptionStatus === 'rejected') {
+        return {
+          status: 'rejected',
+          icon: AlertTriangle,
+          color: 'text-red-600',
+          bgColor: 'bg-red-100',
+          borderColor: 'border-red-200',
+          text: 'Rejected',
+          description: 'Upload new prescription'
+        };
+      } else {
+        return {
+          status: 'needs_prescription',
+          icon: AlertCircle,
+          color: 'text-orange-600',
+          bgColor: 'bg-orange-100',
+          borderColor: 'border-orange-200',
+          text: 'Prescription Required',
+          description: 'Upload prescription'
+        };
+      }
+    } else {
+      return {
+        status: 'ready',
+        icon: Package,
+        color: 'text-[#225F91]',
+        bgColor: 'bg-[#225F91]/10',
+        borderColor: 'border-[#225F91]/20',
+        text: 'Ready',
+        description: 'Available for checkout'
+      };
     }
   };
 
-  const styles = getSegmentStyles();
+  const itemStatus = getItemStatus();
+  const StatusIcon = itemStatus.icon;
+
+  const handleQuantityUpdate = (newQuantity) => {
+    if (newQuantity < 1) return;
+    handleQuantityChange(item.id, newQuantity, item.medication.name);
+    setShowQuantityDialog(false);
+  };
+
+  const handleRemove = () => {
+    setRemoveItem({
+      id: item.id,
+      name: item.medication.name,
+      quantity: item.quantity
+    });
+  };
 
   return (
-    <div className={cn(
-      "border rounded-lg p-3 transition-all duration-300 hover:shadow-sm",
-      styles.border,
-      styles.bg
+    <Card className={cn(
+      "bg-white/95 backdrop-blur-sm border rounded-xl shadow-sm transition-all duration-200 hover:shadow-md",
+      itemStatus.borderColor
     )}>
-      {/* Item Header */}
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <h3 className="text-base font-medium text-gray-900 truncate">
-              {item.medication.displayName}
-            </h3>
-            {isPrescriptionRequired && (
-              <Badge variant="outline" className={cn("text-xs", styles.badge)}>
-                {segment === 'prescription' ? (
-                  <>
-                    <FileText className="h-3 w-3 mr-1" />
-                    Rx Required
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle className="h-3 w-3 mr-1" />
-                    Verified
-                  </>
-                )}
-              </Badge>
-            )}
+      <CardContent className="p-4">
+        <div className="flex items-start gap-4">
+          {/* Enhanced Item Image */}
+          <div className="flex-shrink-0">
+            <div className="w-16 h-16 bg-gradient-to-br from-[#1ABA7F]/20 to-[#225F91]/20 rounded-xl flex items-center justify-center shadow-sm">
+              {item.medication.image ? (
+                <img 
+                  src={item.medication.image} 
+                  alt={item.medication.name}
+                  className="w-12 h-12 object-cover rounded-lg"
+                />
+              ) : (
+                <Package className="h-8 w-8 text-[#225F91]" />
+              )}
+            </div>
           </div>
-          <p className="text-sm text-gray-500 truncate">{item.medication.genericName}</p>
-        </div>
-        
-        {/* Price Display */}
-        <div className="text-right ml-3">
-          <div className={cn("text-base font-bold", styles.price)}>
-            ₦{calculateItemPrice(item).toLocaleString()}
+
+          {/* Enhanced Item Details */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between mb-2">
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-[#225F91] text-base leading-tight mb-1 truncate">
+                  {item.medication.name}
+                </h3>
+                <p className="text-sm text-gray-600 mb-2">
+                  {item.medication.description || 'No description available'}
+                </p>
+                
+                {/* Enhanced Item Metadata */}
+                <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
+                  <span className="font-medium">₦{item.price.toLocaleString()}</span>
+                  <span>•</span>
+                  <span>{item.medication.strength || 'Standard strength'}</span>
+                  {item.medication.manufacturer && (
+                    <>
+                      <span>•</span>
+                      <span className="truncate">{item.medication.manufacturer}</span>
+                    </>
+                  )}
+                </div>
+
+                {/* Enhanced Status Badge */}
+                <div className="flex items-center gap-2 mb-3">
+                  <Badge className={cn(
+                    "text-xs font-medium",
+                    itemStatus.bgColor,
+                    itemStatus.color,
+                    itemStatus.borderColor
+                  )}>
+                    <StatusIcon className="h-3 w-3 mr-1" />
+                    {itemStatus.text}
+                  </Badge>
+                  
+                  {item.medication.prescriptionRequired && (
+                    <Badge className="bg-purple-100 text-purple-800 border-purple-200 text-xs font-medium">
+                      <FileText className="h-3 w-3 mr-1" />
+                      Prescription
+                    </Badge>
+                  )}
+                  
+                  {!item.medication.prescriptionRequired && (
+                    <Badge className="bg-[#225F91]/10 text-[#225F91] border-[#225F91]/20 text-xs font-medium">
+                      <Package className="h-3 w-3 mr-1" />
+                      OTC
+                    </Badge>
+                  )}
+                </div>
+              </div>
+
+              {/* Enhanced Price Display */}
+              <div className="text-right ml-4">
+                <div className="text-lg font-bold text-[#225F91]">
+                  ₦{calculateItemPrice(item).toLocaleString()}
+                </div>
+                <div className="text-sm text-gray-500">
+                  ₦{item.price.toLocaleString()} each
+                </div>
+              </div>
+            </div>
+
+            {/* Enhanced Status Description */}
+            <div className={cn(
+              "p-3 rounded-lg border mb-4",
+              itemStatus.bgColor,
+              itemStatus.borderColor
+            )}>
+              <div className="flex items-start gap-2">
+                <StatusIcon className={cn("h-4 w-4 mt-0.5 flex-shrink-0", itemStatus.color)} />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-[#225F91] mb-1">{itemStatus.description}</p>
+                  <p className="text-xs text-gray-600">
+                    {itemStatus.status === 'verified' && 'Your prescription has been verified and is ready for checkout.'}
+                    {itemStatus.status === 'pending' && 'Your prescription is being reviewed by our pharmacy team.'}
+                    {itemStatus.status === 'rejected' && 'Your prescription was rejected. Please upload a new one.'}
+                    {itemStatus.status === 'needs_prescription' && 'Please upload a prescription for this medication.'}
+                    {itemStatus.status === 'ready' && 'This item is available for immediate checkout.'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Enhanced Action Buttons */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {/* Enhanced Quantity Controls */}
+                <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleQuantityUpdate(item.quantity - 1)}
+                    disabled={item.quantity <= 1 || isUpdating[item.id]}
+                    className="h-8 w-8 p-0 hover:bg-[#1ABA7F]/20 text-[#225F91] disabled:opacity-50"
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                  
+                  <span className="px-3 py-1 text-sm font-medium text-[#225F91] min-w-[2rem] text-center">
+                    {isUpdating[item.id] ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#1ABA7F] border-t-transparent mx-auto"></div>
+                    ) : (
+                      item.quantity
+                    )}
+                  </span>
+                  
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleQuantityUpdate(item.quantity + 1)}
+                    disabled={isUpdating[item.id]}
+                    className="h-8 w-8 p-0 hover:bg-[#1ABA7F]/20 text-[#225F91] disabled:opacity-50"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                {/* Enhanced Quick Actions */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowQuantityDialog(true)}
+                  disabled={isUpdating[item.id]}
+                  className="h-8 px-3 text-xs hover:bg-[#1ABA7F]/10 text-[#225F91] disabled:opacity-50"
+                >
+                  <Edit3 className="h-3 w-3 mr-1" />
+                  Edit
+                </Button>
+              </div>
+
+              {/* Enhanced Remove Button */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleRemove}
+                disabled={isUpdating[item.id]}
+                className="h-8 px-3 text-xs hover:bg-red-50 text-red-600 hover:text-red-700 disabled:opacity-50"
+              >
+                <Trash2 className="h-3 w-3 mr-1" />
+                Remove
+              </Button>
+            </div>
           </div>
-          <div className="text-xs text-gray-500">
-            ₦{item.price.toLocaleString()} each
-          </div>
         </div>
-      </div>
-
-      {/* Item Details - Simplified */}
-      <div className="grid grid-cols-2 gap-2 mb-3 text-xs">
-        <div className="flex items-center gap-1">
-          <span className="text-gray-600">Category:</span>
-          <span className="font-medium text-gray-900">{item.medication.category || 'General'}</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <span className="text-gray-600">Form:</span>
-          <span className="font-medium text-gray-900">{item.medication.form || 'Tablet'}</span>
-        </div>
-      </div>
-
-      {/* Quantity Controls & Actions */}
-      <div className="flex items-center justify-between">
-        {/* Quantity Controls */}
-        <div className="flex items-center gap-2 bg-gray-50 rounded-lg p-1">
-          <Button
-            className={cn(
-              "h-6 w-6 rounded-full text-white text-xs",
-              styles.button
-            )}
-            onClick={() => handleQuantityChange(item.id, item.quantity - 1, item.medication.displayName)}
-            disabled={item.quantity <= 1 || isUpdating[item.id]}
-          >
-            {isUpdating[item.id] ? <Loader2 className="h-3 w-3 animate-spin" /> : <Minus className="h-3 w-3" />}
-          </Button>
-          
-          <Input
-            type="number"
-            value={item.quantity}
-            onChange={(e) => {
-              const value = parseInt(e.target.value) || 1;
-              if (value >= 1) {
-                handleQuantityChange(item.id, value, item.medication.displayName);
-              }
-            }}
-            className="w-12 h-6 text-center text-xs font-medium rounded border-[#1ABA7F]/20 bg-white focus:border-[#1ABA7F]/50"
-            min="1"
-            max="99"
-            disabled={isUpdating[item.id]}
-          />
-          
-          <Button
-            className={cn(
-              "h-6 w-6 rounded-full text-white text-xs",
-              styles.button
-            )}
-            onClick={() => handleQuantityChange(item.id, item.quantity + 1, item.medication.displayName)}
-            disabled={isUpdating[item.id]}
-          >
-            {isUpdating[item.id] ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
-          </Button>
-        </div>
-
-        {/* Remove Button */}
-        <Button
-          className="h-6 px-3 rounded text-red-600 hover:bg-red-100 text-xs border border-red-200"
-          onClick={() => setRemoveItem({ id: item.id, name: item.medication.displayName })}
-          disabled={isUpdating[item.id]}
-        >
-          {isUpdating[item.id] ? (
-            <Loader2 className="h-3 w-3 animate-spin" />
-          ) : (
-            <Trash2 className="h-3 w-3" />
-          )}
-        </Button>
-      </div>
-
-      {/* Item Total */}
-      <div className="mt-2 pt-2 border-t border-[#1ABA7F]/10">
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-gray-600">Item Total:</span>
-          <span className={cn("text-sm font-bold", styles.price)}>
-            ₦{calculateItemPrice(item).toLocaleString()}
-          </span>
-        </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 

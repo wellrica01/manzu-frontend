@@ -1,45 +1,68 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, Loader2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Trash2, AlertTriangle, Package } from 'lucide-react';
 
 const RemoveItemDialog = ({ removeItem, setRemoveItem, handleRemoveItem, isUpdating }) => {
+  if (!removeItem) return null;
+
   return (
     <Dialog open={!!removeItem} onOpenChange={() => setRemoveItem(null)}>
-      <DialogContent className="sm:max-w-md p-8 border border-[#1ABA7F]/20 rounded-2xl bg-white/95 backdrop-blur-sm shadow-xl animate-in slide-in-from-top fade-in-20 duration-300">
-        <div className="absolute top-0 left-0 w-12 h-12 bg-[#1ABA7F]/20 rounded-br-3xl" />
-        <CheckCircle
-          className="h-10 w-10 text-[#1ABA7F] mx-auto mb-4 animate-[pulse_1s_ease-in-out_infinite]"
-          aria-hidden="true"
-        />
+      <DialogContent className="bg-white/95 backdrop-blur-sm border border-[#1ABA7F]/20 rounded-2xl shadow-xl">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-[#225F91] text-center tracking-tight">
-            Remove Item
-          </DialogTitle>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-3 bg-red-100 rounded-xl">
+              <Trash2 className="h-6 w-6 text-red-600" />
+            </div>
+            <DialogTitle className="text-xl font-bold text-[#225F91]">
+              Remove Item
+            </DialogTitle>
+          </div>
+          <DialogDescription className="text-gray-600 leading-relaxed">
+            Are you sure you want to remove <span className="font-semibold text-[#225F91]">{removeItem.name}</span> from your cart?
+            This action cannot be undone.
+          </DialogDescription>
         </DialogHeader>
-        <div className="py-4">
-          <p className="text-base text-gray-600 text-center font-medium">
-            Are you sure you want to remove{' '}
-            <span className="font-semibold text-gray-900">{removeItem?.name}</span> from your cart?
-          </p>
+
+        <div className="p-4 bg-gradient-to-r from-red-50 to-orange-50 rounded-xl border border-red-200 mb-6">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-red-800 mb-1">Item Details</p>
+              <p className="text-sm text-red-700">
+                <span className="font-medium">{removeItem.name}</span>
+                {removeItem.quantity > 1 && (
+                  <span> • Quantity: {removeItem.quantity}</span>
+                )}
+              </p>
+            </div>
+          </div>
         </div>
-        <DialogFooter className="flex flex-col sm:flex-row gap-4 justify-center">
+
+        <DialogFooter className="flex flex-col sm:flex-row gap-3">
           <Button
             variant="outline"
             onClick={() => setRemoveItem(null)}
-            className="h-12 px-6 text-base font-semibold rounded-full border-[#1ABA7F]/20 text-gray-700 hover:bg-[#1ABA7F]/10 hover:border-[#1ABA7F]/50 hover:shadow-[0_0_10px_rgba(26,186,127,0.2)] transition-all duration-300"
-            aria-label="Cancel remove item"
+            disabled={isUpdating[removeItem?.id]}
+            className="w-full sm:w-auto border-[#1ABA7F]/20 text-[#225F91] hover:bg-[#1ABA7F]/10"
           >
             Cancel
           </Button>
           <Button
-            variant="destructive"
             onClick={handleRemoveItem}
-            className="h-12 px-6 text-base font-semibold rounded-full bg-red-600 text-white hover:bg-red-700 hover:shadow-[0_0_15px_rgba(220,38,38,0.3)] transition-all duration-300"
             disabled={isUpdating[removeItem?.id]}
-            aria-label="Confirm remove item"
+            className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white shadow-lg hover:shadow-xl"
           >
-            {isUpdating[removeItem?.id] && <Loader2 className="h-5 w-5 animate-spin mr-2" />}
-            Remove
+            {isUpdating[removeItem?.id] ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
+                Removing...
+              </>
+            ) : (
+              <>
+                <Trash2 className="h-4 w-4 mr-2" />
+                Remove Item
+              </>
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>
