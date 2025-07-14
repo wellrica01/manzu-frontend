@@ -48,7 +48,8 @@ const PrescriptionUploadSection = ({
 
   // Check if any items need prescriptions
   const needsPrescription = items.some(item => 
-    prescriptionStatuses[item.pharmacyMedicationMedicationId] === 'none'
+    prescriptionStatuses[item.pharmacyMedicationMedicationId] === 'none' ||
+    prescriptionStatuses[item.pharmacyMedicationMedicationId] === 'rejected'
   );
 
   const validateContact = () => {
@@ -123,9 +124,10 @@ const PrescriptionUploadSection = ({
     
     formData.append('prescriptionFile', selectedFile);
     formData.append('patientIdentifier', guestId);
-    // Only send medication IDs that actually need prescription (status 'none')
+    // Only send medication IDs that actually need prescription (status 'none' or 'rejected')
     const medicationsNeedingPrescription = items.filter(item => 
-      prescriptionStatuses[item.pharmacyMedicationMedicationId] === 'none'
+      prescriptionStatuses[item.pharmacyMedicationMedicationId] === 'none' ||
+      prescriptionStatuses[item.pharmacyMedicationMedicationId] === 'rejected'
     );
     
     formData.append('medicationIds', medicationsNeedingPrescription.map(item => item.pharmacyMedicationMedicationId).join(','));
@@ -252,11 +254,12 @@ const PrescriptionUploadSection = ({
   };
 
   return (
-    <Card className="bg-white/95 backdrop-blur-sm border border-gray-200/60 rounded-2xl shadow-xl">
-      <CardHeader className="pb-6">
-        <CardTitle className="text-xl font-bold text-gray-900 flex items-center gap-3">
-          <div className="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-sm">
-            <FileText className="h-5 w-5 text-white" />
+    <Card className="relative bg-white/95 backdrop-blur-sm border border-[#1ABA7F]/20 rounded-2xl shadow-xl overflow-hidden">
+      <div className="absolute top-0 left-0 w-16 h-16 bg-[#1ABA7F]/20 rounded-br-3xl" />
+      <CardHeader className="bg-gradient-to-r from-[#1ABA7F]/10 to-transparent pb-6">
+        <CardTitle className="text-xl font-bold text-[#225F91] flex items-center gap-3">
+          <div className="p-3 bg-gradient-to-br from-[#1ABA7F]/20 to-[#225F91]/20 rounded-xl shadow-sm">
+            <FileText className="h-5 w-5 text-[#225F91]" />
           </div>
           Prescription Status
         </CardTitle>
@@ -279,14 +282,14 @@ const PrescriptionUploadSection = ({
                   <div className="flex items-start gap-4 flex-1">
                     {getStatusIcon(status)}
                     <div className="flex-1 min-w-0">
-                      <h4 className="text-base font-bold text-gray-900 mb-2">{item.medication.displayName}</h4>
-                      <p className="text-sm text-gray-600 mb-2">{item.medication.genericName}</p>
-                      <p className="text-sm text-gray-500 font-medium">{getStatusMessage(status)}</p>
+                      <h4 className="text-base font-bold text-[#225F91] mb-2">{item.medication.displayName}</h4>
+                      <p className="text-sm text-gray-700 mb-2">{item.medication.genericName}</p>
+                      <p className="text-sm text-gray-600 font-medium">{getStatusMessage(status)}</p>
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-3">
                     {getStatusBadge(status)}
-                    <span className="text-lg font-bold text-gray-900">
+                    <span className="text-lg font-bold text-[#225F91]">
                       ₦{(item.price * item.quantity).toLocaleString()}
                     </span>
                   </div>
@@ -338,7 +341,7 @@ const PrescriptionUploadSection = ({
                   
                   <Button
                     onClick={() => fileInputRef.current?.click()}
-                    className="bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white h-12 px-8 text-base font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+                    className="w-full h-14 text-lg font-semibold rounded-xl bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_20px_rgba(34,95,145,0.4)] transition-all duration-300"
                   >
                     <Upload className="h-5 w-5 mr-3" />
                     Choose File
@@ -393,13 +396,13 @@ const PrescriptionUploadSection = ({
 
             {/* Enhanced Contact Information Form */}
             {selectedFile && (
-              <div className="p-6 bg-gradient-to-r from-blue-50 to-blue-100/50 rounded-2xl border border-blue-200">
+              <div className="p-6 bg-[#1ABA7F]/10 rounded-2xl border border-[#1ABA7F]/20">
                 <div className="space-y-6">
                   <div className="flex items-center gap-3">
-                    <Mail className="h-5 w-5 text-blue-600" />
-                    <h4 className="text-lg font-bold text-blue-800">Contact Information</h4>
+                    <Mail className="h-5 w-5 text-[#1ABA7F]" />
+                    <h4 className="text-lg font-bold text-[#225F91]">Contact Information</h4>
                   </div>
-                  <p className="text-base text-blue-700 leading-relaxed">
+                  <p className="text-base text-gray-700 leading-relaxed">
                     Please provide your contact information so we can notify you when your prescription is verified.
                   </p>
                   

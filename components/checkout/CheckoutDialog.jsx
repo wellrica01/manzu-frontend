@@ -26,7 +26,8 @@ const CheckoutDialog = ({
 }) => {
   if (!show) return null;
 
-  const totalItems = segments.readyForCheckout.reduce((sum, item) => sum + item.quantity, 0);
+  // Count unique medications, not total quantity
+  const uniqueMedicationsCount = segments.readyForCheckout.length;
 
   // Group items by pharmacy for display
   const groupItemsByPharmacy = (items) => {
@@ -67,7 +68,7 @@ const CheckoutDialog = ({
               </Badge>
             </div>
 
-            {/* Items by Pharmacy */}
+            {/* Medications by Pharmacy */}
             <div className="space-y-4">
               {pharmacyGroups.map((group, index) => (
                 <div key={group.pharmacy?.id || index} className="border border-gray-200 rounded-lg p-4">
@@ -78,11 +79,11 @@ const CheckoutDialog = ({
                       <h4 className="font-semibold text-gray-900">{group.pharmacy?.name || 'Unknown Pharmacy'}</h4>
                     </div>
                     <Badge variant="outline" className="text-xs border-[#1ABA7F]/20 text-[#1ABA7F]">
-                      {group.items.length} item{group.items.length !== 1 ? 's' : ''}
+                      {group.items.length} medication{group.items.length !== 1 ? 's' : ''}
                     </Badge>
                   </div>
 
-                  {/* Items List */}
+                  {/* Medications List */}
                   <div className="space-y-2">
                     {group.items.map((item) => (
                       <div key={item.id} className="flex items-center justify-between py-2">
@@ -124,7 +125,7 @@ const CheckoutDialog = ({
             
             <div className="space-y-2 text-sm">
               <div className="flex items-center justify-between">
-                <span className="text-gray-600">Items Total:</span>
+                <span className="text-gray-600">Medications Total:</span>
                 <span className="font-medium text-gray-900">₦{segments.totalPrice.toLocaleString()}</span>
               </div>
               <div className="flex items-center justify-between">

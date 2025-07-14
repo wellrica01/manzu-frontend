@@ -24,7 +24,8 @@ const OrderSummary = ({ items = [], calculateItemPrice, totalPrice = 0 }) => {
   };
 
   const pharmacyGroups = groupItemsByPharmacy(items);
-  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+  // Count unique medications, not total quantity
+  const uniqueMedicationsCount = items.length;
 
   return (
     <Card className="relative bg-white/95 border border-[#1ABA7F]/20 rounded-2xl shadow-xl overflow-hidden backdrop-blur-sm sticky top-8">
@@ -40,12 +41,12 @@ const OrderSummary = ({ items = [], calculateItemPrice, totalPrice = 0 }) => {
             <CheckCircle className="h-3 w-3 mr-1" />
             Ready for Checkout
           </Badge>
-          <span className="text-sm text-gray-600">{totalItems} items</span>
+          <span className="text-sm text-gray-600">{uniqueMedicationsCount} medication{uniqueMedicationsCount !== 1 ? 's' : ''}</span>
         </div>
       </CardHeader>
 
       <CardContent className="p-6 space-y-6">
-        {/* Items by Pharmacy */}
+        {/* Medications by Pharmacy */}
         <div className="space-y-4">
           {pharmacyGroups.map((group, index) => (
             <div key={group.pharmacy?.id || index} className="space-y-3">
@@ -56,11 +57,11 @@ const OrderSummary = ({ items = [], calculateItemPrice, totalPrice = 0 }) => {
                   <h4 className="font-semibold text-gray-900">{group.pharmacy?.name || 'Unknown Pharmacy'}</h4>
                 </div>
                 <Badge variant="outline" className="text-xs border-[#1ABA7F]/20 text-[#1ABA7F]">
-                  {group.items.length} item{group.items.length !== 1 ? 's' : ''}
+                  {group.items.length} medication{group.items.length !== 1 ? 's' : ''}
                 </Badge>
               </div>
 
-              {/* Items List */}
+              {/* Medications List */}
               <div className="space-y-2 ml-6">
                 {group.items.map((item) => (
                   <div key={item.id} className="flex items-center justify-between py-2">
@@ -131,7 +132,7 @@ const OrderSummary = ({ items = [], calculateItemPrice, totalPrice = 0 }) => {
           
           <div className="space-y-2 text-sm">
             <div className="flex items-center justify-between">
-              <span className="text-gray-600">Items Total:</span>
+              <span className="text-gray-600">Medications Total:</span>
               <span className="font-medium text-gray-900">₦{totalPrice.toLocaleString()}</span>
             </div>
             <div className="flex items-center justify-between">

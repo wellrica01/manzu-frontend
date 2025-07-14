@@ -13,7 +13,10 @@ import {
   Package,
   Star,
   AlertTriangle,
-  Edit3
+  Pill,
+  Calendar,
+  Shield,
+  Building
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -25,8 +28,6 @@ const CartItem = ({
   calculateItemPrice,
   segment = 'ready'
 }) => {
-  const [showQuantityDialog, setShowQuantityDialog] = useState(false);
-
   const getItemStatus = () => {
     if (item.medication?.prescriptionRequired) {
       if (item.prescriptionStatus === 'verified') {
@@ -89,7 +90,6 @@ const CartItem = ({
   const handleQuantityUpdate = (newQuantity) => {
     if (newQuantity < 1) return;
     handleQuantityChange(item.id, newQuantity, item.medication.name);
-    setShowQuantityDialog(false);
   };
 
   const handleRemove = () => {
@@ -102,51 +102,89 @@ const CartItem = ({
 
   return (
     <Card className={cn(
-      "bg-white/95 backdrop-blur-sm border rounded-xl shadow-sm transition-all duration-200 hover:shadow-md",
+      "relative bg-white/95 backdrop-blur-sm border rounded-xl shadow-sm transition-all duration-200 hover:shadow-md group overflow-hidden",
       itemStatus.borderColor
     )}>
+      <div className="absolute top-0 left-0 w-12 h-12 bg-[#1ABA7F]/20 rounded-br-xl" />
       <CardContent className="p-4">
         <div className="flex items-start gap-4">
-          {/* Enhanced Item Image */}
-          <div className="flex-shrink-0">
+          {/* Enhanced Item Image with Status Overlay */}
+          <div className="flex-shrink-0 relative">
             <div className="w-16 h-16 bg-gradient-to-br from-[#1ABA7F]/20 to-[#225F91]/20 rounded-xl flex items-center justify-center shadow-sm">
-              {item.medication.image ? (
+              {item.medication.imageUrl ? (
                 <img 
-                  src={item.medication.image} 
+                  src={item.medication.imageUrl} 
                   alt={item.medication.name}
                   className="w-12 h-12 object-cover rounded-lg"
                 />
               ) : (
-                <Package className="h-8 w-8 text-[#225F91]" />
+                <Pill className="h-8 w-8 text-[#225F91]" />
               )}
+            </div>
+            
+            {/* Status Indicator Overlay */}
+            <div className={cn(
+              "absolute -top-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center shadow-sm",
+              itemStatus.bgColor,
+              itemStatus.borderColor
+            )}>
+              <StatusIcon className="h-3 w-3" />
             </div>
           </div>
 
           {/* Enhanced Item Details */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between mb-2">
+            <div className="flex items-start justify-between mb-3">
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-[#225F91] text-base leading-tight mb-1 truncate">
-                  {item.medication.name}
-                </h3>
-                <p className="text-sm text-gray-600 mb-2">
-                  {item.medication.description || 'No description available'}
-                </p>
-                
-                {/* Enhanced Item Metadata */}
-                <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
-                  <span className="font-medium">₦{item.price.toLocaleString()}</span>
-                  <span>•</span>
-                  <span>{item.medication.strength || 'Standard strength'}</span>
-                  {item.medication.manufacturer && (
-                    <>
-                      <span>•</span>
-                      <span className="truncate">{item.medication.manufacturer}</span>
-                    </>
+                {/* Enhanced Title with Category and Generic Name */}
+                <div className="flex items-start gap-2 mb-2">
+                  <h3 className="font-semibold text-[#225F91] text-base leading-tight truncate">
+                    {item.medication.name}
+                  </h3>
+                  {item.medication.category && (
+                    <Badge className="bg-gray-100 text-gray-600 border-gray-200 text-xs font-medium">
+                      {item.medication.category}
+                    </Badge>
                   )}
                 </div>
 
-                {/* Enhanced Status Badge */}
+                {/* Generic Name */}
+                {item.medication.genericName && item.medication.genericName !== item.medication.name && (
+                  <p className="text-xs text-gray-500 mb-2 italic">
+                    Generic: {item.medication.genericName}
+                  </p>
+                )}
+
+                {/* Enhanced Description */}
+                <p className="text-sm text-gray-700 mb-3 line-clamp-2">
+                  {item.medication.description || 'No description available'}
+                </p>
+                
+                {/* Enhanced Item Metadata with Icons */}
+                <div className="flex flex-wrap items-center gap-3 text-xs text-gray-600 mb-3">
+                  {item.medication.dosage && (
+                    <div className="flex items-center gap-1">
+                      <Pill className="h-3 w-3 text-[#225F91]" />
+                      <span>{item.medication.dosage}</span>
+                    </div>
+                  )}
+                  
+                  {item.medication.form && (
+                    <div className="flex items-center gap-1">
+                      <Package className="h-3 w-3 text-[#225F91]" />
+                      <span>{item.medication.form}</span>
+                    </div>
+                  )}
+                  
+                  {item.medication.manufacturer && (
+                    <div className="flex items-center gap-1">
+                      <Building className="h-3 w-3 text-[#225F91]" />
+                      <span className="truncate">{item.medication.manufacturer}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Enhanced Status Badges with Better Visual Hierarchy */}
                 <div className="flex items-center gap-2 mb-3">
                   <Badge className={cn(
                     "text-xs font-medium",
@@ -174,49 +212,34 @@ const CartItem = ({
                 </div>
               </div>
 
-              {/* Enhanced Price Display */}
+              {/* Enhanced Price Display with Better Visual Hierarchy */}
               <div className="text-right ml-4">
                 <div className="text-lg font-bold text-[#225F91]">
                   ₦{calculateItemPrice(item).toLocaleString()}
                 </div>
                 <div className="text-sm text-gray-500">
-                  ₦{item.price.toLocaleString()} each
+                  ₦{item.price.toLocaleString()} per unit
                 </div>
+                {item.quantity > 1 && (
+                  <div className="text-xs text-[#1ABA7F] font-medium mt-1">
+                    {item.quantity} units × ₦{item.price.toLocaleString()}
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Enhanced Status Description */}
-            <div className={cn(
-              "p-3 rounded-lg border mb-4",
-              itemStatus.bgColor,
-              itemStatus.borderColor
-            )}>
-              <div className="flex items-start gap-2">
-                <StatusIcon className={cn("h-4 w-4 mt-0.5 flex-shrink-0", itemStatus.color)} />
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-[#225F91] mb-1">{itemStatus.description}</p>
-                  <p className="text-xs text-gray-600">
-                    {itemStatus.status === 'verified' && 'Your prescription has been verified and is ready for checkout.'}
-                    {itemStatus.status === 'pending' && 'Your prescription is being reviewed by our pharmacy team.'}
-                    {itemStatus.status === 'rejected' && 'Your prescription was rejected. Please upload a new one.'}
-                    {itemStatus.status === 'needs_prescription' && 'Please upload a prescription for this medication.'}
-                    {itemStatus.status === 'ready' && 'This item is available for immediate checkout.'}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Enhanced Action Buttons */}
+            {/* Enhanced Action Buttons with Better UX */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                {/* Enhanced Quantity Controls */}
-                <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+                {/* Enhanced Quantity Controls with Visual Feedback */}
+                <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1 shadow-sm">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => handleQuantityUpdate(item.quantity - 1)}
                     disabled={item.quantity <= 1 || isUpdating[item.id]}
-                    className="h-8 w-8 p-0 hover:bg-[#1ABA7F]/20 text-[#225F91] disabled:opacity-50"
+                    className="h-8 w-8 p-0 hover:bg-[#1ABA7F]/20 text-[#225F91] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                    title="Decrease quantity"
                   >
                     <Minus className="h-4 w-4" />
                   </Button>
@@ -225,7 +248,7 @@ const CartItem = ({
                     {isUpdating[item.id] ? (
                       <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#1ABA7F] border-t-transparent mx-auto"></div>
                     ) : (
-                      item.quantity
+                      `${item.quantity}`
                     )}
                   </span>
                   
@@ -234,32 +257,22 @@ const CartItem = ({
                     size="sm"
                     onClick={() => handleQuantityUpdate(item.quantity + 1)}
                     disabled={isUpdating[item.id]}
-                    className="h-8 w-8 p-0 hover:bg-[#1ABA7F]/20 text-[#225F91] disabled:opacity-50"
+                    className="h-8 w-8 p-0 hover:bg-[#1ABA7F]/20 text-[#225F91] disabled:opacity-50 transition-all duration-200"
+                    title="Increase quantity"
                   >
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>
-
-                {/* Enhanced Quick Actions */}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowQuantityDialog(true)}
-                  disabled={isUpdating[item.id]}
-                  className="h-8 px-3 text-xs hover:bg-[#1ABA7F]/10 text-[#225F91] disabled:opacity-50"
-                >
-                  <Edit3 className="h-3 w-3 mr-1" />
-                  Edit
-                </Button>
               </div>
 
-              {/* Enhanced Remove Button */}
+              {/* Enhanced Remove Button with Better Visual Feedback */}
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleRemove}
                 disabled={isUpdating[item.id]}
-                className="h-8 px-3 text-xs hover:bg-red-50 text-red-600 hover:text-red-700 disabled:opacity-50"
+                className="h-8 px-3 text-xs hover:bg-red-50 text-red-600 hover:text-red-700 disabled:opacity-50 transition-all duration-200 group-hover:bg-red-50"
+                title="Remove item from cart"
               >
                 <Trash2 className="h-3 w-3 mr-1" />
                 Remove

@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Package, CheckCircle, ArrowRight } from 'lucide-react';
 
-const QuantityUpdateDialog = ({ quantityUpdate, setQuantityUpdate, handleCheckout }) => {
+const QuantityUpdateDialog = ({ quantityUpdate, setQuantityUpdate }) => {
   if (!quantityUpdate) return null;
 
   return (
@@ -20,17 +20,17 @@ const QuantityUpdateDialog = ({ quantityUpdate, setQuantityUpdate, handleCheckou
             </DialogTitle>
           </div>
           <DialogDescription className="text-gray-600 leading-relaxed">
-            The quantity for <span className="font-semibold text-[#225F91]">{quantityUpdate.name}</span> has been updated to <span className="font-semibold text-[#1ABA7F]">{quantityUpdate.quantity}</span>.
+            The quantity for <span className="font-semibold text-[#225F91]">{quantityUpdate.name}</span> has been updated to <span className="font-semibold text-[#1ABA7F]">{quantityUpdate.quantity}</span>. Your cart total has been recalculated.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="p-4 bg-gradient-to-r from-[#1ABA7F]/10 to-green-50 rounded-xl border border-[#1ABA7F]/20 mb-6">
+        <div className="p-4 bg-green-50 rounded-xl border border-green-200 mb-6">
           <div className="flex items-start gap-3">
-            <Package className="h-5 w-5 text-[#1ABA7F] mt-0.5 flex-shrink-0" />
+            <Package className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
             <div>
-              <p className="text-sm font-medium text-[#225F91] mb-1">Item Updated Successfully</p>
-              <p className="text-sm text-[#1ABA7F]/70">
-                Your cart has been updated with the new quantity.
+              <p className="text-sm font-medium text-[#225F91] mb-1">Medication Updated Successfully</p>
+              <p className="text-sm text-gray-700">
+                Your cart has been updated with the new quantity and total price.
               </p>
             </div>
           </div>
@@ -43,13 +43,6 @@ const QuantityUpdateDialog = ({ quantityUpdate, setQuantityUpdate, handleCheckou
             className="w-full sm:w-auto border-[#1ABA7F]/20 text-[#225F91] hover:bg-[#1ABA7F]/10"
           >
             Continue Shopping
-          </Button>
-          <Button
-            onClick={handleCheckout}
-            className="w-full sm:w-auto bg-gradient-to-r from-[#1ABA7F] to-[#1ABA7F]/90 hover:from-[#1ABA7F]/90 hover:to-[#1ABA7F] text-white shadow-lg hover:shadow-xl"
-          >
-            <ArrowRight className="h-4 w-4 mr-2" />
-            Proceed to Checkout
           </Button>
         </DialogFooter>
       </DialogContent>

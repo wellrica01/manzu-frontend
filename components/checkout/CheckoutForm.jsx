@@ -60,7 +60,7 @@ const CheckoutForm = ({
       return {
         type: 'mixed',
         title: 'Mixed Order - OTC + Verified Prescriptions',
-        description: 'All items are ready for immediate payment.',
+        description: 'All medications are ready for immediate payment.',
         buttonText: 'Pay Now',
         buttonIcon: 'CreditCard',
         infoColor: 'green'
@@ -69,7 +69,7 @@ const CheckoutForm = ({
       return {
         type: 'otc_only',
         title: 'Over-the-Counter Order',
-        description: 'All items are ready for immediate payment.',
+        description: 'All medications are ready for immediate payment.',
         buttonText: 'Pay Now',
         buttonIcon: 'CreditCard',
         infoColor: 'green'
@@ -78,19 +78,19 @@ const CheckoutForm = ({
       return {
         type: 'prescription_verified',
         title: 'Prescription Order - All Verified',
-        description: 'All prescription items are verified and ready for payment.',
+        description: 'All prescription medications are verified and ready for payment.',
         buttonText: 'Pay Now',
         buttonIcon: 'CreditCard',
         infoColor: 'green'
       };
     } else {
       return {
-        type: 'empty',
-        title: 'Review Your Order',
-        description: 'Please review your cart items.',
-        buttonText: 'Continue',
-        buttonIcon: 'ArrowRight',
-        infoColor: 'gray'
+        type: 'ready',
+        title: 'Ready for Checkout',
+        description: 'All medications are ready for immediate payment.',
+        buttonText: 'Pay Now',
+        buttonIcon: 'CreditCard',
+        infoColor: 'green'
       };
     }
   };
@@ -131,7 +131,7 @@ const CheckoutForm = ({
               <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
               <div className="text-sm">
                 <p className="font-medium text-gray-900 mb-1">{orderType.description}</p>
-                <p className="text-gray-600">All items are ready for immediate checkout.</p>
+                <p className="text-gray-600">All medications are ready for immediate checkout.</p>
               </div>
             </div>
           </div>

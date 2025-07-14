@@ -1,13 +1,11 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Script from 'next/script';
 import { toast } from 'sonner';
-import { Loader2, ArrowLeft, ShoppingCart, CheckCircle, AlertCircle, CreditCard } from 'lucide-react';
+import { Loader2, ArrowLeft, CheckCircle, AlertCircle, CreditCard } from 'lucide-react';
 import ErrorMessage from '@/components/ErrorMessage';
-import EmptyCart from '@/components/cart/EmptyCart';
-import PendingMessage from './PendingMessage';
 import CheckoutDialog from './CheckoutDialog';
 import CheckoutForm from './CheckoutForm';
 import dynamic from 'next/dynamic';
@@ -18,87 +16,44 @@ import { getCartSegments, canProceedToCheckout } from '@/lib/cartUtils';
 const OrderSummary = dynamic(() => import('./OrderSummary'), { ssr: false });
 
 export default function Checkout() {
-  const [form, setForm] = useState({ name: '', email: '', phone: '', address: '', deliveryMethod: 'pickup' });
+  const [form, setForm] = useState({ 
+    name: '', 
+    email: '', 
+    phone: '', 
+    address: '', 
+    deliveryMethod: 'pickup' 
+  });
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [pendingMessage, setPendingMessage] = useState(null);
   const [showCheckoutDialog, setShowCheckoutDialog] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState('idle'); // idle, processing, success, error
   const [paymentError, setPaymentError] = useState(null);
+  const [cartLoaded, setCartLoaded] = useState(false);
   const router = useRouter();
   const { cart, fetchCart, guestId, isPending, isError } = useCart();
 
-  // Get cart segments - only ready items should be in checkout
+  // Get cart segments - only ready medications should be in checkout
   const segments = getCartSegments(cart);
   const canCheckout = canProceedToCheckout(segments);
+  
 
-  // Validate cart before proceeding
+
+  // Track when cart has been properly loaded
   useEffect(() => {
     if (!isPending && !isError && cart) {
-      if (!cart.pharmacies || cart.pharmacies.length === 0) {
-        setError('Your cart is empty. Please add items before proceeding to checkout.');
-        toast.error('Your cart is empty', { duration: 4000 });
-        return;
-      }
-      
-      if (!canCheckout) {
-        setError('No items are ready for checkout. Please upload prescriptions for required items in your cart.');
-        toast.error('No items ready for checkout', { duration: 4000 });
-        router.push('/cart');
-        return;
-      }
-      
-      if (segments.totalPrice <= 0) {
-        setError('Your cart total is invalid. Please review your items.');
-        toast.error('Invalid cart total', { duration: 4000 });
-        return;
-      }
+      setLoading(false);
+      setCartLoaded(true);
     }
-  }, [cart, isPending, isError, canCheckout, segments, router]);
+  }, [isPending, isError, cart]);
 
+  // Only redirect if cart has been loaded and there are no ready medications
   useEffect(() => {
-    async function loadCart() {
-      if (!guestId) {
-        setError('Guest ID not found');
-        toast.error('Guest ID not found', { duration: 4000 });
-        setLoading(false);
-        return;
-      }
-
-      try {
-        setError(null);
-        console.log('loadCart: cart state:', { cart, isPending, isError });
-
-        if (isPending) {
-          console.log('Cart query is pending, waiting...');
-          return;
-        }
-
-        if (isError) {
-          throw new Error('Failed to fetch cart or invalid cart data');
-        }
-
-        if (!cart || !Array.isArray(cart.pharmacies)) {
-          throw new Error('Invalid cart data: missing or invalid pharmacies');
-        }
-
-        // Only proceed if there are ready items
-        if (!canCheckout) {
-          throw new Error('No items ready for checkout');
-        }
-
-        console.log('Checkout ready items:', segments.readyForCheckout);
-      } catch (err) {
-        console.error('Fetch cart error:', err.message);
-        setError(mapErrorMessage(err.message));
-        toast.error(mapErrorMessage(err.message), { duration: 4000 });
-      } finally {
-        setLoading(false);
-      }
+    // Don't redirect while still loading or if cart hasn't been properly loaded yet
+    // Also ensure we have actual cart data (not null) before making the decision
+    if (cartLoaded && !isPending && !loading && !isError && cart && !canCheckout) {
+      router.push('/cart');
     }
-
-    loadCart();
-  }, [guestId, cart, isPending, isError, canCheckout, segments]);
+  }, [cartLoaded, isPending, loading, isError, cart, canCheckout, router]);
 
   const handleInputChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -122,7 +77,7 @@ export default function Checkout() {
       'Invalid email address': 'Please enter a valid email address.',
       'Invalid phone number (10-15 digits)': 'Please enter a valid phone number with 10-15 digits.',
       'Address is required for delivery': 'Please provide a delivery address.',
-      'Cart is empty or invalid': 'Your cart is empty or contains invalid items.',
+      'Cart is empty or invalid': 'Your cart is empty or contains invalid medications.',
       'One or more pharmacy addresses are not available for pickup': 'One or more pharmacy addresses are unavailable for pickup. Please select delivery or contact support.',
       'Checkout failed: Server error': 'An error occurred during checkout. Please try again or contact support.',
       'Invalid transaction parameters': 'Payment couldn\'t be processed. Please check your details and try again.',
@@ -132,9 +87,9 @@ export default function Checkout() {
       'All fields are required': 'Please fill in all required fields.',
       'Invalid phone number': 'Please enter a valid phone number.',
       'Address is required for delivery': 'Please provide a delivery address.',
-      'Cart is empty or invalid': 'Your cart is empty. Please add items before checkout.',
+      'Cart is empty or invalid': 'Your cart is empty. Please add medications before checkout.',
       'One or more pharmacy addresses are not available for pickup': 'Some pharmacy addresses are unavailable for pickup. Please select delivery.',
-      'No items ready for checkout': 'Please upload prescriptions for required items in your cart.',
+      'No medications ready for checkout': 'Please complete prescription requirements in your cart.',
     };
     return errorMap[error] || error || 'An error occurred. Please try again.';
   };
@@ -146,7 +101,7 @@ export default function Checkout() {
 
   const confirmCheckout = async () => {
     if (!canCheckout) {
-      toast.error('No items ready for checkout', { duration: 4000 });
+      toast.error('No medications ready for checkout', { duration: 4000 });
       return;
     }
 
@@ -163,24 +118,16 @@ export default function Checkout() {
         throw new Error('Address is required for delivery');
       }
 
-      // Create order with only ready items
+      // Create order with ready medications
       const orderData = {
-        items: segments.readyForCheckout.map(item => ({
-          pharmacyMedicationId: item.pharmacyMedicationId,
-          quantity: item.quantity,
-          price: item.price
-        })),
-        customerInfo: {
-          name: form.name,
-          email: form.email,
-          phone: form.phone,
-          address: form.address,
-          deliveryMethod: form.deliveryMethod
-        },
-        totalAmount: segments.totalPrice
+        name: form.name,
+        email: form.email,
+        phone: form.phone,
+        address: form.address,
+        deliveryMethod: form.deliveryMethod
       };
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/checkout`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/med-checkout`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -195,13 +142,21 @@ export default function Checkout() {
       }
 
       const result = await response.json();
-      setPaymentStatus('success');
+      console.log('Checkout response:', result);
       
-      // Clear cart after successful checkout
-      await fetchCart();
-      
-      // Redirect to confirmation
-      router.push(`/confirmation?orderId=${result.orderId}`);
+      // Check if we have a payment URL to redirect to Paystack
+      if (result.paymentUrl) {
+        console.log('Redirecting to Paystack payment:', result.paymentUrl);
+        console.log('Full result:', result);
+        window.location.href = result.paymentUrl;
+      } else {
+        // Fallback: redirect to confirmation with order ID
+        console.log('No payment URL found, using fallback');
+        setPaymentStatus('success');
+        await fetchCart();
+        const orderId = result.orders?.[0]?.orderId || result.checkoutSessionId;
+        router.push(`/confirmation?orderId=${orderId}`);
+      }
       
     } catch (err) {
       console.error('Checkout error:', err);
@@ -241,7 +196,8 @@ export default function Checkout() {
     </Card>
   );
 
-  if (loading) {
+  // Show loading state while cart is being fetched or if we haven't determined checkout eligibility yet
+  if (loading || isPending || !cartLoaded) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 via-gray-50/50 to-white/80 flex items-center justify-center">
         <div className="text-center">
@@ -268,7 +224,8 @@ export default function Checkout() {
     );
   }
 
-  if (!canCheckout) {
+  // Don't show the "no medications ready" UI if cart is still loading or if we haven't checked the cart yet
+  if (!canCheckout && cartLoaded && !isPending && !loading && !isError && cart) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 via-gray-50/50 to-white/80 py-12 px-4">
         <div className="container mx-auto max-w-4xl">
@@ -276,13 +233,13 @@ export default function Checkout() {
             <CardHeader>
               <CardTitle className="text-orange-800 flex items-center gap-2">
                 <AlertCircle className="h-5 w-5" />
-                No Items Ready for Checkout
+                No Medications Ready for Checkout
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-orange-700 mb-4">
-                All items in your cart require prescription verification. 
-                Please upload prescriptions in your cart before proceeding to checkout.
+                All medications in your cart require prescription verification. 
+                Please complete prescription requirements in your cart before proceeding to checkout.
               </p>
               <Button onClick={handleBackToCart} className="bg-orange-600 hover:bg-orange-700">
                 <ArrowLeft className="h-4 w-4 mr-2" />
@@ -296,7 +253,7 @@ export default function Checkout() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 via-gray-50/50 to-white/80 py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 to-gray-50/30 py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       <div className="absolute inset-0 bg-[url('/svg/pattern-dots.svg')] opacity-10 pointer-events-none" aria-hidden="true" />
       
       {/* Payment Scripts */}
@@ -357,14 +314,6 @@ export default function Checkout() {
           loading={paymentStatus === 'processing'}
           segments={segments}
         />
-
-        {/* Pending Message */}
-        {pendingMessage && (
-          <PendingMessage
-            message={pendingMessage}
-            onClose={() => setPendingMessage(null)}
-          />
-        )}
       </div>
     </div>
   );

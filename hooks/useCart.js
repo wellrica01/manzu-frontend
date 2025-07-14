@@ -30,11 +30,11 @@ export function useCart() {
     staleTime: 5 * 1000, // Cache for 5 seconds
     refetchOnWindowFocus: false,
     retry: 2, // Retry up to 2 times on failure
-    placeholderData: { pharmacies: [], totalPrice: 0 }, // Provide fallback during loading
+    placeholderData: undefined, // Don't provide placeholder data to avoid premature evaluation
   });
 
-  const cart = cartData || { pharmacies: [], totalPrice: 0 };
-  const cartItemCount = cart.pharmacies?.reduce((sum, pharmacy) => sum + (pharmacy.items?.length || 0), 0) || 0;
+  const cart = cartData || null;
+  const cartItemCount = cart?.pharmacies?.reduce((sum, pharmacy) => sum + (pharmacy.items?.length || 0), 0) || 0;
 
   console.log('useCart state:', { isPending, isError, error, cart });
 

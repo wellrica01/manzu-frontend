@@ -13,7 +13,7 @@ import PharmacyCartCard from './PharmacyCartCard';
 import CartSummary from './CartSummary';
 import PrescriptionUploadSection from './PrescriptionUploadSection';
 import { getCartSegments, getCartStatus, canProceedToCheckout } from '@/lib/cartUtils';
-import { ShoppingCart, ArrowLeft, Sparkles, Clock, CheckCircle, Package, AlertCircle, Loader2, RefreshCw } from 'lucide-react';
+import { ShoppingCart, ArrowLeft, Sparkles, Clock, CheckCircle, Package, AlertCircle, Loader2, RefreshCw, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 
 export default function Cart() {
@@ -100,15 +100,25 @@ export default function Cart() {
           const statusData = await response.json();
           const currentStatuses = prescriptionStatuses;
           
-          // Check if any prescription status changed to 'verified'
+          // Check if any prescription status changed to 'verified' or 'rejected'
           const newlyVerified = Object.keys(statusData).filter(medId => 
             statusData[medId] === 'verified' && currentStatuses[medId] !== 'verified'
+          );
+          
+          const newlyRejected = Object.keys(statusData).filter(medId => 
+            statusData[medId] === 'rejected' && currentStatuses[medId] !== 'rejected'
           );
 
           if (newlyVerified.length > 0) {
             // Refresh cart data to get updated order status
             await fetchCart();
             toast.success('Your prescription has been verified! 🎉', { duration: 5000 });
+          }
+          
+          if (newlyRejected.length > 0) {
+            // Refresh cart data to get updated order status
+            await fetchCart();
+            toast.error('Your prescription has been rejected. Please upload a new prescription.', { duration: 5000 });
           }
 
           setPrescriptionStatuses(statusData || {});
@@ -193,6 +203,17 @@ export default function Cart() {
   };
 
   const handleCheckout = () => {
+    console.log('Cart handleCheckout called');
+    console.log('Cart debug - segments:', segments);
+    console.log('Cart debug - canCheckout:', canCheckout);
+    console.log('Cart debug - readyForCheckout length:', segments.readyForCheckout.length);
+    
+    if (!canCheckout) {
+      console.log('Cart handleCheckout - canCheckout is false, showing error');
+      toast.error('No medications ready for checkout. Please complete prescription requirements first.', { duration: 4000 });
+      return;
+    }
+    console.log('Cart handleCheckout - navigating to checkout');
     router.push('/checkout');
   };
 
@@ -234,8 +255,9 @@ export default function Cart() {
   const cartStatus = getCartStatus(segments);
   const canCheckout = canProceedToCheckout(segments);
   
-  // Check if cart is in pending_prescription status
-  const isPendingPrescription = cart?.orderStatus === 'pending_prescription';
+  // Check if cart has rejected prescriptions
+  const hasRejectedPrescriptions = segments.rejectedPrescription.length > 0;
+  const isPendingPrescription = cart?.orderStatus === 'pending_prescription' && !hasRejectedPrescriptions;
 
   // Group items by pharmacy for display
   const groupItemsByPharmacy = (items) => {
@@ -256,7 +278,7 @@ export default function Cart() {
   };
 
   const readyPharmacies = groupItemsByPharmacy(segments.readyForCheckout);
-  const prescriptionPharmacies = groupItemsByPharmacy([...segments.needsPrescription, ...segments.pendingPrescription]);
+  const prescriptionPharmacies = groupItemsByPharmacy([...segments.needsPrescription, ...segments.pendingPrescription, ...segments.rejectedPrescription]);
 
   // Get cart type for better UX
   const getCartType = () => {
@@ -285,44 +307,134 @@ export default function Cart() {
     const hasReadyItems = segments.readyForCheckout.length > 0;
     const hasPendingItems = segments.needsPrescription.length > 0;
     const hasPendingPrescriptionItems = segments.pendingPrescription.length > 0;
+    const hasRejectedItems = segments.rejectedPrescription.length > 0;
     const hasVerifiedItems = segments.readyForCheckout.some(item => item.medication.prescriptionRequired && item.prescriptionStatus === 'verified');
     const hasOTCItems = segments.readyForCheckout.some(item => !item.medication.prescriptionRequired);
     
-    // Show tabs if we have both ready items (OTC or verified) and pending items (needs prescription or pending prescription)
-    return (hasReadyItems && (hasPendingItems || hasPendingPrescriptionItems)) || (hasVerifiedItems && (hasPendingItems || hasPendingPrescriptionItems));
+    // Show tabs if we have multiple different types of items
+    const prescriptionTypes = [hasPendingItems, hasPendingPrescriptionItems, hasRejectedItems].filter(Boolean).length;
+    return (hasReadyItems && prescriptionTypes > 0) || prescriptionTypes > 1;
   };
+
+  // Get available tabs based on cart content
+  const getAvailableTabs = () => {
+    const tabs = [];
+    
+    if (segments.readyForCheckout.length > 0) {
+      tabs.push({
+        id: 'ready',
+        label: 'Ready Medications',
+        shortLabel: 'Ready',
+        icon: CheckCircle,
+        count: segments.readyItemsCount,
+        color: 'bg-[#1ABA7F]/10 text-[#1ABA7F]'
+      });
+    }
+    
+    if (segments.needsPrescription.length > 0) {
+      tabs.push({
+        id: 'needs_prescription',
+        label: 'Needs Prescription',
+        shortLabel: 'Needs Rx',
+        icon: AlertCircle,
+        count: segments.prescriptionItemsCount,
+        color: 'bg-orange-100 text-orange-700'
+      });
+    }
+    
+    if (segments.pendingPrescription.length > 0) {
+      tabs.push({
+        id: 'pending',
+        label: 'Under Review',
+        shortLabel: 'Review',
+        icon: Clock,
+        count: segments.pendingItemsCount,
+        color: 'bg-blue-100 text-blue-700'
+      });
+    }
+    
+    if (segments.rejectedPrescription.length > 0) {
+      tabs.push({
+        id: 'rejected',
+        label: 'Rejected',
+        shortLabel: 'Rejected',
+        icon: AlertTriangle,
+        count: segments.rejectedItemsCount,
+        color: 'bg-red-100 text-red-700'
+      });
+    }
+    
+    return tabs;
+  };
+
+  const availableTabs = getAvailableTabs();
 
   // Auto-select active tab based on cart content
   useEffect(() => {
-    if (readyPharmacies.length > 0 && prescriptionPharmacies.length === 0) {
-      setActiveTab('ready');
-    } else if (prescriptionPharmacies.length > 0 && readyPharmacies.length === 0) {
-      setActiveTab('prescription');
-    } else if (readyPharmacies.length > 0 && prescriptionPharmacies.length > 0) {
-      setActiveTab('ready'); // Default to ready items
-    } else if (segments.readyForCheckout.length > 0 && (segments.needsPrescription.length > 0 || segments.pendingPrescription.length > 0)) {
-      setActiveTab('ready'); // Default to ready items for mixed cart
+    if (availableTabs.length === 0) return;
+    
+    // Priority order: ready > rejected > pending > needs prescription
+    const priorityOrder = ['ready', 'rejected', 'pending', 'needs_prescription'];
+    const currentTab = availableTabs.find(tab => tab.id === activeTab);
+    
+    if (!currentTab || !availableTabs.some(tab => tab.id === activeTab)) {
+      // Find the highest priority available tab
+      for (const tabId of priorityOrder) {
+        const tab = availableTabs.find(t => t.id === tabId);
+        if (tab) {
+          setActiveTab(tabId);
+          break;
+        }
+      }
     }
-  }, [readyPharmacies.length, prescriptionPharmacies.length, segments.readyForCheckout.length, segments.needsPrescription.length, segments.pendingPrescription.length]);
+  }, [availableTabs, activeTab]);
 
   // Get context-specific summary data
   const getTabSpecificSummary = () => {
-    if (activeTab === 'ready') {
+    switch (activeTab) {
+      case 'ready':
       return {
-        title: 'Ready Items Summary',
+          title: 'Ready Medications Summary',
         items: segments.readyForCheckout,
         totalPrice: segments.totalPrice,
         itemCount: segments.readyItemsCount,
-        message: 'These items are ready for immediate checkout',
+          message: 'These medications are ready for immediate checkout',
         type: 'ready'
       };
-    } else {
+      case 'needs_prescription':
       return {
-        title: 'Prescription Items Summary',
+          title: 'Needs Prescription Summary',
         items: segments.needsPrescription,
         totalPrice: segments.prescriptionPrice,
         itemCount: segments.prescriptionItemsCount,
-        message: 'Upload prescriptions to proceed with these items',
+          message: 'Upload prescriptions to proceed with these medications',
+          type: 'needs_prescription'
+        };
+      case 'pending':
+        return {
+          title: 'Under Review Summary',
+          items: segments.pendingPrescription,
+          totalPrice: segments.pendingPrice,
+          itemCount: segments.pendingItemsCount,
+          message: 'Your prescriptions are being reviewed by our pharmacy team',
+          type: 'pending'
+        };
+      case 'rejected':
+        return {
+          title: 'Rejected Prescriptions Summary',
+          items: segments.rejectedPrescription,
+          totalPrice: segments.rejectedPrice,
+          itemCount: segments.rejectedItemsCount,
+          message: 'Upload new prescriptions to proceed with these medications',
+          type: 'rejected'
+        };
+      default:
+        return {
+          title: 'Prescription Medications Summary',
+          items: [...segments.needsPrescription, ...segments.pendingPrescription, ...segments.rejectedPrescription],
+          totalPrice: segments.prescriptionPrice + segments.pendingPrice + segments.rejectedPrice,
+          itemCount: segments.prescriptionItemsCount + segments.pendingItemsCount + segments.rejectedItemsCount,
+          message: 'Upload prescriptions to proceed with these medications',
         type: 'prescription'
       };
     }
@@ -331,77 +443,142 @@ export default function Cart() {
   const tabSummary = getTabSpecificSummary();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 via-gray-50/50 to-white/80">
-      {/* Enhanced Header */}
-      <div className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-[#1ABA7F]/20 shadow-sm">
+    <div className="min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 to-gray-50/30 relative">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 bg-[url('/svg/pattern-dots.svg')] opacity-10 pointer-events-none" aria-hidden="true" />      {/* Brand-Aligned Cart Header */}
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[#1ABA7F]/20 shadow-sm">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-4">
+          <div className="flex items-center justify-between h-20">
+            {/* Left Section - Navigation & Title */}
+            <div className="flex items-center gap-6">
+              {/* Back Button */}
               <Link 
                 href="/"
-                className="p-2 rounded-full hover:bg-[#1ABA7F]/10 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#1ABA7F] focus:ring-offset-2"
+                className="group p-3 rounded-xl hover:bg-[#1ABA7F]/10 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#1ABA7F] focus:ring-offset-2"
                 aria-label="Go back to home"
               >
-                <ArrowLeft className="h-5 w-5 text-[#225F91]" />
+                <ArrowLeft className="h-5 w-5 text-[#225F91] group-hover:text-[#1ABA7F] transition-colors duration-200" />
               </Link>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-gradient-to-br from-[#1ABA7F] to-[#225F91] rounded-xl shadow-sm">
-                  <ShoppingCart className="h-5 w-5 text-white" />
+              
+              {/* Cart Title & Info */}
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <div className="p-3 bg-[#1ABA7F] rounded-2xl shadow-lg">
+                    <ShoppingCart className="h-6 w-6 text-white" />
+                  </div>
+                  {/* Cart Item Count Badge */}
+                  {cart?.pharmacies?.length > 0 && (
+                    <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center shadow-lg">
+                      <span className="text-xs font-bold text-white">
+                        {segments.readyItemsCount + segments.prescriptionItemsCount + segments.pendingItemsCount + segments.rejectedItemsCount}
+                      </span>
+                    </div>
+                  )}
                 </div>
-                <div>
-                  <h1 className="text-xl font-bold text-[#225F91]">Your Cart</h1>
-                  <p className="text-sm text-gray-500">
-                    {cart?.pharmacies?.length || 0} pharmacies • {segments.readyItemsCount + segments.prescriptionItemsCount} items
+
+              <div className="hidden sm:block">
+                    <div className="flex items-center gap-3">
+                      <h1 className="text-3xl sm:text-4xl font-bold text-[#225F91] tracking-tight">Your Cart</h1>
+                    </div>
+                    <p className="text-sm font-semibold text-[#1ABA7F]">
+                      {cart?.pharmacies?.length || 0} pharmacies • {segments.readyItemsCount + segments.prescriptionItemsCount + segments.pendingItemsCount + segments.rejectedItemsCount} medications
                   </p>
                 </div>
               </div>
             </div>
             
-            {/* Enhanced Cart Status Badge */}
+            {/* Center Section - Cart Status (Desktop) */}
+            <div className="hidden md:flex items-center gap-4">
             {cartType !== 'empty' && (
-              <div className={`px-4 py-2 rounded-full text-sm font-medium shadow-sm transition-all duration-200 ${
-                cartType === 'otc_only' ? 'bg-green-100 text-green-700 border border-green-200' :
+                <div className="flex items-center gap-6">
+                  {/* Progress Steps for Prescription Medications */}
+                  {(segments.prescriptionItemsCount > 0 || segments.pendingItemsCount > 0 || segments.rejectedItemsCount > 0) && (
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                          segments.needsPrescription.length > 0 ? 'bg-orange-400 shadow-lg' : 'bg-gray-300'
+                        }`}></div>
+                        <span className="text-xs text-gray-500">Upload</span>
+                      </div>
+                      <div className="w-8 h-0.5 bg-gray-200"></div>
+                      <div className="flex items-center gap-2">
+                        <div className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                          segments.pendingPrescription.length > 0 ? 'bg-blue-400 shadow-lg' : 'bg-gray-300'
+                        }`}></div>
+                        <span className="text-xs text-gray-500">Review</span>
+                      </div>
+                      <div className="w-8 h-0.5 bg-gray-200"></div>
+                      <div className="flex items-center gap-2">
+                        <div className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                          segments.readyForCheckout.some(item => item.prescriptionStatus === 'verified') ? 'bg-[#1ABA7F] shadow-lg' : 
+                          segments.rejectedPrescription.length > 0 ? 'bg-red-400 shadow-lg' : 'bg-gray-300'
+                        }`}></div>
+                        <span className="text-xs text-gray-500">
+                          {segments.rejectedPrescription.length > 0 ? 'Rejected' : 'Ready'}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Cart Status Badge */}
+                  <div className={`px-4 py-2 rounded-full text-sm font-semibold shadow-sm transition-all duration-300 ${
+                    cartType === 'otc_only' ? 'bg-[#1ABA7F]/10 text-[#1ABA7F] border border-[#1ABA7F]/20' :
                 cartType === 'prescription_only' ? 'bg-orange-100 text-orange-700 border border-orange-200' :
-                'bg-[#1ABA7F]/10 text-[#225F91] border border-[#1ABA7F]/20'
+                    'bg-[#225F91]/10 text-[#225F91] border border-[#225F91]/20'
               }`}>
                 {cartType === 'otc_only' && <CheckCircle className="h-4 w-4 inline mr-2" />}
                 {cartType === 'prescription_only' && <Clock className="h-4 w-4 inline mr-2" />}
                 {cartType === 'mixed' && <Sparkles className="h-4 w-4 inline mr-2" />}
-                {cartType === 'otc_only' && 'Ready'}
-                {cartType === 'prescription_only' && 'Pending'}
-                {cartType === 'mixed' && 'Mixed'}
+                    {cartType === 'otc_only' && 'Ready for Checkout'}
+                    {cartType === 'prescription_only' && 'Prescription Required'}
+                    {cartType === 'mixed' && 'Mixed Order'}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Right Section - Actions */}
+            <div className="flex items-center gap-3">
+              {/* Mobile Cart Info (Hidden on Desktop) */}
+              <div className="sm:hidden">
+                <h1 className="text-lg font-bold text-[#225F91]">Cart</h1>
+                <p className="text-sm font-semibold text-[#1ABA7F]">
+                   {segments.readyItemsCount + segments.prescriptionItemsCount + segments.pendingItemsCount + segments.rejectedItemsCount} medications
+               </p>
               </div>
-            )}
 
             {/* Refresh Button */}
             <button
               onClick={handleRefreshCart}
               disabled={isRefreshing}
-              className="p-2 rounded-full hover:bg-[#1ABA7F]/10 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#1ABA7F] focus:ring-offset-2 disabled:opacity-50"
+                className="group p-3 rounded-xl hover:bg-[#1ABA7F]/10 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#1ABA7F] focus:ring-offset-2 disabled:opacity-50"
               aria-label="Refresh cart"
             >
               {isRefreshing ? (
                 <Loader2 className="h-5 w-5 text-[#1ABA7F] animate-spin" />
               ) : (
-                <RefreshCw className="h-5 w-5 text-[#225F91]" />
+                  <RefreshCw className="h-5 w-5 text-[#225F91] group-hover:text-[#1ABA7F] transition-colors duration-200" />
               )}
             </button>
           </div>
         </div>
       </div>
+      </header>
 
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <ErrorMessage error={error} />
         
         {!isFetched ? (
           <div className="flex justify-center py-20">
-            <div className="flex flex-col items-center gap-4">
+            <div className="flex flex-col items-center gap-6">
               <div className="relative">
-                <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#1ABA7F]/20 border-t-[#1ABA7F]"></div>
+                <div className="animate-spin rounded-full h-16 w-16 border-4 border-[#1ABA7F]/20 border-t-[#1ABA7F]"></div>
                 <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-[#225F91]/40 animate-pulse"></div>
               </div>
-              <p className="text-gray-500 font-medium">Loading your cart...</p>
-              <p className="text-sm text-gray-400">Please wait while we fetch your items</p>
+              <div className="text-center">
+                <h2 className="text-xl font-semibold text-gray-900 mb-2">Loading your cart...</h2>
+                <p className="text-gray-500">Please wait while we fetch your medications</p>
+              </div>
             </div>
           </div>
         ) : cart.pharmacies.length === 0 ? (
@@ -409,63 +586,6 @@ export default function Cart() {
         ) : (
           <div className="max-w-6xl mx-auto lg:flex lg:gap-8">
             <div className="flex-1 min-w-0">
-              {/* Enhanced Context-Aware Prescription Status Banner */}
-              {activeTab === 'prescription' && isPendingPrescription && (
-                <div className="mb-8 p-6 bg-gradient-to-r from-[#225F91]/10 to-[#1ABA7F]/10 border border-[#225F91]/20 rounded-2xl shadow-sm">
-                  <div className="flex items-start gap-4">
-                    <div className="p-3 bg-[#225F91]/20 rounded-xl">
-                      <Clock className="h-6 w-6 text-[#225F91]" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-[#225F91] mb-2 text-lg">Prescription Under Review</h3>
-                      <p className="text-[#225F91] leading-relaxed">
-                        Your prescription has been uploaded and is being reviewed by our pharmacy team. 
-                        You'll be notified once verification is complete.
-                      </p>
-                      <div className="mt-3 flex items-center gap-2 text-sm text-[#225F91]">
-                        <div className="w-2 h-2 bg-[#1ABA7F] rounded-full animate-pulse"></div>
-                        <span>Review in progress...</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Enhanced Prescription Verified Success Banner */}
-              {activeTab === 'ready' && segments.readyForCheckout.some(item => item.prescriptionStatus === 'verified') && 
-                !segments.needsPrescription.length && !segments.pendingPrescription.length && (
-                <div className="mb-8 p-6 bg-gradient-to-r from-[#1ABA7F]/10 to-green-100/50 border border-[#1ABA7F]/20 rounded-2xl shadow-sm">
-                  <div className="flex items-start gap-4">
-                    <div className="p-3 bg-[#1ABA7F]/20 rounded-xl">
-                      <CheckCircle className="h-6 w-6 text-[#1ABA7F]" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-[#225F91] mb-2 text-lg">Prescription Verified!</h3>
-                      <p className="text-[#225F91] leading-relaxed">
-                        Your prescription has been verified and is now ready for checkout. You can proceed to payment anytime.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Enhanced Ready Items Success Banner */}
-              {activeTab === 'ready' && readyPharmacies.length > 0 && prescriptionPharmacies.length > 0 && 
-                !segments.readyForCheckout.some(item => item.prescriptionStatus === 'verified') && (
-                <div className="mb-8 p-6 bg-gradient-to-r from-[#1ABA7F]/10 to-green-100/50 border border-[#1ABA7F]/20 rounded-2xl shadow-sm">
-                  <div className="flex items-start gap-4">
-                    <div className="p-3 bg-[#1ABA7F]/20 rounded-xl">
-                      <CheckCircle className="h-6 w-6 text-[#1ABA7F]" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-[#225F91] mb-2 text-lg">Ready for Checkout</h3>
-                      <p className="text-[#225F91] leading-relaxed">
-                        These items are ready for immediate checkout. You can proceed to payment anytime.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
 
             <RemoveItemDialog
               removeItem={removeItem}
@@ -479,40 +599,245 @@ export default function Cart() {
               handleCheckout={handleCheckout}
             />
 
-              {/* Enhanced Smart Tab Navigation */}
+              {/* Professional Tab Navigation */}
               {shouldShowTabs() && (
                 <div className="mb-8">
-                  <div className="flex bg-gray-100 rounded-2xl p-1.5 shadow-sm">
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-2">
+                    <div className="flex bg-gray-50 rounded-xl p-1">
+                      {availableTabs.map((tab) => (
                     <button
-                      onClick={() => setActiveTab('ready')}
-                      className={`flex-1 flex items-center justify-center gap-3 py-4 px-6 rounded-xl font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#1ABA7F] focus:ring-offset-2 ${
-                        activeTab === 'ready'
-                          ? 'bg-white text-[#1ABA7F] shadow-md transform scale-105'
-                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                      }`}
-                    >
-                      <CheckCircle className="h-5 w-5" />
-                      <span>Ready ({segments.readyItemsCount})</span>
+                          key={tab.id}
+                          onClick={() => setActiveTab(tab.id)}
+                          className={`flex-1 flex items-center justify-center gap-3 py-4 px-6 rounded-lg font-semibold transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#1ABA7F] focus:ring-offset-2 ${
+                            activeTab === tab.id
+                              ? `bg-white text-[#1ABA7F] shadow-md transform scale-105 border border-gray-200 ${tab.color}`
+                              : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
+                          }`}
+                        >
+                          <tab.icon className="h-5 w-5" />
+                          <span className="hidden sm:inline">{tab.label}</span>
+                          <span className="sm:hidden">{tab.shortLabel}</span>
+                          <span className={`${tab.color} px-2 py-1 rounded-full text-xs font-bold`}>
+                            {tab.count}
+                          </span>
                     </button>
-                    <button
-                      onClick={() => setActiveTab('prescription')}
-                      className={`flex-1 flex items-center justify-center gap-3 py-4 px-6 rounded-xl font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#1ABA7F] focus:ring-offset-2 ${
-                        activeTab === 'prescription'
-                          ? 'bg-white text-[#1ABA7F] shadow-md transform scale-105'
-                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                      }`}
-                    >
-                      <Clock className="h-5 w-5" />
-                      <span>Pending ({segments.prescriptionItemsCount + segments.pendingItemsCount})</span>
-                    </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+            {/* Enhanced Context-Aware Status Banners */}
+            
+            {/* Ready Medications Banner */}
+            {activeTab === 'ready' && segments.readyForCheckout.some(item => item.prescriptionStatus === 'verified') && (
+              <div className="mb-8 p-6 bg-gradient-to-r from-[#1ABA7F]/10 to-green-100/50 border border-[#1ABA7F]/20 rounded-2xl shadow-sm">
+                <div className="flex items-start gap-4">
+                  <div className="p-3 bg-[#1ABA7F]/20 rounded-xl">
+                    <CheckCircle className="h-6 w-6 text-[#1ABA7F]" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-[#225F91] mb-2 text-lg">Prescription Verified! 🎉</h3>
+                    <p className="text-[#225F91] leading-relaxed mb-3">
+                      Your prescription has been verified and is now ready for checkout. You can proceed to payment anytime.
+                    </p>
+                    <div className="flex items-center gap-4 text-sm">
+                      <span className="text-[#1ABA7F] font-medium">✓ Verified by pharmacy team</span>
+                      <span className="text-[#225F91]/60">•</span>
+                      <span className="text-[#225F91]/60">Ready for immediate checkout</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* OTC Medications Banner */}
+            {activeTab === 'ready' && segments.readyForCheckout.some(item => !item.medication.prescriptionRequired) && 
+              !segments.readyForCheckout.some(item => item.prescriptionStatus === 'verified') && (
+              <div className="mb-8 p-6 bg-gradient-to-r from-[#1ABA7F]/10 to-green-100/50 border border-[#1ABA7F]/20 rounded-2xl shadow-sm">
+                <div className="flex items-start gap-4">
+                  <div className="p-3 bg-[#1ABA7F]/20 rounded-xl">
+                    <CheckCircle className="h-6 w-6 text-[#1ABA7F]" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-[#225F91] mb-2 text-lg">Ready for Checkout</h3>
+                    <p className="text-[#225F91] leading-relaxed mb-3">
+                      These medications are ready for immediate checkout. You can proceed to payment anytime.
+                    </p>
+                    <div className="flex items-center gap-4 text-sm">
+                      <span className="text-[#1ABA7F] font-medium">✓ OTC medications available</span>
+                      <span className="text-[#225F91]/60">•</span>
+                      <span className="text-[#225F91]/60">No prescription required</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Needs Prescription Banner */}
+            {activeTab === 'needs_prescription' && (
+              <div className="mb-8 p-6 bg-gradient-to-r from-orange-50 to-orange-100/50 border border-orange-200 rounded-2xl shadow-sm">
+                <div className="flex items-start gap-4">
+                  <div className="p-3 bg-orange-100 rounded-xl">
+                    <AlertCircle className="h-6 w-6 text-orange-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-orange-800 mb-2 text-lg">Prescription Required</h3>
+                    <p className="text-orange-700 leading-relaxed mb-3">
+                      These medications require a prescription. Please upload your prescription to proceed with checkout.
+                    </p>
+                    <div className="flex items-center gap-4 text-sm">
+                      <span className="text-orange-600 font-medium">📋 Upload prescription to continue</span>
+                      <span className="text-orange-600/60">•</span>
+                      <span className="text-orange-600/60">Prescription will be reviewed within 24-48 hours</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Under Review Banner */}
+            {activeTab === 'pending' && (
+              <div className="mb-8 p-6 bg-gradient-to-r from-[#225F91]/10 to-[#1ABA7F]/10 border border-[#225F91]/20 rounded-2xl shadow-sm">
+                <div className="flex items-start gap-4">
+                  <div className="p-3 bg-[#225F91]/20 rounded-xl">
+                    <Clock className="h-6 w-6 text-[#225F91]" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-[#225F91] mb-2 text-lg">Prescription Under Review</h3>
+                    <p className="text-[#225F91] leading-relaxed mb-3">
+                      Your prescription has been uploaded and is being reviewed by our pharmacy team. 
+                      You'll be notified once verification is complete.
+                    </p>
+                    <div className="flex items-center gap-4 text-sm">
+                      <div className="flex items-center gap-2 text-[#225F91]">
+                        <div className="w-2 h-2 bg-[#1ABA7F] rounded-full animate-pulse"></div>
+                        <span>Review in progress...</span>
+                      </div>
+                      <span className="text-[#225F91]/60">•</span>
+                      <span className="text-[#225F91]/60">Usually takes 24-48 hours</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Rejected Prescriptions Banner */}
+            {activeTab === 'rejected' && (
+              <div className="mb-8 p-6 bg-gradient-to-r from-red-50 to-red-100/50 border border-red-200 rounded-2xl shadow-sm">
+                <div className="flex items-start gap-4">
+                  <div className="p-3 bg-red-100 rounded-xl">
+                    <AlertTriangle className="h-6 w-6 text-red-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-red-800 mb-2 text-lg">Prescription Rejected</h3>
+                    <p className="text-red-700 leading-relaxed mb-3">
+                      Your prescription was rejected by our pharmacy team. Please upload a new prescription to proceed with these medications.
+                    </p>
+                    <div className="flex items-center gap-4 text-sm">
+                      <span className="text-red-600 font-medium">⚠️ Upload new prescription to continue</span>
+                      <span className="text-red-600/60">•</span>
+                      <span className="text-red-600/60">Check email for rejection details</span>
+                    </div>
+                  </div>
                   </div>
               </div>
             )}
 
               {/* Enhanced Content Sections */}
               <div className="space-y-8">
+                {/* Tab-Specific Content (only when tabs are shown) */}
+                {shouldShowTabs() && (
+                  <>
+                    {/* Ready for Checkout Section */}
+                    {activeTab === 'ready' && readyPharmacies.length > 0 && (
+                      <div className="space-y-6">
+                        {readyPharmacies.map((pharmacy) => (
+                          <PharmacyCartCard
+                            key={pharmacy.pharmacy.id}
+                            pharmacy={pharmacy}
+                            handleQuantityChange={handleQuantityChange}
+                            setRemoveItem={setRemoveItem}
+                            isUpdating={isUpdating}
+                            calculateItemPrice={calculateItemPrice}
+                            segment="ready"
+                          />
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Needs Prescription Section */}
+                    {activeTab === 'needs_prescription' && segments.needsPrescription.length > 0 && (
+                      <div className="space-y-6">
+                        {groupItemsByPharmacy(segments.needsPrescription).map((pharmacy) => (
+                          <PharmacyCartCard
+                            key={pharmacy.pharmacy.id}
+                            pharmacy={pharmacy}
+                            handleQuantityChange={handleQuantityChange}
+                            setRemoveItem={setRemoveItem}
+                            isUpdating={isUpdating}
+                            calculateItemPrice={calculateItemPrice}
+                            segment="needs_prescription"
+                          />
+                        ))}
+
+                        <PrescriptionUploadSection
+                          items={segments.needsPrescription}
+                          guestId={guestId}
+                          onUploadSuccess={handlePrescriptionUploadSuccess}
+                          prescriptionStatuses={prescriptionStatuses}
+                        />
+                      </div>
+                    )}
+
+                    {/* Under Review Section */}
+                    {activeTab === 'pending' && segments.pendingPrescription.length > 0 && (
+                      <div className="space-y-6">
+                        {groupItemsByPharmacy(segments.pendingPrescription).map((pharmacy) => (
+                          <PharmacyCartCard
+                            key={pharmacy.pharmacy.id}
+                            pharmacy={pharmacy}
+                            handleQuantityChange={handleQuantityChange}
+                            setRemoveItem={setRemoveItem}
+                            isUpdating={isUpdating}
+                            calculateItemPrice={calculateItemPrice}
+                            segment="pending"
+                          />
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Rejected Prescriptions Section */}
+                    {activeTab === 'rejected' && segments.rejectedPrescription.length > 0 && (
+                      <div className="space-y-6">
+                        {groupItemsByPharmacy(segments.rejectedPrescription).map((pharmacy) => (
+                          <PharmacyCartCard
+                            key={pharmacy.pharmacy.id}
+                            pharmacy={pharmacy}
+                            handleQuantityChange={handleQuantityChange}
+                            setRemoveItem={setRemoveItem}
+                            isUpdating={isUpdating}
+                            calculateItemPrice={calculateItemPrice}
+                            segment="rejected"
+                          />
+                        ))}
+
+                        <PrescriptionUploadSection
+                          items={segments.rejectedPrescription}
+                          guestId={guestId}
+                          onUploadSuccess={handlePrescriptionUploadSuccess}
+                          prescriptionStatuses={prescriptionStatuses}
+                        />
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* Legacy Support for Mixed Content (when no tabs) */}
+                {!shouldShowTabs() && (
+                  <>
             {/* Ready for Checkout Section */}
-                {readyPharmacies.length > 0 && (activeTab === 'ready' || prescriptionPharmacies.length === 0) && (
+                    {readyPharmacies.length > 0 && (
                   <div className="space-y-6">
                 {readyPharmacies.map((pharmacy) => (
                   <PharmacyCartCard
@@ -529,7 +854,7 @@ export default function Cart() {
             )}
 
             {/* Prescription Required Section */}
-                {prescriptionPharmacies.length > 0 && (activeTab === 'prescription' || readyPharmacies.length === 0) && (
+                    {prescriptionPharmacies.length > 0 && (
                   <div className="space-y-6">
                 {prescriptionPharmacies.map((pharmacy) => (
                   <PharmacyCartCard
@@ -544,12 +869,14 @@ export default function Cart() {
                 ))}
 
                 <PrescriptionUploadSection
-                  items={segments.needsPrescription}
+                          items={[...segments.needsPrescription, ...segments.rejectedPrescription]}
                   guestId={guestId}
                   onUploadSuccess={handlePrescriptionUploadSuccess}
                   prescriptionStatuses={prescriptionStatuses}
                 />
               </div>
+                    )}
+                  </>
             )}
 
                 {/* Enhanced Mobile Cart Summary */}
@@ -580,7 +907,7 @@ export default function Cart() {
             </div>
           </div>
         )}
-      </div>
+      </main>
     </div>
   );
 }
