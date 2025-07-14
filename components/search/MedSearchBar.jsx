@@ -123,7 +123,7 @@ export default function SearchBar() {
   }, [t]);
 
   useEffect(() => {
-    setCartItems(cart.pharmacies?.flatMap(p => p.items) || []);
+    setCartItems(cart?.pharmacies?.flatMap(p => p.items) || []);
   }, [cart]);
 
   useEffect(() => {

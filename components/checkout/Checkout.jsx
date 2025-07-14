@@ -262,6 +262,14 @@ export default function Checkout() {
         strategy="beforeInteractive"
       />
 
+      {/* Payment processing overlay */}
+      {paymentStatus === 'processing' && (
+        <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm">
+          <Loader2 className="h-10 w-10 animate-spin text-[#1ABA7F] mb-4" />
+          <span className="text-lg font-semibold text-[#225F91]">Redirecting to payment...</span>
+        </div>
+      )}
+
       <div className="container mx-auto max-w-6xl">
         <div className="flex items-center gap-4 mb-8">
           <Button
