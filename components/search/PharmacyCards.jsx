@@ -59,25 +59,22 @@ const PharmacyCards = ({ availability, medId, handleAddToCart, isInCart, display
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-2">
                     <h3 className="text-base font-semibold text-gray-900 truncate">
-                {avail.pharmacyName}
+                  {avail.pharmacyName}
                     </h3>
-                    {avail.rating && (
-                      <div className="flex items-center gap-1">
-                        <Star className="h-3 w-3 text-yellow-500 fill-current" />
-                        <span className="text-xs text-gray-600">{avail.rating}</span>
-                      </div>
-                    )}
-                    {avail.operatingHours && (() => {
-                      const formattedHours = formatOperatingHours(avail.operatingHours);
-                      if (formattedHours?.status === 'open') {
-                        return (
-                          <Badge variant="secondary" className="text-xs bg-green-100 text-green-700 border-green-200">
-                            24/7
-                          </Badge>
-                        );
-                      }
-                      return null;
-                    })()}
+                    {/* License number and status badge */}
+                    <div className="flex items-center gap-2 mb-1">
+                      {avail.licenseNumber && (
+                        <span className="text-xs text-gray-400">License: {avail.licenseNumber}</span>
+                      )}
+                      {avail.status && (
+                        <Badge variant="secondary" className={`text-xs ${avail.status === 'VERIFIED' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-gray-100 text-gray-500 border-gray-200'}`}>
+                          {avail.status.charAt(0) + avail.status.slice(1).toLowerCase()}
+                        </Badge>
+                      )}
+                      {avail.isActive === false && (
+                        <Badge variant="secondary" className="text-xs bg-red-100 text-red-700 border-red-200">Inactive</Badge>
+                      )}
+                    </div>
                   </div>
                   
                   {avail.address && (
@@ -96,6 +93,10 @@ const PharmacyCards = ({ availability, medId, handleAddToCart, isInCart, display
                           Cheapest
                         </Badge>
                       )}
+                      {/* In stock */}
+                      {typeof avail.stock === 'number' && (
+                        <span className="text-xs text-gray-500 ml-2">In stock: {avail.stock}</span>
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-sm text-gray-600">
@@ -110,6 +111,14 @@ const PharmacyCards = ({ availability, medId, handleAddToCart, isInCart, display
                       )}
                     </div>
                   </div>
+                  {/* Expiry date */}
+                  {avail.expiryDate && (
+                    <div className="text-xs text-gray-400 mb-1">Expires: {avail.expiryDate}</div>
+                  )}
+                  {/* Ward/LGA/State tooltip */}
+                  {(avail.ward || avail.lga || avail.state) && (
+                    <div className="text-xs text-gray-400 mb-1" title={`Ward: ${avail.ward || 'N/A'}, LGA: ${avail.lga || 'N/A'}, State: ${avail.state || 'N/A'}`}>Location: {avail.ward || ''}{avail.ward && avail.lga ? ', ' : ''}{avail.lga || ''}{(avail.ward || avail.lga) && avail.state ? ', ' : ''}{avail.state || ''}</div>
+                  )}
 
                   {/* Action Buttons */}
                   <div className="flex items-center gap-2">
@@ -281,8 +290,8 @@ const PharmacyCards = ({ availability, medId, handleAddToCart, isInCart, display
                           <div className="flex-1 h-9 flex items-center justify-center text-xs text-gray-400 bg-gray-50 rounded-md">
                             No location data
                           </div>
-              )}
-            </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>

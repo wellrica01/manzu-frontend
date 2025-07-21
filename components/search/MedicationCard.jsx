@@ -81,7 +81,12 @@ const MedicationCard = ({ med, handleAddToCart, isInCart, isAddingToCart }) => {
               <CardTitle className="text-2xl sm:text-3xl font-bold text-[#225F91] tracking-tight leading-tight">
                 {med.displayName}
               </CardTitle>
+              {/* Subtitle: Form and Strength */}
               <div className="flex items-center gap-2 mt-2 flex-wrap">
+                <span className="text-base text-gray-700 font-medium">
+                  {med.form ? med.form.charAt(0) + med.form.slice(1).toLowerCase() : ''}
+                  {med.strengthValue && med.strengthUnit ? ` • ${med.strengthValue}${med.strengthUnit}` : ''}
+                </span>
                 {med.prescriptionRequired && (
                   <Badge variant="secondary" className="bg-[#225F91]/10 text-[#225F91] border-[#225F91]/20">
                     <Clock className="h-3 w-3 mr-1" />
@@ -92,6 +97,10 @@ const MedicationCard = ({ med, handleAddToCart, isInCart, isAddingToCart }) => {
                   {med.genericName || 'Generic N/A'}
                 </span>
               </div>
+              {/* Manufacturer */}
+              {med.manufacturer && (
+                <div className="text-sm text-gray-400 mt-1">Manufacturer: {med.manufacturer}</div>
+              )}
             </div>
             {med.imageUrl && (
               <div className="relative w-24 h-24 sm:w-32 sm:h-32 flex-shrink-0">
@@ -103,7 +112,7 @@ const MedicationCard = ({ med, handleAddToCart, isInCart, isAddingToCart }) => {
               </div>
             )}
           </div>
-          
+          {/* Details Section */}
           {showDetails && (
             <div className="mt-4 space-y-2 animate-in slide-in-from-top-2 duration-300">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
@@ -111,12 +120,18 @@ const MedicationCard = ({ med, handleAddToCart, isInCart, isAddingToCart }) => {
                   <span className="font-semibold text-gray-700">NAFDAC Code:</span>
                   <span className="ml-2 text-gray-600">{med.nafdacCode || 'N/A'}</span>
                 </div>
-                {averagePrice && (
-                  <div>
-                    <span className="font-semibold text-gray-700">Average Price:</span>
-                    <span className="ml-2 text-[#1ABA7F] font-semibold">₦{averagePrice.toLocaleString()}</span>
-                  </div>
-                )}
+                <div>
+                  <span className="font-semibold text-gray-700">Form:</span>
+                  <span className="ml-2 text-gray-600">{med.form || 'N/A'}</span>
+                </div>
+                <div>
+                  <span className="font-semibold text-gray-700">Strength:</span>
+                  <span className="ml-2 text-gray-600">{med.strengthValue && med.strengthUnit ? `${med.strengthValue}${med.strengthUnit}` : 'N/A'}</span>
+                </div>
+                <div>
+                  <span className="font-semibold text-gray-700">Manufacturer:</span>
+                  <span className="ml-2 text-gray-600">{med.manufacturer || 'N/A'}</span>
+                </div>
               </div>
             </div>
           )}

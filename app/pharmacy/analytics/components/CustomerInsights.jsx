@@ -4,7 +4,7 @@ import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recha
 function getCustomerStats(orders) {
   const stats = {};
   (orders || []).forEach(order => {
-    const id = order.patientIdentifier;
+    const id = order.userIdentifier;
     if (!stats[id]) stats[id] = { id, orders: 0, spent: 0 };
     stats[id].orders += 1;
     stats[id].spent += order.totalPrice || 0;

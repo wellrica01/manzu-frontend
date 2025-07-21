@@ -18,13 +18,13 @@ export default function OrderDetails() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [patientIdentifier, setPatientIdentifier] = useState('');
+  const [userIdentifier, setuserIdentifier] = useState('');
   const [checkoutSessionId, setCheckoutSessionId] = useState(null);
 
   useEffect(() => {
     const id = localStorage.getItem('guestId');
     if (id) {
-      setPatientIdentifier(id);
+      setuserIdentifier(id);
       fetchCheckoutSessionId(id);
     } else {
       setError('Guest ID not found. Please check your status again.');
@@ -149,7 +149,7 @@ export default function OrderDetails() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-guest-id': patientIdentifier,
+          'x-guest-id': userIdentifier,
         },
         body: JSON.stringify({ email: email || 'user@example.com' }),
       });

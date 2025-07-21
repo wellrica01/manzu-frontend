@@ -130,12 +130,6 @@ const PharmacyTable = ({ availability, medId, handleAddToCart, isInCart, display
                             <h3 className="text-base font-semibold text-gray-900 truncate">
                               {avail.pharmacyName}
                             </h3>
-                            {avail.rating && (
-                              <div className="flex items-center gap-1">
-                                <Star className="h-3 w-3 text-yellow-500 fill-current" />
-                                <span className="text-xs text-gray-600">{avail.rating}</span>
-                              </div>
-                            )}
                             {avail.operatingHours && (() => {
                               const formattedHours = formatOperatingHours(avail.operatingHours);
                               if (formattedHours?.status === 'open') {

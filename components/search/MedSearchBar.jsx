@@ -231,8 +231,8 @@ export default function SearchBar() {
       setCartItems(prev => [
         ...prev,
         {
-          pharmacyMedicationMedicationId: medicationId,
-          pharmacyMedicationPharmacyId: pharmacyId,
+          medicationAvailabilityMedicationId: medicationId,
+          medicationAvailabilityPharmacyId: pharmacyId,
           quantity,
           medication: { displayName: medicationName },
         },
@@ -258,8 +258,8 @@ export default function SearchBar() {
     } catch (err) {
       toast.error(`Error: ${err.message}`);
       setCartItems(prev => prev.filter(item => 
-        !(item.pharmacyMedicationMedicationId === medicationId && 
-          item.pharmacyMedicationPharmacyId === pharmacyId)
+        !(item.medicationAvailabilityMedicationId === medicationId && 
+          item.medicationAvailabilityPharmacyId === pharmacyId)
       ));
     } finally {
       setIsAddingToCart(prev => ({ ...prev, [itemKey]: false }));
@@ -270,8 +270,8 @@ export default function SearchBar() {
     if (!Array.isArray(cartItems)) return false;
     return cartItems.some(
       (item) =>
-        item.pharmacyMedicationMedicationId === medicationId &&
-        item.pharmacyMedicationPharmacyId === pharmacyId
+        item.medicationAvailabilityMedicationId === medicationId &&
+        item.medicationAvailabilityPharmacyId === pharmacyId
     );
   };
 
@@ -351,15 +351,7 @@ export default function SearchBar() {
                       <TrendingUp className="h-4 w-4 text-[#225F91]" />
                       <div className="flex-1">
                         <div className="font-medium">{suggestion.displayName}</div>
-                        {suggestion.genericName && (
-                          <div className="text-sm text-gray-500">{suggestion.genericName}</div>
-                        )}
                       </div>
-                      {suggestion.prescriptionRequired && (
-                        <Badge variant="outline" className="text-xs border-[#225F91]/20 text-[#225F91]">
-                          Rx
-                        </Badge>
-                      )}
                     </button>
                   ))}
                 </div>

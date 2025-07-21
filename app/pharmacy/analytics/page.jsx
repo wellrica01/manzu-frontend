@@ -115,7 +115,7 @@ export default function AnalyticsPage() {
   const totalOrders = filteredOrders.length;
   const avgOrderValue = totalOrders ? Math.round(totalSales / totalOrders) : 0;
   const customerOrderCounts = filteredOrders.reduce((acc, o) => {
-    acc[o.patientIdentifier] = (acc[o.patientIdentifier] || 0) + 1;
+    acc[o.userIdentifier] = (acc[o.userIdentifier] || 0) + 1;
     return acc;
   }, {});
   const returningCustomers = Object.values(customerOrderCounts).filter(c => c > 1).length;

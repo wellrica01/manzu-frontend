@@ -101,7 +101,7 @@ const PrescriptionMedicationsPage = React.memo(() => {
   const [showInfo, setShowInfo] = useState(false);
   const [showMedImage, setShowMedImage] = useState(null);
   const [isAddingToCart, setIsAddingToCart] = useState({});
-  const { patientIdentifier } = useParams();
+  const { userIdentifier } = useParams();
   const { cart, fetchCart, guestId } = useCart();
 
   // Filtering state for pharmacies
@@ -177,10 +177,10 @@ const PrescriptionMedicationsPage = React.memo(() => {
     if (typeof window !== 'undefined' && window.gtag) {
       window.gtag('event', 'page_view', {
         page_title: 'Prescription Medications',
-        page_path: `/prescriptions/${patientIdentifier}`,
+        page_path: `/prescriptions/${userIdentifier}`,
       });
     }
-  }, [patientIdentifier]);
+  }, [userIdentifier]);
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -211,7 +211,7 @@ const PrescriptionMedicationsPage = React.memo(() => {
       if (filterState) queryParams.append('state', filterState);
       if (filterLga) queryParams.append('lga', filterLga);
       if (filterWard) queryParams.append('ward', filterWard);
-      const url = `http://localhost:5000/api/prescription/prescriptions/${patientIdentifier}?${queryParams.toString()}`;
+      const url = `http://localhost:5000/api/prescription/prescriptions/${userIdentifier}?${queryParams.toString()}`;
       const response = await fetch(url, {
         headers: { 'x-guest-id': guestId },
       });
@@ -234,14 +234,14 @@ const PrescriptionMedicationsPage = React.memo(() => {
     } finally {
       setLoading(false);
     }
-  }, [patientIdentifier, userLocation, guestId, filterState, filterLga, filterWard]);
+  }, [userIdentifier, userLocation, guestId, filterState, filterLga, filterWard]);
 
   useEffect(() => {
-    if (patientIdentifier && (userLocation || error)) {
+    if (userIdentifier && (userLocation || error)) {
       fetchPrescriptionOrder();
       fetchCart();
     }
-  }, [patientIdentifier, userLocation, error, fetchPrescriptionOrder, fetchCart, filterState, filterLga, filterWard]);
+  }, [userIdentifier, userLocation, error, fetchPrescriptionOrder, fetchCart, filterState, filterLga, filterWard]);
 
   useEffect(() => {
     setCartItems(cart?.pharmacies?.flatMap(p => p.items) || []);

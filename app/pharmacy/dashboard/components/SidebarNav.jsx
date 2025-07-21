@@ -37,11 +37,13 @@ export default function SidebarNav() {
       </div>
       <nav className="flex-1 flex flex-col gap-2 mt-4">
         {navItems.map(({ label, href, icon: Icon }) => (
-          <Link key={href} href={href} legacyBehavior>
-            <a className="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-700 font-medium hover:bg-primary/10 transition-colors duration-200 group">
-              <Icon className="w-6 h-6 text-primary" />
-              <span className={`${collapsed ? 'hidden' : 'inline'}`}>{label}</span>
-            </a>
+          <Link
+            key={href}
+            href={href}
+            className="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-700 font-medium hover:bg-primary/10 transition-colors duration-200 group"
+          >
+            <Icon className="w-6 h-6 text-primary" />
+            <span className={`${collapsed ? 'hidden' : 'inline'}`}>{label}</span>
           </Link>
         ))}
       </nav>

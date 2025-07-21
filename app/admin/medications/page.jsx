@@ -1,467 +1,297 @@
-'use client';
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
-import Link from 'next/link';
-import { Loader2, Pill, Plus } from 'lucide-react';
+"use client";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { Card } from "@/components/ui/card";
+import { Loader2, AlertTriangle, Eye, Edit, Trash2, Plus, CheckCircle } from "lucide-react";
 
-export default function Medications() {
-  const [data, setData] = useState({ medications: [], pagination: {} });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [page, setPage] = useState(1);
-  const [filters, setFilters] = useState({
-    name: '',
-    genericName: '',
-    category: '',
-    prescriptionRequired: '',
-  });
-  const [createOpen, setCreateOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    genericName: '',
-    category: '',
-    description: '',
-    manufacturer: '',
-    form: '',
-    dosage: '',
-    nafdacCode: '',
-    prescriptionRequired: false,
-    imageUrl: '',
-  });
-  const [formError, setFormError] = useState(null);
-  const [submitting, setSubmitting] = useState(false);
-  const router = useRouter();
-  const [authChecked, setAuthChecked] = useState(false);
+const brandBlue = "#225F91";
+const brandGreen = "#1ABA7F";
 
-  useEffect(() => {
-    const token = localStorage.getItem('adminToken');
-    if (!token) {
-      router.replace('/admin/login');
-    } else {
-      setAuthChecked(true);
-    }
-  }, [router]);
-
-  const fetchMedications = async () => {
-    setLoading(true);
-    try {
-      const token = localStorage.getItem('adminToken');
-      if (!token) {
-        router.replace('/admin/login');
-        return;
-      }
-      const query = new URLSearchParams({
-        page,
-        limit: '10',
-        ...(filters.name && { name: filters.name }),
-        ...(filters.genericName && { genericName: filters.genericName }),
-        ...(filters.category && { category: filters.category }),
-        ...(filters.prescriptionRequired !== '' && { prescriptionRequired: filters.prescriptionRequired }),
-      }).toString();
-      const response = await fetch(`http://localhost:5000/api/admin/medications?${query}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (!response.ok) {
-        if (response.status === 401) {
-          localStorage.removeItem('adminToken');
-          router.replace('/admin/login');
-          return;
-        }
-        throw new Error('Failed to fetch medications');
-      }
-      const result = await response.json();
-      setData(result);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (!authChecked) return;
-    fetchMedications();
-  }, [page, filters, authChecked]);
-
-  const handleFilterChange = (name, value) => {
-    setFilters((prev) => ({ ...prev, [name]: value === 'all' ? '' : value }));
-    setPage(1);
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value,
-    }));
-  };
-
-  const handleCreate = async () => {
-    if (!formData.name || !formData.genericName) {
-      setFormError('Name and Generic Name are required');
-      return;
-    }
-    setSubmitting(true);
-    setFormError(null);
-    try {
-      const token = localStorage.getItem('adminToken');
-      if (!token) {
-        router.replace('/admin/login');
-        return;
-      }
-      const response = await fetch('http://localhost:5000/api/admin/medications', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(formData),
-      });
-      if (!response.ok) {
-        if (response.status === 401) {
-          localStorage.removeItem('adminToken');
-          router.replace('/admin/login');
-          return;
-        }
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create medication');
-      }
-      setCreateOpen(false);
-      setFormData({
-        name: '',
-        genericName: '',
-        category: '',
-        description: '',
-        manufacturer: '',
-        form: '',
-        dosage: '',
-        nafdacCode: '',
-        prescriptionRequired: false,
-        imageUrl: '',
-      });
-      fetchMedications();
-    } catch (err) {
-      setFormError(err.message);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  if (!authChecked) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-muted">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-muted">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-muted-foreground ml-2">Loading medications...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-muted">
-        <div className="card bg-destructive/10 border-l-4 border-destructive p-4 fade-in">
-          <p className="text-destructive font-medium">Error: {error}</p>
+function ConfirmDialog({ open, onClose, onConfirm, loading, message }) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+      <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm border border-[#1ABA7F]/20">
+        <div className="flex items-center gap-2 mb-4">
+          <AlertTriangle className="w-6 h-6 text-red-500" />
+          <span className="font-semibold text-lg text-[#225F91]">Confirm Delete</span>
+        </div>
+        <div className="mb-6 text-gray-700">{message || "Are you sure you want to delete this medication? This action cannot be undone."}</div>
+        <div className="flex justify-end gap-2">
+          <button
+            className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200"
+            onClick={onClose}
+            disabled={loading}
+          >
+            Cancel
+          </button>
+          <button
+            className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+            onClick={onConfirm}
+            disabled={loading}
+          >
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Delete"}
+          </button>
         </div>
       </div>
-    );
+    </div>
+  );
+}
+
+export default function MedicationsPage() {
+  const [medications, setMedications] = useState([]);
+  const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, pages: 1 });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState("");
+  const [prescriptionRequired, setPrescriptionRequired] = useState("");
+  const [allCategories, setAllCategories] = useState([]);
+  const [deleteId, setDeleteId] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteSuccess, setDeleteSuccess] = useState(false);
+
+  // Fetch all categories for filter dropdown (from medications list)
+  useEffect(() => {
+    if (medications.length > 0) {
+      const uniqueCategories = Array.from(new Set(medications.map((m) => m.category).filter(Boolean)));
+      setAllCategories(uniqueCategories);
+    }
+  }, [medications]);
+
+  useEffect(() => {
+    async function fetchMedications() {
+      setLoading(true);
+      setError(null);
+      try {
+        const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
+        const token = typeof window !== "undefined" ? localStorage.getItem("adminToken") : null;
+        const params = new URLSearchParams({
+          page: pagination.page,
+          limit: pagination.limit,
+          ...(search ? { name: search } : {}),
+          ...(category ? { category } : {}),
+          ...(prescriptionRequired ? { prescriptionRequired } : {}),
+        });
+        const res = await fetch(`${API_BASE}/api/admin/medications?${params.toString()}`, {
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          credentials: "include",
+        });
+        if (!res.ok) throw new Error(`Error: ${res.status}`);
+        const data = await res.json();
+        setMedications(data.medications);
+        setPagination(data.pagination);
+      } catch (e) {
+        setError("Failed to load medications.");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchMedications();
+    // eslint-disable-next-line
+  }, [pagination.page, search, category, prescriptionRequired]);
+
+  function handlePageChange(newPage) {
+    setPagination((prev) => ({ ...prev, page: newPage }));
+  }
+
+  async function handleDelete(id) {
+    setDeleteLoading(true);
+    try {
+      const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
+      const token = typeof window !== "undefined" ? localStorage.getItem("adminToken") : null;
+      const res = await fetch(`${API_BASE}/api/admin/medications/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message || `Error: ${res.status}`);
+      }
+      setDeleteSuccess(true);
+      setMedications((prev) => prev.filter((m) => m.id !== id));
+      setTimeout(() => {
+        setDeleteId(null);
+        setDeleteSuccess(false);
+      }, 1000);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setDeleteLoading(false);
+    }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted py-12 px-4 sm:px-6 lg:px-8 fade-in">
-      <div className="container mx-auto max-w-6xl">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl sm:text-5xl font-bold text-primary">
-            Medications
-          </h1>
-          <div className="flex space-x-2">
-            <Button
-              onClick={() => setCreateOpen(true)}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground"
+    <div className="space-y-8">
+      <ConfirmDialog
+        open={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={() => handleDelete(deleteId)}
+        loading={deleteLoading}
+      />
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-2xl font-bold text-[#225F91]">Medications</h1>
+        <Link
+          href="/admin/medications/new"
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#1ABA7F] text-white font-semibold hover:bg-[#159e6a] transition"
+        >
+          <Plus className="w-4 h-4" />
+          Add Medication
+        </Link>
+      </div>
+      <Card className="p-6 bg-white/95 border border-[#1ABA7F]/20 rounded-2xl shadow-md">
+        <div className="mb-4 flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
+          <div className="flex gap-2 flex-1">
+            <input
+              type="text"
+              placeholder="Search by name or generic name..."
+              value={search}
+              onChange={(e) => {
+                setPagination((prev) => ({ ...prev, page: 1 }));
+                setSearch(e.target.value);
+              }}
+              className="w-full sm:w-64 px-4 py-2 border border-[#1ABA7F]/20 rounded-lg focus:border-[#1ABA7F] focus:outline-none"
+            />
+            <select
+              value={category}
+              onChange={(e) => {
+                setPagination((prev) => ({ ...prev, page: 1 }));
+                setCategory(e.target.value);
+              }}
+              className="px-3 py-2 border border-[#1ABA7F]/20 rounded-lg focus:border-[#1ABA7F] focus:outline-none"
             >
-              <Plus className="h-5 w-5 mr-2" />
-              Create Medication
-            </Button>
-            <Button
-              onClick={() => router.push('/admin/dashboard')}
-              className="bg-muted hover:bg-muted/90 text-foreground"
+              <option value="">All Categories</option>
+              {allCategories.map((cat) => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+            <select
+              value={prescriptionRequired}
+              onChange={(e) => {
+                setPagination((prev) => ({ ...prev, page: 1 }));
+                setPrescriptionRequired(e.target.value);
+              }}
+              className="px-3 py-2 border border-[#1ABA7F]/20 rounded-lg focus:border-[#1ABA7F] focus:outline-none"
             >
-              Back to Dashboard
-            </Button>
+              <option value="">All</option>
+              <option value="true">Prescription Required</option>
+              <option value="false">No Prescription</option>
+            </select>
           </div>
         </div>
-        <Card className="card card-shadow fade-in">
-          <CardHeader className="bg-primary/5">
-            <CardTitle className="text-2xl font-semibold text-primary flex items-center">
-              <Pill className="h-6 w-6 mr-2" />
-              Medication List
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              <div>
-                <Label className="block text-sm font-medium text-primary mb-1">Name</Label>
-                <Input
-                  value={filters.name}
-                  onChange={(e) => handleFilterChange('name', e.target.value)}
-                  placeholder="Filter by name"
-                  className="border-border"
-                />
-              </div>
-              <div>
-                <Label className="block text-sm font-medium text-primary mb-1">Generic Name</Label>
-                <Input
-                  value={filters.genericName}
-                  onChange={(e) => handleFilterChange('genericName', e.target.value)}
-                  placeholder="Filter by generic name"
-                  className="border-border"
-                />
-              </div>
-              <div>
-                <Label className="block text-sm font-medium text-primary mb-1">Category</Label>
-                <Input
-                  value={filters.category}
-                  onChange={(e) => handleFilterChange('category', e.target.value)}
-                  placeholder="Filter by category"
-                  className="border-border"
-                />
-              </div>
-              <div>
-                <Label className="block text-sm font-medium text-primary mb-1">Prescription Required</Label>
-                <Select
-                  value={filters.prescriptionRequired || 'all'}
-                  onValueChange={(value) => handleFilterChange('prescriptionRequired', value)}
-                >
-                  <SelectTrigger className="border-border">
-                    <SelectValue placeholder="Select" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All</SelectItem>
-                    <SelectItem value="true">Yes</SelectItem>
-                    <SelectItem value="false">No</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-primary">ID</TableHead>
-                  <TableHead className="text-primary">Name</TableHead>
-                  <TableHead className="text-primary">Generic Name</TableHead>
-                  <TableHead className="text-primary">Category</TableHead>
-                  <TableHead className="text-primary">Prescription Required</TableHead>
-                  <TableHead className="text-primary">Created At</TableHead>
-                  <TableHead className="text-primary">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.medications.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-muted-foreground text-center">
-                      No medications found.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  data.medications.map((medication, index) => (
-                    <TableRow key={medication.id} className="fade-in" style={{ animationDelay: `${0.1 * index}s` }}>
-                      <TableCell>{medication.id}</TableCell>
-                      <TableCell>{medication.name}</TableCell>
-                      <TableCell>{medication.genericName || 'N/A'}</TableCell>
-                      <TableCell>{medication.category || '-'}</TableCell>
-                      <TableCell>{medication.prescriptionRequired ? 'Yes' : 'No'}</TableCell>
-                      <TableCell>{new Date(medication.createdAt).toLocaleDateString()}</TableCell>
-                      <TableCell>
-                        <Link href={`/admin/medications/${medication.id}`}>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="border-border text-primary hover:bg-muted"
-                          >
-                            View
-                          </Button>
+        {loading ? (
+          <div className="flex justify-center items-center h-32">
+            <Loader2 className="animate-spin w-8 h-8 text-[#1ABA7F]" />
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center gap-2 text-red-600">
+            <AlertTriangle className="w-8 h-8" />
+            <span>{error}</span>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr className="text-left text-gray-600 border-b">
+                  <th className="py-2 px-3">Name</th>
+                  <th className="py-2 px-3">Generic Name</th>
+                  <th className="py-2 px-3">Category</th>
+                  <th className="py-2 px-3">Manufacturer</th>
+                  <th className="py-2 px-3">Form</th>
+                  <th className="py-2 px-3">Dosage</th>
+                  <th className="py-2 px-3">Prescription</th>
+                  <th className="py-2 px-3">Created</th>
+                  <th className="py-2 px-3">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {medications.length > 0 ? (
+                  medications.map((med) => (
+                    <tr key={med.id} className="border-b last:border-0">
+                      <td className="py-2 px-3 font-medium text-gray-900">{med.name}</td>
+                      <td className="py-2 px-3">{med.genericName}</td>
+                      <td className="py-2 px-3">{med.category}</td>
+                      <td className="py-2 px-3">{med.manufacturer}</td>
+                      <td className="py-2 px-3">{med.form}</td>
+                      <td className="py-2 px-3">{med.dosage}</td>
+                      <td className="py-2 px-3">
+                        {med.prescriptionRequired ? (
+                          <span className="text-red-600 font-semibold">Yes</span>
+                        ) : (
+                          <span className="text-green-600 font-semibold">No</span>
+                        )}
+                      </td>
+                      <td className="py-2 px-3">{new Date(med.createdAt).toLocaleDateString()}</td>
+                      <td className="py-2 px-3 flex gap-2">
+                        <Link
+                          href={`/admin/medications/${med.id}`}
+                          className="p-1 rounded hover:bg-[#1ABA7F]/10 text-[#225F91]"
+                          title="View"
+                        >
+                          <Eye className="w-4 h-4" />
                         </Link>
-                      </TableCell>
-                    </TableRow>
+                        <Link
+                          href={`/admin/medications/${med.id}?edit=1`}
+                          className="p-1 rounded hover:bg-[#1ABA7F]/10 text-[#1ABA7F]"
+                          title="Edit"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Link>
+                        <button
+                          className="p-1 rounded hover:bg-red-100 text-red-600"
+                          title="Delete"
+                          onClick={() => setDeleteId(med.id)}
+                          disabled={deleteLoading && deleteId === med.id}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
                   ))
+                ) : (
+                  <tr>
+                    <td colSpan={9} className="text-center py-4 text-gray-500">
+                      No medications found.
+                    </td>
+                  </tr>
                 )}
-              </TableBody>
-            </Table>
-            <div className="flex justify-between items-center mt-4">
-              <Button
-                disabled={page === 1}
-                onClick={() => setPage(page - 1)}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground disabled:bg-muted disabled:text-muted-foreground"
-              >
-                Previous
-              </Button>
-              <span className="text-muted-foreground">
-                Page {data.pagination.page || 1} of {data.pagination.pages || 1}
-              </span>
-              <Button
-                disabled={page === data.pagination.pages}
-                onClick={() => setPage(page + 1)}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground disabled:bg-muted disabled:text-muted-foreground"
-              >
-                Next
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-          <DialogContent className="card bg-card max-h-[90vh] flex flex-col">
-            <DialogHeader className="flex-shrink-0">
-              <DialogTitle className="text-primary">Create Medication</DialogTitle>
-            </DialogHeader>
-            <div className="flex-1 overflow-y-auto p-6">
-              <div className="space-y-4">
-                {formError && (
-                  <div className="card bg-destructive/10 border-l-4 border-destructive p-2">
-                    <p className="text-destructive text-sm">{formError}</p>
-                  </div>
-                )}
-                <div>
-                  <Label className="block text-sm font-medium text-primary">Name *</Label>
-                  <Input
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    placeholder="Enter medication name"
-                    required
-                    className="border-border"
-                  />
-                </div>
-                <div>
-                  <Label className="block text-sm font-medium text-primary">Generic Name *</Label>
-                  <Input
-                    name="genericName"
-                    value={formData.genericName}
-                    onChange={handleInputChange}
-                    placeholder="Enter generic name"
-                    required
-                    className="border-border"
-                  />
-                </div>
-                <div>
-                  <Label className="block text-sm font-medium text-primary">Category</Label>
-                  <Input
-                    name="category"
-                    value={formData.category}
-                    onChange={handleInputChange}
-                    placeholder="Enter category"
-                    className="border-border"
-                  />
-                </div>
-                <div>
-                  <Label className="block text-sm font-medium text-primary">Description</Label>
-                  <Input
-                    name="description"
-                    value={formData.description}
-                    onChange={handleInputChange}
-                    placeholder="Enter description"
-                    className="border-border"
-                  />
-                </div>
-                <div>
-                  <Label className="block text-sm font-medium text-primary">Manufacturer</Label>
-                  <Input
-                    name="manufacturer"
-                    value={formData.manufacturer}
-                    onChange={handleInputChange}
-                    placeholder="Enter manufacturer"
-                    className="border-border"
-                  />
-                </div>
-                <div>
-                  <Label className="block text-sm font-medium text-primary">Form</Label>
-                  <Input
-                    name="form"
-                    value={formData.form}
-                    onChange={handleInputChange}
-                    placeholder="Enter form (e.g., tablet)"
-                    className="border-border"
-                  />
-                </div>
-                <div>
-                  <Label className="block text-sm font-medium text-primary">Dosage</Label>
-                  <Input
-                    name="dosage"
-                    value={formData.dosage}
-                    onChange={handleInputChange}
-                    placeholder="Enter dosage"
-                    className="border-border"
-                  />
-                </div>
-                <div>
-                  <Label className="block text-sm font-medium text-primary">NAFDAC Code</Label>
-                  <Input
-                    name="nafdacCode"
-                    value={formData.nafdacCode}
-                    onChange={handleInputChange}
-                    placeholder="Enter NAFDAC code"
-                    className="border-border"
-                  />
-                </div>
-                <div>
-                  <label className="flex items-center">
-                    <Input
-                      type="checkbox"
-                      name="prescriptionRequired"
-                      checked={formData.prescriptionRequired}
-                      onChange={handleInputChange}
-                      className="mr-2"
-                    />
-                    <span className="text-primary font-medium">Prescription Required</span>
-                  </label>
-                </div>
-                <div>
-                  <Label className="block text-sm font-medium text-primary">Image URL</Label>
-                  <Input
-                    name="imageUrl"
-                    value={formData.imageUrl}
-                    onChange={handleInputChange}
-                    placeholder="Enter image URL"
-                    className="border-border"
-                  />
-                </div>
-              </div>
-            </div>
-            <DialogFooter className="flex-shrink-0 p-6 pt-0">
-              <Button
-                variant="outline"
-                onClick={() => setCreateOpen(false)}
-                disabled={submitting}
-                className="border-border text-primary hover:bg-muted"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleCreate}
-                disabled={submitting}
-                className="bg-success hover:bg-success/90 text-primary-foreground"
-              >
-                {submitting ? 'Creating...' : 'Create'}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
+              </tbody>
+            </table>
+          </div>
+        )}
+        {/* Pagination Controls */}
+        <div className="flex justify-end items-center gap-2 mt-4">
+          <button
+            className="px-3 py-1 rounded border border-[#1ABA7F]/30 text-[#225F91] disabled:opacity-50"
+            onClick={() => handlePageChange(pagination.page - 1)}
+            disabled={pagination.page <= 1}
+          >
+            Prev
+          </button>
+          <span className="text-sm text-gray-700">
+            Page {pagination.page} of {pagination.pages}
+          </span>
+          <button
+            className="px-3 py-1 rounded border border-[#1ABA7F]/30 text-[#225F91] disabled:opacity-50"
+            onClick={() => handlePageChange(pagination.page + 1)}
+            disabled={pagination.page >= pagination.pages}
+          >
+            Next
+          </button>
+        </div>
+      </Card>
+      {deleteSuccess && (
+        <div className="fixed bottom-6 right-6 bg-green-100 border border-green-300 text-green-800 px-4 py-2 rounded-lg flex items-center gap-2 shadow-lg z-50">
+          <CheckCircle className="w-5 h-5" /> Medication deleted successfully.
+        </div>
+      )}
     </div>
   );
 }

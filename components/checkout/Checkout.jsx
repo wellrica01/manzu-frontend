@@ -119,12 +119,15 @@ export default function Checkout() {
       }
 
       // Create order with ready medications
+      let deliveryMethodEnum = form.deliveryMethod;
+      if (deliveryMethodEnum === 'pickup') deliveryMethodEnum = 'PICKUP';
+      else if (deliveryMethodEnum === 'delivery') deliveryMethodEnum = 'COURIER';
       const orderData = {
         name: form.name,
         email: form.email,
         phone: form.phone,
         address: form.address,
-        deliveryMethod: form.deliveryMethod
+        deliveryMethod: deliveryMethodEnum
       };
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/med-checkout`, {

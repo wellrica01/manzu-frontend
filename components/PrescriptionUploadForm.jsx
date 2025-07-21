@@ -27,7 +27,7 @@ export default function PrescriptionUploadForm() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [openSuccessDialog, setOpenSuccessDialog] = useState(false);
-  const [patientIdentifier, setPatientIdentifier] = useState('');
+  const [userIdentifier, setuserIdentifier] = useState('');
   const [errors, setErrors] = useState({});
   const [submittedContact, setSubmittedContact] = useState('');
   const [filePreview, setFilePreview] = useState(null);
@@ -38,7 +38,7 @@ export default function PrescriptionUploadForm() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const id = getGuestId();
-      setPatientIdentifier(id);
+      setuserIdentifier(id);
     }
   }, []);
 
@@ -162,7 +162,7 @@ export default function PrescriptionUploadForm() {
            setSubmittedContact(contact);
            setOpenSuccessDialog(true);
            if (typeof window !== 'undefined' && window.gtag) {
-             window.gtag('event', 'upload_prescription', { patientIdentifier });
+             window.gtag('event', 'upload_prescription', { userIdentifier });
            }
            removeFile();
            setContact('');
@@ -183,7 +183,7 @@ export default function PrescriptionUploadForm() {
       });
 
       xhr.open('POST', `${process.env.NEXT_PUBLIC_API_URL}/api/prescription/upload`);
-      xhr.setRequestHeader('x-guest-id', patientIdentifier);
+      xhr.setRequestHeader('x-guest-id', userIdentifier);
       xhr.send(formData);
     } catch (err) {
       toast.error(err.message || t('upload.errors.upload_failed'));

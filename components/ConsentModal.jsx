@@ -31,8 +31,8 @@ export default function ConsentModal({ isOpen, onClose }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          patientIdentifier: guestId,
-          consentType: 'data_collection',
+          userIdentifier: guestId,
+          consentType: 'DATA_SHARING',
           granted: true,
         }),
       });

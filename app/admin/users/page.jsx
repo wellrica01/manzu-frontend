@@ -2,46 +2,21 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
-import { Loader2, AlertTriangle, CheckCircle } from "lucide-react";
+import { Loader2, AlertTriangle } from "lucide-react";
 
 const brandBlue = "#225F91";
-const statusOptions = [
-  "all",
-  "pending",
-  "confirmed",
-  "processing",
-  "shipped",
-  "delivered",
-  "ready_for_pickup",
-  "cancelled"
-];
+const roleOptions = ["all", "admin", "support"];
 
-function StatusBadge({ status }) {
-  let color = "bg-gray-200 text-gray-700";
-  if (status === "pending") color = "bg-yellow-100 text-yellow-800";
-  else if (status === "confirmed") color = "bg-blue-100 text-blue-800";
-  else if (status === "processing") color = "bg-purple-100 text-purple-800";
-  else if (status === "shipped") color = "bg-indigo-100 text-indigo-800";
-  else if (status === "delivered") color = "bg-green-100 text-green-800";
-  else if (status === "ready_for_pickup") color = "bg-cyan-100 text-cyan-800";
-  else if (status === "cancelled") color = "bg-red-100 text-red-800";
-  return (
-    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${color}`}>
-      {status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-    </span>
-  );
-}
-
-export default function OrdersPage() {
-  const [orders, setOrders] = useState([]);
+export default function UsersPage() {
+  const [users, setUsers] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, pages: 1 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("all");
+  const [role, setRole] = useState("all");
 
   useEffect(() => {
-    async function fetchOrders() {
+    async function fetchUsers() {
       setLoading(true);
       setError(null);
       try {
@@ -50,10 +25,10 @@ export default function OrdersPage() {
         const params = new URLSearchParams({
           page: pagination.page,
           limit: pagination.limit,
-          ...(search ? { userIdentifier: search } : {}),
-          ...(status !== "all" ? { status } : {}),
+          ...(search ? { email: search } : {}),
+          ...(role !== "all" ? { role } : {}),
         });
-        const res = await fetch(`${API_BASE}/api/admin/orders?${params.toString()}`, {
+        const res = await fetch(`${API_BASE}/api/admin/admin-users?${params.toString()}`, {
           headers: {
             "Content-Type": "application/json",
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -62,17 +37,17 @@ export default function OrdersPage() {
         });
         if (!res.ok) throw new Error(`Error: ${res.status}`);
         const data = await res.json();
-        setOrders(data.orders);
+        setUsers(data.users);
         setPagination(data.pagination);
       } catch (e) {
-        setError("Failed to load orders.");
+        setError("Failed to load users.");
       } finally {
         setLoading(false);
       }
     }
-    fetchOrders();
+    fetchUsers();
     // eslint-disable-next-line
-  }, [pagination.page, search, status]);
+  }, [pagination.page, search, role]);
 
   function handlePageChange(newPage) {
     setPagination((prev) => ({ ...prev, page: newPage }));
@@ -81,14 +56,14 @@ export default function OrdersPage() {
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-bold text-[#225F91]">Orders</h1>
+        <h1 className="text-2xl font-bold text-[#225F91]">Admin Users</h1>
       </div>
       <Card className="p-6 bg-white/95 border border-[#1ABA7F]/20 rounded-2xl shadow-md">
         <div className="mb-4 flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
           <div className="flex gap-2 flex-1">
             <input
               type="text"
-              placeholder="Search by patient identifier..."
+              placeholder="Search by email..."
               value={search}
               onChange={(e) => {
                 setPagination((prev) => ({ ...prev, page: 1 }));
@@ -97,15 +72,15 @@ export default function OrdersPage() {
               className="w-full sm:w-64 px-4 py-2 border border-[#1ABA7F]/20 rounded-lg focus:border-[#1ABA7F] focus:outline-none"
             />
             <select
-              value={status}
+              value={role}
               onChange={(e) => {
                 setPagination((prev) => ({ ...prev, page: 1 }));
-                setStatus(e.target.value);
+                setRole(e.target.value);
               }}
               className="px-3 py-2 border border-[#1ABA7F]/20 rounded-lg focus:border-[#1ABA7F] focus:outline-none"
             >
-              {statusOptions.map((opt) => (
-                <option key={opt} value={opt}>{opt.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</option>
+              {roleOptions.map((opt) => (
+                <option key={opt} value={opt}>{opt.charAt(0).toUpperCase() + opt.slice(1)}</option>
               ))}
             </select>
           </div>
@@ -124,26 +99,26 @@ export default function OrdersPage() {
             <table className="min-w-full text-sm">
               <thead>
                 <tr className="text-left text-gray-600 border-b">
-                  <th className="py-2 px-3">Order ID</th>
-                  <th className="py-2 px-3">Patient</th>
-                  <th className="py-2 px-3">Status</th>
-                  <th className="py-2 px-3">Total Price</th>
+                  <th className="py-2 px-3">ID</th>
+                  <th className="py-2 px-3">Name</th>
+                  <th className="py-2 px-3">Email</th>
+                  <th className="py-2 px-3">Role</th>
                   <th className="py-2 px-3">Created</th>
                   <th className="py-2 px-3">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {orders.length > 0 ? (
-                  orders.map((order) => (
-                    <tr key={order.id} className="border-b last:border-0">
-                      <td className="py-2 px-3 font-medium text-gray-900">{order.id}</td>
-                      <td className="py-2 px-3">{order.userIdentifier}</td>
-                      <td className="py-2 px-3"><StatusBadge status={order.status} /></td>
-                      <td className="py-2 px-3">₦{order.totalPrice?.toLocaleString?.() ?? order.totalPrice}</td>
-                      <td className="py-2 px-3">{new Date(order.createdAt).toLocaleDateString()}</td>
+                {users.length > 0 ? (
+                  users.map((user) => (
+                    <tr key={user.id} className="border-b last:border-0">
+                      <td className="py-2 px-3 font-medium text-gray-900">{user.id}</td>
+                      <td className="py-2 px-3">{user.name}</td>
+                      <td className="py-2 px-3">{user.email}</td>
+                      <td className="py-2 px-3">{user.role.charAt(0).toUpperCase() + user.role.slice(1)}</td>
+                      <td className="py-2 px-3">{new Date(user.createdAt).toLocaleDateString()}</td>
                       <td className="py-2 px-3">
                         <Link
-                          href={`/admin/orders/${order.id}`}
+                          href={`/admin/users/${user.id}`}
                           className="px-4 py-2 rounded-lg bg-[#225F91] text-white font-semibold hover:bg-[#1A4971] transition"
                         >
                           View
@@ -154,7 +129,7 @@ export default function OrdersPage() {
                 ) : (
                   <tr>
                     <td colSpan={6} className="text-center py-4 text-gray-500">
-                      No orders found.
+                      No users found.
                     </td>
                   </tr>
                 )}
@@ -186,11 +161,3 @@ export default function OrdersPage() {
     </div>
   );
 }
-
-
-
-
-
-
-
-

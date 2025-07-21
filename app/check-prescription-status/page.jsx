@@ -17,12 +17,12 @@ export default function StatusCheck() {
   const [status, setStatus] = useState('idle'); // idle, loading, success, error
   const [error, setError] = useState(null);
   const [prescription, setPrescription] = useState(null);
-  const [patientIdentifier, setPatientIdentifier] = useState(null);
+  const [userIdentifier, setuserIdentifier] = useState(null);
 
   useEffect(() => {
-    const id = searchParams.get('patientIdentifier');
+    const id = searchParams.get('userIdentifier');
     if (id) {
-      setPatientIdentifier(id);
+      setuserIdentifier(id);
       fetchStatus(id);
     }
   }, [searchParams]);
@@ -94,7 +94,7 @@ export default function StatusCheck() {
       }
       const { guestId } = await response.json();
       localStorage.setItem('guestId', guestId);
-      setPatientIdentifier(guestId);
+      setuserIdentifier(guestId);
       await fetchStatus(guestId);
     } catch (err) {
       setError(err.message);
@@ -109,7 +109,7 @@ export default function StatusCheck() {
     setForm({ identifier: '' });
     setError(null);
     setPrescription(null);
-    setPatientIdentifier(null);
+    setuserIdentifier(null);
     setStatus('idle');
   };
 

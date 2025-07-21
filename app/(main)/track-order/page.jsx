@@ -392,7 +392,7 @@ export default function Track() {
                       <div className="space-y-6">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-[#225F91] text-base font-medium">
                           <div className="flex items-center gap-2"><span className="font-semibold text-[#225F91]">Tracking Code:</span> {order.trackingCode || 'N/A'}</div>
-                          <div className="flex items-center gap-2"><span className="font-semibold text-[#225F91]">Customer:</span> {order.name || order.patientIdentifier || 'N/A'}</div>
+                          <div className="flex items-center gap-2"><span className="font-semibold text-[#225F91]">Customer:</span> {order.name || order.userIdentifier || 'N/A'}</div>
                           <div className="flex items-center gap-2"><span className="font-semibold text-[#225F91]">Order Placed:</span> {order.createdAt ? new Date(order.createdAt).toLocaleString() : 'N/A'}</div>
                           <div className="flex items-center gap-2"><span className="font-semibold text-[#225F91]">Payment Status:</span> {order.paymentStatus ? order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1).toLowerCase() : 'Pending'}</div>
                           {order.cancelledAt && (

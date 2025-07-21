@@ -123,7 +123,7 @@ const PrescriptionUploadSection = ({
     const formData = new FormData();
     
     formData.append('prescriptionFile', selectedFile);
-    formData.append('patientIdentifier', guestId);
+    formData.append('userIdentifier', guestId);
     // Only send medication IDs that actually need prescription (status 'none' or 'rejected')
     const medicationsNeedingPrescription = items.filter(item => 
       prescriptionStatuses[item.pharmacyMedicationMedicationId] === 'none' ||

@@ -85,8 +85,8 @@ export default function OrdersTable({ onViewDetails, refreshKey }) {
     if (sortBy === 'created_asc') return new Date(a.createdAt) - new Date(b.createdAt);
     if (sortBy === 'total_desc') return (b.totalPrice || 0) - (a.totalPrice || 0);
     if (sortBy === 'total_asc') return (a.totalPrice || 0) - (b.totalPrice || 0);
-    if (sortBy === 'patient_asc') return (a.patientIdentifier || '').localeCompare(b.patientIdentifier || '');
-    if (sortBy === 'patient_desc') return (b.patientIdentifier || '').localeCompare(a.patientIdentifier || '');
+    if (sortBy === 'patient_asc') return (a.userIdentifier || '').localeCompare(b.userIdentifier || '');
+    if (sortBy === 'patient_desc') return (b.userIdentifier || '').localeCompare(a.userIdentifier || '');
     return 0;
   });
 
@@ -194,7 +194,7 @@ export default function OrdersTable({ onViewDetails, refreshKey }) {
                 tabIndex={0}
               >
                 <td className="px-4 py-2 font-medium text-gray-800">{order.id}</td>
-                <td className="px-4 py-2 text-gray-700 max-w-[120px] truncate" title={order.patientIdentifier}>{order.patientIdentifier}</td>
+                <td className="px-4 py-2 text-gray-700 max-w-[120px] truncate" title={order.userIdentifier}>{order.userIdentifier}</td>
                 <td className="px-4 py-2"><StatusBadge status={order.status} /></td>
                 <td className="px-4 py-2 text-gray-700">₦{order.totalPrice?.toLocaleString()}</td>
                 <td className="px-4 py-2 text-gray-500 whitespace-nowrap">{new Date(order.createdAt).toLocaleString()}</td>
