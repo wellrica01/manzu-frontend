@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Loader2, AlertTriangle, CheckCircle, Users, Package, ShoppingBag, FileText, Clock } from "lucide-react";
+import { fetchDashboard } from "./api";
 
 const brandBlue = "#225F91";
 const brandGreen = "#1ABA7F";
@@ -24,34 +25,19 @@ export default function AdminDashboard() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    async function fetchDashboard() {
+    async function loadDashboard() {
       setLoading(true);
       setError(null);
       try {
-        // Set your API base URL here
-        const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
-        // Get token from localStorage/cookie if needed
-        const token = typeof window !== 'undefined' ? localStorage.getItem('adminToken') : null;
-        const res = await fetch(`${API_BASE}/api/admin/dashboard`, {
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          credentials: 'include', // if your backend uses cookies
-        });
-        if (!res.ok) {
-          throw new Error(`Error: ${res.status}`);
-        }
-        const data = await res.json();
-        // The backend returns { message, summary }
-        setStats(data.summary);
+        const data = await fetchDashboard();
+        setStats(data.summary || data);
         setLoading(false);
       } catch (e) {
         setError("Failed to load dashboard data.");
         setLoading(false);
       }
     }
-    fetchDashboard();
+    loadDashboard();
   }, []);
 
   return (

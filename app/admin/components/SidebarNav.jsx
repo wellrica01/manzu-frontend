@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, ShoppingBag, FileText, Package, LogOut } from 'lucide-react';
+import { Home, Users, ShoppingBag, FileText, Package, LogOut, BookOpen, Layers, FlaskConical, ListOrdered, Factory, Info } from 'lucide-react';
 
 const navItems = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: Home },
@@ -10,6 +10,15 @@ const navItems = [
   { href: '/admin/prescriptions', label: 'Prescriptions', icon: FileText },
   { href: '/admin/orders', label: 'Orders', icon: FileText },
   { href: '/admin/users', label: 'Users', icon: Users },
+];
+
+const masterDataItems = [
+  { href: '/admin/generic-medications', label: 'Generic Medications', icon: BookOpen },
+  { href: '/admin/categories', label: 'Categories', icon: Layers },
+  { href: '/admin/therapeutic-classes', label: 'Therapeutic Classes', icon: FlaskConical },
+  { href: '/admin/chemical-classes', label: 'Chemical Classes', icon: ListOrdered },
+  { href: '/admin/indications', label: 'Indications', icon: Info },
+  { href: '/admin/manufacturers', label: 'Manufacturers', icon: Factory },
 ];
 
 export default function SidebarNav() {
@@ -22,6 +31,21 @@ export default function SidebarNav() {
       </div>
       <nav className="flex-1 px-4 space-y-2">
         {navItems.map(({ href, label, icon: Icon }) => (
+          <Link
+            key={href}
+            href={href}
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${
+              pathname.startsWith(href)
+                ? 'bg-[#1ABA7F]/20 text-[#225F91]'
+                : 'text-gray-700 hover:bg-[#1ABA7F]/10 hover:text-[#1ABA7F]'
+            }`}
+          >
+            <Icon className="w-5 h-5" />
+            {label}
+          </Link>
+        ))}
+        <div className="mt-6 mb-2 text-xs font-bold text-gray-400 px-2 uppercase tracking-widest">Master Data</div>
+        {masterDataItems.map(({ href, label, icon: Icon }) => (
           <Link
             key={href}
             href={href}

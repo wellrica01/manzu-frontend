@@ -55,7 +55,7 @@ export default function Cart() {
 
       try {
         const medicationIds = prescriptionItems
-          .map(item => item.pharmacyMedicationMedicationId)
+          .map(item => item.medication.id)
           .join(',');
 
         const response = await fetch(
@@ -88,7 +88,7 @@ export default function Cart() {
     const interval = setInterval(async () => {
       try {
         const medicationIds = prescriptionItems
-          .map(item => item.pharmacyMedicationMedicationId)
+          .map(item => item.medication.id)
           .join(',');
 
         const response = await fetch(
@@ -102,11 +102,11 @@ export default function Cart() {
           
           // Check if any prescription status changed to 'verified' or 'rejected'
           const newlyVerified = Object.keys(statusData).filter(medId => 
-            statusData[medId] === 'verified' && currentStatuses[medId] !== 'verified'
+            statusData[medId] === 'VERIFIED' && currentStatuses[medId] !== 'VERIFIED'
           );
           
           const newlyRejected = Object.keys(statusData).filter(medId => 
-            statusData[medId] === 'rejected' && currentStatuses[medId] !== 'rejected'
+            statusData[medId] === 'REJECTED' && currentStatuses[medId] !== 'REJECTED'
           );
 
           if (newlyVerified.length > 0) {
@@ -228,7 +228,7 @@ export default function Cart() {
       if (prescriptionItems.length > 0) {
         try {
           const medicationIds = prescriptionItems
-            .map(item => item.pharmacyMedicationMedicationId)
+            .map(item => item.medication.id)
             .join(',');
 
           const response = await fetch(
@@ -284,7 +284,7 @@ export default function Cart() {
   const getCartType = () => {
     const hasOTC = segments.readyForCheckout.some(item => !item.medication.prescriptionRequired);
     const hasPrescription = segments.needsPrescription.length > 0;
-    const hasVerified = segments.readyForCheckout.some(item => item.medication.prescriptionRequired && item.prescriptionStatus === 'verified');
+    const hasVerified = segments.readyForCheckout.some(item => item.medication.prescriptionRequired && item.prescriptionStatus === 'VERIFIED');
     const hasPending = segments.pendingPrescription.length > 0;
 
     // If we have verified prescription items, treat them as ready items
@@ -308,7 +308,7 @@ export default function Cart() {
     const hasPendingItems = segments.needsPrescription.length > 0;
     const hasPendingPrescriptionItems = segments.pendingPrescription.length > 0;
     const hasRejectedItems = segments.rejectedPrescription.length > 0;
-    const hasVerifiedItems = segments.readyForCheckout.some(item => item.medication.prescriptionRequired && item.prescriptionStatus === 'verified');
+    const hasVerifiedItems = segments.readyForCheckout.some(item => item.medication.prescriptionRequired && item.prescriptionStatus === 'VERIFIED');
     const hasOTCItems = segments.readyForCheckout.some(item => !item.medication.prescriptionRequired);
     
     // Show tabs if we have multiple different types of items
@@ -510,7 +510,7 @@ export default function Cart() {
                       <div className="w-8 h-0.5 bg-gray-200"></div>
                       <div className="flex items-center gap-2">
                         <div className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                          segments.readyForCheckout.some(item => item.prescriptionStatus === 'verified') ? 'bg-[#1ABA7F] shadow-lg' : 
+                          segments.readyForCheckout.some(item => item.prescriptionStatus === 'VERIFIED') ? 'bg-[#1ABA7F] shadow-lg' : 
                           segments.rejectedPrescription.length > 0 ? 'bg-red-400 shadow-lg' : 'bg-gray-300'
                         }`}></div>
                         <span className="text-xs text-gray-500">
@@ -630,7 +630,7 @@ export default function Cart() {
             {/* Enhanced Context-Aware Status Banners */}
             
             {/* Ready Medications Banner */}
-            {activeTab === 'ready' && segments.readyForCheckout.some(item => item.prescriptionStatus === 'verified') && (
+            {activeTab === 'ready' && segments.readyForCheckout.some(item => item.prescriptionStatus === 'VERIFIED') && (
               <div className="mb-8 p-6 bg-gradient-to-r from-[#1ABA7F]/10 to-green-100/50 border border-[#1ABA7F]/20 rounded-2xl shadow-sm">
                 <div className="flex items-start gap-4">
                   <div className="p-3 bg-[#1ABA7F]/20 rounded-xl">
@@ -653,7 +653,7 @@ export default function Cart() {
 
             {/* OTC Medications Banner */}
             {activeTab === 'ready' && segments.readyForCheckout.some(item => !item.medication.prescriptionRequired) && 
-              !segments.readyForCheckout.some(item => item.prescriptionStatus === 'verified') && (
+              !segments.readyForCheckout.some(item => item.prescriptionStatus === 'VERIFIED') && (
               <div className="mb-8 p-6 bg-gradient-to-r from-[#1ABA7F]/10 to-green-100/50 border border-[#1ABA7F]/20 rounded-2xl shadow-sm">
                 <div className="flex items-start gap-4">
                   <div className="p-3 bg-[#1ABA7F]/20 rounded-xl">

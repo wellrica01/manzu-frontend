@@ -30,7 +30,7 @@ const CartItem = ({
 }) => {
   const getItemStatus = () => {
     if (item.medication?.prescriptionRequired) {
-      if (item.prescriptionStatus === 'verified') {
+      if (item.prescriptionStatus === 'VERIFIED') {
         return {
           status: 'verified',
           icon: CheckCircle,
@@ -40,7 +40,7 @@ const CartItem = ({
           text: 'Verified',
           description: 'Ready for checkout'
         };
-      } else if (item.prescriptionStatus === 'pending') {
+      } else if (item.prescriptionStatus === 'PENDING') {
         return {
           status: 'pending',
           icon: Clock,
@@ -50,7 +50,7 @@ const CartItem = ({
           text: 'Under Review',
           description: 'Being verified'
         };
-      } else if (item.prescriptionStatus === 'rejected') {
+      } else if (item.prescriptionStatus === 'REJECTED') {
         return {
           status: 'rejected',
           icon: AlertTriangle,

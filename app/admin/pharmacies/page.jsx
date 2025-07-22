@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Loader2, AlertTriangle, Eye, Edit, Trash2, Plus, XCircle, CheckCircle } from "lucide-react";
+import { fetchPharmacies, deletePharmacy } from "./api";
 
 const brandBlue = "#225F91";
 const brandGreen = "#1ABA7F";
@@ -74,28 +75,18 @@ export default function PharmaciesPage() {
   }, [pharmacies]);
 
   useEffect(() => {
-    async function fetchPharmacies() {
+    async function loadPharmacies() {
       setLoading(true);
       setError(null);
       try {
-        const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
-        const token = typeof window !== "undefined" ? localStorage.getItem("adminToken") : null;
-        const params = new URLSearchParams({
+        const params = {
           page: pagination.page,
           limit: pagination.limit,
           ...(search ? { name: search } : {}),
           ...(status !== "all" ? { status } : {}),
           ...(stateFilter ? { state: stateFilter } : {}),
-        });
-        const res = await fetch(`${API_BASE}/api/admin/pharmacies?${params.toString()}`, {
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          credentials: "include",
-        });
-        if (!res.ok) throw new Error(`Error: ${res.status}`);
-        const data = await res.json();
+        };
+        const data = await fetchPharmacies(params);
         setPharmacies(data.pharmacies);
         setPagination(data.pagination);
       } catch (e) {
@@ -104,7 +95,7 @@ export default function PharmaciesPage() {
         setLoading(false);
       }
     }
-    fetchPharmacies();
+    loadPharmacies();
     // eslint-disable-next-line
   }, [pagination.page, search, status, stateFilter]);
 
@@ -117,20 +108,7 @@ export default function PharmaciesPage() {
     setDeleteError(null);
     setDeleteSuccess(false);
     try {
-      const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
-      const token = typeof window !== "undefined" ? localStorage.getItem("adminToken") : null;
-      const res = await fetch(`${API_BASE}/api/admin/pharmacies/${id}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        credentials: "include",
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.message || `Error: ${res.status}`);
-      }
+      await deletePharmacy(id);
       setDeleteSuccess(true);
       setPharmacies((prev) => prev.filter((p) => p.id !== id));
       setTimeout(() => {

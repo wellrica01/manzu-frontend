@@ -3,18 +3,19 @@ import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Loader2, AlertTriangle, ArrowLeft, CheckCircle } from "lucide-react";
-
-const statusOptions = ["pending", "verified", "rejected"];
+import MedicationSearchField from "@/components/MedicationSearchField";
+const statusOptions = ["PENDING", "VERIFIED", "REJECTED", "EXPIRED"];
 
 function StatusBadge({ status }) {
   let color = "bg-gray-200 text-gray-700";
-  if (status === "verified") color = "bg-green-100 text-green-800";
-  else if (status === "pending") color = "bg-yellow-100 text-yellow-800";
-  else if (status === "rejected" || status === "cancelled") color = "bg-red-100 text-red-800";
-  else if (status === "filled") color = "bg-blue-100 text-blue-800";
+  const normalized = status ? status.toUpperCase() : "";
+  if (normalized === "VERIFIED") color = "bg-green-100 text-green-800";
+  else if (normalized === "PENDING") color = "bg-yellow-100 text-yellow-800";
+  else if (normalized === "REJECTED") color = "bg-red-100 text-red-800";
+  else if (normalized === "EXPIRED") color = "bg-gray-400 text-white";
   return (
     <span className={`px-2 py-1 rounded-full text-xs font-semibold ${color}`}>
-      {status.charAt(0).toUpperCase() + status.slice(1)}
+      {normalized.charAt(0) + normalized.slice(1).toLowerCase()}
     </span>
   );
 }
@@ -34,7 +35,7 @@ export default function PrescriptionDetailsPage() {
   const [addMedLoading, setAddMedLoading] = useState(false);
   const [addMedError, setAddMedError] = useState(null);
   const [addMedSuccess, setAddMedSuccess] = useState(false);
-  const [medForm, setMedForm] = useState([{ medicationId: "", quantity: 1 }]);
+  const [medForm, setMedForm] = useState([{ medicationId: '', displayName: '', quantity: 1, dosageInstructions: '' }]);
 
   useEffect(() => {
     async function fetchPrescription() {
@@ -53,7 +54,7 @@ export default function PrescriptionDetailsPage() {
         if (!res.ok) throw new Error(`Error: ${res.status}`);
         const data = await res.json();
         setPrescription(data.prescription);
-        setMedications(data.prescription.PrescriptionMedication || []);
+        setMedications(data.prescription.prescriptionMedications || []);
         setNewStatus(data.prescription.status);
       } catch (e) {
         setError("Failed to load prescription details.");
@@ -97,8 +98,11 @@ export default function PrescriptionDetailsPage() {
   function handleMedFormChange(idx, field, value) {
     setMedForm((prev) => prev.map((item, i) => i === idx ? { ...item, [field]: value } : item));
   }
+  function handleMedSelect(idx, med) {
+    setMedForm((prev) => prev.map((item, i) => i === idx ? { ...item, medicationId: med.id, displayName: med.displayName } : item));
+  }
   function addMedRow() {
-    setMedForm((prev) => [...prev, { medicationId: "", quantity: 1 }]);
+    setMedForm((prev) => [...prev, { medicationId: "", displayName: "", quantity: 1, dosageInstructions: "" }]);
   }
   function removeMedRow(idx) {
     setMedForm((prev) => prev.filter((_, i) => i !== idx));
@@ -111,6 +115,12 @@ export default function PrescriptionDetailsPage() {
     try {
       const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
       const token = typeof window !== "undefined" ? localStorage.getItem("adminToken") : null;
+      // Only send allowed fields to backend
+      const medicationsPayload = medForm.map(({ medicationId, quantity, dosageInstructions }) => ({
+        medicationId: Number(medicationId),
+        quantity: Number(quantity),
+        ...(dosageInstructions ? { dosageInstructions } : {})
+      }));
       const res = await fetch(`${API_BASE}/api/prescription/${id}/medications`, {
         method: "POST",
         headers: {
@@ -118,7 +128,7 @@ export default function PrescriptionDetailsPage() {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         credentials: "include",
-        body: JSON.stringify({ medications: medForm }),
+        body: JSON.stringify({ medications: medicationsPayload }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -193,23 +203,29 @@ export default function PrescriptionDetailsPage() {
             <form className="mt-8 space-y-2" onSubmit={handleAddMedications}>
               <label className="block text-sm font-medium text-[#225F91] mb-1">Add Medications</label>
               {medForm.map((row, idx) => (
-                <div key={idx} className="flex gap-2 mb-2">
-                  <input
-                    type="text"
-                    placeholder="Medication ID"
-                    value={row.medicationId}
-                    onChange={e => handleMedFormChange(idx, "medicationId", e.target.value)}
-                    className="px-3 py-2 border border-[#1ABA7F]/20 rounded-lg focus:border-[#1ABA7F] focus:outline-none"
-                    required
-                  />
+                <div key={idx} className="flex gap-2 mb-2 items-center">
+                  <div className="flex-1">
+                    <MedicationSearchField
+                      value={row.displayName ? { id: row.medicationId, displayName: row.displayName } : null}
+                      onSelect={med => handleMedSelect(idx, med)}
+                      placeholder="Search medication..."
+                    />
+                  </div>
                   <input
                     type="number"
                     min={1}
                     placeholder="Quantity"
                     value={row.quantity}
-                    onChange={e => handleMedFormChange(idx, "quantity", e.target.value)}
+                    onChange={e => handleMedFormChange(idx, 'quantity', e.target.value)}
                     className="w-24 px-3 py-2 border border-[#1ABA7F]/20 rounded-lg focus:border-[#1ABA7F] focus:outline-none"
                     required
+                  />
+                  <input
+                    type="text"
+                    placeholder="Dosage instructions (optional)"
+                    value={row.dosageInstructions}
+                    onChange={e => handleMedFormChange(idx, 'dosageInstructions', e.target.value)}
+                    className="flex-1 px-3 py-2 border border-[#1ABA7F]/20 rounded-lg focus:border-[#1ABA7F] focus:outline-none"
                   />
                   {medForm.length > 1 && (
                     <button type="button" onClick={() => removeMedRow(idx)} className="text-red-600 font-bold">&times;</button>
@@ -236,7 +252,12 @@ export default function PrescriptionDetailsPage() {
                 <ul className="space-y-1">
                   {medications.map((pm, idx) => (
                     <li key={idx} className="border-b last:border-0 py-2">
-                      <span className="font-medium">ID:</span> {pm.medicationId} | <span className="font-medium">Quantity:</span> {pm.quantity}
+                      <span className="font-medium">ID:</span> {pm.medicationId} |
+                      <span className="font-medium"> Name:</span> {pm.medication?.brandName || pm.medicationId} |
+                      <span className="font-medium"> Quantity:</span> {pm.quantity}
+                      {pm.dosageInstructions && (
+                        <span> | <span className="font-medium">Dosage:</span> {pm.dosageInstructions}</span>
+                      )}
                     </li>
                   ))}
                 </ul>

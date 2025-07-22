@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Loader2, AlertTriangle } from "lucide-react";
+import { fetchUsers } from "./api";
 
 const brandBlue = "#225F91";
 const roleOptions = ["all", "admin", "support"];
@@ -16,27 +17,17 @@ export default function UsersPage() {
   const [role, setRole] = useState("all");
 
   useEffect(() => {
-    async function fetchUsers() {
+    async function loadUsers() {
       setLoading(true);
       setError(null);
       try {
-        const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
-        const token = typeof window !== "undefined" ? localStorage.getItem("adminToken") : null;
-        const params = new URLSearchParams({
+        const params = {
           page: pagination.page,
           limit: pagination.limit,
           ...(search ? { email: search } : {}),
           ...(role !== "all" ? { role } : {}),
-        });
-        const res = await fetch(`${API_BASE}/api/admin/admin-users?${params.toString()}`, {
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          credentials: "include",
-        });
-        if (!res.ok) throw new Error(`Error: ${res.status}`);
-        const data = await res.json();
+        };
+        const data = await fetchUsers(params);
         setUsers(data.users);
         setPagination(data.pagination);
       } catch (e) {
@@ -45,7 +36,7 @@ export default function UsersPage() {
         setLoading(false);
       }
     }
-    fetchUsers();
+    loadUsers();
     // eslint-disable-next-line
   }, [pagination.page, search, role]);
 

@@ -35,7 +35,7 @@ const CartSummary = ({ cart, segments, handleCheckout, canCheckout, cartType, ac
     if (isReadyTab) {
       if (hasReadyItems) {
         const hasVerifiedPrescriptions = segments.readyForCheckout.some(item => 
-          item.medication.prescriptionRequired && item.prescriptionStatus === 'verified'
+          item.medication.prescriptionRequired && item.prescriptionStatus === 'VERIFIED'
         );
         
         if (hasVerifiedPrescriptions) {
@@ -234,11 +234,11 @@ const CartSummary = ({ cart, segments, handleCheckout, canCheckout, cartType, ac
                 <span className="text-gray-700 font-medium">Medications ready:</span>
                 <span className="text-green-600 font-semibold">{segments.readyItemsCount}</span>
               </div>
-              {segments.readyForCheckout.some(item => item.prescriptionStatus === 'verified') && (
+              {segments.readyForCheckout.some(item => item.prescriptionStatus === 'VERIFIED') && (
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-700 font-medium">Prescriptions verified:</span>
                   <span className="text-green-600 font-semibold">
-                    {segments.readyForCheckout.filter(item => item.prescriptionStatus === 'verified').length}
+                    {segments.readyForCheckout.filter(item => item.prescriptionStatus === 'VERIFIED').length}
                   </span>
                 </div>
               )}

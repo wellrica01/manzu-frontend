@@ -116,7 +116,9 @@ export default function PrescriptionUploadForm() {
     setFile(null);
     setFilePreview(null);
     setShowFilePreview(false);
-    fileInputRef.current.value = '';
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
     setErrors((prev) => ({ ...prev, file: null }));
   };
 

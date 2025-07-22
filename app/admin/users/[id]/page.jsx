@@ -4,6 +4,7 @@ import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Loader2, AlertTriangle, ArrowLeft } from "lucide-react";
+import { fetchUser } from "../api";
 
 const brandBlue = "#225F91";
 
@@ -16,28 +17,12 @@ export default function UserDetailsPage() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    async function fetchUser() {
+    async function loadUser() {
       setLoading(true);
       setError(null);
       try {
-        const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
-        const token = typeof window !== "undefined" ? localStorage.getItem("adminToken") : null;
-        const res = await fetch(`${API_BASE}/api/admin/admin-users/${id}`, {
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          credentials: "include",
-        });
-        if (res.status === 404) {
-          setError("User not found.");
-          setUser(null);
-        } else if (!res.ok) {
-          throw new Error(`Error: ${res.status}`);
-        } else {
-          const data = await res.json();
-          setUser(data.user);
-        }
+        const data = await fetchUser(id);
+        setUser(data.user || data);
       } catch (e) {
         setError("Failed to load user details.");
         setUser(null);
@@ -45,7 +30,7 @@ export default function UserDetailsPage() {
         setLoading(false);
       }
     }
-    if (id) fetchUser();
+    if (id) loadUser();
   }, [id]);
 
   return (

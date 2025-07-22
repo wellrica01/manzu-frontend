@@ -48,8 +48,8 @@ const PrescriptionUploadSection = ({
 
   // Check if any items need prescriptions
   const needsPrescription = items.some(item => 
-    prescriptionStatuses[item.pharmacyMedicationMedicationId] === 'none' ||
-    prescriptionStatuses[item.pharmacyMedicationMedicationId] === 'rejected'
+    prescriptionStatuses[item.medication.id] === 'NONE' ||
+    prescriptionStatuses[item.medication.id] === 'REJECTED'
   );
 
   const validateContact = () => {
@@ -124,14 +124,13 @@ const PrescriptionUploadSection = ({
     
     formData.append('prescriptionFile', selectedFile);
     formData.append('userIdentifier', guestId);
-    // Only send medication IDs that actually need prescription (status 'none' or 'rejected')
+    // Only send medication IDs that actually need prescription (status 'NONE' or 'rejected')
     const medicationsNeedingPrescription = items.filter(item => 
-      prescriptionStatuses[item.pharmacyMedicationMedicationId] === 'none' ||
-      prescriptionStatuses[item.pharmacyMedicationMedicationId] === 'rejected'
+      prescriptionStatuses[item.medication.id] === 'NONE' ||
+      prescriptionStatuses[item.medication.id] === 'REJECTED'
     );
     
-    formData.append('medicationIds', medicationsNeedingPrescription.map(item => item.pharmacyMedicationMedicationId).join(','));
-    formData.append('email', contactEmail);
+    formData.append('medicationIds', medicationsNeedingPrescription.map(item => item.medication.id).join(','));    formData.append('email', contactEmail);
     formData.append('phone', contactPhone);
 
     try {
@@ -197,17 +196,17 @@ const PrescriptionUploadSection = ({
   };
 
   const getItemStatus = (item) => {
-    const status = prescriptionStatuses[item.pharmacyMedicationMedicationId] || 'none';
+    const status = prescriptionStatuses[item.medication.id] || 'NONE';
     return status;
   };
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case 'verified':
+      case 'VERIFIED':
         return <CheckCircle className="h-5 w-5 text-green-600" />;
-      case 'pending':
+      case 'PENDING':
         return <Clock className="h-5 w-5 text-orange-600" />;
-      case 'rejected':
+      case 'REJECTED':
         return <X className="h-5 w-5 text-red-600" />;
       default:
         return <AlertCircle className="h-5 w-5 text-gray-500" />;
@@ -216,11 +215,11 @@ const PrescriptionUploadSection = ({
 
   const getStatusBadge = (status) => {
     switch (status) {
-      case 'verified':
+      case 'VERIFIED':
         return <Badge className="bg-green-100 text-green-800 border-green-200 text-xs font-medium">✓ Verified</Badge>;
-      case 'pending':
+      case 'PENDING':
         return <Badge className="bg-orange-100 text-orange-800 border-orange-200 text-xs font-medium">⏳ Pending</Badge>;
-      case 'rejected':
+      case 'REJECTED':
         return <Badge className="bg-red-100 text-red-800 border-red-200 text-xs font-medium">✗ Rejected</Badge>;
       default:
         return <Badge className="bg-gray-100 text-gray-800 border-gray-200 text-xs font-medium">📋 Required</Badge>;
@@ -229,11 +228,11 @@ const PrescriptionUploadSection = ({
 
   const getStatusMessage = (status) => {
     switch (status) {
-      case 'verified':
+      case 'VERIFIED':
         return 'This medication is ready for checkout';
-      case 'pending':
+      case 'PENDING':
         return 'Under review by our pharmacy team';
-      case 'rejected':
+      case 'REJECTED':
         return 'Please upload a new prescription';
       default:
         return 'Prescription upload required';
@@ -242,16 +241,18 @@ const PrescriptionUploadSection = ({
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'verified':
+      case 'VERIFIED':
         return 'border-green-200 bg-green-50/80';
-      case 'pending':
+      case 'PENDING':
         return 'border-orange-200 bg-orange-50/80';
-      case 'rejected':
+      case 'REJECTED':
         return 'border-red-200 bg-red-50/80';
       default:
         return 'border-gray-200 bg-gray-50/80';
     }
   };
+
+  console.log('PrescriptionUploadSection state:', { needsPrescription, showUploadArea, selectedFile, items, prescriptionStatuses });
 
   return (
     <Card className="relative bg-white/95 backdrop-blur-sm border border-[#1ABA7F]/20 rounded-2xl shadow-xl overflow-hidden">

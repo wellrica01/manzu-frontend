@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Loader2, AlertTriangle, Eye, Edit, Trash2, Plus, CheckCircle } from "lucide-react";
+import { fetchMedications, deleteMedication } from "./api";
 
 const brandBlue = "#225F91";
 const brandGreen = "#1ABA7F";
@@ -54,34 +55,31 @@ export default function MedicationsPage() {
   // Fetch all categories for filter dropdown (from medications list)
   useEffect(() => {
     if (medications.length > 0) {
-      const uniqueCategories = Array.from(new Set(medications.map((m) => m.category).filter(Boolean)));
+      // Extract unique category names from categories array in each medication
+      const uniqueCategories = Array.from(new Set(
+        medications.flatMap((m) =>
+          Array.isArray(m.categories)
+            ? m.categories.map((cat) => cat.category?.name).filter(Boolean)
+            : []
+        )
+      ));
       setAllCategories(uniqueCategories);
     }
   }, [medications]);
 
   useEffect(() => {
-    async function fetchMedications() {
+    async function loadMedications() {
       setLoading(true);
       setError(null);
       try {
-        const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
-        const token = typeof window !== "undefined" ? localStorage.getItem("adminToken") : null;
-        const params = new URLSearchParams({
+        const params = {
           page: pagination.page,
           limit: pagination.limit,
           ...(search ? { name: search } : {}),
           ...(category ? { category } : {}),
           ...(prescriptionRequired ? { prescriptionRequired } : {}),
-        });
-        const res = await fetch(`${API_BASE}/api/admin/medications?${params.toString()}`, {
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          credentials: "include",
-        });
-        if (!res.ok) throw new Error(`Error: ${res.status}`);
-        const data = await res.json();
+        };
+        const data = await fetchMedications(params);
         setMedications(data.medications);
         setPagination(data.pagination);
       } catch (e) {
@@ -90,7 +88,7 @@ export default function MedicationsPage() {
         setLoading(false);
       }
     }
-    fetchMedications();
+    loadMedications();
     // eslint-disable-next-line
   }, [pagination.page, search, category, prescriptionRequired]);
 
@@ -101,20 +99,7 @@ export default function MedicationsPage() {
   async function handleDelete(id) {
     setDeleteLoading(true);
     try {
-      const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
-      const token = typeof window !== "undefined" ? localStorage.getItem("adminToken") : null;
-      const res = await fetch(`${API_BASE}/api/admin/medications/${id}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        credentials: "include",
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.message || `Error: ${res.status}`);
-      }
+      await deleteMedication(id);
       setDeleteSuccess(true);
       setMedications((prev) => prev.filter((m) => m.id !== id));
       setTimeout(() => {
@@ -215,12 +200,16 @@ export default function MedicationsPage() {
                 {medications.length > 0 ? (
                   medications.map((med) => (
                     <tr key={med.id} className="border-b last:border-0">
-                      <td className="py-2 px-3 font-medium text-gray-900">{med.name}</td>
-                      <td className="py-2 px-3">{med.genericName}</td>
-                      <td className="py-2 px-3">{med.category}</td>
-                      <td className="py-2 px-3">{med.manufacturer}</td>
+                      <td className="py-2 px-3 font-medium text-gray-900">{med.brandName}</td>
+                      <td className="py-2 px-3">{med.genericMedication?.name || ""}</td>
+                      <td className="py-2 px-3">
+                        {Array.isArray(med.categories)
+                          ? med.categories.map(cat => cat.category?.name).filter(Boolean).join(", ")
+                          : ""}
+                      </td>
+                      <td className="py-2 px-3">{med.manufacturer?.name || ""}</td>
                       <td className="py-2 px-3">{med.form}</td>
-                      <td className="py-2 px-3">{med.dosage}</td>
+                      <td className="py-2 px-3">{med.strengthValue ? `${med.strengthValue} ${med.strengthUnit || ""}` : ""}</td>
                       <td className="py-2 px-3">
                         {med.prescriptionRequired ? (
                           <span className="text-red-600 font-semibold">Yes</span>

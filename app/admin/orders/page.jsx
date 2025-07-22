@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Loader2, AlertTriangle, CheckCircle } from "lucide-react";
+import { fetchOrders } from "./api";
 
 const brandBlue = "#225F91";
 const statusOptions = [
@@ -41,27 +42,17 @@ export default function OrdersPage() {
   const [status, setStatus] = useState("all");
 
   useEffect(() => {
-    async function fetchOrders() {
+    async function loadOrders() {
       setLoading(true);
       setError(null);
       try {
-        const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
-        const token = typeof window !== "undefined" ? localStorage.getItem("adminToken") : null;
-        const params = new URLSearchParams({
+        const params = {
           page: pagination.page,
           limit: pagination.limit,
           ...(search ? { userIdentifier: search } : {}),
           ...(status !== "all" ? { status } : {}),
-        });
-        const res = await fetch(`${API_BASE}/api/admin/orders?${params.toString()}`, {
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          credentials: "include",
-        });
-        if (!res.ok) throw new Error(`Error: ${res.status}`);
-        const data = await res.json();
+        };
+        const data = await fetchOrders(params);
         setOrders(data.orders);
         setPagination(data.pagination);
       } catch (e) {
@@ -70,7 +61,7 @@ export default function OrdersPage() {
         setLoading(false);
       }
     }
-    fetchOrders();
+    loadOrders();
     // eslint-disable-next-line
   }, [pagination.page, search, status]);
 
@@ -186,6 +177,7 @@ export default function OrdersPage() {
     </div>
   );
 }
+
 
 
 

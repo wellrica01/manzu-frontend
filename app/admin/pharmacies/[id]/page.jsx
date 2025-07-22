@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Loader2, AlertTriangle, ArrowLeft } from "lucide-react";
 import PharmacyForm from "../PharmacyForm";
+import { fetchPharmacy } from "../api";
 
 const brandBlue = "#225F91";
 
@@ -19,29 +20,19 @@ export default function PharmacyDetailsPage() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    async function fetchPharmacy() {
+    async function loadPharmacy() {
       setLoading(true);
       setError(null);
       try {
-        const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
-        const token = typeof window !== "undefined" ? localStorage.getItem("adminToken") : null;
-        const res = await fetch(`${API_BASE}/api/admin/pharmacies/${id}`, {
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          credentials: "include",
-        });
-        if (!res.ok) throw new Error(`Error: ${res.status}`);
-        const data = await res.json();
-        setPharmacy(data.pharmacy);
+        const data = await fetchPharmacy(id);
+        setPharmacy(data.pharmacy || data);
       } catch (e) {
         setError("Failed to load pharmacy details.");
       } finally {
         setLoading(false);
       }
     }
-    if (id) fetchPharmacy();
+    if (id) loadPharmacy();
   }, [id]);
 
   return (
