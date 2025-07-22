@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
-import { Loader2, AlertTriangle, CheckCircle, Users, Package, ShoppingBag, FileText, Clock } from "lucide-react";
+import { Loader2, AlertTriangle, CheckCircle, Users, Package, ShoppingBag, FileText, Clock, Layers, FlaskConical, Beaker, Factory, Pill, BookOpen } from "lucide-react";
 import { fetchDashboard } from "./api";
 
 const brandBlue = "#225F91";
@@ -62,6 +62,13 @@ export default function AdminDashboard() {
             <StatCard icon={FileText} label="Prescriptions" value={stats.prescriptions.total} color={brandBlue} />
             <StatCard icon={Clock} label="Pending Prescriptions" value={stats.prescriptions.pending} color={brandGreen} />
             <StatCard icon={Users} label="Admin Users" value={stats.users.total} color={brandBlue} />
+            {/* New Stats */}
+            <StatCard icon={Layers} label="Categories" value={stats.categories?.total ?? 0} color={brandBlue} />
+            <StatCard icon={FlaskConical} label="Therapeutic Classes" value={stats.therapeuticClasses?.total ?? 0} color={brandBlue} />
+            <StatCard icon={Beaker} label="Chemical Classes" value={stats.chemicalClasses?.total ?? 0} color={brandBlue} />
+            <StatCard icon={Factory} label="Manufacturers" value={stats.manufacturers?.total ?? 0} color={brandBlue} />
+            <StatCard icon={Pill} label="Generic Medications" value={stats.genericMedications?.total ?? 0} color={brandBlue} />
+            <StatCard icon={BookOpen} label="Indications" value={stats.indications?.total ?? 0} color={brandBlue} />
           </div>
 
           {/* Recent Orders Table */}

@@ -4,6 +4,8 @@ import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Loader2, AlertTriangle, Eye, Edit, Trash2, Plus, XCircle, CheckCircle } from "lucide-react";
 import { fetchPharmacies, deletePharmacy } from "./api";
+import Dialog from "../components/Dialog";
+import PharmacyForm from "./PharmacyForm";
 
 const brandBlue = "#225F91";
 const brandGreen = "#1ABA7F";
@@ -65,6 +67,7 @@ export default function PharmaciesPage() {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState(null);
   const [deleteSuccess, setDeleteSuccess] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   // Fetch all states for filter dropdown (from pharmacies list)
   useEffect(() => {
@@ -124,6 +127,16 @@ export default function PharmaciesPage() {
 
   return (
     <div className="space-y-8">
+      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} title="Add Pharmacy">
+        <PharmacyForm
+          mode="create"
+          onSuccess={() => {
+            setDialogOpen(false);
+            // Optionally, trigger a refresh here if needed
+            // e.g., setRefresh((r) => r + 1);
+          }}
+        />
+      </Dialog>
       <ConfirmDialog
         open={!!deleteId}
         onClose={() => setDeleteId(null)}
@@ -133,13 +146,13 @@ export default function PharmaciesPage() {
       />
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold text-[#225F91]">Pharmacies</h1>
-        <Link
-          href="/admin/pharmacies/new"
+        <button
+          onClick={() => setDialogOpen(true)}
           className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#1ABA7F] text-white font-semibold hover:bg-[#159e6a] transition"
         >
           <Plus className="w-4 h-4" />
           Add Pharmacy
-        </Link>
+        </button>
       </div>
       <Card className="p-6 bg-white/95 border border-[#1ABA7F]/20 rounded-2xl shadow-md">
         <div className="mb-4 flex flex-col sm:flex-row gap-3 sm:items-center justify-between">

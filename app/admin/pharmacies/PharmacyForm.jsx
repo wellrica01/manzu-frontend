@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { Loader2, AlertTriangle, CheckCircle } from "lucide-react";
 
 const statusOptions = ["pending", "verified", "rejected"];
+const pharmacyTypeOptions = ["COMMUNITY", "HOSPITAL", "SPECIALTY", "PMV"];
 
 export default function PharmacyForm({ pharmacy = {}, mode = "create" }) {
   const router = useRouter();
@@ -17,6 +18,10 @@ export default function PharmacyForm({ pharmacy = {}, mode = "create" }) {
     status: pharmacy.status || "pending",
     logoUrl: pharmacy.logoUrl || "",
     isActive: pharmacy.isActive ?? true,
+    pharmacyType: pharmacy.pharmacyType || "COMMUNITY",
+    ward: pharmacy.ward || "",
+    operatingHours: pharmacy.operatingHours || "",
+    deliveryAvailability: pharmacy.deliveryAvailability ?? false,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -152,6 +157,49 @@ export default function PharmacyForm({ pharmacy = {}, mode = "create" }) {
             onChange={handleChange}
             className="w-full px-3 py-2 border border-[#1ABA7F]/20 rounded-lg focus:border-[#1ABA7F] focus:outline-none"
           />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-[#225F91] mb-1">Pharmacy Type *</label>
+          <select
+            name="pharmacyType"
+            value={form.pharmacyType}
+            onChange={handleChange}
+            required
+            className="w-full px-3 py-2 border border-[#1ABA7F]/20 rounded-lg focus:border-[#1ABA7F] focus:outline-none"
+          >
+            {pharmacyTypeOptions.map((opt) => (
+              <option key={opt} value={opt}>{opt.charAt(0) + opt.slice(1).toLowerCase()}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-[#225F91] mb-1">Ward</label>
+          <input
+            name="ward"
+            value={form.ward}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border border-[#1ABA7F]/20 rounded-lg focus:border-[#1ABA7F] focus:outline-none"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-[#225F91] mb-1">Operating Hours</label>
+          <input
+            name="operatingHours"
+            value={form.operatingHours}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border border-[#1ABA7F]/20 rounded-lg focus:border-[#1ABA7F] focus:outline-none"
+          />
+        </div>
+        <div className="flex items-center gap-2 mt-6">
+          <input
+            type="checkbox"
+            name="deliveryAvailability"
+            checked={form.deliveryAvailability}
+            onChange={handleChange}
+            id="deliveryAvailability"
+            className="h-4 w-4 border-gray-300 rounded"
+          />
+          <label htmlFor="deliveryAvailability" className="text-sm text-[#225F91]">Delivery Available</label>
         </div>
         <div className="flex items-center gap-2 mt-6">
           <input
