@@ -43,7 +43,7 @@ export default function CustomerInsights({ orders, loading }) {
         <table className="min-w-full bg-white rounded-xl shadow-md text-sm" aria-label="Top Customers">
           <thead>
             <tr>
-              <th className="px-4 py-2 text-left">Patient Identifier</th>
+              <th className="px-4 py-2 text-left">User Identifier</th>
               <th className="px-4 py-2 text-left">Total Orders</th>
               <th className="px-4 py-2 text-left">Total Spent</th>
             </tr>

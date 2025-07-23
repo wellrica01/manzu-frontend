@@ -4,7 +4,7 @@ function getTopMedications(orders) {
   const medStats = {};
   (orders || []).forEach(order => {
     (order.items || []).forEach(item => {
-      const name = item.medication.name;
+      const name = item.medication.brandName || item.medication.genericName;
       const revenue = (item.price || 0) * (item.quantity || 0);
       if (!medStats[name]) medStats[name] = { name, qty: 0, revenue: 0 };
       medStats[name].qty += item.quantity || 0;

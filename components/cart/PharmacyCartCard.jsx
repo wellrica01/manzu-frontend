@@ -38,10 +38,10 @@ const PharmacyCartCard = ({
   const getPharmacyStatus = () => {
     const hasPrescriptionItems = pharmacy.items.some(item => item.medication?.prescriptionRequired);
     const hasVerifiedItems = pharmacy.items.some(item => 
-      item.medication?.prescriptionRequired && item.prescriptionStatus === 'verified'
+      item.medication?.prescriptionRequired && item.prescriptionStatus === 'VERIFIED'
     );
     const hasPendingItems = pharmacy.items.some(item => 
-      item.medication?.prescriptionRequired && item.prescriptionStatus === 'pending'
+      item.medication?.prescriptionRequired && item.prescriptionStatus === 'PENDING'
     );
 
     if (hasVerifiedItems) {
@@ -167,11 +167,11 @@ const PharmacyCartCard = ({
                 <div className="flex items-center gap-1">
                   <Shield className="h-3 w-3 text-[#1ABA7F]" />
                   <span className={cn(
-                    pharmacy.pharmacy.status === 'verified' ? 'text-green-600' : 
-                    pharmacy.pharmacy.status === 'pending' ? 'text-orange-600' : 'text-gray-500'
+                    pharmacy.pharmacy.status === 'VERIFIED' ? 'text-green-600' : 
+                    pharmacy.pharmacy.status === 'PENDING' ? 'text-orange-600' : 'text-gray-500'
                   )}>
-                    {pharmacy.pharmacy.status === 'verified' ? 'Verified Pharmacy' :
-                     pharmacy.pharmacy.status === 'pending' ? 'Pending Verification' : 'Unverified'}
+                    {pharmacy.pharmacy.status === 'VERIFIED' ? 'Verified Pharmacy' :
+                     pharmacy.pharmacy.status === 'PENDING' ? 'Pending Verification' : 'Unverified'}
                   </span>
                 </div>
               </div>

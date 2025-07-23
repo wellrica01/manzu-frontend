@@ -80,7 +80,7 @@ export default function AdminDashboard() {
                   <tr className="text-left text-gray-600 border-b">
                     <th className="py-2 px-3">Order ID</th>
                     <th className="py-2 px-3">Tracking Code</th>
-                    <th className="py-2 px-3">Patient</th>
+                    <th className="py-2 px-3">User</th>
                     <th className="py-2 px-3">Total Price</th>
                     <th className="py-2 px-3">Status</th>
                     <th className="py-2 px-3">Date</th>

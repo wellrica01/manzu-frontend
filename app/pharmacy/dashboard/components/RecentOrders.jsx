@@ -112,7 +112,7 @@ export default function RecentOrders() {
               {/* Main info */}
               <div className="flex-1 min-w-0">
                 <div className="font-semibold text-gray-800 truncate">
-                  {name || <span className="italic text-gray-400">Unknown Patient</span>}
+                  {name || <span className="italic text-gray-400">Unknown User</span>}
                 </div>
                 <div className="text-xs text-gray-500 truncate">
                   <span className="font-medium">Tracking:</span> {order.trackingCode || <span className="italic">N/A</span>}

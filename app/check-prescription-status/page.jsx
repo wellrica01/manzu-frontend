@@ -29,12 +29,12 @@ export default function StatusCheck() {
 
   const handleInputChange = (e) => setForm({ ...form, identifier: e.target.value });
 
-  const fetchStatus = async (patientId) => {
+  const fetchStatus = async (userId) => {
     setStatus('loading');
     setError(null);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/prescription/prescriptions/${patientId}`, {
-        headers: { 'x-guest-id': patientId },
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/prescription/prescriptions/${userId}`, {
+        headers: { 'x-guest-id': userId },
       });
       if (!response.ok) {
         const errorData = await response.json();
@@ -43,12 +43,12 @@ export default function StatusCheck() {
       const data = await response.json();
       const { prescriptionMetadata, medications } = data;
       // If prescription is verified and has medications, redirect to prescription medications page
-      if (prescriptionMetadata.status === 'verified' && medications && medications.length > 0) {
-        router.push(`/prescriptions/${patientId}`);
+      if (prescriptionMetadata.status === 'VERIFIED' && medications && medications.length > 0) {
+        router.push(`/prescriptions/${userId}`);
         return;
       }
       // If prescription is pending, show status
-      if ([ 'pending', 'pending_admin', 'pending_action' ].includes(prescriptionMetadata.status)) {
+      if ([ 'PENDING', 'PENDING_ADMIN', 'PENDING_ACTION' ].includes(prescriptionMetadata.status)) {
         setPrescription(prescriptionMetadata);
         setStatus('success');
         toast.info('Your prescription is under review. You’ll be notified when it’s ready.', {
@@ -153,7 +153,7 @@ export default function StatusCheck() {
             </form>
         {status === 'success' && prescription && (
             <div className="mt-8 text-center">
-              {['pending', 'pending_admin', 'pending_action'].includes(prescription.status) ? (
+              {['PENDING', 'PENDING_ADMIN', 'PENDING_ACTION'].includes(prescription.status) ? (
                 <>
                   <CheckCircle className="h-10 w-10 text-[#1ABA7F] mx-auto mb-2" />
                   <p className="text-lg font-semibold text-[#225F91] mb-2">Your prescription is under review.</p>

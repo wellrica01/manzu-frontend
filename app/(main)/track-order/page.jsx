@@ -14,19 +14,19 @@ import React from 'react'; // Added missing import for React
 
 // Helper for progress steps
 const DELIVERY_STEPS = [
-  { key: 'confirmed', label: 'Confirmed', icon: CheckCircle },
-  { key: 'processing', label: 'Processing', icon: Clock },
-  { key: 'shipped', label: 'Shipped', icon: Truck },
-  { key: 'delivered', label: 'Delivered', icon: Check },
+  { key: 'CONFIRMED', label: 'Confirmed', icon: CheckCircle },
+  { key: 'PROCESSING', label: 'Processing', icon: Clock },
+  { key: 'SHIPPED', label: 'Shipped', icon: Truck },
+  { key: 'DELIVERED', label: 'Delivered', icon: Check },
 ];
 const PICKUP_STEPS = [
-  { key: 'confirmed', label: 'Confirmed', icon: CheckCircle },
-  { key: 'processing', label: 'Processing', icon: Clock },
-  { key: 'ready_for_pickup', label: 'Ready for Pickup', icon: Store },
+  { key: 'CONFIRMED', label: 'Confirmed', icon: CheckCircle },
+  { key: 'PROCESSING', label: 'Processing', icon: Clock },
+  { key: 'READY_FOR_PICKUP', label: 'Ready for Pickup', icon: Store },
 ];
 
 function getOrderSteps(order) {
-  if (order.deliveryMethod === 'pickup') return PICKUP_STEPS;
+  if (order.deliveryMethod === 'PICKUP') return PICKUP_STEPS;
   return DELIVERY_STEPS;
 }
 function getOrderStepIndex(order, steps) {
@@ -208,7 +208,7 @@ export default function Track() {
   const calculateItemPrice = (item) => item.quantity * item.price;
 
   const getUniquePharmacyAddresses = (order) => {
-    if (order.pharmacy && order.deliveryMethod === 'pickup') {
+    if (order.pharmacy && order.deliveryMethod === 'PICKUP') {
       return [{ name: order.pharmacy.name, address: order.pharmacy.address }];
     }
     return [];
@@ -219,7 +219,7 @@ export default function Track() {
   };
 
   const getStatusProgress = (status) => {
-    const steps = ['confirmed', 'processing', 'shipped', 'delivered', 'ready_for_pickup'];
+    const steps = ['CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'READY_FOR_PICKUP'];
     const index = steps.indexOf(status);
     return index >= 0 ? ((index + 1) / steps.length) * 100 : 0;
   };
@@ -406,10 +406,10 @@ export default function Track() {
                         <div className="flex items-center gap-2 text-sm mt-2">
                           <MapPin className="h-4 w-4 text-[#1ABA7F]" />
                           <span className="font-semibold text-[#225F91] mr-1">
-                            {order.deliveryMethod === 'pickup' ? 'Pickup Address:' : 'Delivery Address:'}
+                            {order.deliveryMethod === 'PICKUP' ? 'Pickup Address:' : 'Delivery Address:'}
                           </span>
                           <span className="text-gray-700 font-medium">
-                            {order.deliveryMethod === 'pickup'
+                            {order.deliveryMethod === 'PICKUP'
                               ? (order.pharmacy?.address || 'No pickup address provided')
                               : (order.address || 'No delivery address provided')}
                           </span>
@@ -426,7 +426,7 @@ export default function Track() {
                             <div key={item.id} className="flex justify-between items-center px-2 py-1 border-b last:border-b-0">
                               <span className="flex items-center gap-2 font-medium text-gray-900">
                                 <span className="w-2 h-2 rounded-full bg-[#1ABA7F] inline-block" />
-                                {item.medication.name} {item.medication.genericName ? <span className="text-xs text-gray-500 ml-1">({item.medication.genericName})</span> : null}
+                                {item.medication.displayName} {item.medication.genericName ? <span className="text-xs text-gray-500 ml-1">({item.medication.genericName})</span> : null}
                                 {item.medication.prescriptionRequired && (
                                   <span className="ml-2 px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 text-xs font-medium">Prescription</span>
                                 )}
@@ -457,7 +457,7 @@ export default function Track() {
                                 {order.prescription.medications.map((med, index) => (
                                   <div key={index} className="flex items-center gap-2 text-gray-600 text-base">
                                     <span className="w-2 h-2 rounded-full bg-[#1ABA7F] inline-block" />
-                                    {med.name} {med.genericName ? <span className="text-xs text-gray-500 ml-1">({med.genericName})</span> : null} - Dosage: {med.dosage || 'N/A'}, Quantity: {med.quantity || 'N/A'}
+                                    {med.displayName} {med.genericName ? <span className="text-xs text-gray-500 ml-1">({med.genericName})</span> : null} - Dosage: {med.dosage || 'N/A'}, Quantity: {med.quantity || 'N/A'}
                                   </div>
                                 ))}
                               </div>
@@ -468,7 +468,7 @@ export default function Track() {
                       {/* Order Total */}
                       <div className="flex justify-end mt-6 text-2xl font-bold text-[#225F91] border-t pt-6">Total: ₦{order.totalPrice.toLocaleString()}</div>
                       {/* Cancelled Notice */}
-                      {order.status === 'cancelled' && (
+                      {order.status === 'CANCELLED ' && (
                         <div className="mt-4 flex items-center gap-2 text-[#225F91]">
                           <AlertCircle className="h-5 w-5" />
                           <p className="text-base font-medium">

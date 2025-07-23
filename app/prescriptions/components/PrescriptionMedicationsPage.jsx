@@ -37,8 +37,8 @@ const PrescriptionSummaryCard = ({ metadata, onViewPrescription, onHelp }) => {
   if (!metadata) return null;
   const statusSteps = [
     { label: 'Uploaded', complete: true },
-    { label: 'Verified', complete: metadata.status === 'verified' },
-    { label: 'Ready to Order', complete: metadata.status === 'verified' },
+    { label: 'Verified', complete: metadata.status === 'VERIFIED' },
+    { label: 'Ready to Order', complete: metadata.status === 'VERIFIED' },
   ];
   return (
     <Card className="mb-8 shadow-xl border border-[#1ABA7F]/20 rounded-2xl bg-white/95 backdrop-blur-sm animate-in slide-in-from-bottom-2 duration-500">
@@ -268,8 +268,8 @@ const PrescriptionMedicationsPage = React.memo(() => {
       setCartItems(prev => [
         ...prev,
         {
-          pharmacyMedicationMedicationId: medicationId,
-          pharmacyMedicationPharmacyId: pharmacyId,
+          medicationAvailabilityMedicationId: medicationId,
+          medicationAvailabilityPharmacyId: pharmacyId,
           quantity,
           medication: { displayName: medicationName },
         },
@@ -283,8 +283,8 @@ const PrescriptionMedicationsPage = React.memo(() => {
     } catch (err) {
       toast.error(`Error: ${err.message}`, { duration: 4000 });
       setCartItems(prev => prev.filter(item =>
-        !(item.pharmacyMedicationMedicationId === medicationId &&
-          item.pharmacyMedicationPharmacyId === pharmacyId)
+        !(item.medicationAvailabilityMedicationId === medicationId &&
+          item.medicationAvailabilityPharmacyId === pharmacyId)
       ));
     } finally {
       setIsAddingToCart(prev => ({ ...prev, [itemKey]: false }));
@@ -294,15 +294,15 @@ const PrescriptionMedicationsPage = React.memo(() => {
   const isInCart = useCallback((medicationId, pharmacyId) => {
     if (!Array.isArray(cartItems)) return false;
     return cartItems.some(
-      item => item.pharmacyMedicationMedicationId === medicationId &&
-              item.pharmacyMedicationPharmacyId === pharmacyId
+      item => item.medicationAvailabilityMedicationId === medicationId &&
+              item.medicationAvailabilityPharmacyId === pharmacyId
     );
   }, [cartItems]);
 
   const getIntroMessage = () => {
     if (!prescriptionMetadata) return null;
     switch (prescriptionMetadata.status) {
-      case 'verified':
+      case 'VERIFIED':
         return (
           <Card className="shadow-xl border border-[#1ABA7F]/20 rounded-2xl bg-white/95 backdrop-blur-sm p-6 mb-6 text-center">
             <div className="absolute top-0 left-0 w-12 h-12 bg-[#1ABA7F]/20 rounded-br-full" />
@@ -319,14 +319,13 @@ const PrescriptionMedicationsPage = React.memo(() => {
             </p>
           </Card>
         );
-      case 'pending_admin':
-      case 'pending_action':
+      case 'PENDING':
         return (
           <Card className="shadow-xl border border-yellow-100/50 rounded-2xl bg-yellow-50/90 backdrop-blur-md p-6 mb-6 text-center">
             <div className="absolute top-0 left-0 w-12 h-12 bg-[#1ABA7F]/20 rounded-br-full" />
             <h1 className="text-3xl font-extrabold text-[#225F91] mb-2">Prescription Under Review</h1>
             <p className="text-base text-gray-600">
-              Your prescription is currently {prescriptionMetadata.status === 'pending_admin' ? 'under review by our team' : 'pending action'}. We’ll notify you when it’s ready to order.{' '}
+              Your prescription is currently under review by our team. We’ll notify you when it’s ready to order.{' '}
               <Link
                 href="/support"
                 className="text-[#225F91] hover:text-[#1A4971] underline font-semibold"
@@ -439,7 +438,7 @@ const PrescriptionMedicationsPage = React.memo(() => {
       )}
       {/* Medications List */}
       <div className="space-y-10 mt-8">
-        {prescriptionMetadata?.status === 'verified' && medications.length === 0 && (
+        {prescriptionMetadata?.status === 'VERIFIED' && medications.length === 0 && (
           <Card className="shadow-xl border border-[#1ABA7F]/20 rounded-2xl text-center py-10 bg-white/95 backdrop-blur-sm animate-in fade-in-20 duration-700">
             <div className="absolute top-0 left-0 w-12 h-12 bg-[#1ABA7F]/20 rounded-br-full" />
             <p className="text-gray-600 text-xl font-medium">
@@ -462,7 +461,7 @@ const PrescriptionMedicationsPage = React.memo(() => {
             </p>
           </Card>
         )}
-        {prescriptionMetadata?.status === 'verified' && medications.length > 0 && medications.map((med) => (
+        {prescriptionMetadata?.status === 'VERIFIED' && medications.length > 0 && medications.map((med) => (
           <MedicationCard
             key={med.id}
             med={med}

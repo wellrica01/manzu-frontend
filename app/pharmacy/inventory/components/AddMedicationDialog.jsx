@@ -1,41 +1,63 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function AddMedicationDialog({ open, onClose }) {
-  const [availableMeds, setAvailableMeds] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [form, setForm] = useState({ medicationId: '', stock: '', price: '', expiryDate: '' });
+  const [form, setForm] = useState({ medicationId: '', stock: '', price: '', expiryDate: '', medicationName: '' });
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestionLoading, setSuggestionLoading] = useState(false);
+  const [suggestionError, setSuggestionError] = useState(null);
+  let suggestionTimeout = null;
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
 
-  useEffect(() => {
-    if (!open) return;
-    async function fetchAvailable() {
-      setLoading(true);
-      setError(null);
-      try {
-        const token = localStorage.getItem('pharmacyToken');
-        const res = await fetch('http://localhost:5000/api/pharmacy/medications', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-        if (!res.ok) throw new Error('Failed to fetch medications');
-        const data = await res.json();
-        setAvailableMeds(data.availableMedications || []);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchAvailable();
-  }, [open]);
-
   const handleChange = e => {
     setForm(f => ({ ...f, [e.target.name]: e.target.value }));
+  };
+
+  // Suggestion fetcher
+  const fetchSuggestions = async (query) => {
+    if (!query || query.trim().length === 0) {
+      setSuggestions([]);
+      return;
+    }
+    setSuggestionLoading(true);
+    setSuggestionError(null);
+    try {
+      const token = localStorage.getItem('pharmacyToken');
+      const res = await fetch('http://localhost:5000/api/medication-suggestions?q=' + encodeURIComponent(query), {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (!res.ok) throw new Error('Failed to fetch suggestions');
+      const data = await res.json();
+      setSuggestions(data);
+    } catch (err) {
+      setSuggestionError(err.message);
+      setSuggestions([]);
+    } finally {
+      setSuggestionLoading(false);
+    }
+  };
+
+  // Handle medication input change
+  const handleMedicationInput = e => {
+    const value = e.target.value;
+    setForm(f => ({ ...f, medicationName: value, medicationId: '' }));
+    setShowSuggestions(true);
+    if (suggestionTimeout) clearTimeout(suggestionTimeout);
+    suggestionTimeout = setTimeout(() => {
+      fetchSuggestions(value);
+    }, 300);
+  };
+
+  // Handle suggestion select
+  const handleSuggestionSelect = (med) => {
+    setForm(f => ({ ...f, medicationName: med.displayName, medicationId: med.id }));
+    setShowSuggestions(false);
+    setSuggestions([]);
   };
 
   const handleSubmit = async e => {
@@ -73,37 +95,38 @@ export default function AddMedicationDialog({ open, onClose }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm transition-all">
       <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md animate-in fade-in duration-200">
         <h2 className="text-2xl font-bold mb-6 text-primary">Add Medication</h2>
-        {loading ? (
-          <div className="space-y-4">
-            <div className="h-5 w-1/2 bg-gray-200 rounded animate-pulse mb-2" />
-            <div className="h-10 w-full bg-gray-200 rounded animate-pulse" />
-            <div className="h-5 w-1/3 bg-gray-200 rounded animate-pulse mb-2" />
-            <div className="h-10 w-full bg-gray-200 rounded animate-pulse" />
-            <div className="h-5 w-1/3 bg-gray-200 rounded animate-pulse mb-2" />
-            <div className="h-10 w-full bg-gray-200 rounded animate-pulse" />
-            <div className="h-5 w-1/3 bg-gray-200 rounded animate-pulse mb-2" />
-            <div className="h-10 w-full bg-gray-200 rounded animate-pulse" />
-          </div>
-        ) : error ? (
-          <p className="text-red-500 mb-4">{error}</p>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-4" aria-label="Add medication form">
+        <form onSubmit={handleSubmit} className="space-y-4" aria-label="Add medication form">
             <div>
-              <label className="block mb-1 font-medium" htmlFor="add-medication-select">Medication</label>
-              <select
-                id="add-medication-select"
-                name="medicationId"
-                value={form.medicationId}
-                onChange={handleChange}
+              <label className="block mb-1 font-medium" htmlFor="add-medication-suggest">Medication</label>
+              <input
+                id="add-medication-suggest"
+                name="medicationName"
+                type="text"
+                autoComplete="off"
+                value={form.medicationName}
+                onChange={handleMedicationInput}
                 required
                 className="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-primary focus:outline-none"
                 aria-required="true"
-              >
-                <option value="">Select medication</option>
-                {availableMeds.map(med => (
-                  <option key={med.id} value={med.id}>{med.name}</option>
-                ))}
-              </select>
+                onFocus={() => form.medicationName && setShowSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                placeholder="Type to search medication..."
+              />
+              {suggestionLoading && <div className="text-xs text-gray-500 mt-1">Loading...</div>}
+              {suggestionError && <div className="text-xs text-red-500 mt-1">{suggestionError}</div>}
+              {showSuggestions && suggestions.length > 0 && (
+                <ul className="absolute z-50 bg-white border rounded shadow mt-1 w-full max-h-48 overflow-y-auto">
+                  {suggestions.map(med => (
+                    <li
+                      key={med.id}
+                      className="px-3 py-2 hover:bg-primary/10 cursor-pointer text-sm"
+                      onMouseDown={() => handleSuggestionSelect(med)}
+                    >
+                      {med.displayName}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
             <div>
               <label className="block mb-1 font-medium" htmlFor="add-stock">Stock</label>
@@ -165,8 +188,7 @@ export default function AddMedicationDialog({ open, onClose }) {
               </button>
             </div>
           </form>
-        )}
       </div>
     </div>
   );
-} 
+}

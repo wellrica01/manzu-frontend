@@ -182,7 +182,8 @@ export default function ConfirmationInner() {
     );
   }
 
-  const isDelivery = confirmationData.pharmacies.some(pharmacy => pharmacy.orders.some(order => order.deliveryMethod === 'delivery'));
+  // Delivery method check (update all occurrences)
+  const isDelivery = confirmationData.pharmacies.some(pharmacy => pharmacy.orders.some(order => order.deliveryMethod === 'COURIER'));
 
   return (
     <>
@@ -211,12 +212,12 @@ export default function ConfirmationInner() {
             <div className="space-y-2 text-base text-gray-700">
               <div className="flex flex-wrap gap-6 items-center justify-center">
                 <span><strong>Tracking Code:</strong> {confirmationData.trackingCode}</span>
-                {confirmationData.pharmacies.some(pharmacy => pharmacy.orders.some(order => order.deliveryMethod === 'delivery')) && (
+                {confirmationData.pharmacies.some(pharmacy => pharmacy.orders.some(order => order.deliveryMethod === 'COURIER')) && (
                   <span className="text-green-700"><strong>Estimated delivery:</strong> 2-3 hours</span>
                 )}
                 {/* Show delivery address if any delivery order exists */}
                 {(() => {
-                  const deliveryOrder = confirmationData.pharmacies.flatMap(p => p.orders).find(o => o.deliveryMethod === 'delivery');
+                  const deliveryOrder = confirmationData.pharmacies.flatMap(p => p.orders).find(o => o.deliveryMethod === 'COURIER');
                   if (deliveryOrder && deliveryOrder.address) {
                     return (
                       <span className="flex items-center gap-2 text-[#225F91]">
@@ -234,7 +235,7 @@ export default function ConfirmationInner() {
               {confirmationData.pharmacies.flatMap(pharmacyObj =>
                 pharmacyObj.orders.map(order => {
                   const pharmacy = pharmacyObj.pharmacy;
-                  const isPickup = order.deliveryMethod !== 'delivery';
+                  const isPickup = order.deliveryMethod !== 'COURIER';
                   return (
                     <Card key={order.id} className="border border-[#1ABA7F]/20 rounded-2xl shadow-xl bg-white/95 overflow-hidden">
                       <CardHeader className="bg-[#225F91]/10 p-6 flex flex-col gap-2">
@@ -281,7 +282,7 @@ export default function ConfirmationInner() {
                               <div key={item.id} className="flex justify-between items-center px-2 py-1 border-b last:border-b-0">
                                 <span className="flex items-center gap-2 font-medium text-gray-900">
                                   <span className="w-2 h-2 rounded-full bg-[#1ABA7F] inline-block" />
-                                  {item.medication.name}
+                                  {item.medication.displayName || item.medication.genericName}
                                 </span>
                                 <span className="text-gray-600">Qty: {item.quantity}</span>
                                 <span className="text-[#225F91] font-semibold">₦{(item.price * item.quantity).toLocaleString()}</span>
@@ -310,7 +311,7 @@ export default function ConfirmationInner() {
                       </div>
                 {/* Delivery message (once, if any delivery order) */}
                 {(() => {
-                  const deliveryOrder = confirmationData.pharmacies.flatMap(p => p.orders).find(o => o.deliveryMethod === 'delivery');
+                  const deliveryOrder = confirmationData.pharmacies.flatMap(p => p.orders).find(o => o.deliveryMethod === 'COURIER');
                   if (deliveryOrder && deliveryOrder.address) {
                     return (
                       <div className="flex items-center gap-2">
@@ -322,7 +323,7 @@ export default function ConfirmationInner() {
                   return null;
                 })()}
                 {/* Pickup messages (one per pickup pharmacy) */}
-                {confirmationData.pharmacies.some(pharmacyObj => pharmacyObj.orders.some(order => order.deliveryMethod !== 'delivery')) && (
+                {confirmationData.pharmacies.some(pharmacyObj => pharmacyObj.orders.some(order => order.deliveryMethod !== 'COURIER')) && (
                   <div className="flex items-center gap-2">
                     <Store className="h-5 w-5 text-[#1ABA7F]" />
                     <span className="text-sm">You’ll be notified when your medications are ready for pickup at your selected pharmacy.</span>

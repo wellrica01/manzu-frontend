@@ -69,7 +69,7 @@ export default function OrderDetailsPage() {
           <h2 className="text-xl font-bold text-[#225F91] mb-4">Order Details</h2>
           <div className="space-y-2">
             <div><span className="font-semibold">Order ID:</span> {order.id}</div>
-            <div><span className="font-semibold">Patient Identifier:</span> {order.userIdentifier}</div>
+            <div><span className="font-semibold">User Identifier:</span> {order.userIdentifier}</div>
             <div><span className="font-semibold">Status:</span> <StatusBadge status={order.status} /></div>
             <div><span className="font-semibold">Total Price:</span> ₦{order.totalPrice?.toLocaleString?.() ?? order.totalPrice}</div>
             <div><span className="font-semibold">Delivery Method:</span> {order.deliveryMethod || '-'}</div>

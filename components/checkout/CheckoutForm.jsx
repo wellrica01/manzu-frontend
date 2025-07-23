@@ -120,22 +120,6 @@ const CheckoutForm = ({
       </CardHeader>
       <CardContent className="p-6 sm:p-8 space-y-6">
         <form onSubmit={handleCheckout} className="space-y-6">
-          {/* Order Type Description */}
-          <div className={`p-4 rounded-xl border ${
-            orderType.infoColor === 'green' ? 'bg-green-50 border-green-200' :
-            orderType.infoColor === 'blue' ? 'bg-blue-50 border-blue-200' :
-            orderType.infoColor === 'orange' ? 'bg-orange-50 border-orange-200' :
-            'bg-gray-50 border-gray-200'
-          }`}>
-            <div className="flex items-start gap-3">
-              <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-              <div className="text-sm">
-                <p className="font-medium text-gray-900 mb-1">{orderType.description}</p>
-                <p className="text-gray-600">All medications are ready for immediate checkout.</p>
-              </div>
-            </div>
-          </div>
-
           {/* Contact Information */}
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

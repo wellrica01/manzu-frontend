@@ -167,7 +167,7 @@ export default function PrescriptionDetailsPage() {
           <Card className="p-6 bg-white/95 border border-[#1ABA7F]/20 rounded-2xl shadow-md">
             <h2 className="text-xl font-bold text-[#225F91] mb-4">Prescription Details</h2>
             <div className="space-y-2">
-              <div><span className="font-semibold">Patient Identifier:</span> {prescription.userIdentifier}</div>
+              <div><span className="font-semibold">User Identifier:</span> {prescription.userIdentifier}</div>
               <div><span className="font-semibold">Status:</span> <StatusBadge status={prescription.status} /></div>
               <div><span className="font-semibold">Verified:</span> {prescription.verified ? "Yes" : "No"}</div>
               <div><span className="font-semibold">Created At:</span> {new Date(prescription.createdAt).toLocaleString()}</div>

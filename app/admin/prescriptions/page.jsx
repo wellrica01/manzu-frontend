@@ -5,14 +5,14 @@ import { Card } from "@/components/ui/card";
 import { Loader2, AlertTriangle, Eye, Edit, Trash2, CheckCircle } from "lucide-react";
 
 const brandBlue = "#225F91";
-const statusOptions = ["all", "pending", "verified", "rejected"];
+const statusOptions = ["ALL", "PENDING", "VERIFIED", "REJECTED"];
 
 function StatusBadge({ status }) {
   let color = "bg-gray-200 text-gray-700";
-  if (status === "verified") color = "bg-green-100 text-green-800";
-  else if (status === "pending") color = "bg-yellow-100 text-yellow-800";
-  else if (status === "rejected" || status === "cancelled") color = "bg-red-100 text-red-800";
-  else if (status === "filled") color = "bg-blue-100 text-blue-800";
+  if (status === "VERIFIED") color = "bg-green-100 text-green-800";
+  else if (status === "PENDING") color = "bg-yellow-100 text-yellow-800";
+  else if (status === "REJECTED" || status === "CANCELLED") color = "bg-red-100 text-red-800";
+  else if (status === "FILLED") color = "bg-blue-100 text-blue-800";
   return (
     <span className={`px-2 py-1 rounded-full text-xs font-semibold ${color}`}>
       {status.charAt(0).toUpperCase() + status.slice(1)}
@@ -57,7 +57,7 @@ export default function PrescriptionsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("all");
+  const [status, setStatus] = useState("ALL");
   const [deleteId, setDeleteId] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteSuccess, setDeleteSuccess] = useState(false);
@@ -73,7 +73,7 @@ export default function PrescriptionsPage() {
           page: pagination.page,
           limit: pagination.limit,
           ...(search ? { userIdentifier: search } : {}),
-          ...(status !== "all" ? { status } : {}),
+          ...(status !== "ALL" ? { status } : {}),
         });
         const res = await fetch(`${API_BASE}/api/admin/prescriptions?${params.toString()}`, {
           headers: {
@@ -146,7 +146,7 @@ export default function PrescriptionsPage() {
           <div className="flex gap-2 flex-1">
             <input
               type="text"
-              placeholder="Search by patient identifier..."
+              placeholder="Search by user identifier..."
               value={search}
               onChange={(e) => {
                 setPagination((prev) => ({ ...prev, page: 1 }));
@@ -182,7 +182,7 @@ export default function PrescriptionsPage() {
             <table className="min-w-full text-sm">
               <thead>
                 <tr className="text-left text-gray-600 border-b">
-                  <th className="py-2 px-3">Patient</th>
+                  <th className="py-2 px-3">User</th>
                   <th className="py-2 px-3">Status</th>
                   <th className="py-2 px-3">Verified</th>
                   <th className="py-2 px-3">Created</th>

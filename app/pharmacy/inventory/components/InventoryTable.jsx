@@ -61,7 +61,7 @@ export default function InventoryTable({ onEdit, onDelete, refreshKey }) {
   // Filtering
   let filteredMeds = medications;
   if (nameFilter.trim()) {
-    filteredMeds = filteredMeds.filter(med => med.name.toLowerCase().includes(nameFilter.trim().toLowerCase()));
+    filteredMeds = filteredMeds.filter(med => med.brandName.toLowerCase().includes(nameFilter.trim().toLowerCase()));
   }
   if (lowStockOnly) {
     filteredMeds = filteredMeds.filter(med => med.stock <= 5);
@@ -74,8 +74,8 @@ export default function InventoryTable({ onEdit, onDelete, refreshKey }) {
 
   // Sorting
   filteredMeds = [...filteredMeds].sort((a, b) => {
-    if (sortBy === 'name_asc') return a.name.localeCompare(b.name);
-    if (sortBy === 'name_desc') return b.name.localeCompare(a.name);
+    if (sortBy === 'name_asc') return (a.brandName || '').localeCompare(b.brandName || '');
+    if (sortBy === 'name_desc') return (b.brandName || '').localeCompare(a.brandName || '');
     if (sortBy === 'stock_asc') return a.stock - b.stock;
     if (sortBy === 'stock_desc') return b.stock - a.stock;
     if (sortBy === 'price_asc') return a.price - b.price;
@@ -222,7 +222,7 @@ export default function InventoryTable({ onEdit, onDelete, refreshKey }) {
                 className={`border-t transition-colors duration-150 ${idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'} hover:bg-primary/10 focus-within:bg-primary/20`}
                 tabIndex={0}
               >
-                <td className="px-4 py-2 font-medium text-gray-800 max-w-[180px] truncate" title={med.name}>{med.name}</td>
+                <td className="px-4 py-2 font-medium text-gray-800 max-w-[180px] truncate" title={med.brandName}>{med.brandName}</td>
                 <td className="px-4 py-2"><StockBadge stock={med.stock} /></td>
                 <td className="px-4 py-2 text-gray-700">₦{med.price}</td>
                 <td className="px-4 py-2 text-gray-700">{formatDate(med.expiryDate)}</td>

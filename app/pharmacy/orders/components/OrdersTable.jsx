@@ -27,8 +27,8 @@ const sortOptions = [
   { value: 'created_asc', label: 'Oldest First' },
   { value: 'total_desc', label: 'Total High-Low' },
   { value: 'total_asc', label: 'Total Low-High' },
-  { value: 'patient_asc', label: 'Patient A-Z' },
-  { value: 'patient_desc', label: 'Patient Z-A' },
+  { value: 'user_asc', label: 'User A-Z' },
+  { value: 'user_desc', label: 'User Z-A' },
 ];
 
 function StatusBadge({ status }) {
@@ -85,8 +85,8 @@ export default function OrdersTable({ onViewDetails, refreshKey }) {
     if (sortBy === 'created_asc') return new Date(a.createdAt) - new Date(b.createdAt);
     if (sortBy === 'total_desc') return (b.totalPrice || 0) - (a.totalPrice || 0);
     if (sortBy === 'total_asc') return (a.totalPrice || 0) - (b.totalPrice || 0);
-    if (sortBy === 'patient_asc') return (a.userIdentifier || '').localeCompare(b.userIdentifier || '');
-    if (sortBy === 'patient_desc') return (b.userIdentifier || '').localeCompare(a.userIdentifier || '');
+    if (sortBy === 'user_asc') return (a.userIdentifier || '').localeCompare(b.userIdentifier || '');
+    if (sortBy === 'user_desc') return (b.userIdentifier || '').localeCompare(a.userIdentifier || '');
     return 0;
   });
 
@@ -101,7 +101,7 @@ export default function OrdersTable({ onViewDetails, refreshKey }) {
           <thead className="sticky top-0 bg-white z-10">
             <tr>
               <th className="px-4 py-2 text-left">Order ID</th>
-              <th className="px-4 py-2 text-left">Patient</th>
+              <th className="px-4 py-2 text-left">User</th>
               <th className="px-4 py-2 text-left">Status</th>
               <th className="px-4 py-2 text-left">Total (₦)</th>
               <th className="px-4 py-2 text-left">Created</th>
@@ -160,7 +160,7 @@ export default function OrdersTable({ onViewDetails, refreshKey }) {
         <thead className="sticky top-0 bg-white z-10">
           <tr>
             <th className="px-4 py-2 text-left font-semibold text-gray-700">Order ID</th>
-            <th className="px-4 py-2 text-left font-semibold text-gray-700">Patient</th>
+            <th className="px-4 py-2 text-left font-semibold text-gray-700">User</th>
             <th className="px-4 py-2 text-left font-semibold text-gray-700">Status</th>
             <th className="px-4 py-2 text-left font-semibold text-gray-700">Total (₦)</th>
             <th className="px-4 py-2 text-left font-semibold text-gray-700">Created</th>
