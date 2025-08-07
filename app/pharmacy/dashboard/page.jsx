@@ -16,7 +16,7 @@ export default function DashboardPage() {
       try {
         const token = localStorage.getItem('pharmacyToken');
         // Fetch orders
-        const ordersRes = await fetch('http://localhost:5000/api/pharmacy/orders', {
+        const ordersRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/pharmacy/orders`, {
           headers: { 'Authorization': `Bearer ${token}` },
         });
         if (!ordersRes.ok) throw new Error('Failed to fetch orders');
@@ -30,7 +30,7 @@ export default function DashboardPage() {
         const pendingOrders = orders.filter(o => o.status === 'pending').length;
         const revenue = orders.reduce((sum, o) => sum + (o.totalPrice || 0), 0);
         // Fetch inventory for low stock
-        const medsRes = await fetch('http://localhost:5000/api/pharmacy/medications', {
+        const medsRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/pharmacy/medications`, {
           headers: { 'Authorization': `Bearer ${token}` },
         });
         if (!medsRes.ok) throw new Error('Failed to fetch medications');

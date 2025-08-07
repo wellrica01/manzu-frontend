@@ -29,7 +29,7 @@ export default function ChangePasswordDialog({ open, onClose }) {
     }
     try {
       const token = localStorage.getItem('pharmacyToken');
-      const res = await fetch('http://localhost:5000/api/auth/change-password', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/change-password`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,

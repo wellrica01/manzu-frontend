@@ -24,7 +24,7 @@ export default function EditProfileDialog({ open, onClose, pharmacy }) {
     setSuccess(null);
     try {
       const token = localStorage.getItem('pharmacyToken');
-      const res = await fetch('http://localhost:5000/api/pharmacy/profile', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/pharmacy/profile`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,

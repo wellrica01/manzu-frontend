@@ -29,7 +29,7 @@ export default function RecentOrders() {
       setError(null);
       try {
         const token = localStorage.getItem('pharmacyToken');
-        const res = await fetch('http://localhost:5000/api/pharmacy/orders', {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/pharmacy/orders`, {
           headers: { 'Authorization': `Bearer ${token}` },
         });
         if (!res.ok) throw new Error('Failed to fetch orders');

@@ -26,7 +26,7 @@ export default function AddMedicationDialog({ open, onClose }) {
     setSuggestionError(null);
     try {
       const token = localStorage.getItem('pharmacyToken');
-      const res = await fetch('http://localhost:5000/api/medication-suggestions?q=' + encodeURIComponent(query), {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/medication-suggestions?q=` + encodeURIComponent(query), {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -66,7 +66,7 @@ export default function AddMedicationDialog({ open, onClose }) {
     setSubmitError(null);
     try {
       const token = localStorage.getItem('pharmacyToken');
-      const res = await fetch('http://localhost:5000/api/pharmacy/medications', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/pharmacy/medications`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

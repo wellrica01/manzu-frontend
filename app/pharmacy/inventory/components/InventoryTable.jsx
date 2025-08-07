@@ -41,7 +41,7 @@ export default function InventoryTable({ onEdit, onDelete, refreshKey }) {
       setError(null);
       try {
         const token = localStorage.getItem('pharmacyToken');
-        const res = await fetch('http://localhost:5000/api/pharmacy/medications', {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/pharmacy/medications`, {
           headers: {
             'Authorization': `Bearer ${token}`,
           },

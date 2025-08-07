@@ -13,7 +13,7 @@ export default function DashboardSummary() {
       try {
         const token = localStorage.getItem('pharmacyToken');
         // Fetch inventory
-        const medsRes = await fetch('http://localhost:5000/api/pharmacy/medications', {
+        const medsRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/pharmacy/medications`, {
           headers: { 'Authorization': `Bearer ${token}` },
         });
         if (!medsRes.ok) throw new Error('Failed to fetch medications');

@@ -27,7 +27,7 @@ export default function EditMedicationDialog({ open, onClose, medication }) {
     setSubmitError(null);
     try {
       const token = localStorage.getItem('pharmacyToken');
-      const res = await fetch('http://localhost:5000/api/pharmacy/medications', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/pharmacy/medications`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,

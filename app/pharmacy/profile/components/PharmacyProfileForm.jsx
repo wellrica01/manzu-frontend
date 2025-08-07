@@ -14,7 +14,7 @@ export default function PharmacyProfileForm() {
       try {
         const token = localStorage.getItem('pharmacyToken');
         // Placeholder: fetch pharmacy profile (replace endpoint as needed)
-        const res = await fetch('http://localhost:5000/api/pharmacy/profile', {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/pharmacy/profile`, {
           headers: { 'Authorization': `Bearer ${token}` },
         });
         if (!res.ok) throw new Error('Failed to fetch profile');
@@ -46,7 +46,7 @@ export default function PharmacyProfileForm() {
     try {
       const token = localStorage.getItem('pharmacyToken');
       // Placeholder: update pharmacy profile (replace endpoint as needed)
-      const res = await fetch('http://localhost:5000/api/pharmacy/profile', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/pharmacy/profile`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,

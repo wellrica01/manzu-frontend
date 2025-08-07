@@ -253,7 +253,7 @@ const PrescriptionMedicationsPage = React.memo(() => {
     try {
       if (!medicationId || !pharmacyId) throw new Error('Invalid medication or pharmacy');
       setIsAddingToCart(prev => ({ ...prev, [itemKey]: true }));
-      const response = await fetch('http://localhost:5000/api/cart/add', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart/add`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
