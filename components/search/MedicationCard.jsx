@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Info, MapPin, Clock, Star } from 'lucide-react';
+import { Info, MapPin, Clock } from 'lucide-react';
 import PharmacyTable from './PharmacyTable';
 import PharmacyCards from './PharmacyCards';
 import { cn } from '@/lib/utils';
@@ -30,26 +29,8 @@ const MedicationCard = ({ med, handleAddToCart, isInCart, isAddingToCart }) => {
   const availabilityCount = getAvailabilityCount();
 
   return (
-    <Card
-      className="relative shadow-xl border border-[#1ABA7F]/20 rounded-2xl overflow-hidden bg-white/95 backdrop-blur-sm transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:ring-2 hover:ring-[#1ABA7F]/30"
-    >
-      {/* Enhanced gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#1ABA7F]/5 to-[#225F91]/5 opacity-50" />
-      
-      {/* Decorative elements */}
-      <div className="absolute top-0 left-0 w-16 h-16 bg-gradient-to-br from-[#1ABA7F]/10 to-[#225F91]/10 rounded-br-2xl" />
-      <div className="absolute top-4 right-4">
-        <div className="w-2 h-2 bg-gradient-to-r from-[#1ABA7F] to-[#225F91] rounded-full animate-pulse" />
-      </div>
-      
-      {/* Floating particles */}
-      <div className="absolute top-1/4 right-1/4 w-1 h-1 bg-[#1ABA7F]/30 rounded-full animate-bounce" style={{ animationDelay: '0.5s' }} />
-      <div className="absolute bottom-1/4 left-1/4 w-1.5 h-1.5 bg-[#225F91]/30 rounded-full animate-pulse" style={{ animationDelay: '1s' }} />
-      
-      <div className="absolute top-0 left-0 w-12 h-12 bg-[#1ABA7F]/20 rounded-br-full" />
-      
-      {/* Quick Stats Bar */}
-      <div className="bg-gradient-to-r from-[#1ABA7F]/5 to-[#225F91]/5 px-6 py-3 border-b border-[#1ABA7F]/10 relative z-10">
+    <div className="w-full space-y-4">
+      <div className="bg-[#1ABA7F]/5 px-4 py-3 rounded-lg">
         <div className="flex items-center justify-between text-sm">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1">
@@ -74,14 +55,13 @@ const MedicationCard = ({ med, handleAddToCart, isInCart, isAddingToCart }) => {
         </div>
       </div>
 
-      <CardHeader className="p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-gradient-to-r from-[#1ABA7F]/10 to-transparent relative z-10">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
         <div className="flex-1">
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <CardTitle className="text-2xl sm:text-3xl font-bold text-[#225F91] tracking-tight leading-tight">
+              <h3 className="text-2xl sm:text-3xl font-bold text-[#225F91] tracking-tight leading-tight">
                 {med.displayName}
-              </CardTitle>
-              {/* Subtitle: Form and Strength */}
+              </h3>
               <div className="flex items-center gap-2 mt-2 flex-wrap">
                 <span className="text-base text-gray-700 font-medium">
                   {med.form ? med.form.charAt(0) + med.form.slice(1).toLowerCase() : ''}
@@ -97,7 +77,6 @@ const MedicationCard = ({ med, handleAddToCart, isInCart, isAddingToCart }) => {
                   {med.genericName || 'Generic N/A'}
                 </span>
               </div>
-              {/* Manufacturer */}
               {med.manufacturer && (
                 <div className="text-sm text-gray-400 mt-1">Manufacturer: {med.manufacturer}</div>
               )}
@@ -112,7 +91,6 @@ const MedicationCard = ({ med, handleAddToCart, isInCart, isAddingToCart }) => {
               </div>
             )}
           </div>
-          {/* Details Section */}
           {showDetails && (
             <div className="mt-4 space-y-2 animate-in slide-in-from-top-2 duration-300">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
@@ -136,10 +114,10 @@ const MedicationCard = ({ med, handleAddToCart, isInCart, isAddingToCart }) => {
             </div>
           )}
         </div>
-      </CardHeader>
-      
-      <CardContent className="p-6 relative z-10">
-        <div className="flex items-center justify-between mb-4">
+      </div>
+
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
           <h3 className="text-xl font-bold text-[#225F91]">Compare Pharmacies</h3>
           {availabilityCount > 0 && (
             <Badge variant="outline" className="border-[#1ABA7F] text-[#1ABA7F]">
@@ -147,7 +125,7 @@ const MedicationCard = ({ med, handleAddToCart, isInCart, isAddingToCart }) => {
             </Badge>
           )}
         </div>
-        
+
         {availabilityCount === 0 ? (
           <div className="text-center py-8">
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -176,8 +154,8 @@ const MedicationCard = ({ med, handleAddToCart, isInCart, isAddingToCart }) => {
             />
           </>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 

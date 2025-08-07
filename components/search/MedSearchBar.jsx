@@ -2,7 +2,6 @@
 import { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { toast } from 'sonner';
-import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { useCart } from '@/hooks/useCart';
@@ -15,14 +14,14 @@ import { useTranslation } from 'react-i18next';
 import { History, TrendingUp, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// Add loading skeleton component
+// Loading skeleton component
 const SearchSkeleton = () => (
-  <div className="space-y-6 animate-pulse">
-    <div className="h-16 bg-gray-200 rounded-2xl"></div>
-    <div className="h-32 bg-gray-200 rounded-2xl"></div>
-    <div className="space-y-4">
+  <div className="space-y-4 sm:space-y-6 animate-pulse">
+    <div className="h-12 sm:h-16 bg-gray-200 rounded-lg sm:rounded-2xl"></div>
+    <div className="h-24 sm:h-32 bg-gray-200 rounded-lg sm:rounded-2xl"></div>
+    <div className="space-y-3 sm:space-y-4">
       {[1, 2, 3].map((i) => (
-        <div key={i} className="h-48 bg-gray-200 rounded-2xl"></div>
+        <div key={i} className="h-40 sm:h-48 bg-gray-200 rounded-lg sm:rounded-2xl"></div>
       ))}
     </div>
   </div>
@@ -178,10 +177,8 @@ export default function SearchBar() {
       setShowDropdown(false);
       setFocusedSuggestionIndex(-1);
       await fetchCart();
-      // Add to search history
       setSearchHistory(prev => {
         const newHistory = [term, ...prev];
-        // Keep only unique terms
         return [...new Set(newHistory)];
       });
       localStorage.setItem('searchHistory', JSON.stringify(searchHistory));
@@ -276,26 +273,26 @@ export default function SearchBar() {
   };
 
   return (
-    <div className="space-y-6 p-6 relative">
+    <div className="w-full space-y-4 sm:space-y-6">
       <CartDialog
         openCartDialog={openCartDialog}
         setOpenCartDialog={setOpenCartDialog}
         lastAddedItem={lastAddedItem}
       />
       
-      {/* Search Dropdown positioned at container level */}
+      {/* Search Dropdown */}
       {(showDropdown && suggestions.length > 0) || (showHistory && searchHistory.length > 0) || isLoadingSuggestions ? (
         <div className="absolute top-0 left-0 right-0 z-[9999] pointer-events-none">
-          <div className="relative" style={{ paddingTop: '120px', paddingLeft: '24px', paddingRight: '24px' }}>
-            <div className="bg-white/95 backdrop-blur-sm border border-[#1ABA7F]/20 rounded-xl shadow-xl max-h-60 overflow-y-auto pointer-events-auto">
+          <div className="relative" style={{ paddingTop: '100px sm:120px', paddingLeft: '16px sm:24px', paddingRight: '16px sm:24px' }}>
+            <div className="bg-white/95 backdrop-blur-sm border border-[#1ABA7F]/20 rounded-lg sm:rounded-xl shadow-lg sm:shadow-xl max-h-60 overflow-y-auto pointer-events-auto">
               {/* Search History */}
               {showHistory && searchHistory.length > 0 && (
                 <div>
-                  <div className="p-3 border-b border-[#1ABA7F]/10">
+                  <div className="p-2 sm:p-3 border-b border-[#1ABA7F]/10">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <History className="h-4 w-4 text-[#225F91]" />
-                        <span className="text-sm font-medium text-[#225F91]">Recent Searches</span>
+                      <div className="flex items-center gap-1 sm:gap-2">
+                        <History className="h-3 sm:h-4 w-3 sm:w-4 text-[#225F91]" />
+                        <span className="text-xs sm:text-sm font-medium text-[#225F91]">Recent Searches</span>
                       </div>
                       <Button
                         variant="ghost"
@@ -304,10 +301,10 @@ export default function SearchBar() {
                           setSearchHistory([]);
                           localStorage.removeItem('searchHistory');
                         }}
-                        className="h-6 w-6 p-0 text-gray-400 hover:text-red-500"
+                        className="h-5 sm:h-6 w-5 sm:w-6 p-0 text-gray-400 hover:text-red-500"
                         aria-label="Clear search history"
                       >
-                        <X className="h-3 w-3" />
+                        <X className="h-2 sm:h-3 w-2 sm:w-3" />
                       </Button>
                     </div>
                   </div>
@@ -319,10 +316,10 @@ export default function SearchBar() {
                         setShowHistory(false);
                         handleSearch(term);
                       }}
-                      className="w-full px-4 py-3 text-left hover:bg-[#1ABA7F]/10 transition-colors duration-200 flex items-center gap-3"
+                      className="w-full px-3 sm:px-4 py-2 sm:py-3 text-left hover:bg-[#1ABA7F]/10 transition-colors duration-200 flex items-center gap-2 sm:gap-3 text-sm sm:text-base"
                       role="option"
                     >
-                      <History className="h-4 w-4 text-gray-400" />
+                      <History className="h-3 sm:h-4 w-3 sm:w-4 text-gray-400" />
                       <span className="text-gray-700">{term}</span>
                     </button>
                   ))}
@@ -340,7 +337,7 @@ export default function SearchBar() {
                         handleSelectMedication(suggestion);
                       }}
                       className={cn(
-                        "w-full px-4 py-3 text-left transition-colors duration-200 flex items-center gap-3",
+                        "w-full px-3 sm:px-4 py-2 sm:py-3 text-left transition-colors duration-200 flex items-center gap-2 sm:gap-3 text-sm sm:text-base",
                         focusedSuggestionIndex === index
                           ? "bg-[#1ABA7F]/10 text-[#225F91]"
                           : "hover:bg-[#1ABA7F]/10 text-gray-700"
@@ -348,7 +345,7 @@ export default function SearchBar() {
                       role="option"
                       aria-selected={focusedSuggestionIndex === index}
                     >
-                      <TrendingUp className="h-4 w-4 text-[#225F91]" />
+                      <TrendingUp className="h-3 sm:h-4 w-3 sm:w-4 text-[#225F91]" />
                       <div className="flex-1">
                         <div className="font-medium">{suggestion.displayName}</div>
                       </div>
@@ -359,10 +356,10 @@ export default function SearchBar() {
 
               {/* Loading State */}
               {isLoadingSuggestions && (
-                <div className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#1ABA7F]"></div>
-                    <span className="text-gray-600">Searching...</span>
+                <div className="p-3 sm:p-4">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="animate-spin rounded-full h-3 sm:h-4 w-3 sm:w-4 border-b-2 border-[#1ABA7F]"></div>
+                    <span className="text-gray-600 text-xs sm:text-sm">Searching...</span>
                   </div>
                 </div>
               )}
@@ -417,21 +414,19 @@ export default function SearchBar() {
       {isSearching ? (
         <SearchSkeleton />
       ) : (
-        <div className="space-y-8">
+        <div className="space-y-6 sm:space-y-8">
           {results.length === 0 && !error && searchTerm ? (
-            <Card className="shadow-xl border border-[#1ABA7F]/20 rounded-2xl text-center py-10 bg-white/95 backdrop-blur-sm">
-              <div className="absolute top-0 left-0 w-12 h-12 bg-[#1ABA7F]/20 rounded-br-full" />
-              <p className="text-gray-600 text-xl font-medium">
+            <div className="text-center py-8 sm:py-10 bg-white/95 border border-[#1ABA7F]/20 rounded-lg sm:rounded-2xl shadow-lg">
+              <p className="text-gray-600 text-sm sm:text-base leading-relaxed max-w-full sm:max-w-md mx-auto">
                 {t('search.no_results', { searchTerm })}
               </p>
-            </Card>
+            </div>
           ) : results.length === 0 && !searchTerm ? (
-            <Card className="shadow-xl border border-[#1ABA7F]/20 rounded-2xl text-center py-10 bg-white/95 backdrop-blur-sm">
-              <div className="absolute top-0 left-0 w-12 h-12 bg-[#1ABA7F]/20 rounded-br-full" />
-              <p className="text-gray-600 text-xl font-medium">
+            <div className="text-center py-8 sm:py-10 bg-white/95 border border-[#1ABA7F]/20 rounded-lg sm:rounded-2xl shadow-lg">
+              <p className="text-gray-600 text-sm sm:text-base leading-relaxed max-w-full sm:max-w-md mx-auto">
                 {t('search.enter_medication')}
               </p>
-            </Card>
+            </div>
           ) : (
             results.map((med) => (
               <MedicationCard

@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Search, Mic, History, TrendingUp, X } from 'lucide-react';
+import { Search, Mic } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const SearchInput = ({
@@ -63,7 +61,6 @@ const SearchInput = ({
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && focusedSuggestionIndex === -1 && searchTerm) {
       e.preventDefault();
-      // Save to history
       if (searchTerm.trim()) {
         const newHistory = [searchTerm, ...searchHistory.filter(item => item !== searchTerm)].slice(0, 5);
         setSearchHistory(newHistory);
@@ -89,7 +86,6 @@ const SearchInput = ({
       });
     } else if (e.key === 'Enter' && focusedSuggestionIndex >= 0) {
       e.preventDefault();
-      // Save to history
       const suggestion = suggestions[focusedSuggestionIndex];
       const newHistory = [suggestion.displayName, ...searchHistory.filter(item => item !== suggestion.displayName)].slice(0, 5);
       setSearchHistory(newHistory);
@@ -118,7 +114,6 @@ const SearchInput = ({
   const handleHistoryClick = (term) => {
     setSearchTerm(term);
     setShowHistory(false);
-    // Save to history
     if (term.trim()) {
       const newHistory = [term, ...searchHistory.filter(item => item !== term)].slice(0, 5);
       setSearchHistory(newHistory);
@@ -145,58 +140,36 @@ const SearchInput = ({
   }, [dropdownRef, setShowDropdown, setFocusedSuggestionIndex]);
 
   return (
-    <Card
-      className="shadow-xl border border-[#1ABA7F]/20 rounded-2xl bg-white/95 backdrop-blur-sm transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:ring-2 hover:ring-[#1ABA7F]/30"
-    >
-      {/* Enhanced gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#1ABA7F]/5 to-[#225F91]/5 opacity-50" />
-      
-      {/* Decorative elements */}
-      <div className="absolute top-0 left-0 w-16 h-16 bg-gradient-to-br from-[#1ABA7F]/10 to-[#225F91]/10 rounded-br-2xl" />
-      <div className="absolute top-4 right-4">
-        <div className="w-2 h-2 bg-gradient-to-r from-[#1ABA7F] to-[#225F91] rounded-full animate-pulse" />
-      </div>
-      
-      {/* Floating particles */}
-      <div className="absolute top-1/4 right-1/4 w-1 h-1 bg-[#1ABA7F]/30 rounded-full animate-bounce" style={{ animationDelay: '0.5s' }} />
-      <div className="absolute bottom-1/4 left-1/4 w-1.5 h-1.5 bg-[#225F91]/30 rounded-full animate-pulse" style={{ animationDelay: '1s' }} />
-      
-      <div className="absolute top-0 left-0 w-12 h-12 bg-[#1ABA7F]/20 rounded-br-full" />
-      <CardContent className="p-6 relative z-10">
-        <div className="relative">
-          <Search
-            className="absolute left-4 top-1/2 -translate-y-1/2 h-6 w-6 text-[#225F91]/70"
-            aria-hidden="true"
-          />
-          <Input
-            ref={inputRef}
-            type="text"
-            placeholder="Search for medications..."
-            value={searchTerm}
-            onChange={handleInputChange}
-            onKeyDown={handleKeyDown}
-            onFocus={handleInputFocus}
-            className="pl-12 pr-20 h-12 text-base font-medium rounded-xl border border-[#1ABA7F]/20 bg-white/95 text-gray-900 placeholder:text-gray-400 focus:ring-0 focus:border-[#1ABA7F]/50 focus:shadow-[0_0_15px_rgba(26,186,127,0.3)] transition-all duration-300"
-            autoComplete="off"
-            aria-autocomplete="list"
-            aria-expanded={showDropdown || showHistory}
-            aria-controls="suggestions-list"
-          />
-          
-          {/* Voice Search Button */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={startVoiceSearch}
-            disabled={isListening}
-            className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0 text-[#225F91] hover:text-[#1A4971] hover:bg-[#225F91]/10"
-            aria-label="Voice search"
-          >
-            <Mic className={cn("h-4 w-4", isListening && "animate-pulse text-[#1ABA7F]")} />
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="relative w-full">
+      <Search
+        className="absolute left-4 top-1/2 -translate-y-1/2 h-6 w-6 text-[#225F91]/70"
+        aria-hidden="true"
+      />
+      <Input
+        ref={inputRef}
+        type="text"
+        placeholder="Search for medications..."
+        value={searchTerm}
+        onChange={handleInputChange}
+        onKeyDown={handleKeyDown}
+        onFocus={handleInputFocus}
+        className="pl-12 pr-20 h-12 text-sm sm:text-base font-medium rounded-xl border border-[#1ABA7F]/20 bg-white/95 text-gray-900 placeholder:text-gray-400 focus:ring-0 focus:border-[#1ABA7F]/50 focus:shadow-[0_0_15px_rgba(26,186,127,0.3)] transition-all duration-300 w-full"
+        autoComplete="off"
+        aria-autocomplete="list"
+        aria-expanded={showDropdown || showHistory}
+        aria-controls="suggestions-list"
+      />
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={startVoiceSearch}
+        disabled={isListening}
+        className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0 text-[#225F91] hover:text-[#1A4971] hover:bg-[#225F91]/10"
+        aria-label="Voice search"
+      >
+        <Mic className={cn("h-4 w-4", isListening && "animate-pulse text-[#1ABA7F]")} />
+      </Button>
+    </div>
   );
 };
 

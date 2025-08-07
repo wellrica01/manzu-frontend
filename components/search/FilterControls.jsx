@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Filter, X, Save, Bookmark, TrendingUp, MapPin, DollarSign } from 'lucide-react';
+import { Filter, X, Save, Bookmark, MapPin, DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Select from 'react-select';
 
@@ -84,7 +83,6 @@ const FilterControls = ({
   const [savedFilters, setSavedFilters] = useState([]);
   const [activeFilters, setActiveFilters] = useState(0);
 
-  // Load saved filters from localStorage
   useEffect(() => {
     const saved = localStorage.getItem('savedFilters');
     if (saved) {
@@ -92,7 +90,6 @@ const FilterControls = ({
     }
   }, []);
 
-  // Count active filters
   useEffect(() => {
     let count = 0;
     if (filterState) count++;
@@ -112,7 +109,7 @@ const FilterControls = ({
       sortBy,
       timestamp: new Date().toISOString(),
     };
-    const newSavedFilters = [...savedFilters, currentFilter].slice(-5); // Keep only last 5
+    const newSavedFilters = [...savedFilters, currentFilter].slice(-5);
     setSavedFilters(newSavedFilters);
     localStorage.setItem('savedFilters', JSON.stringify(newSavedFilters));
   };
@@ -139,27 +136,9 @@ const FilterControls = ({
   ];
 
   return (
-    <Card
-      className="shadow-xl border border-[#1ABA7F]/20 rounded-2xl overflow-hidden bg-white/95 backdrop-blur-sm transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:ring-2 hover:ring-[#1ABA7F]/30"
-    >
-      {/* Enhanced gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#1ABA7F]/5 to-[#225F91]/5 opacity-50" />
-      
-      {/* Decorative elements */}
-      <div className="absolute top-0 left-0 w-16 h-16 bg-gradient-to-br from-[#1ABA7F]/10 to-[#225F91]/10 rounded-br-2xl" />
-      <div className="absolute top-4 right-4">
-        <div className="w-2 h-2 bg-gradient-to-r from-[#1ABA7F] to-[#225F91] rounded-full animate-pulse" />
-      </div>
-      
-      {/* Floating particles */}
-      <div className="absolute top-1/4 right-1/4 w-1 h-1 bg-[#1ABA7F]/30 rounded-full animate-bounce" style={{ animationDelay: '0.5s' }} />
-      <div className="absolute bottom-1/4 left-1/4 w-1.5 h-1.5 bg-[#225F91]/30 rounded-full animate-pulse" style={{ animationDelay: '1s' }} />
-      
-      <div className="absolute top-0 left-0 w-12 h-12 bg-[#1ABA7F]/20 rounded-br-full" />
-      
-      {/* Header */}
+    <div className="w-full space-y-4">
       <div
-        className="flex justify-between items-center px-6 py-4 bg-gradient-to-r from-[#1ABA7F]/10 to-transparent cursor-pointer hover:bg-[#1ABA7F]/20 transition-colors duration-300 relative z-10"
+        className="flex justify-between items-center px-4 py-3 bg-[#1ABA7F]/5 rounded-lg cursor-pointer hover:bg-[#1ABA7F]/10 transition-colors duration-300"
         onClick={() => setShowFilters(!showFilters)}
         role="button"
         aria-expanded={showFilters}
@@ -200,16 +179,15 @@ const FilterControls = ({
       </div>
 
       {showFilters && (
-        <CardContent
+        <div
           id="filter-content"
-          className="px-6 py-6 space-y-6 bg-transparent animate-in slide-in-from-top-10 fade-in-20 duration-500 relative z-10"
+          className="px-4 py-4 space-y-6 animate-in slide-in-from-top-10 fade-in-20 duration-500"
         >
-          {/* Sort Options */}
           <div className="space-y-3">
             <Label className="text-sm font-semibold text-[#225F91] uppercase tracking-wider">
-              Sort Results
+              Quick Filters
             </Label>
-            <div className="flex gap-3">
+            <div className="flex gap-2 flex-wrap">
               {quickFilters.map((filter) => (
                 <Button
                   key={filter.id}
@@ -233,7 +211,6 @@ const FilterControls = ({
             </div>
           </div>
 
-          {/* Saved Filters */}
           {savedFilters.length > 0 && (
             <div className="space-y-3">
               <Label className="text-sm font-semibold text-[#225F91] uppercase tracking-wider">
@@ -270,7 +247,6 @@ const FilterControls = ({
             Filter by location and sort results to find the best pharmacies
           </p>
 
-          {/* Location Filters */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="space-y-2">
               <Label
@@ -356,7 +332,6 @@ const FilterControls = ({
             </div>
           </div>
 
-          {/* Action Buttons */}
           <div className="flex justify-between items-center pt-4">
             <div className="flex gap-4">
               <Button
@@ -386,9 +361,9 @@ const FilterControls = ({
               Apply Filters
             </Button>
           </div>
-        </CardContent>
+        </div>
       )}
-    </Card>
+    </div>
   );
 };
 
