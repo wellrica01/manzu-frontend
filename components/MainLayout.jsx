@@ -118,14 +118,11 @@ export default function MainLayout({ children }) {
                   className="p-2 text-[#225F91] hover:text-[#1ABA7F] focus:ring-2 focus:ring-[#1ABA7F]"
                   aria-label={t('nav.toggle_menu')}
                 >
-                  {isOpen ? <X className="h-5 w-5 sm:h-6 sm:w-6" /> : <Menu className="h-5 w-5 sm:h-6 sm:w-6" />}
+                  {isOpen ? <X className="h-6 w-6 sm:h-6 sm:w-6" /> : <Menu className="h-6 w-6 sm:h-6 sm:w-6" />}
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-[95vw] max-w-[360px] bg-white/95 p-4">
-                <SheetHeader>
-                  <SheetTitle className="text-lg font-bold text-[#225F91]">{t('nav.menu')}</SheetTitle>
-                </SheetHeader>
-                <div className="flex flex-col gap-2 mt-6">
+              <SheetContent side="right" className="w-[60vw] max-w-[360px] bg-white/95 p-4">
+                <div className="flex flex-col gap-2 mt-7">
                   {navItems.map(({ label, icon: Icon, href, badge }) => (
                     <Link
                       key={label}
@@ -169,12 +166,12 @@ export default function MainLayout({ children }) {
         </div>
       </nav>
 
-      <main className="flex-1 w-full mx-auto px-1 sm:px-2 pt-[60px] sm:pt-[68px] max-w-[95vw] sm:max-w-3xl lg:max-w-[90vw] xl:max-w-[85vw]">
+      <main className="flex-1 w-full mx-auto px-1 sm:px-2 pt-[50px] sm:pt-[68px] max-w-[95vw] sm:max-w-3xl lg:max-w-[90vw] xl:max-w-[85vw]">
         {children}
       </main>
 
-      <footer className="bg-[#225F91] text-white mt-8">
-        <div className="w-full max-w-[95vw] sm:max-w-3xl lg:max-w-[90vw] xl:max-w-[85vw] mx-auto px-1 sm:px-2 py-6">
+      <footer className="bg-[#225F91] text-white">
+        <div className="w-full max-w-[95vw] sm:max-w-3xl lg:max-w-[90vw] xl:max-w-[85vw] mx-auto px-1 sm:px-2 py-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
             <div className="flex flex-col items-center text-center">
               <Image

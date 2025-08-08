@@ -13,6 +13,7 @@ import PharmacyCartCard from './PharmacyCartCard';
 import CartSummary from './CartSummary';
 import PrescriptionUploadSection from './PrescriptionUploadSection';
 import { getCartSegments, getCartStatus, canProceedToCheckout } from '@/lib/cartUtils';
+import { Button } from '@/components/ui/button';
 import { ShoppingCart, ArrowLeft, Sparkles, Clock, CheckCircle, Package, AlertCircle, Loader2, RefreshCw, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 
@@ -248,6 +249,10 @@ export default function Cart() {
     toast.success('Prescription uploaded successfully. Please wait for verification.', { duration: 4000 });
   };
 
+ const handleBackToHome = () => {
+    router.push('/');
+  };
+
   const calculateItemPrice = (item) => item.quantity * item.price;
 
   // Get cart segments and status
@@ -443,129 +448,53 @@ export default function Cart() {
   const tabSummary = getTabSpecificSummary();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 to-gray-50/30 relative">
+    <div className="min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 to-gray-50/30 relative overflow-hidden">
       {/* Background Pattern */}
-      <div className="absolute inset-0 bg-[url('/svg/pattern-dots.svg')] opacity-10 pointer-events-none" aria-hidden="true" />      {/* Brand-Aligned Cart Header */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[#1ABA7F]/20 shadow-sm">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-20">
-            {/* Left Section - Navigation & Title */}
-            <div className="flex items-center gap-6">
-              {/* Back Button */}
-              <Link 
-                href="/"
-                className="group p-3 rounded-xl hover:bg-[#1ABA7F]/10 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#1ABA7F] focus:ring-offset-2"
-                aria-label="Go back to home"
-              >
-                <ArrowLeft className="h-5 w-5 text-[#225F91] group-hover:text-[#1ABA7F] transition-colors duration-200" />
-              </Link>
-              
-              {/* Cart Title & Info */}
-              <div className="flex items-center gap-4">
-                <div className="relative">
-                  <div className="p-3 bg-[#1ABA7F] rounded-2xl shadow-lg">
-                    <ShoppingCart className="h-6 w-6 text-white" />
-                  </div>
-                  {/* Cart Item Count Badge */}
-                  {cart?.pharmacies?.length > 0 && (
-                    <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center shadow-lg">
-                      <span className="text-xs font-bold text-white">
-                        {segments.readyItemsCount + segments.prescriptionItemsCount + segments.pendingItemsCount + segments.rejectedItemsCount}
-                      </span>
-                    </div>
-                  )}
-                </div>
+      <div className="absolute inset-0 bg-[url('/svg/pattern-dots.svg')] opacity-10 pointer-events-none hidden sm:block" aria-hidden="true" />
 
-              <div className="hidden sm:block">
-                    <div className="flex items-center gap-3">
-                      <h1 className="text-3xl sm:text-4xl font-bold text-[#225F91] tracking-tight">Your Cart</h1>
-                    </div>
-                    <p className="text-sm font-semibold text-[#1ABA7F]">
-                      {cart?.pharmacies?.length || 0} pharmacies • {segments.readyItemsCount + segments.prescriptionItemsCount + segments.pendingItemsCount + segments.rejectedItemsCount} medications
-                  </p>
-                </div>
-              </div>
-            </div>
-            
-            {/* Center Section - Cart Status (Desktop) */}
-            <div className="hidden md:flex items-center gap-4">
-            {cartType !== 'empty' && (
-                <div className="flex items-center gap-6">
-                  {/* Progress Steps for Prescription Medications */}
-                  {(segments.prescriptionItemsCount > 0 || segments.pendingItemsCount > 0 || segments.rejectedItemsCount > 0) && (
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-2">
-                        <div className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                          segments.needsPrescription.length > 0 ? 'bg-orange-400 shadow-lg' : 'bg-gray-300'
-                        }`}></div>
-                        <span className="text-xs text-gray-500">Upload</span>
-                      </div>
-                      <div className="w-8 h-0.5 bg-gray-200"></div>
-                      <div className="flex items-center gap-2">
-                        <div className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                          segments.pendingPrescription.length > 0 ? 'bg-blue-400 shadow-lg' : 'bg-gray-300'
-                        }`}></div>
-                        <span className="text-xs text-gray-500">Review</span>
-                      </div>
-                      <div className="w-8 h-0.5 bg-gray-200"></div>
-                      <div className="flex items-center gap-2">
-                        <div className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                          segments.readyForCheckout.some(item => item.prescriptionStatus === 'VERIFIED') ? 'bg-[#1ABA7F] shadow-lg' : 
-                          segments.rejectedPrescription.length > 0 ? 'bg-red-400 shadow-lg' : 'bg-gray-300'
-                        }`}></div>
-                        <span className="text-xs text-gray-500">
-                          {segments.rejectedPrescription.length > 0 ? 'Rejected' : 'Ready'}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Cart Status Badge */}
-                  <div className={`px-4 py-2 rounded-full text-sm font-semibold shadow-sm transition-all duration-300 ${
-                    cartType === 'otc_only' ? 'bg-[#1ABA7F]/10 text-[#1ABA7F] border border-[#1ABA7F]/20' :
-                cartType === 'prescription_only' ? 'bg-orange-100 text-orange-700 border border-orange-200' :
-                    'bg-[#225F91]/10 text-[#225F91] border border-[#225F91]/20'
-              }`}>
-                {cartType === 'otc_only' && <CheckCircle className="h-4 w-4 inline mr-2" />}
-                {cartType === 'prescription_only' && <Clock className="h-4 w-4 inline mr-2" />}
-                {cartType === 'mixed' && <Sparkles className="h-4 w-4 inline mr-2" />}
-                    {cartType === 'otc_only' && 'Ready for Checkout'}
-                    {cartType === 'prescription_only' && 'Prescription Required'}
-                    {cartType === 'mixed' && 'Mixed Order'}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Right Section - Actions */}
-            <div className="flex items-center gap-3">
-              {/* Mobile Cart Info (Hidden on Desktop) */}
-              <div className="sm:hidden">
-                <h1 className="text-lg font-bold text-[#225F91]">Cart</h1>
-                <p className="text-sm font-semibold text-[#1ABA7F]">
-                   {segments.readyItemsCount + segments.prescriptionItemsCount + segments.pendingItemsCount + segments.rejectedItemsCount} medications
-               </p>
-              </div>
-
-            {/* Refresh Button */}
-            <button
-              onClick={handleRefreshCart}
-              disabled={isRefreshing}
-                className="group p-3 rounded-xl hover:bg-[#1ABA7F]/10 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#1ABA7F] focus:ring-offset-2 disabled:opacity-50"
-              aria-label="Refresh cart"
+        {/* Navigation */}
+        <nav className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm shadow-sm py-3 px-3 sm:px-4">
+          <div className="w-full max-w-[95vw] sm:max-w-3xl lg:max-w-[90vw] xl:max-w-[85vw] mx-auto flex items-center justify-between">
+            <Button
+              variant="outline"
+              onClick={handleBackToHome}
+              className="border-[#1ABA7F]/20 text-[#225F91] hover:bg-[#1ABA7F]/10 h-10 px-4"
+              aria-label="Back to Cart"
             >
-              {isRefreshing ? (
-                <Loader2 className="h-5 w-5 text-[#1ABA7F] animate-spin" />
-              ) : (
-                  <RefreshCw className="h-5 w-5 text-[#225F91] group-hover:text-[#1ABA7F] transition-colors duration-200" />
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
+            <h2 className="text-lg sm:text-2xl font-bold text-[#225F91] tracking-tight">Cart</h2>
+      
+          <button
+          onClick={handleRefreshCart}
+          disabled={isRefreshing}
+            className="group p-3 rounded-xl hover:bg-[#1ABA7F]/10 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#1ABA7F] focus:ring-offset-2 disabled:opacity-50"
+          aria-label="Refresh cart"
+        >
+          {isRefreshing ? (
+            <Loader2 className="h-5 w-5 text-[#1ABA7F] animate-spin" />
+          ) : (
+              <RefreshCw className="h-5 w-5 text-[#225F91] group-hover:text-[#1ABA7F] transition-colors duration-200" />
+          )}
+        </button> 
+          <div className="relative ">
+              <div className="p-2 text-[#225F91] hover:text-[#1ABA7F] focus:outline-none focus:ring-2 focus:ring-[#1ABA7F] rounded-md">
+                <ShoppingCart className="h-5 w-5 sm:h-6 sm:w-6" />
+              </div>
+              {/* Cart Item Count Badge */}
+              {cart?.pharmacies?.length > 0 && (
+                <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center shadow-lg">
+                  <span className="text-xs font-bold text-white">
+                    {segments.readyItemsCount + segments.prescriptionItemsCount + segments.pendingItemsCount + segments.rejectedItemsCount}
+                  </span>
+                </div>
               )}
-            </button>
+            </div>
           </div>
-        </div>
-      </div>
-      </header>
+        </nav>
 
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="py-8 px-2 sm:px-4">
         <ErrorMessage error={error} />
         
         {!isFetched ? (
@@ -602,13 +531,12 @@ export default function Cart() {
               {/* Professional Tab Navigation */}
               {shouldShowTabs() && (
                 <div className="mb-8">
-                  <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-2">
                     <div className="flex bg-gray-50 rounded-xl p-1">
                       {availableTabs.map((tab) => (
                     <button
                           key={tab.id}
                           onClick={() => setActiveTab(tab.id)}
-                          className={`flex-1 flex items-center justify-center gap-3 py-4 px-6 rounded-lg font-semibold transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#1ABA7F] focus:ring-offset-2 ${
+                          className={`flex-1 flex items-center justify-center gap-1 py-1 px-2 rounded-lg font-semibold transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#1ABA7F] focus:ring-offset-2 ${
                             activeTab === tab.id
                               ? `bg-white text-[#1ABA7F] shadow-md transform scale-105 border border-gray-200 ${tab.color}`
                               : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
@@ -624,7 +552,6 @@ export default function Cart() {
                       ))}
                     </div>
                   </div>
-                </div>
               )}
 
             {/* Enhanced Context-Aware Status Banners */}

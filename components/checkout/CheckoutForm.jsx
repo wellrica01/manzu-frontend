@@ -182,7 +182,7 @@ const CheckoutForm = ({
 
           {/* Delivery Method */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
               <Truck className="h-5 w-5 text-[#1ABA7F]" />
               Delivery Method
             </h3>
@@ -190,10 +190,10 @@ const CheckoutForm = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <button
                 type="button"
-                onClick={() => handleDeliveryMethodChange('pickup')}
+                onClick={() => handleDeliveryMethodChange('PICKUP')}
                 className={cn(
-                  "p-4 border-2 rounded-xl text-left transition-all duration-300",
-                  form.deliveryMethod === 'pickup'
+                  "p-2 border-2 rounded-xl text-left transition-all duration-300",
+                  form.deliveryMethod === 'PICKUP'
                     ? "border-[#1ABA7F] bg-[#1ABA7F]/10"
                     : "border-gray-200 hover:border-[#1ABA7F]/30"
                 )}
@@ -209,10 +209,10 @@ const CheckoutForm = ({
               
               <button
                 type="button"
-                onClick={() => handleDeliveryMethodChange('delivery')}
+                onClick={() => handleDeliveryMethodChange('COURIER')}
                 className={cn(
-                  "p-4 border-2 rounded-xl text-left transition-all duration-300",
-                  form.deliveryMethod === 'delivery'
+                  "p-2 border-2 rounded-xl text-left transition-all duration-300",
+                  form.deliveryMethod === 'COURIER'
                     ? "border-[#1ABA7F] bg-[#1ABA7F]/10"
                     : "border-gray-200 hover:border-[#1ABA7F]/30"
                 )}
@@ -229,7 +229,7 @@ const CheckoutForm = ({
           </div>
 
           {/* Delivery Address */}
-          {form.deliveryMethod === 'delivery' && (
+          {form.deliveryMethod === 'COURIER' && (
             <div className="space-y-2">
               <Label htmlFor="address" className="text-sm font-medium text-gray-700">
                 Delivery Address *
@@ -248,8 +248,8 @@ const CheckoutForm = ({
           )}
 
           {/* Pickup Information */}
-          {form.deliveryMethod === 'pickup' && (
-            <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
+          {form.deliveryMethod === 'PICKUP' && (
+            <div className="p-2 bg-blue-50 rounded-xl border border-blue-200">
               <div className="flex items-start gap-3">
                 <Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                 <div className="text-sm text-blue-800">
@@ -280,7 +280,7 @@ const CheckoutForm = ({
           {/* Submit Button */}
           <Button
             type="submit"
-            className="w-full h-14 text-lg font-semibold rounded-xl bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_20px_rgba(34,95,145,0.4)] transition-all duration-300"
+            className="w-full sm:w-auto h-12 px-4 bg-[#225F91] text-white hover:bg-[#1A4971]"
             disabled={loading}
           >
             {loading ? (

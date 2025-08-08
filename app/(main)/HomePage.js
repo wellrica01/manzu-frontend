@@ -121,13 +121,13 @@ const HeroSection = ({ onSearchClick, onUploadClick }) => {
         </span>
       </h1>
 
-      <p className={`mt-3 sm:mt-4 text-base sm:text-lg md:text-xl text-gray-600 font-medium max-w-xl sm:max-w-2xl md:max-w-3xl mx-auto transition-all duration-1000 delay-300 ${
+      <p className={`mt-4 sm:mt-4 text-base sm:text-lg md:text-xl text-gray-600 font-medium max-w-xl sm:max-w-2xl md:max-w-3xl mx-auto transition-all duration-1000 delay-300 ${
         isVisible ? 'animate-in slide-in-from-bottom opacity-100' : 'opacity-0 translate-y-8'
       }`}>
         {t('hero.subtitle')}
       </p>
       
-      <div className={`mt-6 sm:mt-8 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 transition-all duration-1000 delay-500 ${
+      <div className={`mt-8 sm:mt-8 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 transition-all duration-1000 delay-500 ${
         isVisible ? 'animate-in zoom-in-50 opacity-100' : 'opacity-0 scale-95'
       }`}>
         <Button
@@ -201,9 +201,7 @@ const ServiceCard = ({ title, icon: Icon, children, ref, className = "", isActiv
   return (
     <Card 
       ref={ref || cardRef} 
-      className={`relative bg-white/95 border-0 rounded-2xl sm:rounded-3xl shadow-lg sm:shadow-xl overflow-hidden backdrop-blur-sm transition-all duration-500 hover:-translate-y-1 sm:hover:-translate-y-2 hover:shadow-xl sm:hover:shadow-2xl w-full max-w-[95vw] sm:max-w-xl lg:max-w-2xl xl:max-w-3xl mx-0 ${className} ${
-        isActive ? 'ring-2 ring-[#1ABA7F]/50 shadow-xl sm:shadow-2xl' : ''
-      }`}
+      className={`relative bg-white/95 border-0 rounded-2xl mt-4 sm:rounded-3xl shadow-lg sm:shadow-xl overflow-hidden backdrop-blur-sm transition-all duration-500 hover:-translate-y-1 sm:hover:-translate-y-2 hover:shadow-xl sm:hover:shadow-2xl w-full max-w-[95vw] sm:max-w-xl lg:max-w-2xl xl:max-w-3xl mx-0 ring-2 ring-[#1ABA7F]/50 shadow-xl sm:shadow-2xl ${className}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -409,12 +407,12 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className={`min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 via-gray-50/50 to-white/80 py-6 sm:py-8 px-0 relative overflow-hidden transition-all duration-5000 ${
+    <div className={`min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 via-gray-50/50 to-white/80 pt-8 pb-12 sm:py-8 px-1 relative overflow-hidden transition-all duration-1000 ${
       isPageLoaded ? 'opacity-100' : 'opacity-0'
     }`}>
       <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
       
-      <div className="absolute inset-0 bg-[url('/svg/pattern-dots.svg')] opacity-10 pointer-events-none animate-pulse hidden sm:block" aria-hidden="true" />
+      <div className="absolute inset-0 bg-[url('/svg/pattern-dots.svg')] opacity-10 pointer-events-none animate-pulse sm:block" aria-hidden="true" />
       
       <div className="w-full max-w-[95vw] sm:max-w-3xl lg:max-w-[90vw] xl:max-w-[85vw] mx-auto flex flex-col items-center px-1 sm:px-2">
         <LanguageToggle />

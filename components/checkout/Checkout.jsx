@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Script from 'next/script';
 import { toast } from 'sonner';
-import { Loader2, ArrowLeft, CheckCircle, AlertCircle, CreditCard } from 'lucide-react';
+import { Loader2, ArrowLeft, CheckCircle, AlertCircle, CreditCard, Home, ShoppingCart, Mail, FileText } from 'lucide-react';
 import ErrorMessage from '@/components/ErrorMessage';
 import CheckoutDialog from './CheckoutDialog';
 import CheckoutForm from './CheckoutForm';
@@ -12,16 +12,16 @@ import dynamic from 'next/dynamic';
 import { useCart } from '@/hooks/useCart';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import Link from 'next/link';
 import { getCartSegments, canProceedToCheckout } from '@/lib/cartUtils';
-const OrderSummary = dynamic(() => import('./OrderSummary'), { ssr: false });
 
 export default function Checkout() {
-  const [form, setForm] = useState({ 
-    name: '', 
-    email: '', 
-    phone: '', 
-    address: '', 
-    deliveryMethod: 'pickup' 
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+    deliveryMethod: 'PICKUP',
   });
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -35,8 +35,6 @@ export default function Checkout() {
   // Get cart segments - only ready medications should be in checkout
   const segments = getCartSegments(cart);
   const canCheckout = canProceedToCheckout(segments);
-  
-
 
   // Track when cart has been properly loaded
   useEffect(() => {
@@ -48,8 +46,6 @@ export default function Checkout() {
 
   // Only redirect if cart has been loaded and there are no ready medications
   useEffect(() => {
-    // Don't redirect while still loading or if cart hasn't been properly loaded yet
-    // Also ensure we have actual cart data (not null) before making the decision
     if (cartLoaded && !isPending && !loading && !isError && cart && !canCheckout) {
       router.push('/cart');
     }
@@ -58,8 +54,8 @@ export default function Checkout() {
   const handleInputChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleDeliveryMethodChange = (value) => {
-    setForm({ ...form, deliveryMethod: value, address: value === 'pickup' ? '' : form.address });
-    if (value === 'pickup') {
+    setForm({ ...form, deliveryMethod: value, address: value === 'PICKUP' ? '' : form.address });
+    if (value === 'PICKUP') {
       const hasValidAddresses = segments.readyForCheckout.every((item) => item.pharmacy?.address);
       if (!hasValidAddresses) {
         setError('One or more pharmacy addresses are unavailable for pickup. Please select delivery or contact support.');
@@ -114,20 +110,20 @@ export default function Checkout() {
         throw new Error('Name and phone number are required');
       }
 
-      if (form.deliveryMethod === 'delivery' && !form.address) {
+      if (form.deliveryMethod === 'COURIER' && !form.address) {
         throw new Error('Address is required for delivery');
       }
 
       // Create order with ready medications
       let deliveryMethodEnum = form.deliveryMethod;
-      if (deliveryMethodEnum === 'pickup') deliveryMethodEnum = 'PICKUP';
-      else if (deliveryMethodEnum === 'delivery') deliveryMethodEnum = 'COURIER';
+      if (deliveryMethodEnum === 'PICKUP') deliveryMethodEnum = 'PICKUP';
+      else if (deliveryMethodEnum === 'COURIER') deliveryMethodEnum = 'COURIER';
       const orderData = {
         name: form.name,
         email: form.email,
         phone: form.phone,
         address: form.address,
-        deliveryMethod: deliveryMethodEnum
+        deliveryMethod: deliveryMethodEnum,
       };
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/med-checkout`, {
@@ -146,7 +142,7 @@ export default function Checkout() {
 
       const result = await response.json();
       console.log('Checkout response:', result);
-      
+
       // Check if we have a payment URL to redirect to Paystack
       if (result.paymentUrl) {
         console.log('Redirecting to Paystack payment:', result.paymentUrl);
@@ -160,7 +156,6 @@ export default function Checkout() {
         const orderId = result.orders?.[0]?.orderId || result.checkoutSessionId;
         router.push(`/confirmation?orderId=${orderId}`);
       }
-      
     } catch (err) {
       console.error('Checkout error:', err);
       setPaymentError(err.message);
@@ -178,46 +173,47 @@ export default function Checkout() {
   const calculateItemPrice = (item) => item.quantity * item.price;
 
   const getUniquePharmacyAddresses = () => {
-    const addresses = [...new Set(segments.readyForCheckout.map(item => item.pharmacy?.address).filter(Boolean))];
+    const addresses = [...new Set(segments.readyForCheckout.map((item) => item.pharmacy?.address).filter(Boolean))];
     return addresses;
   };
 
   const PaymentError = () => (
-    <Card className="bg-red-50 border-red-200">
+    <Card className="bg-red-50 border-red-200 w-full max-w-[95vw] sm:max-w-xl mx-auto">
       <CardHeader>
-        <CardTitle className="text-red-800 flex items-center gap-2">
+        <CardTitle className="text-red-800 flex items-center gap-2 text-lg sm:text-xl">
           <AlertCircle className="h-5 w-5" />
           Payment Failed
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-red-700 mb-4">{paymentError}</p>
-        <Button onClick={retryPayment} className="bg-red-600 hover:bg-red-700">
+        <p className="text-red-700 text-sm sm:text-base mb-4">{paymentError}</p>
+        <Button onClick={retryPayment} className="bg-red-600 hover:bg-red-700 w-full sm:w-auto h-12">
           Try Again
         </Button>
       </CardContent>
     </Card>
   );
 
-  // Show loading state while cart is being fetched or if we haven't determined checkout eligibility yet
+  // Loading state
   if (loading || isPending || !cartLoaded) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 via-gray-50/50 to-white/80 flex items-center justify-center">
-        <div className="text-center">
+      <div className="min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 to-gray-50/30 flex items-center justify-center px-2">
+        <div className="text-center w-full max-w-[95vw]">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-[#225F91]" />
-          <p className="text-gray-600">Loading checkout...</p>
+          <p className="text-gray-600 text-sm sm:text-base">Loading checkout...</p>
         </div>
       </div>
     );
   }
 
+  // Error state
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 via-gray-50/50 to-white/80 py-12 px-4">
-        <div className="container mx-auto max-w-4xl">
+      <div className="min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 to-gray-50/30 py-8 px-2">
+        <div className="w-full max-w-[95vw] sm:max-w-3xl mx-auto">
           <ErrorMessage error={error} />
           <div className="mt-6 text-center">
-            <Button onClick={handleBackToCart} variant="outline">
+            <Button onClick={handleBackToCart} variant="outline" className="h-12 w-full sm:w-auto">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Cart
             </Button>
@@ -227,24 +223,24 @@ export default function Checkout() {
     );
   }
 
-  // Don't show the "no medications ready" UI if cart is still loading or if we haven't checked the cart yet
+  // No medications ready
   if (!canCheckout && cartLoaded && !isPending && !loading && !isError && cart) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 via-gray-50/50 to-white/80 py-12 px-4">
-        <div className="container mx-auto max-w-4xl">
+      <div className="min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 to-gray-50/30 py-8 px-2">
+        <div className="w-full max-w-[95vw] sm:max-w-3xl mx-auto">
           <Card className="bg-orange-50 border-orange-200">
             <CardHeader>
-              <CardTitle className="text-orange-800 flex items-center gap-2">
+              <CardTitle className="text-orange-800 flex items-center gap-2 text-lg sm:text-xl">
                 <AlertCircle className="h-5 w-5" />
                 No Medications Ready for Checkout
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-orange-700 mb-4">
+              <p className="text-orange-700 text-sm sm:text-base mb-4">
                 All medications in your cart require prescription verification. 
                 Please complete prescription requirements in your cart before proceeding to checkout.
               </p>
-              <Button onClick={handleBackToCart} className="bg-orange-600 hover:bg-orange-700">
+              <Button onClick={handleBackToCart} className="bg-orange-600 hover:bg-orange-700 w-full sm:w-auto h-12">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Cart
               </Button>
@@ -256,14 +252,28 @@ export default function Checkout() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 to-gray-50/30 py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      <div className="absolute inset-0 bg-[url('/svg/pattern-dots.svg')] opacity-10 pointer-events-none" aria-hidden="true" />
-      
+    <div className="min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 to-gray-50/30 relative overflow-hidden">
+      <div className="absolute inset-0 bg-[url('/svg/pattern-dots.svg')] opacity-10 pointer-events-none hidden sm:block" aria-hidden="true" />
+
+      {/* Navigation */}
+      <nav className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm shadow-sm py-3 px-2 sm:px-4">
+        <div className="w-full max-w-[95vw] sm:max-w-3xl lg:max-w-[90vw] xl:max-w-[85vw] mx-auto flex items-center justify-between">
+          <Button
+            variant="outline"
+            onClick={handleBackToCart}
+            className="border-[#1ABA7F]/20 text-[#225F91] hover:bg-[#1ABA7F]/10 h-10 px-4"
+            aria-label="Back to Cart"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
+          <h2 className="text-lg sm:text-2xl font-bold text-[#225F91] tracking-tight">Checkout</h2>
+          <div className="w-12"></div> {/* Spacer for alignment */}
+        </div>
+      </nav>
+
       {/* Payment Scripts */}
-      <Script
-        src="https://js.paystack.co/v1/inline.js"
-        strategy="beforeInteractive"
-      />
+      <Script src="https://js.paystack.co/v1/inline.js" strategy="beforeInteractive" />
 
       {/* Payment processing overlay */}
       {paymentStatus === 'processing' && (
@@ -273,58 +283,38 @@ export default function Checkout() {
         </div>
       )}
 
-      <div className="container mx-auto max-w-6xl">
-        <div className="flex items-center gap-4 mb-8">
-          <Button
-            variant="outline"
-            onClick={handleBackToCart}
-            className="border-[#1ABA7F]/20 text-[#225F91] hover:bg-[#1ABA7F]/10"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Cart
-          </Button>
-          <h1 className="text-4xl sm:text-5xl font-bold text-[#225F91] tracking-tight">
-            Checkout
-          </h1>
+      {/* Main Content */}
+      <div className="py-8 px-2 sm:px-4">
+        <div className="w-full max-w-[95vw] sm:max-w-3xl lg:max-w-[90vw] xl:max-w-[85vw] mx-auto">
+          {paymentStatus === 'error' ? (
+            <PaymentError />
+          ) : (
+            <div>
+              {/* Checkout Form */}
+              <div className="space-y-4 sm:space-y-6">
+                <CheckoutForm
+                  form={form}
+                  setForm={setForm}
+                  handleInputChange={handleInputChange}
+                  handleDeliveryMethodChange={handleDeliveryMethodChange}
+                  handleCheckout={handleCheckout}
+                  segments={segments}
+                  getUniquePharmacyAddresses={getUniquePharmacyAddresses}
+                  loading={loading}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Checkout Dialog */}
+          <CheckoutDialog
+            show={showCheckoutDialog}
+            onClose={() => setShowCheckoutDialog(false)}
+            onConfirm={confirmCheckout}
+            loading={paymentStatus === 'processing'}
+            segments={segments}
+          />
         </div>
-
-        {paymentStatus === 'error' ? (
-          <PaymentError />
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Checkout Form */}
-            <div className="space-y-6">
-              <CheckoutForm
-                form={form}
-                setForm={setForm}
-                handleInputChange={handleInputChange}
-                handleDeliveryMethodChange={handleDeliveryMethodChange}
-                handleCheckout={handleCheckout}
-                segments={segments}
-                getUniquePharmacyAddresses={getUniquePharmacyAddresses}
-                loading={loading}
-              />
-            </div>
-
-            {/* Order Summary */}
-            <div className="space-y-6">
-              <OrderSummary 
-                items={segments.readyForCheckout}
-                calculateItemPrice={calculateItemPrice}
-                totalPrice={segments.totalPrice}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Checkout Dialog */}
-        <CheckoutDialog
-          show={showCheckoutDialog}
-          onClose={() => setShowCheckoutDialog(false)}
-          onConfirm={confirmCheckout}
-          loading={paymentStatus === 'processing'}
-          segments={segments}
-        />
       </div>
     </div>
   );

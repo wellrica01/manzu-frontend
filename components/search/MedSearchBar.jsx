@@ -280,11 +280,36 @@ export default function SearchBar() {
         lastAddedItem={lastAddedItem}
       />
       
-      {/* Search Dropdown */}
-      {(showDropdown && suggestions.length > 0) || (showHistory && searchHistory.length > 0) || isLoadingSuggestions ? (
-        <div className="absolute top-0 left-0 right-0 z-[9999] pointer-events-none">
-          <div className="relative" style={{ paddingTop: '100px sm:120px', paddingLeft: '16px sm:24px', paddingRight: '16px sm:24px' }}>
-            <div className="bg-white/95 backdrop-blur-sm border border-[#1ABA7F]/20 rounded-lg sm:rounded-xl shadow-lg sm:shadow-xl max-h-60 overflow-y-auto pointer-events-auto">
+      {/* Search Input and Dropdown */}
+      <div className="relative w-full">
+        <SearchInput
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          suggestions={suggestions}
+          setSuggestions={setSuggestions}
+          isLoadingSuggestions={isLoadingSuggestions}
+          setIsLoadingSuggestions={setIsLoadingSuggestions}
+          showDropdown={showDropdown}
+          setShowDropdown={setShowDropdown}
+          focusedSuggestionIndex={focusedSuggestionIndex}
+          setFocusedSuggestionIndex={setFocusedSuggestionIndex}
+          handleSearch={handleSearch}
+          handleSelectMedication={handleSelectMedication}
+          dropdownRef={dropdownRef}
+          inputRef={inputRef}
+          suggestionRefs={suggestionRefs}
+          searchHistory={searchHistory}
+          setSearchHistory={setSearchHistory}
+          showHistory={showHistory}
+          setShowHistory={setShowHistory}
+        />
+        {(showDropdown && suggestions.length > 0) || (showHistory && searchHistory.length > 0) || isLoadingSuggestions ? (
+          <div
+            ref={dropdownRef}
+            className="absolute left-0 right-0 top-full z-[9999] mt-2 pointer-events-auto"
+            style={{ maxHeight: '16rem', overflowY: 'auto' }} // Ensures dropdown is scrollable and in front
+          >
+            <div className="bg-white/95 backdrop-blur-sm border border-[#1ABA7F]/20 rounded-lg sm:rounded-xl shadow-lg sm:shadow-xl">
               {/* Search History */}
               {showHistory && searchHistory.length > 0 && (
                 <div>
@@ -365,30 +390,9 @@ export default function SearchBar() {
               )}
             </div>
           </div>
-        </div>
-      ) : null}
+        ) : null}
+      </div>
       
-      <SearchInput
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        suggestions={suggestions}
-        setSuggestions={setSuggestions}
-        isLoadingSuggestions={isLoadingSuggestions}
-        setIsLoadingSuggestions={setIsLoadingSuggestions}
-        showDropdown={showDropdown}
-        setShowDropdown={setShowDropdown}
-        focusedSuggestionIndex={focusedSuggestionIndex}
-        setFocusedSuggestionIndex={setFocusedSuggestionIndex}
-        handleSearch={handleSearch}
-        handleSelectMedication={handleSelectMedication}
-        dropdownRef={dropdownRef}
-        inputRef={inputRef}
-        suggestionRefs={suggestionRefs}
-        searchHistory={searchHistory}
-        setSearchHistory={setSearchHistory}
-        showHistory={showHistory}
-        setShowHistory={setShowHistory}
-      />
       <FilterControls
         filterState={filterState}
         setFilterState={setFilterState}

@@ -225,9 +225,9 @@ export default function Track() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 via-gray-50/50 to-white/80 py-10 px-4 sm:px-6 lg:px-8 relative overflow-hidden animate-in fade-in-20 duration-500">
-      <div className="absolute inset-0 bg-[url('/svg/pattern-dots.svg')] opacity-10 pointer-events-none" aria-hidden="true" />
-      <div className="container mx-auto max-w-5xl">
+    <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 to-gray-50/30 relative overflow-hidden">
+      <div className="absolute inset-0 bg-[url('/svg/pattern-dots.svg')] opacity-10 pointer-events-none hidden sm:block" aria-hidden="true" />
+      <div className="flex-1 py-12 px-2 sm:px-4">
         <h1 className="text-4xl sm:text-5xl font-bold text-[#225F91] mb-8 text-center tracking-tight animate-in slide-in-from-top duration-700">
           {orders.length === 0
             ? 'Track Your Order'
@@ -247,24 +247,25 @@ export default function Track() {
         )}
         {/* Only show the form if no orders are being shown */}
         {orders.length === 0 && (
-          <Card className="relative bg-white/95 border border-[#1ABA7F]/20 rounded-2xl shadow-xl overflow-hidden backdrop-blur-sm transition-all duration-500 hover:ring-2 hover:ring-[#1ABA7F]/30 mb-6">
+          <div className="w-full max-w-[95vw] sm:max-w-3xl lg:max-w-[90vw] xl:max-w-[85vw] mx-auto">
+          <Card className="relative bg-white/95 border border-[#1ABA7F]/20 rounded-xl shadow-lg sm:p-6 transition-all duration-500 hover:ring-2 hover:ring-[#1ABA7F]/30">
             <div className="absolute top-0 left-0 w-16 h-16 bg-[#1ABA7F]/20 rounded-br-3xl" />
             <CardHeader className="bg-[#225F91]/10 p-6 sm:p-8">
-              <CardTitle className="text-xl sm:text-2xl font-bold text-[#225F91]">
+              <CardTitle className="text-lg sm:text-2xl font-bold text-[#225F91]">
                 Enter Tracking Code
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6 sm:p-8">
               <form onSubmit={handleTrack} className="space-y-6" role="form" aria-labelledby="track-form-title" ref={formRef}>
                 <div>
-                  <Label htmlFor="trackingCode" className="text-sm font-semibold text-[#225F91] uppercase tracking-wider">
+                  <Label htmlFor="trackingCode" className="text-xs sm:text-sm font-semibold text-[#225F91] uppercase tracking-wider">
                     Tracking Code
                   </Label>
                   <Input
                     id="trackingCode"
                     value={trackingCode}
                     onChange={(e) => setTrackingCode(e.target.value)}
-                    className="mt-2 h-12 text-lg font-medium rounded-2xl border-[#1ABA7F]/20 bg-white/95 text-gray-900 placeholder:text-gray-400 focus:ring-0 focus:border-[#1ABA7F]/50 focus:shadow-[0_0_15px_rgba(26,186,127,0.3)] transition-all duration-300"
+                    className="mt-2 h-12 text-xs font-medium rounded-2xl border-[#1ABA7F]/20 bg-white/95 text-gray-900 placeholder:text-gray-400 focus:ring-0 focus:border-[#1ABA7F]/50 focus:shadow-[0_0_15px_rgba(26,186,127,0.3)] transition-all duration-300"
                     placeholder="e.g., TRK-SESSION-15-1747421013936"
                     required
                     aria-required="true"
@@ -273,7 +274,7 @@ export default function Track() {
                 </div>
                 <Button
                   type="submit"
-                  className="w-full h-14 px-8 text-lg font-semibold rounded-full bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_20px_rgba(34,95,145,0.3)] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full sm:w-auto h-12 px-4 sm:px-6 text-sm sm:text-base font-semibold rounded-full bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_20px_rgba(34,95,145,0.3)] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={loading}
                   aria-label="Track order"
                 >
@@ -289,6 +290,16 @@ export default function Track() {
               </form>
             </CardContent>
           </Card>
+         <Button
+              onClick={handleBackToHome}
+              variant="outline"
+              className="w-full sm:w-auto h-12 mt-6 px-4 sm:px-6 text-sm sm:text-base font-semibold rounded-full border-[#1ABA7F] text-[#1ABA7F] hover:bg-[#1ABA7F]/10"
+              aria-label="Go back to home page"
+            >
+              <Home className="h-4 w-4 sm:h-5 w-5 mr-2" />
+              Back to Home
+            </Button>
+          </div>
         )}
         {error && (
           <Card className="bg-white/95 border border-[#225F91]/20 rounded-2xl shadow-xl backdrop-blur-sm p-6 animate-in zoom-in-50 duration-500" id="tracking-error" role="alert">
@@ -324,10 +335,7 @@ export default function Track() {
                       >
                         <div className="flex items-center gap-3 justify-between">
                       <div className="flex items-center gap-3">
-                        {order.pharmacy?.logoUrl && (
-                          <img src={order.pharmacy.logoUrl} alt="Pharmacy Logo" className="h-8 w-8 rounded-full border border-gray-200 bg-white object-contain" />
-                        )}
-                        <span className="text-xl font-bold text-[#225F91] flex items-center gap-2">
+                        <span className="text-lg font-bold text-[#225F91] flex items-center gap-2">
                           <Store className="h-5 w-5 text-[#1ABA7F] mr-1" />
                           {order.pharmacy?.name || 'Pharmacy'}
                         </span>
@@ -348,11 +356,11 @@ export default function Track() {
                         </div>
                         {/* Always show the full progress bar with labels, regardless of expanded/collapsed state */}
                         <div className="w-full flex flex-col items-center mt-4">
-                          {order.status === 'cancelled' ? (
+                          {order.status === 'CANCELLED' ? (
                             <div className="flex items-center gap-2 text-red-600 font-semibold">
                               <XCircle className="h-5 w-5" /> Cancelled
                             </div>
-                          ) : order.status === 'completed' ? (
+                          ) : order.status === 'COMPLETED' ? (
                             <div className="flex items-center gap-2 text-[#1ABA7F] font-semibold">
                               <CheckCircle className="h-5 w-5" /> Completed
                             </div>
@@ -390,7 +398,7 @@ export default function Track() {
                     <CardContent className="p-6 sm:p-8 space-y-8">
                       {/* Order Details Grid */}
                       <div className="space-y-6">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-[#225F91] text-base font-medium">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-[#225F91] text-sm sm:text-base font-medium">
                           <div className="flex items-center gap-2"><span className="font-semibold text-[#225F91]">Tracking Code:</span> {order.trackingCode || 'N/A'}</div>
                           <div className="flex items-center gap-2"><span className="font-semibold text-[#225F91]">Customer:</span> {order.name || order.userIdentifier || 'N/A'}</div>
                           <div className="flex items-center gap-2"><span className="font-semibold text-[#225F91]">Order Placed:</span> {order.createdAt ? new Date(order.createdAt).toLocaleString() : 'N/A'}</div>
@@ -417,22 +425,21 @@ export default function Track() {
                       </div>
                       {/* Medications Section */}
                       <div className="pt-2">
-                        <div className="font-semibold text-[#225F91] mb-2 flex items-center gap-2 text-lg">
+                        <div className="font-semibold text-[#225F91] mb-2 flex items-center gap-2 text-base sm:text-lg">
                           <Package className="h-5 w-5 text-[#1ABA7F]" />
                           Medications
                         </div>
                         <div className="space-y-2">
                           {order.items?.map(item => (
-                            <div key={item.id} className="flex justify-between items-center px-2 py-1 border-b last:border-b-0">
-                              <span className="flex items-center gap-2 font-medium text-gray-900">
+                            <div key={item.id} className="flex justify-between items-center border-b last:border-b-0">
+                              <span className="flex items-center gap-2 text-sm font-medium text-gray-900">
                                 <span className="w-2 h-2 rounded-full bg-[#1ABA7F] inline-block" />
-                                {item.medication.displayName} {item.medication.genericName ? <span className="text-xs text-gray-500 ml-1">({item.medication.genericName})</span> : null}
+                                {item.medication.displayName} * {item.quantity}
                                 {item.medication.prescriptionRequired && (
                                   <span className="ml-2 px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 text-xs font-medium">Prescription</span>
                                 )}
                               </span>
-                              <span className="text-gray-600">Qty: {item.quantity}</span>
-                              <span className="text-[#225F91] font-semibold">₦{(item.price * item.quantity).toLocaleString()}</span>
+                              <span className="text-[#225F91] text-sm font-semibold"> ₦{(item.price * item.quantity).toLocaleString()}</span>
                             </div>
                           ))}
                         </div>
@@ -466,7 +473,7 @@ export default function Track() {
                         </div>
                       )}
                       {/* Order Total */}
-                      <div className="flex justify-end mt-6 text-2xl font-bold text-[#225F91] border-t pt-6">Total: ₦{order.totalPrice.toLocaleString()}</div>
+                      <div className="flex justify-end mt-6 text-base sm:text-base font-bold text-[#225F91] border-t pt-6">Total: ₦{order.totalPrice.toLocaleString()}</div>
                       {/* Cancelled Notice */}
                       {order.status === 'CANCELLED ' && (
                         <div className="mt-4 flex items-center gap-2 text-[#225F91]">
@@ -485,14 +492,31 @@ export default function Track() {
             </div>
             <Button
               onClick={handleTrackAnother}
-              className="w-full h-14 px-8 text-lg font-semibold rounded-full bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_20px_rgba(34,95,145,0.3)] transition-all duration-300 mt-8"
+              className="w-full sm:w-auto h-12 px-4 sm:px-6 text-sm mt-12 mb-6 sm:text-base font-semibold rounded-full bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_20px_rgba(34,95,145,0.3)] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label="Track another order"
             >
               Track Another Order
             </Button>
+            <Button
+              onClick={handleBackToHome}
+              variant="outline"
+              className="w-full sm:w-auto h-12 px-4 sm:px-6 text-sm sm:text-base font-semibold rounded-full border-[#1ABA7F] text-[#1ABA7F] hover:bg-[#1ABA7F]/10"
+              aria-label="Go back to home page"
+            >
+              <Home className="h-4 w-4 sm:h-5 w-5 mr-2" />
+              Back to Home
+            </Button>
           </>
         )}
       </div>
+          
+      {/* Footer */}
+      <footer className="bg-[#225F91]/95 text-white py-5 px-2 sm:px-4 mt-8 print:hidden">
+          <div className="pt-2 border-white/20 text-center">
+            <p className="text-xs sm:text-sm opacity-80">&copy; {new Date().getFullYear()} Manzu. Powered by WellRica.</p>
+          </div>
+      </footer>
     </div>
+
   );
 }

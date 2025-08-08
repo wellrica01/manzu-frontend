@@ -146,7 +146,7 @@ const FilterControls = ({
       >
         <div className="flex items-center gap-3">
           <Filter className="h-6 w-6 text-[#225F91]" />
-          <span className="text-lg font-bold text-[#225F91] tracking-tight">
+          <span className="text-base font-bold text-[#225F91] tracking-tight">
             {showFilters ? 'Hide Filters' : 'Advanced Filters'}
           </span>
           {activeFilters > 0 && (
@@ -184,7 +184,7 @@ const FilterControls = ({
           className="px-4 py-4 space-y-6 animate-in slide-in-from-top-10 fade-in-20 duration-500"
         >
           <div className="space-y-3">
-            <Label className="text-sm font-semibold text-[#225F91] uppercase tracking-wider">
+            <Label className="text-xs sm:text-sm font-semibold text-[#225F91] uppercase tracking-wider">
               Quick Filters
             </Label>
             <div className="flex gap-2 flex-wrap">
@@ -198,7 +198,7 @@ const FilterControls = ({
                     if (searchTerm) handleSearch(searchTerm);
                   }}
                   className={cn(
-                    'h-9 px-4 text-sm font-medium rounded-full transition-all duration-300',
+                    'h-9 px-4 text-sm sm:text-base font-medium rounded-full transition-all duration-300',
                     sortBy === filter.sortBy
                       ? 'bg-[#225F91] text-white shadow-[0_0_10px_rgba(34,95,145,0.3)]'
                       : 'border-[#1ABA7F] text-[#225F91] hover:bg-[#1ABA7F]/10 hover:border-[#1ABA7F]/50'
@@ -213,7 +213,7 @@ const FilterControls = ({
 
           {savedFilters.length > 0 && (
             <div className="space-y-3">
-              <Label className="text-sm font-semibold text-[#225F91] uppercase tracking-wider">
+              <Label className="text-xs sm:text-sm font-semibold text-[#225F91] uppercase tracking-wider">
                 Saved Filters
               </Label>
               <div className="flex gap-2 flex-wrap">
@@ -243,7 +243,7 @@ const FilterControls = ({
             </div>
           )}
 
-          <p className="text-base font-medium text-gray-600 tracking-wide">
+          <p className="text-gray-600 text-sm sm:text-base tracking-wide">
             Filter by location and sort results to find the best pharmacies
           </p>
 
@@ -251,7 +251,7 @@ const FilterControls = ({
             <div className="space-y-2">
               <Label
                 htmlFor="state-filter"
-                className="text-sm font-semibold text-[#225F91] uppercase tracking-wider"
+                className="text-xs sm:text-sm font-semibold text-[#225F91] uppercase tracking-wider"
               >
                 State
               </Label>
@@ -274,14 +274,14 @@ const FilterControls = ({
                 placeholder="Select a state"
                 isClearable
                 styles={customSelectStyles}
-                className="text-base"
+                className="text-sm sm:text-base font-medium"
                 aria-label="Select state"
               />
             </div>
             <div className="space-y-2">
               <Label
                 htmlFor="lga-filter"
-                className="text-sm font-semibold text-[#225F91] uppercase tracking-wider"
+                className="text-xs sm:text-sm font-semibold text-[#225F91] uppercase tracking-wider"
               >
                 LGA
               </Label>
@@ -303,14 +303,14 @@ const FilterControls = ({
                 isClearable
                 isDisabled={!filterState}
                 styles={customSelectStyles}
-                className="text-base"
+                className="text-sm sm:text-base font-medium"
                 aria-label="Select LGA"
               />
             </div>
             <div className="space-y-2">
               <Label
                 htmlFor="ward-filter"
-                className="text-sm font-semibold text-[#225F91] uppercase tracking-wider"
+                className="text-xs sm:text-sm font-semibold text-[#225F91] uppercase tracking-wider"
               >
                 Ward
               </Label>
@@ -326,7 +326,7 @@ const FilterControls = ({
                 isClearable
                 isDisabled={!filterLga}
                 styles={customSelectStyles}
-                className="text-base"
+                className="text-sm sm:text-base font-medium"
                 aria-label="Select ward"
               />
             </div>
@@ -337,7 +337,7 @@ const FilterControls = ({
               <Button
                 variant="outline"
                 onClick={clearFilters}
-                className="h-12 px-6 text-base font-semibold rounded-full border-[#1ABA7F] text-[#225F91] hover:bg-[#1ABA7F]/10 hover:border-[#1ABA7F]/50 transition-all duration-300"
+                className="h-9 px-6 text-sm sm:text-base font-semibold rounded-full border-[#1ABA7F] text-[#225F91] hover:bg-[#1ABA7F]/10 hover:border-[#1ABA7F]/50 transition-all duration-300"
                 aria-label="Clear all filters"
               >
                 Clear
@@ -346,7 +346,7 @@ const FilterControls = ({
                 <Button
                   variant="outline"
                   onClick={saveCurrentFilter}
-                  className="h-12 px-6 text-base font-semibold rounded-full border-[#1ABA7F] text-[#225F91] hover:bg-[#1ABA7F]/10 hover:border-[#1ABA7F]/50 transition-all duration-300"
+                  className="h-9 px-6 text-sm sm:text-base font-semibold rounded-full border-[#1ABA7F] text-[#225F91] hover:bg-[#1ABA7F]/10 hover:border-[#1ABA7F]/50 transition-all duration-300"
                   aria-label="Save current filter"
                 >
                   <Save className="h-4 w-4 mr-2" />
@@ -356,7 +356,7 @@ const FilterControls = ({
             </div>
             <Button
               onClick={() => handleSearch(searchTerm)}
-              className="h-12 px-6 text-base font-semibold rounded-full bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_20px_rgba(34,95,145,0.6)] transition-all duration-300"
+              className="h-9 px-6 text-sm sm:text-base font-semibold rounded-full bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_20px_rgba(34,95,145,0.6)] transition-all duration-300"
             >
               Apply Filters
             </Button>

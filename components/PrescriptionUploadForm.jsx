@@ -262,46 +262,7 @@ export default function PrescriptionUploadForm() {
           role="form"
           aria-labelledby="form-title"
         >
-          {/* Contact Information */}
-          <div>
-            <Label
-              htmlFor="contact"
-              className="text-xs sm:text-sm font-semibold text-[#225F91] uppercase tracking-wider"
-            >
-              {t('upload.contact_label')}
-            </Label>
-            <div className="relative mt-1 sm:mt-2">
-              <Mail
-                className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 h-4 sm:h-5 w-4 sm:w-5 text-[#225F91]/70"
-                aria-hidden="true"
-              />
-              <Input
-                id="contact"
-                type="text"
-                value={contact}
-                onChange={(e) => {
-                  setContact(e.target.value);
-                  setErrors((prev) => ({ ...prev, contact: null }));
-                }}
-                placeholder={t('upload.contact_placeholder')}
-                className={cn(
-                  "h-10 sm:h-12 pl-10 sm:pl-12 text-sm sm:text-base font-medium rounded-lg sm:rounded-xl border bg-white/95 text-gray-900 placeholder:text-gray-400 focus:ring-0 focus:shadow-[0_0_15px_rgba(26,186,127,0.3)] transition-all duration-300",
-                  errors.contact 
-                    ? "border-red-300 focus:border-red-500" 
-                    : "border-[#1ABA7F]/20 focus:border-[#1ABA7F]/50"
-                )}
-                aria-invalid={!!errors.contact}
-                aria-describedby={errors.contact ? 'contact-error' : undefined}
-              />
-            </div>
-            {errors.contact && (
-              <p id="contact-error" className="mt-1 sm:mt-2 text-xs sm:text-sm text-red-600 font-medium flex items-center gap-1">
-                <AlertCircle className="h-3 sm:h-4 w-3 sm:w-4" />
-                {errors.contact}
-              </p>
-            )}
-          </div>
-
+       
           {/* File Upload */}
           <div>
             <Label
@@ -442,6 +403,47 @@ export default function PrescriptionUploadForm() {
               <Progress value={uploadProgress} className="h-1.5 sm:h-2" />
             </div>
           )}
+
+             {/* Contact Information */}
+          <div>
+            <Label
+              htmlFor="contact"
+              className="text-xs sm:text-sm font-semibold text-[#225F91] uppercase tracking-wider"
+            >
+              {t('upload.contact_label')}
+            </Label>
+            <div className="relative mt-1 sm:mt-2">
+              <Mail
+                className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 h-4 sm:h-5 w-4 sm:w-5 text-[#225F91]/70"
+                aria-hidden="true"
+              />
+              <Input
+                id="contact"
+                type="text"
+                value={contact}
+                onChange={(e) => {
+                  setContact(e.target.value);
+                  setErrors((prev) => ({ ...prev, contact: null }));
+                }}
+                placeholder={t('upload.contact_placeholder')}
+                className={cn(
+                  "h-10 sm:h-12 pl-10 sm:pl-12 text-sm sm:text-base font-medium rounded-lg sm:rounded-xl border bg-white/95 text-gray-900 placeholder:text-gray-400 focus:ring-0 focus:shadow-[0_0_15px_rgba(26,186,127,0.3)] transition-all duration-300",
+                  errors.contact 
+                    ? "border-red-300 focus:border-red-500" 
+                    : "border-[#1ABA7F]/20 focus:border-[#1ABA7F]/50"
+                )}
+                aria-invalid={!!errors.contact}
+                aria-describedby={errors.contact ? 'contact-error' : undefined}
+              />
+            </div>
+            {errors.contact && (
+              <p id="contact-error" className="mt-1 sm:mt-2 text-xs sm:text-sm text-red-600 font-medium flex items-center gap-1">
+                <AlertCircle className="h-3 sm:h-4 w-3 sm:w-4" />
+                {errors.contact}
+              </p>
+            )}
+          </div>
+
 
           {/* Submit Button */}
           <Button

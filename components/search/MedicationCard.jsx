@@ -1,14 +1,11 @@
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Info, MapPin, Clock } from 'lucide-react';
+import { Info, MapPin, Clock, Pill } from 'lucide-react'; // <-- Add Pill icon import
 import PharmacyTable from './PharmacyTable';
 import PharmacyCards from './PharmacyCards';
 import { cn } from '@/lib/utils';
 
 const MedicationCard = ({ med, handleAddToCart, isInCart, isAddingToCart }) => {
-  const [showDetails, setShowDetails] = useState(false);
-
   const getAvailabilityCount = () => {
     return med.availability?.length || 0;
   };
@@ -29,8 +26,8 @@ const MedicationCard = ({ med, handleAddToCart, isInCart, isAddingToCart }) => {
   const availabilityCount = getAvailabilityCount();
 
   return (
-    <div className="w-full space-y-4">
-      <div className="bg-[#1ABA7F]/5 px-4 py-3 rounded-lg">
+    <div className="w-full space-y-4 mt-7">
+      <div className="bg-[#1ABA7F]/5 px-4 py-4 rounded-lg">
         <div className="flex items-center justify-between text-sm">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1">
@@ -43,15 +40,6 @@ const MedicationCard = ({ med, handleAddToCart, isInCart, isAddingToCart }) => {
               </div>
             )}
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowDetails(!showDetails)}
-            className="text-[#225F91] hover:text-[#1A4971] hover:bg-[#225F91]/10"
-          >
-            <Info className="h-4 w-4 mr-1" />
-            {showDetails ? 'Hide' : 'Details'}
-          </Button>
         </div>
       </div>
 
@@ -59,66 +47,46 @@ const MedicationCard = ({ med, handleAddToCart, isInCart, isAddingToCart }) => {
         <div className="flex-1">
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <h3 className="text-2xl sm:text-3xl font-bold text-[#225F91] tracking-tight leading-tight">
+              <h3 className="text-lg sm:text-3xl font-bold text-[#225F91] tracking-tight leading-tight">
                 {med.displayName}
               </h3>
-              <div className="flex items-center gap-2 mt-2 flex-wrap">
-                <span className="text-base text-gray-700 font-medium">
-                  {med.form ? med.form.charAt(0) + med.form.slice(1).toLowerCase() : ''}
-                  {med.strengthValue && med.strengthUnit ? ` • ${med.strengthValue}${med.strengthUnit}` : ''}
-                </span>
+              <div className="flex items-center text-sm gap-2 mt-2 flex-wrap">
                 {med.prescriptionRequired && (
-                  <Badge variant="secondary" className="bg-[#225F91]/10 text-[#225F91] border-[#225F91]/20">
+                  <Badge variant="secondary" className="bg-[#225F91]/10 text-[#225F91] border-primary">
                     <Clock className="h-3 w-3 mr-1" />
                     Prescription Required
                   </Badge>
                 )}
-                <span className="text-sm text-gray-500">
-                  {med.genericName || 'Generic N/A'}
-                </span>
+               {med.manufacturer && (
+              <div>
+                <span className="text-gray-600 font-semibold">Manufacturer:</span>
+                <span className="ml-2 text-gray-600">{med.manufacturer || 'N/A'}</span>
+              </div>  )}
+              <div>
+                <span className="font-semibold text-gray-600">NAFDAC Code:</span>
+                <span className="ml-2 text-gray-600">{med.nafdacCode || 'N/A'}</span>
               </div>
-              {med.manufacturer && (
-                <div className="text-sm text-gray-400 mt-1">Manufacturer: {med.manufacturer}</div>
-              )}
+              </div>
             </div>
-            {med.imageUrl && (
-              <div className="relative w-24 h-24 sm:w-32 sm:h-32 flex-shrink-0">
+            {/* Medication image or fallback */}
+            <div className="relative w-24 h-24 sm:w-32 sm:h-32 flex-shrink-0 flex items-center justify-center bg-white">
+              {med.imageUrl ? (
                 <img
                   src={med.imageUrl}
                   alt={med.displayName}
                   className="w-full h-full object-cover rounded-xl border border-[#1ABA7F]/20 shadow-md transition-transform duration-300 hover:scale-105"
                 />
-              </div>
-            )}
-          </div>
-          {showDetails && (
-            <div className="mt-4 space-y-2 animate-in slide-in-from-top-2 duration-300">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="font-semibold text-gray-700">NAFDAC Code:</span>
-                  <span className="ml-2 text-gray-600">{med.nafdacCode || 'N/A'}</span>
-                </div>
-                <div>
-                  <span className="font-semibold text-gray-700">Form:</span>
-                  <span className="ml-2 text-gray-600">{med.form || 'N/A'}</span>
-                </div>
-                <div>
-                  <span className="font-semibold text-gray-700">Strength:</span>
-                  <span className="ml-2 text-gray-600">{med.strengthValue && med.strengthUnit ? `${med.strengthValue}${med.strengthUnit}` : 'N/A'}</span>
-                </div>
-                <div>
-                  <span className="font-semibold text-gray-700">Manufacturer:</span>
-                  <span className="ml-2 text-gray-600">{med.manufacturer || 'N/A'}</span>
-                </div>
-              </div>
+              ) : (
+                <Pill className="w-12 h-12 sm:w-20 sm:h-20 text-[#1ABA7F]/60" aria-label="Medication" />
+              )}
             </div>
-          )}
+          </div>
         </div>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-4 mt-7">
         <div className="flex items-center justify-between">
-          <h3 className="text-xl font-bold text-[#225F91]">Compare Pharmacies</h3>
+          <h3 className="text-base font-bold text-[#225F91]">Compare Pharmacies</h3>
           {availabilityCount > 0 && (
             <Badge variant="outline" className="border-[#1ABA7F] text-[#1ABA7F]">
               {availabilityCount} available
