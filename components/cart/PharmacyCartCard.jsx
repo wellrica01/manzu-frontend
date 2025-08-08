@@ -20,7 +20,8 @@ import {
   Building,
   Award,
   Calendar,
-  Info
+  Info,
+  HospitalIcon
 } from 'lucide-react';
 import CartItem from './CartItem';
 import { cn } from '@/lib/utils';
@@ -108,22 +109,25 @@ const PharmacyCartCard = ({
 
   return (
     <Card className={cn(
-      "relative bg-white/95 backdrop-blur-sm border rounded-2xl shadow-lg transition-all duration-300 hover:shadow-xl overflow-hidden",
+      "relative bg-white/95 border border-[#1ABA7F]/20 rounded-xl shadow-lg sm:p-6 transition-all duration-500 hover:ring-2 hover:ring-[#1ABA7F]/30",
       pharmacyStatus.borderColor
     )}>
-      <div className="absolute top-0 left-0 w-16 h-16 bg-[#1ABA7F]/20 rounded-br-3xl" />
+      <div className="absolute inset-0 bg-[url('/svg/pattern-dots.svg')] opacity-10 pointer-events-none hidden sm:block" aria-hidden="true" />
       <CardHeader className="bg-gradient-to-r from-[#1ABA7F]/10 to-transparent pb-4">
-        <div className="flex items-start justify-between">
+        <div className="flex flex-wrap items-start justify-between">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-3 mb-3">
               <div className={cn(
                 "p-2 rounded-xl shadow-sm",
                 pharmacyStatus.bgColor
               )}>
-                <Building className={cn("h-5 w-5", pharmacyStatus.color)} />
+                <HospitalIcon className={cn("h-5 w-5", pharmacyStatus.color)} />
               </div>
               <div className="flex-1 min-w-0">
-                <CardTitle className="text-lg font-bold text-[#225F91] truncate">
+                <CardTitle
+                  className="text-lg font-bold text-[#225F91] break-words whitespace-normal max-w-[220px] sm:max-w-[320px] truncate"
+                  title={pharmacy.pharmacy.name}
+                >
                   {pharmacy.pharmacy.name}
                 </CardTitle>
               </div>
@@ -132,17 +136,9 @@ const PharmacyCartCard = ({
             {/* Enhanced Pharmacy Information */}
             <div className="space-y-2">
               {/* Basic Contact Info */}
-              <div className="flex items-center gap-4 text-sm text-gray-700">
-                <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 text-sm text-gray-600">
                   <MapPin className="h-4 w-4 text-[#1ABA7F]" />
                   <span className="truncate">{pharmacy.pharmacy.address}</span>
-                </div>
-                {pharmacy.pharmacy.phone && (
-                  <div className="flex items-center gap-1">
-                    <Phone className="h-4 w-4 text-[#1ABA7F]" />
-                    <span>{pharmacy.pharmacy.phone}</span>
-                  </div>
-                )}
               </div>
 
               {/* Enhanced Pharmacy Details */}
@@ -179,26 +175,27 @@ const PharmacyCartCard = ({
           </div>
 
           <div className="flex items-center gap-2 ml-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setExpanded(!expanded)}
-              className="p-2 hover:bg-[#1ABA7F]/10 text-[#225F91]"
-            >
-              <div className={cn(
-                "w-5 h-5 border-2 border-current rounded transition-transform duration-200",
-                expanded ? "rotate-45" : ""
-              )}>
-                <div className="w-3 h-0.5 bg-current absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
-                <div className="w-0.5 h-3 bg-current absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
-              </div>
-            </Button>
+            <div className="rounded-lg border border-[#1ABA7F]/30 bg-white shadow-sm">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setExpanded(!expanded)}
+                className="p-2 hover:bg-[#1ABA7F]/10 text-[#225F91]"
+                aria-label={expanded ? "Collapse" : "Expand"}
+              >
+                {expanded ? (
+                  <Minus className="w-5 h-5" />
+                ) : (
+                  <Plus className="w-5 h-5" />
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       </CardHeader>
 
       {expanded && (
-        <CardContent className="pt-0">
+        <CardContent className="p-0 px-3">
           <div className="space-y-4">
             {pharmacy.items.map((item, index) => (
               <div key={item.id}>

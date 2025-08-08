@@ -252,7 +252,7 @@ export default function Checkout() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 to-gray-50/30 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 to-gray-50/30 p-1 relative overflow-hidden">
       <div className="absolute inset-0 bg-[url('/svg/pattern-dots.svg')] opacity-10 pointer-events-none hidden sm:block" aria-hidden="true" />
 
       {/* Navigation */}

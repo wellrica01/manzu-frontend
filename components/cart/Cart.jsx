@@ -448,13 +448,14 @@ export default function Cart() {
   const tabSummary = getTabSpecificSummary();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 to-gray-50/30 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 to-gray-50/30 relative p-1 overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 bg-[url('/svg/pattern-dots.svg')] opacity-10 pointer-events-none hidden sm:block" aria-hidden="true" />
 
         {/* Navigation */}
         <nav className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm shadow-sm py-3 px-3 sm:px-4">
           <div className="w-full max-w-[95vw] sm:max-w-3xl lg:max-w-[90vw] xl:max-w-[85vw] mx-auto flex items-center justify-between">
+            {/* Left: Back Button */}
             <Button
               variant="outline"
               onClick={handleBackToHome}
@@ -464,32 +465,38 @@ export default function Cart() {
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back
             </Button>
-            <h2 className="text-lg sm:text-2xl font-bold text-[#225F91] tracking-tight">Cart</h2>
-      
-          <button
-          onClick={handleRefreshCart}
-          disabled={isRefreshing}
-            className="group p-3 rounded-xl hover:bg-[#1ABA7F]/10 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#1ABA7F] focus:ring-offset-2 disabled:opacity-50"
-          aria-label="Refresh cart"
-        >
-          {isRefreshing ? (
-            <Loader2 className="h-5 w-5 text-[#1ABA7F] animate-spin" />
-          ) : (
-              <RefreshCw className="h-5 w-5 text-[#225F91] group-hover:text-[#1ABA7F] transition-colors duration-200" />
-          )}
-        </button> 
-          <div className="relative ">
-              <div className="p-2 text-[#225F91] hover:text-[#1ABA7F] focus:outline-none focus:ring-2 focus:ring-[#1ABA7F] rounded-md">
-                <ShoppingCart className="h-5 w-5 sm:h-6 sm:w-6" />
-              </div>
-              {/* Cart Item Count Badge */}
-              {cart?.pharmacies?.length > 0 && (
-                <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center shadow-lg">
-                  <span className="text-xs font-bold text-white">
-                    {segments.readyItemsCount + segments.prescriptionItemsCount + segments.pendingItemsCount + segments.rejectedItemsCount}
-                  </span>
+
+            {/* Center: Title */}
+            <h2 className="text-lg sm:text-2xl font-bold text-[#225F91] tracking-tight text-center flex-1">
+              Cart
+            </h2>
+
+            {/* Right: Refresh + Cart */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleRefreshCart}
+                disabled={isRefreshing}
+                className="group p-3 rounded-xl hover:bg-[#1ABA7F]/10 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#1ABA7F] focus:ring-offset-2 disabled:opacity-50"
+                aria-label="Refresh cart"
+              >
+                {isRefreshing ? (
+                  <Loader2 className="h-5 w-5 text-[#1ABA7F] animate-spin" />
+                ) : (
+                  <RefreshCw className="h-5 w-5 text-[#225F91] group-hover:text-[#1ABA7F] transition-colors duration-200" />
+                )}
+              </button>
+              <div className="relative">
+                <div className="p-2 text-[#225F91] hover:text-[#1ABA7F] focus:outline-none focus:ring-2 focus:ring-[#1ABA7F] rounded-md">
+                  <ShoppingCart className="h-5 w-5 sm:h-6 sm:w-6" />
                 </div>
-              )}
+                {cart?.pharmacies?.length > 0 && (
+                  <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center shadow-lg">
+                    <span className="text-xs font-bold text-white">
+                      {segments.readyItemsCount + segments.prescriptionItemsCount + segments.pendingItemsCount + segments.rejectedItemsCount}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </nav>
@@ -544,7 +551,7 @@ export default function Cart() {
                         >
                           <tab.icon className="h-5 w-5" />
                           <span className="hidden sm:inline">{tab.label}</span>
-                          <span className="sm:hidden">{tab.shortLabel}</span>
+                          <span className="text-sm sm:hidden">{tab.shortLabel}</span>
                           <span className={`${tab.color} px-2 py-1 rounded-full text-xs font-bold`}>
                             {tab.count}
                           </span>
@@ -558,17 +565,17 @@ export default function Cart() {
             
             {/* Ready Medications Banner */}
             {activeTab === 'ready' && segments.readyForCheckout.some(item => item.prescriptionStatus === 'VERIFIED') && (
-              <div className="mb-8 p-6 bg-gradient-to-r from-[#1ABA7F]/10 to-green-100/50 border border-[#1ABA7F]/20 rounded-2xl shadow-sm">
+              <div className="mb-8 p-3 sm:p-6 bg-gradient-to-r from-[#1ABA7F]/10 to-green-100/50 border border-[#1ABA7F]/20 rounded-2xl shadow-sm">
                 <div className="flex items-start gap-4">
                   <div className="p-3 bg-[#1ABA7F]/20 rounded-xl">
                     <CheckCircle className="h-6 w-6 text-[#1ABA7F]" />
                   </div>
                   <div className="flex-1">
                     <h3 className="font-semibold text-[#225F91] mb-2 text-lg">Prescription Verified! 🎉</h3>
-                    <p className="text-[#225F91] leading-relaxed mb-3">
+                    <p className="text-[#225F91] text-sm sm:text-base leading-relaxed mb-3">
                       Your prescription has been verified and is now ready for checkout. You can proceed to payment anytime.
                     </p>
-                    <div className="flex items-center gap-4 text-sm">
+                    <div className="flex items-center gap-4 text-xs sm:text-sm">
                       <span className="text-[#1ABA7F] font-medium">✓ Verified by pharmacy team</span>
                       <span className="text-[#225F91]/60">•</span>
                       <span className="text-[#225F91]/60">Ready for immediate checkout</span>
@@ -581,17 +588,17 @@ export default function Cart() {
             {/* OTC Medications Banner */}
             {activeTab === 'ready' && segments.readyForCheckout.some(item => !item.medication.prescriptionRequired) && 
               !segments.readyForCheckout.some(item => item.prescriptionStatus === 'VERIFIED') && (
-              <div className="mb-8 p-6 bg-gradient-to-r from-[#1ABA7F]/10 to-green-100/50 border border-[#1ABA7F]/20 rounded-2xl shadow-sm">
+              <div className="mb-8 p-3 sm:p-6 bg-gradient-to-r from-[#1ABA7F]/10 to-green-100/50 border border-[#1ABA7F]/20 rounded-2xl shadow-sm">
                 <div className="flex items-start gap-4">
                   <div className="p-3 bg-[#1ABA7F]/20 rounded-xl">
                     <CheckCircle className="h-6 w-6 text-[#1ABA7F]" />
                   </div>
                   <div className="flex-1">
                     <h3 className="font-semibold text-[#225F91] mb-2 text-lg">Ready for Checkout</h3>
-                    <p className="text-[#225F91] leading-relaxed mb-3">
+                    <p className="text-[#225F91] text-sm sm:text-base leading-relaxed mb-3">
                       These medications are ready for immediate checkout. You can proceed to payment anytime.
                     </p>
-                    <div className="flex items-center gap-4 text-sm">
+                    <div className="flex items-center gap-4 text-xs sm:text-sm">
                       <span className="text-[#1ABA7F] font-medium">✓ OTC medications available</span>
                       <span className="text-[#225F91]/60">•</span>
                       <span className="text-[#225F91]/60">No prescription required</span>
@@ -603,17 +610,17 @@ export default function Cart() {
 
             {/* Needs Prescription Banner */}
             {activeTab === 'needs_prescription' && (
-              <div className="mb-8 p-6 bg-gradient-to-r from-orange-50 to-orange-100/50 border border-orange-200 rounded-2xl shadow-sm">
+              <div className="mb-8 p-3 sm:p-6 bg-gradient-to-r from-orange-50 to-orange-100/50 border border-orange-200 rounded-2xl shadow-sm">
                 <div className="flex items-start gap-4">
                   <div className="p-3 bg-orange-100 rounded-xl">
                     <AlertCircle className="h-6 w-6 text-orange-600" />
                   </div>
                   <div className="flex-1">
                     <h3 className="font-semibold text-orange-800 mb-2 text-lg">Prescription Required</h3>
-                    <p className="text-orange-700 leading-relaxed mb-3">
+                    <p className="text-orange-700 text-sm sm:text-base leading-relaxed mb-3">
                       These medications require a prescription. Please upload your prescription to proceed with checkout.
                     </p>
-                    <div className="flex items-center gap-4 text-sm">
+                    <div className="flex items-center gap-4 text-xs sm:text-sm">
                       <span className="text-orange-600 font-medium">📋 Upload prescription to continue</span>
                       <span className="text-orange-600/60">•</span>
                       <span className="text-orange-600/60">Prescription will be reviewed within 24-48 hours</span>
@@ -625,18 +632,18 @@ export default function Cart() {
 
             {/* Under Review Banner */}
             {activeTab === 'pending' && (
-              <div className="mb-8 p-6 bg-gradient-to-r from-[#225F91]/10 to-[#1ABA7F]/10 border border-[#225F91]/20 rounded-2xl shadow-sm">
+              <div className="mb-8 p-3 sm:p-6 bg-gradient-to-r from-[#225F91]/10 to-[#1ABA7F]/10 border border-[#225F91]/20 rounded-2xl shadow-sm">
                 <div className="flex items-start gap-4">
                   <div className="p-3 bg-[#225F91]/20 rounded-xl">
                     <Clock className="h-6 w-6 text-[#225F91]" />
                   </div>
                   <div className="flex-1">
                     <h3 className="font-semibold text-[#225F91] mb-2 text-lg">Prescription Under Review</h3>
-                    <p className="text-[#225F91] leading-relaxed mb-3">
+                    <p className="text-[#225F91] text-sm sm:text-base leading-relaxed mb-3">
                       Your prescription has been uploaded and is being reviewed by our pharmacy team. 
                       You'll be notified once verification is complete.
                     </p>
-                    <div className="flex items-center gap-4 text-sm">
+                    <div className="flex items-center gap-4 text-xs sm:text-sm">
                       <div className="flex items-center gap-2 text-[#225F91]">
                         <div className="w-2 h-2 bg-[#1ABA7F] rounded-full animate-pulse"></div>
                         <span>Review in progress...</span>
@@ -651,17 +658,17 @@ export default function Cart() {
 
             {/* Rejected Prescriptions Banner */}
             {activeTab === 'rejected' && (
-              <div className="mb-8 p-6 bg-gradient-to-r from-red-50 to-red-100/50 border border-red-200 rounded-2xl shadow-sm">
+              <div className="mb-8 p-3 sm:p-6 bg-gradient-to-r from-red-50 to-red-100/50 border border-red-200 rounded-2xl shadow-sm">
                 <div className="flex items-start gap-4">
                   <div className="p-3 bg-red-100 rounded-xl">
                     <AlertTriangle className="h-6 w-6 text-red-600" />
                   </div>
                   <div className="flex-1">
                     <h3 className="font-semibold text-red-800 mb-2 text-lg">Prescription Rejected</h3>
-                    <p className="text-red-700 leading-relaxed mb-3">
+                    <p className="text-red-700 text-sm sm:text-base leading-relaxed mb-3">
                       Your prescription was rejected by our pharmacy team. Please upload a new prescription to proceed with these medications.
                     </p>
-                    <div className="flex items-center gap-4 text-sm">
+                    <div className="flex items-center gap-4 text-xs sm:text-sm">
                       <span className="text-red-600 font-medium">⚠️ Upload new prescription to continue</span>
                       <span className="text-red-600/60">•</span>
                       <span className="text-red-600/60">Check email for rejection details</span>
@@ -796,7 +803,7 @@ export default function Cart() {
                 ))}
 
                 <PrescriptionUploadSection
-                          items={[...segments.needsPrescription, ...segments.rejectedPrescription]}
+                  items={[...segments.needsPrescription, ...segments.rejectedPrescription]}
                   guestId={guestId}
                   onUploadSuccess={handlePrescriptionUploadSuccess}
                   prescriptionStatuses={prescriptionStatuses}

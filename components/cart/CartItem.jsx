@@ -17,7 +17,9 @@ import {
   Calendar,
   Shield,
   Building,
-  Box
+  Box,
+  Hospital,
+  HouseIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -109,8 +111,60 @@ const CartItem = ({
       )}
       aria-label={`Cart item: ${item.medication.name}`}
     >
-      {/* Image & Status Overlay */}
-      <div className="flex items-center gap-4 p-5 pb-0">
+     <div className="flex items-center gap-4 p-5 pb-0">
+    
+        {/* Details Section */}
+        <div className="flex-1 min-w-0 flex flex-col gap-1">
+          <div className="flex items-center gap-2 mb-0.5">
+            <h3 className="font-bold text-[#225F91] text-lg" title={item.medication.displayName}>{item.medication.displayName}</h3>
+          </div>
+          {item.medication.genericName && (
+            <div className="text-sm text-gray-600 italic mb-0.5">
+              Generic: {item.medication.genericName}
+            </div>
+          )}
+         {item.medication.description && (
+            <div className="text-sm text-gray-600 mb-0.5 line-clamp-2">
+              {item.medication.description}
+            </div>
+          )}
+          {/* Status & Badges */}
+          <div className="flex items-center gap-2 mt-1 mb-1.5">
+            {item.medication.prescriptionRequired ? (
+              <Badge className="bg-purple-50 text-purple-700 border-purple-200 text-xs font-medium px-2 py-0.5 rounded-md flex items-center gap-1">
+                <FileText className="h-3 w-3 mr-1" />
+                Prescription
+              </Badge>
+            ) : (
+              <Badge className="bg-[#225F91]/10 text-[#225F91] border-[#225F91]/20 text-xs font-medium px-2 py-0.5 rounded-md flex items-center gap-1">
+                <Package className="h-3 w-3 mr-1" />
+                OTC
+              </Badge>
+            )}
+          </div>
+          {/* Meta with Icons */}
+          <div className="flex flex-wrap items-center gap-3 text-xs text-gray-600 mb-0.5">
+            {item.medication.packSizeQuantity && (
+              <div className="flex items-center gap-1">
+                <Box className="h-3 w-3 text-[#225F91]" />
+                <span>Pack: {item.medication.packSizeQuantity} {item.medication.packSizeUnit || ''}</span>
+              </div>
+            )}
+            {item.medication.manufacturer && (
+              <div className="flex items-center gap-1">
+                <HouseIcon className="h-3 w-3 text-[#225F91]" />
+                <span className="truncate">Manufacturer: {item.medication.manufacturer}</span>
+              </div>
+            )}
+            {item.medication.nafdacCode && (
+              <div className="flex items-center gap-1 text-gray-600">
+                <FileText className="h-3 w-3 text-[#225F91]" />
+                <span>NAFDAC Code: {item.medication.nafdacCode}</span>
+              </div>
+            )}
+          </div>
+        </div>
+          {/* Image & Status Overlay */}
         <div className="relative w-20 h-20 flex-shrink-0">
           <div className="w-20 h-20 bg-gradient-to-br from-[#1ABA7F]/20 to-[#225F91]/20 rounded-xl flex items-center justify-center shadow-sm">
             {item.medication.imageUrl ? (
@@ -132,90 +186,21 @@ const CartItem = ({
             <StatusIcon className="h-4 w-4" />
           </div>
         </div>
-        {/* Details Section */}
-        <div className="flex-1 min-w-0 flex flex-col gap-1">
-          <div className="flex items-center gap-2 mb-0.5">
-            <h3 className="font-bold text-[#225F91] text-lg truncate" title={item.medication.brandName}>{item.medication.brandName}</h3>
-            {item.medication.category && item.medication.category.length > 0 && (
-              <Badge className="bg-gray-100 text-gray-600 border-gray-200 text-xs font-medium px-2 py-0.5 rounded-md">
-                {item.medication.category[0]}
-              </Badge>
-            )}
-          </div>
-          {item.medication.genericName && (
-            <div className="text-xs text-gray-500 italic mb-0.5">
-              Generic: {item.medication.genericName}
-            </div>
-          )}
-         {item.medication.description && (
-            <div className="text-xs text-gray-700 mb-0.5 line-clamp-2">
-              {item.medication.description}
-            </div>
-          )}
-          {/* Status & Badges */}
-          <div className="flex items-center gap-2 mt-1 mb-1.5">
-            {item.medication.prescriptionRequired ? (
-              <Badge className="bg-purple-50 text-purple-700 border-purple-200 text-xs font-medium px-2 py-0.5 rounded-md flex items-center gap-1">
-                <FileText className="h-3 w-3 mr-1" />
-                Prescription
-              </Badge>
-            ) : (
-              <Badge className="bg-[#225F91]/10 text-[#225F91] border-[#225F91]/20 text-xs font-medium px-2 py-0.5 rounded-md flex items-center gap-1">
-                <Package className="h-3 w-3 mr-1" />
-                OTC
-              </Badge>
-            )}
-          </div>
-          {/* Meta with Icons */}
-          <div className="flex flex-wrap items-center gap-3 text-xs text-gray-600 mb-0.5">
-            {item.medication.form && (
-              <div className="flex items-center gap-1">
-                <Package className="h-3 w-3 text-[#225F91]" />
-                <span>{item.medication.form}</span>
-              </div>
-            )}
-            {item.medication.strengthValue && (
-              <div className="flex items-center gap-1">
-                <Shield className="h-3 w-3 text-[#1ABA7F]" />
-                <span>{item.medication.strengthValue}{item.medication.strengthUnit || ''}</span>
-              </div>
-            )}
-            {item.medication.packSizeQuantity && (
-              <div className="flex items-center gap-1">
-                <Box className="h-3 w-3 text-[#225F91]" />
-                <span>Pack: {item.medication.packSizeQuantity} {item.medication.packSizeUnit || ''}</span>
-              </div>
-            )}
-            {item.medication.manufacturer && (
-              <div className="flex items-center gap-1">
-                <Building className="h-3 w-3 text-[#225F91]" />
-                <span className="truncate">Manufacturer: {item.medication.manufacturer}</span>
-              </div>
-            )}
-            {item.medication.nafdacCode && (
-              <div className="flex items-center gap-1 text-gray-400">
-                <FileText className="h-3 w-3 text-gray-400" />
-                <span>NAFDAC: {item.medication.nafdacCode}</span>
-              </div>
-            )}
-          </div>
-        </div>
-        {/* Price Section */}
-        <div className="text-right ml-4 flex flex-col items-end min-w-[110px]">
-          <div className="text-xl font-extrabold text-[#225F91] leading-tight">
-            ₦{calculateItemPrice(item).toLocaleString()}
-          </div>
-          <div className="text-xs text-gray-500">
-            ₦{item.price.toLocaleString()} per unit
-          </div>
+      </div>
+      {/* Divider */}
+      {/* Price Section */}
+      <div className="flex justify-end">
+        <div className="p-3 flex flex-col min-w-[110px] items-end">
           {item.quantity > 1 && (
-            <div className="text-xs text-[#1ABA7F] font-medium mt-0.5">
+            <div className="text-sm text-[#1ABA7F] font-medium mt-0.5">
               {item.quantity} × ₦{item.price.toLocaleString()}
             </div>
           )}
+          <div className="text-base font-extrabold text-[#225F91] leading-tight">
+            ₦{calculateItemPrice(item).toLocaleString()}
+          </div>
         </div>
       </div>
-      {/* Divider */}
       <div className="border-t border-gray-100 my-0.5" />
       {/* Actions Section */}
       <div className="flex items-center justify-between px-5 py-3 bg-white/80 rounded-b-2xl">
