@@ -219,58 +219,48 @@ export default function SearchBar() {
     }
   };
 
-  const handleAddToCart = async (medicationId, pharmacyId, medicationName) => {
-    const quantity = 1;
-    const itemKey = `${medicationId}-${pharmacyId}`;
-    try {
-      if (!medicationId || !pharmacyId) throw new Error(t('errors.invalid_selection'));
-      setIsAddingToCart(prev => ({ ...prev, [itemKey]: true }));
-      setCartItems(prev => [
-        ...prev,
-        {
-          medicationAvailabilityMedicationId: medicationId,
-          medicationAvailabilityPharmacyId: pharmacyId,
-          quantity,
-          medication: { displayName: medicationName },
-        },
-      ]);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart/add`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-guest-id': guestId,
-        },
-        body: JSON.stringify({ medicationId, pharmacyId, quantity }),
-      });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || t('errors.add_to_cart_failed'));
-      }
-      setLastAddedItem(medicationName);
-      setOpenCartDialog(true);
-      if (typeof window !== 'undefined' && window.gtag) {
-        window.gtag('event', 'add_to_cart', { medicationId, pharmacyId });
-      }
-      await fetchCart();
-    } catch (err) {
-      toast.error(`Error: ${err.message}`);
-      setCartItems(prev => prev.filter(item => 
-        !(item.medicationAvailabilityMedicationId === medicationId && 
-          item.medicationAvailabilityPharmacyId === pharmacyId)
-      ));
-    } finally {
-      setIsAddingToCart(prev => ({ ...prev, [itemKey]: false }));
+const handleAddToCart = async (medicationId, pharmacyId, medicationName) => {
+  const quantity = 1;
+  const itemKey = `${medicationId}-${pharmacyId}`;
+  try {
+    if (!medicationId || !pharmacyId) throw new Error(t('errors.invalid_selection'));
+    setIsAddingToCart(prev => ({ ...prev, [itemKey]: true }));
+    console.log('Sending to /api/cart/add:', { medicationId, pharmacyId, quantity });
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart/add`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-guest-id': guestId,
+      },
+      body: JSON.stringify({ medicationId, pharmacyId, quantity }),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || t('errors.add_to_cart_failed'));
     }
-  };
+    setLastAddedItem(medicationName);
+    setOpenCartDialog(true);
+    if (typeof window !== 'undefined' && window.gtag) {
+      window.gtag('event', 'add_to_cart', { medicationId, pharmacyId });
+    }
+    await fetchCart();
+  } catch (err) {
+    toast.error(`Error: ${err.message}`);
+  } finally {
+    setIsAddingToCart(prev => ({ ...prev, [itemKey]: false }));
+  }
+};
 
-  const isInCart = (medicationId, pharmacyId) => {
-    if (!Array.isArray(cartItems)) return false;
-    return cartItems.some(
-      (item) =>
-        item.medicationAvailabilityMedicationId === medicationId &&
-        item.medicationAvailabilityPharmacyId === pharmacyId
-    );
-  };
+const isInCart = (medicationId, pharmacyId) => {
+  console.log('Checking isInCart:', { medicationId, pharmacyId, cart });
+  return cart?.pharmacies?.some(pharmacy =>
+    pharmacy.pharmacy.id === pharmacyId &&
+    pharmacy.items?.some(item => item.medication.id === medicationId)
+  ) || false;
+};
+
+// Add logging for results
+console.log('Search results:', results);
 
   return (
     <div className="w-full space-y-4 sm:space-y-6">

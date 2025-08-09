@@ -52,6 +52,9 @@ const PharmacyTable = ({ availability, medId, handleAddToCart, isInCart, display
     });
   }, [availability, sortField, sortDirection]);
 
+ console.log('Sorted availability:', sortedAvailability);
+
+
   const handleSort = (field) => {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');

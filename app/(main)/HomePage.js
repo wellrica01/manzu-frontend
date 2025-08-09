@@ -20,10 +20,10 @@ const LanguageToggle = ({ onLanguageChange }) => {
   const dropdownRef = useRef(null);
   
   const languages = [
-    { code: 'en', name: 'English', flag: '🇺🇸' },
-    { code: 'ha', name: 'Hausa', flag: '🇳🇬' },
-    { code: 'yo', name: 'Yoruba', flag: '🇳🇬' },
-    { code: 'ig', name: 'Igbo', flag: '🇳🇬' }
+    { code: 'en', name: 'English', flag: 'EN' },
+    { code: 'ha', name: 'Hausa', flag: 'HA' },
+    { code: 'yo', name: 'Yoruba', flag: 'YO' },
+    { code: 'ig', name: 'Igbo', flag: 'IG' }
   ];
 
   const changeLanguage = useCallback((lng) => {

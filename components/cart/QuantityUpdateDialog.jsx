@@ -1,8 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Package, CheckCircle, ArrowRight } from 'lucide-react';
+import { Package, CheckCircle } from 'lucide-react';
 
 const QuantityUpdateDialog = ({ quantityUpdate, setQuantityUpdate }) => {
   if (!quantityUpdate) return null;
@@ -10,27 +8,12 @@ const QuantityUpdateDialog = ({ quantityUpdate, setQuantityUpdate }) => {
   return (
     <Dialog open={!!quantityUpdate} onOpenChange={() => setQuantityUpdate(null)}>
       <DialogContent className="bg-white/95 backdrop-blur-sm border border-[#1ABA7F]/20 rounded-2xl shadow-xl">
-        <DialogHeader>
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-3 bg-[#1ABA7F]/20 rounded-xl">
-              <CheckCircle className="h-6 w-6 text-[#1ABA7F]" />
-            </div>
-            <DialogTitle className="text-xl font-bold text-[#225F91]">
-              Quantity Updated
-            </DialogTitle>
-          </div>
-          <DialogDescription className="text-gray-600 leading-relaxed">
-            The quantity for <span className="font-semibold text-[#225F91]">{quantityUpdate.name}</span> has been updated to <span className="font-semibold text-[#1ABA7F]">{quantityUpdate.quantity}</span>. Your cart total has been recalculated.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="p-4 bg-green-50 rounded-xl border border-green-200 mb-6">
+        <div className="p-3 mt-6 mb-2 bg-green-50 rounded-xl border border-green-200">
           <div className="flex items-start gap-3">
             <Package className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
             <div>
-              <p className="text-sm font-medium text-[#225F91] mb-1">Medication Updated Successfully</p>
               <p className="text-sm text-gray-700">
-                Your cart has been updated with the new quantity and total price.
+                <span className="font-semibold text-[#1ABA7F]">{quantityUpdate.name}</span> has been updated with the new quantity (<span className="font-semibold text-[#1ABA7F]">{quantityUpdate.quantity}</span>).
               </p>
             </div>
           </div>
@@ -40,9 +23,9 @@ const QuantityUpdateDialog = ({ quantityUpdate, setQuantityUpdate }) => {
           <Button
             variant="outline"
             onClick={() => setQuantityUpdate(null)}
-            className="w-full sm:w-auto border-[#1ABA7F]/20 text-[#225F91] hover:bg-[#1ABA7F]/10"
+            className="w-full h-12 sm:w-auto border-[#1ABA7F]/20 text-[#225F91] hover:bg-[#1ABA7F]/10"
           >
-            Continue Shopping
+            Close
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -136,11 +136,13 @@ export default function PrescriptionUploadForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsUploading(true); // Set loading state immediately
+
     if (!validateForm()) {
       toast.error(t('upload.errors.fix_errors'));
+      setIsUploading(false); // Reset loading state if validation fails
       return;
     }
-    setIsUploading(true);
     setUploadProgress(0);
 
     const formData = new FormData();
@@ -174,12 +176,16 @@ export default function PrescriptionUploadForm() {
           } catch (parseError) {
             console.error('Failed to parse error response:', parseError);
           }
-          throw new Error(errorData.message || t('upload.errors.upload_failed'));
+          toast.error(errorData.message || t('upload.errors.upload_failed'));
         }
+        setIsUploading(false); // Reset loading state after upload
+        setUploadProgress(0);
       });
 
       xhr.addEventListener('error', () => {
-        throw new Error(t('upload.errors.upload_failed'));
+        toast.error(t('upload.errors.upload_failed'));
+        setIsUploading(false); // Reset loading state on error
+        setUploadProgress(0);
       });
 
       xhr.open('POST', `${process.env.NEXT_PUBLIC_API_URL}/api/prescription/upload`);
@@ -187,8 +193,7 @@ export default function PrescriptionUploadForm() {
       xhr.send(formData);
     } catch (err) {
       toast.error(err.message || t('upload.errors.upload_failed'));
-    } finally {
-      setIsUploading(false);
+      setIsUploading(false); // Reset loading state on error
       setUploadProgress(0);
     }
   };
@@ -205,15 +210,11 @@ export default function PrescriptionUploadForm() {
     <div className="w-full">
       <Dialog open={openSuccessDialog} onOpenChange={setOpenSuccessDialog}>
         <DialogContent
-          className="w-[95vw] sm:max-w-md p-6 sm:p-8 border border-[#1ABA7F]/20 rounded-2xl bg-white/95 backdrop-blur-sm shadow-lg sm:shadow-xl animate-in slide-in-from-top-10 fade-in-20 duration-300"
+          className="w-[95vw] sm:max-w-md p-4 sm:p-8 border border-[#1ABA7F]/20 rounded-2xl bg-white/95 backdrop-blur-sm shadow-lg sm:shadow-xl animate-in slide-in-from-top-10 fade-in-20 duration-300"
         >
           <div className="absolute top-0 left-0 w-8 sm:w-12 h-8 sm:h-12 bg-[#1ABA7F]/20 rounded-br-full" />
-          <DialogHeader className="flex flex-col items-center gap-2 sm:gap-3">
-            <CheckCircle
-              className="h-10 w-10 sm:h-12 sm:w-12 text-[#1ABA7F] animate-[pulse_1s_ease-in-out_infinite]"
-              aria-hidden="true"
-            />
-            <DialogTitle className="text-lg sm:text-2xl font-bold text-[#225F91] text-center tracking-tight">
+          <DialogHeader className="mt-6 flex flex-col items-center gap-2 sm:gap-3">
+            <DialogTitle className="text-base sm:text-2xl font-bold text-[#225F91] text-center tracking-tight">
               {t('upload.success_title')}
             </DialogTitle>
           </DialogHeader>
@@ -224,32 +225,22 @@ export default function PrescriptionUploadForm() {
             </span>{' '}
             {t('upload.success_message_end')}
           </p>
-          <p className="mt-2 sm:mt-3 text-sm sm:text-base font-medium text-center text-gray-600">
-            {t('upload.verification_info')} {' '}
-            <Link
-              href="/status-check"
-              className="font-semibold text-[#225F91] hover:text-[#1A4971] underline transition-colors duration-200"
-              aria-label={t('upload.check_status')}
-            >
-              {t('upload.check_status')}
-            </Link>
-            .
-          </p>
-          <DialogFooter className="mt-6 sm:mt-8 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
-            <Button
-              variant="outline"
-              onClick={handleUploadAnother}
-              className="h-10 sm:h-12 px-4 sm:px-6 text-sm sm:text-base font-semibold rounded-full border-[#1ABA7F] text-[#1ABA7F] hover:bg-[#1ABA7F]/10 hover:shadow-[0_0_10px_rgba(26,186,127,0.3)] transition-all duration-300"
-              aria-label={t('upload.upload_another')}
-            >
-              {t('upload.upload_another')}
-            </Button>
+
+          <DialogFooter className="mt-2 sm:mt-8 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
             <Button
               asChild
               className="h-10 sm:h-12 px-4 sm:px-6 text-sm sm:text-base font-semibold rounded-full bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_15px_rgba(34,95,145,0.5)] transition-all duration-300"
               aria-label={t('upload.track_order')}
             >
-              <Link href="/track">{t('upload.track_order')}</Link>
+              <Link href="/status-check">Check Status</Link>
+            </Button>
+               <Button
+              variant="outline"
+              onClick={handleUploadAnother}
+              className="h-10 sm:h-12 px-4 sm:px-6 text-sm sm:text-base font-semibold rounded-full border-[#1ABA7F] text-[#1ABA7F] hover:bg-[#1ABA7F]/10 hover:shadow-[0_0_10px_rgba(26,186,127,0.3)] transition-all duration-300"
+              aria-label={t('upload.upload_another')}
+            >
+              Close
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -427,7 +418,7 @@ export default function PrescriptionUploadForm() {
                 }}
                 placeholder={t('upload.contact_placeholder')}
                 className={cn(
-                  "h-10 sm:h-12 pl-10 sm:pl-12 text-sm sm:text-base font-medium rounded-lg sm:rounded-xl border bg-white/95 text-gray-900 placeholder:text-gray-400 focus:ring-0 focus:shadow-[0_0_15px_rgba(26,186,127,0.3)] transition-all duration-300",
+                  "h-12 sm:h-12 pl-10 sm:pl-12 text-sm sm:text-base font-medium rounded-lg sm:rounded-xl border bg-white/95 text-gray-900 placeholder:text-gray-400 focus:ring-0 focus:shadow-[0_0_15px_rgba(26,186,127,0.3)] transition-all duration-300",
                   errors.contact 
                     ? "border-red-300 focus:border-red-500" 
                     : "border-[#1ABA7F]/20 focus:border-[#1ABA7F]/50"
@@ -449,7 +440,7 @@ export default function PrescriptionUploadForm() {
           <Button
             type="submit"
             disabled={isUploading || !file || !contact}
-            className="w-full h-10 sm:h-12 px-4 sm:px-6 text-sm sm:text-base font-semibold rounded-lg sm:rounded-xl bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_20px_rgba(34,95,145,0.6)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+            className="w-full h-12 sm:h-12 px-4 sm:px-6 text-sm sm:text-base font-semibold rounded-lg sm:rounded-xl bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_20px_rgba(34,95,145,0.6)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
           >
             {isUploading ? (
               <span className="flex items-center justify-center gap-1 sm:gap-2">
@@ -490,7 +481,7 @@ export default function PrescriptionUploadForm() {
                 <ul className="list-disc list-inside space-y-0.5 sm:space-y-1 text-sm sm:text-base">
                   <li>Ensure your prescription is clearly visible and readable</li>
                   <li>Supported formats: PDF, JPG, PNG (max 10MB)</li>
-                  <li>We'll process your prescription within 24 hours</li>
+                  <li>We'll process your prescription within few minutes.</li>
                   <li>You'll receive updates via your provided contact</li>
                 </ul>
               </div>

@@ -27,21 +27,6 @@ const MedicationCard = ({ med, handleAddToCart, isInCart, isAddingToCart }) => {
 
   return (
     <div className="w-full space-y-4 mt-7">
-      <div className="bg-[#1ABA7F]/5 px-4 py-4 rounded-lg">
-        <div className="flex items-center justify-between text-sm">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1">
-              <MapPin className="h-4 w-4 text-[#225F91]" />
-              <span className="text-gray-600">{availabilityCount} pharmacies</span>
-            </div>
-            {minPrice && (
-              <div className="flex items-center gap-1">
-                <span className="text-[#1ABA7F] font-semibold">From ₦{minPrice.toLocaleString()}</span>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
 
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
         <div className="flex-1">
@@ -50,7 +35,7 @@ const MedicationCard = ({ med, handleAddToCart, isInCart, isAddingToCart }) => {
               <h3 className="text-lg sm:text-3xl font-bold text-[#225F91] tracking-tight leading-tight">
                 {med.displayName}
               </h3>
-              <div className="flex items-center text-sm gap-2 mt-2 flex-wrap">
+              <div className="flex items-center text-xs gap-2 mt-2 flex-wrap">
                 {med.prescriptionRequired && (
                   <Badge variant="secondary" className="bg-[#225F91]/10 text-[#225F91] border-primary">
                     <Clock className="h-3 w-3 mr-1" />
@@ -84,7 +69,10 @@ const MedicationCard = ({ med, handleAddToCart, isInCart, isAddingToCart }) => {
         </div>
       </div>
 
-      <div className="space-y-4 mt-7">
+
+
+      <div className="space-y-4 mt-9">
+
         <div className="flex items-center justify-between">
           <h3 className="text-base font-bold text-[#225F91]">Compare Pharmacies</h3>
           {availabilityCount > 0 && (

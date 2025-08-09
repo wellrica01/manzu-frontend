@@ -13,7 +13,8 @@ import {
   X,
   Shield,
   Truck,
-  Store
+  Store,
+  HospitalIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -80,7 +81,7 @@ const CheckoutDialog = ({
                   {/* Pharmacy Header */}
                   <div className="flex items-center justify-between mb-2 sm:mb-3">
                     <div className="flex items-center gap-2">
-                      <Store className="h-3 w-3 sm:h-4 w-4 text-[#1ABA7F]" />
+                      <HospitalIcon className="h-3 w-3 sm:h-4 w-4 text-[#1ABA7F]" />
                       <h4 className="font-semibold text-gray-900 text-sm sm:text-base">
                         {group.pharmacy?.name || 'Unknown Pharmacy'}
                       </h4>
@@ -143,10 +144,6 @@ const CheckoutDialog = ({
               <div className="flex items-center justify-between">
                 <span className="text-gray-600">Delivery Fee:</span>
                 <span className="font-medium text-green-600">Free</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600">Tax:</span>
-                <span className="font-medium text-gray-900">Included</span>
               </div>
             </div>
 

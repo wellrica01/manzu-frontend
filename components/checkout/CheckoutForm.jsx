@@ -21,7 +21,8 @@ import {
   Info,
   CreditCard,
   ArrowRight,
-  Loader2
+  Loader2,
+  HospitalIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -134,7 +135,7 @@ const CheckoutForm = ({
                   value={form.name}
                   onChange={handleInputChange}
                   placeholder="Enter your full name"
-                  className="border-[#1ABA7F]/20 focus:border-[#1ABA7F]/50 focus:shadow-[0_0_8px_rgba(26,186,127,0.3)] transition-all duration-300"
+                  className="border-[#1ABA7F]/20 h-12 focus:border-[#1ABA7F]/50 text-sm focus:shadow-[0_0_8px_rgba(26,186,127,0.3)] transition-all duration-300"
                   required
                 />
               </div>
@@ -150,7 +151,7 @@ const CheckoutForm = ({
                   value={form.phone}
                   onChange={handleInputChange}
                   placeholder="+234 801 234 5678"
-                  className="border-[#1ABA7F]/20 focus:border-[#1ABA7F]/50 focus:shadow-[0_0_8px_rgba(26,186,127,0.3)] transition-all duration-300"
+                  className="border-[#1ABA7F]/20 h-12 focus:border-[#1ABA7F]/50 text-sm focus:shadow-[0_0_8px_rgba(26,186,127,0.3)] transition-all duration-300"
                   required
                 />
                 {validatePhone() && (
@@ -170,7 +171,7 @@ const CheckoutForm = ({
                 value={form.email}
                 onChange={handleInputChange}
                 placeholder="your.email@example.com"
-                className="border-[#1ABA7F]/20 focus:border-[#1ABA7F]/50 focus:shadow-[0_0_8px_rgba(26,186,127,0.3)] transition-all duration-300"
+                className="border-[#1ABA7F]/20 h-12 focus:border-[#1ABA7F]/50 text-sm focus:shadow-[0_0_8px_rgba(26,186,127,0.3)] transition-all duration-300"
               />
               {validateEmail() && (
                 <p className="text-xs text-red-600">{validateEmail()}</p>
@@ -183,7 +184,6 @@ const CheckoutForm = ({
           {/* Delivery Method */}
           <div className="space-y-4">
             <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-              <Truck className="h-5 w-5 text-[#1ABA7F]" />
               Delivery Method
             </h3>
             
@@ -199,7 +199,7 @@ const CheckoutForm = ({
                 )}
               >
                 <div className="flex items-center gap-3">
-                  <Store className="h-5 w-5 text-[#1ABA7F]" />
+                  <HospitalIcon className="h-5 w-5 text-[#1ABA7F]" />
                   <div>
                     <div className="font-medium text-gray-900">Pickup</div>
                     <div className="text-sm text-gray-600">Collect from pharmacy</div>

@@ -173,44 +173,25 @@ export default function MainLayout({ children }) {
       <footer className="bg-[#225F91] text-white">
         <div className="w-full max-w-[95vw] sm:max-w-3xl lg:max-w-[90vw] xl:max-w-[85vw] mx-auto px-1 sm:px-2 py-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
-            <div className="flex flex-col items-center text-center">
-              <Image
-                src="/logo_1.png"
-                alt="Manzu Logo"
-                width={100}
-                height={32}
-                className="h-8 w-auto object-contain mb-4 mx-auto"
-              />
-              <p className="text-xs sm:text-sm text-white/80 max-w-xs w-full leading-relaxed">
-                {t('footer.description')}
-              </p>
-              <div className="mt-4 space-y-2 w-full">
-                <p className="text-xs sm:text-sm text-white/80 flex items-center justify-center gap-2">
-                  <span className="w-2 h-2 bg-[#1ABA7F] rounded-full" />
-                  {t('footer.ussd')} <span className="font-bold">*123*456#</span>
-                </p>
-                <p className="text-xs sm:text-sm text-white/80 flex items-center justify-center gap-2">
-                  <span className="w-2 h-2 bg-[#1ABA7F] rounded-full" />
-                  {t('footer.whatsapp')} <a href="https://wa.me/+2341234567890" target="_blank" rel="noopener noreferrer" className="font-bold underline hover:text-[#1ABA7F]">+2341234567890</a>
-                </p>
-              </div>
-            </div>
-
+           
             <div className="flex flex-col items-center text-center">
               <h3 className="text-sm sm:text-base font-semibold text-white mb-3 flex items-center justify-center gap-2">
                 <span className="w-1 h-5 bg-[#1ABA7F] rounded-full" />
                 {t('footer.quick_links')}
+                <span className="w-1 h-5 bg-[#1ABA7F] rounded-full" />
+
               </h3>
               <div className="space-y-2 w-full">
                 {['About', 'Contact', 'Privacy Policy'].map((item) => (
                   <Link
                     key={item}
                     href={`/${item.toLowerCase().replace(' ', '-')}`}
-                    className="text-white/90 hover:text-[#1ABA7F] text-xs sm:text-sm transition-colors duration-200 flex items-center justify-center gap-2"
+                    className="text-white/90 hover:text-[#1ABA7F] text-sm sm:text-sm transition-colors duration-200 flex items-center justify-center gap-2"
                     aria-label={t(`footer.${item.toLowerCase().replace(' ', '_')}`)}
                   >
                     <span className="w-1 h-1 bg-[#1ABA7F] rounded-full" />
                     {t(`footer.${item.toLowerCase().replace(' ', '_')}`)}
+                    
                   </Link>
                 ))}
               </div>
@@ -220,6 +201,7 @@ export default function MainLayout({ children }) {
               <h3 className="text-sm sm:text-base font-semibold text-white mb-3 flex items-center justify-center gap-2">
                 <span className="w-1 h-5 bg-[#1ABA7F] rounded-full" />
                 {t('footer.connect')}
+             <span className="w-1 h-5 bg-[#1ABA7F] rounded-full" />
               </h3>
               <div className="flex justify-center gap-3 w-full">
                 {[
@@ -235,7 +217,7 @@ export default function MainLayout({ children }) {
                     className="text-white hover:text-[#1ABA7F] p-2 rounded-full transition-colors duration-200"
                     aria-label={social.name}
                   >
-                    <social.icon className="h-4 w-4 sm:h-5 sm:w-5" />
+                    <social.icon className="h-5 w-5 sm:h-5 sm:w-5" />
                   </a>
                 ))}
               </div>
@@ -244,8 +226,9 @@ export default function MainLayout({ children }) {
 
           <div className="mt-6 pt-6 border-t border-[#1ABA7F]/20 text-center">
             <p className="text-xs sm:text-sm text-white/80 w-full">
-              © 2025 Manzu. {t('footer.powered_by')}
+              © 2025 Manzu. {t('footer.powered_by')} <Image src="/logo_1.png" alt="Manzu Logo" width={16} height={16} className="inline-block align-middle ml-1" />
             </p>
+            <span className="text-xs sm:text-sm text-white/80 w-full">All rights reserved.</span>
           </div>
         </div>
       </footer>

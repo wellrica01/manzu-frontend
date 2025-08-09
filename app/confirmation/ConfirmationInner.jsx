@@ -174,7 +174,7 @@ export default function ConfirmationInner() {
   const isDelivery = confirmationData.pharmacies.some(pharmacy => pharmacy.orders.some(order => order.deliveryMethod === 'COURIER'));
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 to-gray-50/30 p-1 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 to-gray-50/30 relative overflow-hidden">
       <div className="absolute inset-0 bg-[url('/svg/pattern-dots.svg')] opacity-10 pointer-events-none hidden sm:block" aria-hidden="true" />
 
 
@@ -185,7 +185,7 @@ export default function ConfirmationInner() {
       </div>
 
       {/* Main Content */}
-      <div className="py-12 px-2 sm:px-4">
+      <div className="py-14 px-3 sm:px-4">
         <div className="w-full max-w-[95vw] sm:max-w-3xl lg:max-w-[90vw] xl:max-w-[85vw] mx-auto">
           <Card className="relative bg-white/95 border border-[#1ABA7F]/20 rounded-xl shadow-lg sm:p-6 transition-all duration-500 hover:ring-2 hover:ring-[#1ABA7F]/30">
             <div className="absolute top-0 left-0 w-12 h-12 bg-[#1ABA7F]/20 rounded-br-2xl" />

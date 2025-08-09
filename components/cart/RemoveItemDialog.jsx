@@ -14,18 +14,11 @@ export default function RemoveItemDialog({ removeItem, setRemoveItem, handleRemo
   return (
     <Dialog open={!!removeItem} onOpenChange={() => setRemoveItem(null)}>
       <DialogContent className="sm:max-w-md bg-white/95 backdrop-blur-sm border border-[#1ABA7F]/20 rounded-2xl shadow-xl">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-[#225F91] flex items-center gap-3">
-            <div className="p-2 bg-red-100 rounded-xl">
-              <Trash2 className="h-5 w-5 text-red-600" />
-            </div>
-            Remove Medication
-          </DialogTitle>
-        </DialogHeader>
+
 
         <div className="space-y-6">
           {/* Warning Message */}
-          <div className="p-4 bg-red-50 rounded-xl border border-red-200">
+          <div className="p-4 mt-6 bg-red-50 rounded-xl border border-red-200">
             <div className="flex items-start gap-3">
               <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
               <div>
@@ -37,19 +30,13 @@ export default function RemoveItemDialog({ removeItem, setRemoveItem, handleRemo
             </div>
           </div>
 
-          {/* Item Details */}
-          <div className="p-4 bg-[#1ABA7F]/10 rounded-xl border border-[#1ABA7F]/20">
-            <h3 className="font-semibold text-[#225F91] mb-2">{removeItem.name}</h3>
-            <p className="text-sm text-gray-700">Quantity: {removeItem.quantity}</p>
-          </div>
-
           {/* Action Buttons */}
-          <div className="flex gap-3 pt-4">
+          <div className="flex gap-3 pt-2 sm:pt-4">
             <Button
               variant="outline"
               onClick={() => setRemoveItem(null)}
               disabled={isRemoving}
-              className="flex-1 border-[#1ABA7F]/20 text-[#225F91] hover:bg-[#1ABA7F]/10"
+              className="flex-1 h-12 border-[#1ABA7F]/20 text-[#225F91] hover:bg-[#1ABA7F]/10"
             >
               Cancel
             </Button>
@@ -57,7 +44,7 @@ export default function RemoveItemDialog({ removeItem, setRemoveItem, handleRemo
             <Button
               onClick={handleRemoveItem}
               disabled={isRemoving}
-              className="flex-1 bg-red-600 hover:bg-red-700 text-white shadow-lg"
+              className="flex-1 h-12 bg-red-600 hover:bg-red-700 text-white shadow-lg"
             >
               {isRemoving ? (
                 <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/20 border-t-white mr-2" />

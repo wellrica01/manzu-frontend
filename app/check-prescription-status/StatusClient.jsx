@@ -119,9 +119,9 @@ export default function StatusCheck() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 to-gray-50/30 p-1 relative overflow-hidden">
+    <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 to-gray-50/30 relative overflow-hidden">
       <div className="absolute inset-0 bg-[url('/svg/pattern-dots.svg')] opacity-10 pointer-events-none hidden sm:block" aria-hidden="true" />
-      <div className="flex-1 py-12 px-2 sm:px-4">
+      <div className="flex-1 py-12 px-3 sm:px-4">
         <h1 className="text-4xl sm:text-5xl font-bold text-[#225F91] mb-8 text-center tracking-tight animate-in slide-in-from-top duration-700">
           Check Your Prescription Status
         </h1>
@@ -139,7 +139,7 @@ export default function StatusCheck() {
                   value={form.identifier}
                   onChange={handleInputChange}
                 placeholder="Enter your email or phone number"
-                className="mt-2 h-12 text-xs font-medium rounded-2xl border-[#1ABA7F]/20 bg-white/95 text-gray-900 placeholder:text-gray-400 focus:ring-0 focus:border-[#1ABA7F]/50 focus:shadow-[0_0_15px_rgba(26,186,127,0.3)] transition-all duration-300"
+                className="mt-4 h-12 text-sm font-medium rounded-2xl border-[#1ABA7F]/20 bg-white/95 text-gray-900 placeholder:text-gray-400 focus:ring-0 focus:border-[#1ABA7F]/50 focus:shadow-[0_0_15px_rgba(26,186,127,0.3)] transition-all duration-300"
                 required
                 />
               </div>

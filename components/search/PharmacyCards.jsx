@@ -23,6 +23,7 @@ const PharmacyCards = ({ availability, medId, handleAddToCart, isInCart, display
   return (
     <div className="block sm:hidden space-y-4">
       {availability.map((avail, index) => {
+        
         const validDistances = useMemo(() => {
           return availability
             .filter((a) => typeof a.distance_km === 'number' && !isNaN(a.distance_km))
@@ -56,11 +57,7 @@ const PharmacyCards = ({ availability, medId, handleAddToCart, isInCart, display
               <div className="flex justify-between items-start">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-2">
-                 {avail.status && (
-                        <Badge variant="secondary" className={`text-xs ${avail.status === 'VERIFIED' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-gray-100 text-gray-500 border-gray-200'}`}>
-                          {avail.status === 'VERIFIED' ? '✓' : 'Pending Verification'}
-                        </Badge>
-                      )}
+                    <HospitalIcon className="h-4 w-4 text-gray-400" />
                     <h3 className="text-base font-semibold text-gray-900 truncate">
                       {avail.pharmacyName}
                     </h3>
@@ -74,7 +71,7 @@ const PharmacyCards = ({ availability, medId, handleAddToCart, isInCart, display
 
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
-                      <span className="text-lg font-bold text-gray-800">₦{avail.price.toLocaleString()}</span>
+                      <span className="text-base font-bold text-gray-800">₦{avail.price.toLocaleString()}</span>
                       {isCheapest && (
                         <Badge variant="secondary" className="text-xs bg-[#1ABA7F]/20 text-[#1ABA7F] border-[#1ABA7F]/30">
                           Cheapest
@@ -95,7 +92,16 @@ const PharmacyCards = ({ availability, medId, handleAddToCart, isInCart, display
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-center gap-2">
+                   <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setExpandedCard(isExpanded ? null : index)}
+                      className="flex-1 h-10 px-3 border-[#1ABA7F]/20 text-[#225F91] hover:bg-[#1ABA7F]/10"
+                      aria-label={isExpanded ? 'Hide details' : 'Show details'}
+                    >
+                      {isExpanded ? '−' : '+'}
+                    </Button>
                     <Button
                       id={`add-to-cart-${medId}-${avail.pharmacyId}`}
                       onClick={() => handleAddToCart(medId, avail.pharmacyId, displayName)}
@@ -117,15 +123,7 @@ const PharmacyCards = ({ availability, medId, handleAddToCart, isInCart, display
                         <span>{isInCart(medId, avail.pharmacyId) ? '✓ Added' : 'Add to Cart'}</span>
                       )}
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setExpandedCard(isExpanded ? null : index)}
-                      className="h-10 px-3 border-[#1ABA7F]/20 text-[#225F91] hover:bg-[#1ABA7F]/10"
-                      aria-label={isExpanded ? 'Hide details' : 'Show details'}
-                    >
-                      {isExpanded ? '−' : '+'}
-                    </Button>
+
                   </div>
                 </div>
               </div>

@@ -92,13 +92,13 @@ const CartItem = ({
 
   const handleQuantityUpdate = (newQuantity) => {
     if (newQuantity < 1) return;
-    handleQuantityChange(item.id, newQuantity, item.medication.name);
+    handleQuantityChange(item.id, newQuantity, item.medication.displayName);
   };
 
   const handleRemove = () => {
     setRemoveItem({
       id: item.id,
-      name: item.medication.name,
+      name: item.medication.displayName,
       quantity: item.quantity
     });
   };
