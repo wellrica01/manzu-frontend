@@ -166,7 +166,7 @@ export default function MainLayout({ children }) {
         </div>
       </nav>
 
-      <main className="flex-1 w-full mx-auto px-1 sm:px-2 pt-[50px] sm:pt-[68px] max-w-[95vw] sm:max-w-3xl lg:max-w-[90vw] xl:max-w-[85vw]">
+      <main className="flex-1 w-full mx-auto sm:px-2 pt-[50px] sm:pt-[68px] max-w-[95vw] sm:max-w-3xl lg:max-w-[90vw] xl:max-w-[85vw]">
         {children}
       </main>
 

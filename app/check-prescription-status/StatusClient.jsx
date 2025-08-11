@@ -33,7 +33,7 @@ export default function StatusCheck() {
     setStatus('loading');
     setError(null);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/prescription/prescriptions/${userId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/prescription/${userId}`, {
         headers: { 'x-guest-id': userId },
       });
       if (!response.ok) {
@@ -77,7 +77,7 @@ export default function StatusCheck() {
     setStatus('loading');
     setError(null);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/med-checkout/session/retrieve`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/prescription/retrieve`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

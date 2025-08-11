@@ -244,7 +244,7 @@ const PrescriptionMedicationsPage = React.memo(() => {
       if (filterState) queryParams.append('state', filterState);
       if (filterLga) queryParams.append('lga', filterLga);
       if (filterWard) queryParams.append('ward', filterWard);
-      const url = `${process.env.NEXT_PUBLIC_API_URL}/api/prescription/prescriptions/${userIdentifier}?${queryParams.toString()}`;
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/api/prescription/${userIdentifier}?${queryParams.toString()}`;
       const response = await fetch(url, {
         headers: { 'x-guest-id': guestId },
       });
