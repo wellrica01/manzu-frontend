@@ -42,10 +42,10 @@ const MedicationCard = ({ med, handleAddToCart, isInCart, isAddingToCart }) => {
                     Prescription Required
                   </Badge>
                 )}
-               {med.manufacturer && (
+               {med.manufacturerName && (
               <div>
                 <span className="text-gray-600 font-semibold">Manufacturer:</span>
-                <span className="ml-2 text-gray-600">{med.manufacturer || 'N/A'}</span>
+                <span className="ml-2 text-gray-600">{med.manufacturerName || 'N/A'} - {med.manufacturerCountry}</span>
               </div>  )}
               <div>
                 <span className="font-semibold text-gray-600">NAFDAC Code:</span>

@@ -202,27 +202,25 @@ export default function ConfirmationInner() {
             </CardHeader>
             <CardContent className="p-2 sm:p-6 space-y-4 sm:space-y-6">
               {/* Order summary section */}
-              <div className="space-y-2 text-xs sm:text-sm text-gray-700">
-                <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-center justify-center">
-                  <span className="text-gray-600 text-base sm:text-sm"><strong>Tracking Code:</strong> {confirmationData.trackingCode}</span>
-                  {isDelivery && (
-                    <span className="text-gray-600 text-sm sm:text-sm"><strong>Estimated delivery:</strong> 2-3 hours</span>
-                  )}
+                <div className="flex flex-col p-2 sm:flex-row gap-2 sm:gap-6 ">
+                  <span className="text-[#225F91] font-semibold text-sm sm:text-sm">Tracking Code: <span className="text-gray-500 font-medium">{confirmationData.trackingCode}</span></span>
                   {(() => {
                     const deliveryOrder = confirmationData.pharmacies.flatMap(p => p.orders).find(o => o.deliveryMethod === 'COURIER');
                     if (deliveryOrder && deliveryOrder.address) {
                       return (
-                        <span className="flex items-center gap-2 text-[#225F91]">
-                          <MapPin className="h-4 w-4" />
-                          <span><strong>Delivery Address:</strong> {deliveryOrder.address}</span>
-                        </span>
+                        <div className="flex items-center gap-2 text-sm">
+                          <span className='text-[#225F91] font-semibold'>Delivery Address:</span>
+                           <span className="text-gray-500 font-medium">{deliveryOrder.address}.</span>
+                        </div>
                       );
                     }
                     return null;
                   })()}
+                 {isDelivery && (
+                    <span className="text-[#225F91] font-semibold text-sm sm:text-sm">Estimated delivery: <span className="text-gray-500 font-medium">2-3 hours</span></span>
+                  )}
                 </div>
-              </div>
-              <h3 className="text-xl sm:text-lg font-semibold text-[#225F91] mb-4">Order Summary</h3>
+              <h3 className="text-xl sm:text-lg text-center font-semibold text-[#225F91] mb-4">Order Summary</h3>
               <div className="space-y-4 sm:space-y-6">
                 {confirmationData.pharmacies.flatMap(pharmacyObj =>
                   pharmacyObj.orders.map(order => {
@@ -266,13 +264,23 @@ export default function ConfirmationInner() {
                             </div>
                             <div className="space-y-2">
                               {order.items.map(item => (
-                                <div key={item.id} className="flex justify-between items-center px-2 py-1 border-b last:border-b-0">
-                                  <span className="flex items-center gap-2 text-gray-600 text-sm sm:text-sm">
-                                    <span className="w-2 h-2 rounded-full bg-[#1ABA7F] inline-block" />
-                                    {item.medication.displayName || item.medication.genericName}
+                                <div
+                                  key={item.id}
+                                  className="flex justify-between items-start px-2 py-1 border-b last:border-b-0"
+                                >
+                                  {/* Medication name (full wrap allowed) */}
+                                  <span className="flex items-start gap-2 text-gray-600 text-sm">
+                                    <span className="w-2 h-2 rounded-full bg-[#1ABA7F] flex-shrink-0 mt-1" />
+                                    <span>{item.medication.displayName || item.medication.genericName}</span>
                                   </span>
-                                  <span className="text-gray-600 text-sm sm:text-sm">* {item.quantity}</span>
-                                  <span className="text-[#225F91] font-semibold text-sm sm:text-sm">₦{(item.price * item.quantity).toLocaleString()}</span>
+
+                                  {/* Qty + Price locked on right */}
+                                  <div className="flex items-center gap-4 flex-shrink-0 whitespace-nowrap">
+                                    <span className="text-gray-600 text-sm">x {item.quantity}</span>
+                                    <span className="text-[#225F91] font-semibold text-sm">
+                                      ₦{(item.price * item.quantity).toLocaleString()}
+                                    </span>
+                                  </div>
                                 </div>
                               ))}
                             </div>
@@ -317,7 +325,7 @@ export default function ConfirmationInner() {
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center mt-6 sm:mt-8">
             <Button
               onClick={handleTrackOrder}
-              className="w-full sm:w-auto h-12 px-4 sm:px-6 text-sm sm:text-base font-semibold rounded-full bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_20px_rgba(34,95,145,0.3)]"
+              className="w-full sm:w-auto h-12 px-4 sm:px-6 text-sm sm:text-base font-semibold rounded-lg bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_20px_rgba(34,95,145,0.3)]"
               disabled={!confirmationData.trackingCode}
               aria-label="Track your order with tracking code"
             >
@@ -327,7 +335,7 @@ export default function ConfirmationInner() {
             <Button
               onClick={() => window.print()}
               variant="outline"
-              className="w-full sm:w-auto h-12 px-4 sm:px-6 text-sm sm:text-base font-semibold rounded-full border-[#225F91] text-[#225F91] hover:bg-[#225F91]/10 print:hidden"
+              className="w-full sm:w-auto h-12 px-4 sm:px-6 text-sm sm:text-base font-semibold rounded-lg border-[#225F91] text-[#225F91] hover:bg-[#225F91]/10 print:hidden"
               aria-label="Print or download your receipt"
             >
               <Printer className="h-4 w-4 sm:h-5 w-5 mr-2" />
@@ -336,7 +344,7 @@ export default function ConfirmationInner() {
             <Button
               onClick={handleBackToHome}
               variant="outline"
-              className="w-full sm:w-auto h-12 px-4 sm:px-6 text-sm sm:text-base font-semibold rounded-full border-[#1ABA7F] text-[#1ABA7F] hover:bg-[#1ABA7F]/10"
+              className="w-full sm:w-auto h-12 px-4 sm:px-6 text-sm sm:text-base font-semibold rounded-lg border-[#1ABA7F] text-[#1ABA7F] hover:bg-[#1ABA7F]/10"
               aria-label="Go back to home page"
             >
               <Home className="h-4 w-4 sm:h-5 w-5 mr-2" />

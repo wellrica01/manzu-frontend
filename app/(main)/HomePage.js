@@ -132,7 +132,7 @@ const HeroSection = ({ onSearchClick, onUploadClick }) => {
       }`}>
         <Button
           onClick={onSearchClick}
-          className="group h-10 sm:h-12 px-6 sm:px-8 text-sm sm:text-base font-semibold rounded-full bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-lg transition-all duration-300 relative overflow-hidden"
+          className="group h-12 sm:h-12 px-6 sm:px-8 text-sm sm:text-base font-semibold rounded-lg bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-lg transition-all duration-300 relative overflow-hidden"
           aria-label={t('hero.find_medications')}
         >
           <span className="relative z-10 flex items-center gap-1 sm:gap-2">
@@ -144,7 +144,7 @@ const HeroSection = ({ onSearchClick, onUploadClick }) => {
         
         <Button
           onClick={onUploadClick}
-          className="group h-10 sm:h-12 px-6 sm:px-8 text-sm sm:text-base font-semibold rounded-full bg-transparent border-2 border-[#1ABA7F] text-[#1ABA7F] hover:bg-[#1ABA7F]/10 hover:shadow-lg transition-all duration-300 relative overflow-hidden"
+          className="group h-12 sm:h-12 px-6 sm:px-8 text-sm sm:text-base font-semibold rounded-lg bg-transparent border-2 border-[#1ABA7F] text-[#1ABA7F] hover:bg-[#1ABA7F]/10 hover:shadow-lg transition-all duration-300 relative overflow-hidden"
           aria-label={t('hero.upload_prescription')}
         >
           <span className="relative z-10 flex items-center gap-1 sm:gap-2">
@@ -336,7 +336,7 @@ const ServicesSection = ({ searchRef, uploadRef }) => {
             <Button
               asChild
               variant="outline"
-              className="group w-full sm:w-auto h-10 sm:h-12 px-4 sm:px-6 text-sm sm:text-base font-semibold rounded-full border-[#1ABA7F] text-[#1ABA7F] hover:bg-[#1ABA7F]/10 hover:shadow-[0_0_15px_rgba(26,186,127,0.3)] transition-all duration-300 relative overflow-hidden"
+              className="group w-full sm:w-auto h-12 sm:h-12 px-4 sm:px-6 text-sm sm:text-base font-semibold rounded-lg border-[#1ABA7F] text-[#1ABA7F] hover:bg-[#1ABA7F]/10 hover:shadow-[0_0_15px_rgba(26,186,127,0.3)] transition-all duration-300 relative overflow-hidden"
               aria-label={t('services.register_pharmacy')}
             >
               <Link href="/pharmacy/register" target="_blank" rel="noopener noreferrer">
@@ -349,7 +349,7 @@ const ServicesSection = ({ searchRef, uploadRef }) => {
             </Button>
             <Button
               asChild
-              className="group w-full sm:w-auto h-10 sm:h-12 px-4 sm:px-6 text-sm sm:text-base font-semibold rounded-full bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_20px_rgba(34,95,145,0.5)] transition-all duration-300 relative overflow-hidden"
+              className="group w-full sm:w-auto h-12 sm:h-12 px-4 sm:px-6 text-sm sm:text-base font-semibold rounded-lg bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_20px_rgba(34,95,145,0.5)] transition-all duration-300 relative overflow-hidden"
               aria-label={t('services.pharmacy_login')}
             >
               <Link href="/pharmacy/login" target="_blank" rel="noopener noreferrer">

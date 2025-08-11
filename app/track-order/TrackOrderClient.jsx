@@ -53,7 +53,7 @@ export default function Track() {
     if (codeFromUrl && codeFromUrl !== trackingCode) {
       setTrackingCode(codeFromUrl);
       // Only auto-track if code is valid
-      if (/^TRK-SESSION-\d+-\d+$/.test(codeFromUrl)) {
+      if (/^TRK-[A-Z0-9]{4}-[A-Z0-9]{6}-[A-Z0-9]{3}$/.test(codeFromUrl)) {
         // Simulate form submit
         (async () => {
           setError(null);
@@ -84,7 +84,7 @@ export default function Track() {
   }, [searchParams]);
 
   const validateTrackingCode = (code) => {
-    return /^TRK-SESSION-\d+-\d+$/.test(code);
+    return /^TRK-[A-Z0-9]{4}-[A-Z0-9]{6}-[A-Z0-9]{3}$/.test(code);
   };
 
   const handleTrack = async (e) => {
@@ -106,7 +106,7 @@ export default function Track() {
       return;
     }
     if (!validateTrackingCode(trackingCode)) {
-      setError('Invalid tracking code format (e.g., TRK-SESSION-15-1747421013936)');
+      setError('Invalid tracking code format (e.g., TRK-00A7-LMK6X1-J8Q)');
       toast.error('Invalid tracking code format', {
         duration: 4000,
         style: {
@@ -226,7 +226,7 @@ export default function Track() {
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 to-gray-50/30 relative overflow-hidden">
       <div className="absolute inset-0 bg-[url('/svg/pattern-dots.svg')] opacity-10 pointer-events-none hidden sm:block" aria-hidden="true" />
-      <div className="flex-1 py-12 px-3 sm:px-4">
+      <div className="flex-1 py-12 px-3 sm:px-5">
         <h1 className="text-4xl sm:text-5xl font-bold text-[#225F91] mb-8 text-center tracking-tight animate-in slide-in-from-top duration-700">
           {orders.length === 0
             ? 'Track Your Order'
@@ -264,8 +264,8 @@ export default function Track() {
                     id="trackingCode"
                     value={trackingCode}
                     onChange={(e) => setTrackingCode(e.target.value)}
-                    className="mt-2 h-12 text-xs font-medium rounded-2xl border-[#1ABA7F]/20 bg-white/95 text-gray-900 placeholder:text-gray-400 focus:ring-0 focus:border-[#1ABA7F]/50 focus:shadow-[0_0_15px_rgba(26,186,127,0.3)] transition-all duration-300"
-                    placeholder="e.g., TRK-SESSION-15-1747421013936"
+                    className="mt-4 h-12 text-xs font-medium rounded-lg border-[#1ABA7F]/20 bg-white/95 text-gray-900 placeholder:text-gray-400 focus:ring-0 focus:border-[#1ABA7F]/50 focus:shadow-[0_0_15px_rgba(26,186,127,0.3)] transition-all duration-300"
+                    placeholder="e.g., TRK-00A7-LMK6X1-J8Q"
                     required
                     aria-required="true"
                     aria-describedby={error ? 'tracking-error' : undefined}
@@ -273,7 +273,7 @@ export default function Track() {
                 </div>
                 <Button
                   type="submit"
-                  className="w-full sm:w-auto h-12 px-4 sm:px-6 text-sm sm:text-base font-semibold rounded-full bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_20px_rgba(34,95,145,0.3)] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full sm:w-auto h-12 px-4 sm:px-6 text-sm sm:text-base font-semibold rounded-lg bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_20px_rgba(34,95,145,0.3)] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={loading}
                   aria-label="Track order"
                 >
@@ -292,7 +292,7 @@ export default function Track() {
          <Button
               onClick={handleBackToHome}
               variant="outline"
-              className="w-full sm:w-auto h-12 mt-6 px-4 sm:px-6 text-sm sm:text-base font-semibold rounded-full border-[#1ABA7F] text-[#1ABA7F] hover:bg-[#1ABA7F]/10"
+              className="w-full sm:w-auto h-12 mt-6 px-4 sm:px-6 text-sm sm:text-base font-semibold rounded-lg border-[#1ABA7F] text-[#1ABA7F] hover:bg-[#1ABA7F]/10"
               aria-label="Go back to home page"
             >
               <Home className="h-4 w-4 sm:h-5 w-5 mr-2" />
@@ -354,7 +354,7 @@ export default function Track() {
                           )}
                         </div>
                         {/* Always show the full progress bar with labels, regardless of expanded/collapsed state */}
-                        <div className="w-full flex flex-col items-center mt-4">
+                        <div className="w-full flex flex-col items-center p-0 mt-4">
                           {order.status === 'CANCELLED' ? (
                             <div className="flex items-center gap-2 text-red-600 font-semibold">
                               <XCircle className="h-5 w-5" /> Cancelled
@@ -364,7 +364,7 @@ export default function Track() {
                               <CheckCircle className="h-5 w-5" /> Completed
                             </div>
                           ) : (
-                            <div className="flex items-center w-full justify-between gap-2">
+                            <div className="flex items-center w-full justify-between">
                               {steps.map((step, idx) => {
                                 const isCompleted = idx < currentIdx;
                                 const isCurrent = idx === currentIdx;
@@ -411,7 +411,6 @@ export default function Track() {
                         </div>
                         {/* Address Section */}
                         <div className="flex items-center gap-2 text-sm mt-2">
-                          <MapPin className="h-4 w-4 text-[#1ABA7F]" />
                           <span className="font-semibold text-[#225F91] mr-1">
                             {order.deliveryMethod === 'PICKUP' ? 'Pickup Address:' : 'Delivery Address:'}
                           </span>
@@ -428,20 +427,28 @@ export default function Track() {
                           <Package className="h-5 w-5 text-[#1ABA7F]" />
                           Medications
                         </div>
-                        <div className="space-y-2">
-                          {order.items?.map(item => (
-                            <div key={item.id} className="flex justify-between items-center border-b last:border-b-0">
-                              <span className="flex items-center gap-2 text-sm font-medium text-gray-900">
-                                <span className="w-2 h-2 rounded-full bg-[#1ABA7F] inline-block" />
-                                {item.medication.displayName} * {item.quantity}
-                                {item.medication.prescriptionRequired && (
-                                  <span className="ml-2 px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 text-xs font-medium">Prescription</span>
-                                )}
-                              </span>
-                              <span className="text-[#225F91] text-sm font-semibold"> ₦{(item.price * item.quantity).toLocaleString()}</span>
+                         <div className="space-y-2">
+                              {order.items.map(item => (
+                                <div
+                                  key={item.id}
+                                  className="flex justify-between items-start border-b last:border-b-0"
+                                >
+                                  {/* Medication name (full wrap allowed) */}
+                                  <span className="flex items-start gap-2 font-medium text-gray-900 text-sm">
+                                    <span className="w-2 h-2 rounded-full bg-[#1ABA7F] flex-shrink-0 mt-1" />
+                                    <span>{item.medication.displayName || item.medication.genericName}</span>
+                                  </span>
+
+                                  {/* Qty + Price locked on right */}
+                                  <div className="flex items-center gap-4 flex-shrink-0 whitespace-nowrap">
+                                    <span className="text-gray-600 text-sm">x {item.quantity}</span>
+                                    <span className="text-[#225F91] font-semibold text-sm">
+                                      ₦{(item.price * item.quantity).toLocaleString()}
+                                    </span>
+                                  </div>
+                                </div>
+                              ))}
                             </div>
-                          ))}
-                        </div>
                       </div>
                       {/* Prescription Section */}
                       {order.prescription && (
@@ -458,7 +465,7 @@ export default function Track() {
                           </div>
                           {order.prescription.medications?.length > 0 && (
                             <div className="mt-2">
-                              <span className="font-semibold text-gray-900 text-base font-medium">Prescribed Medications:</span>
+                              <span className="font-semibold text-gray-900 text-base">Prescribed Medications:</span>
                               <div className="mt-1 space-y-1">
                                 {order.prescription.medications.map((med, index) => (
                                   <div key={index} className="flex items-center gap-2 text-gray-600 text-base">
@@ -491,7 +498,7 @@ export default function Track() {
             </div>
             <Button
               onClick={handleTrackAnother}
-              className="w-full sm:w-auto h-12 px-4 sm:px-6 text-sm mt-12 mb-6 sm:text-base font-semibold rounded-full bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_20px_rgba(34,95,145,0.3)] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full sm:w-auto h-12 px-4 sm:px-6 text-sm mt-12 mb-4 sm:text-base font-semibold rounded-lg bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_20px_rgba(34,95,145,0.3)] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label="Track another order"
             >
               Track Another Order
@@ -499,10 +506,10 @@ export default function Track() {
             <Button
               onClick={handleBackToHome}
               variant="outline"
-              className="w-full sm:w-auto h-12 px-4 sm:px-6 text-sm sm:text-base font-semibold rounded-full border-[#1ABA7F] text-[#1ABA7F] hover:bg-[#1ABA7F]/10"
+              className="w-full sm:w-auto h-12 px-4 sm:px-6 text-sm sm:text-base font-semibold rounded-lg border-[#1ABA7F] text-[#1ABA7F] hover:bg-[#1ABA7F]/10"
               aria-label="Go back to home page"
             >
-              <Home className="h-4 w-4 sm:h-5 w-5 mr-2" />
+              <Home className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
               Back to Home
             </Button>
           </>

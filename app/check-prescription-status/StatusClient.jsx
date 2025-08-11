@@ -121,11 +121,11 @@ export default function StatusCheck() {
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 to-gray-50/30 relative overflow-hidden">
       <div className="absolute inset-0 bg-[url('/svg/pattern-dots.svg')] opacity-10 pointer-events-none hidden sm:block" aria-hidden="true" />
-      <div className="flex-1 py-12 px-3 sm:px-4">
+      <div className="flex-1 py-12 px-5 sm:px-6">
         <h1 className="text-4xl sm:text-5xl font-bold text-[#225F91] mb-8 text-center tracking-tight animate-in slide-in-from-top duration-700">
           Check Your Prescription Status
         </h1>
-      <Card className="relative bg-white/95 border border-[#1ABA7F]/20 rounded-xl shadow-lg sm:p-6 transition-all duration-500 hover:ring-2 hover:ring-[#1ABA7F]/30">
+      <Card className="relative bg-white/95 border border-[#1ABA7F]/20 rounded-lg shadow-lg sm:p-6 transition-all duration-500 hover:ring-2 hover:ring-[#1ABA7F]/30">
             <div className="absolute top-0 left-0 w-16 h-16 bg-[#1ABA7F]/20 rounded-br-3xl" />
             <CardContent className="p-6 sm:p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -139,13 +139,13 @@ export default function StatusCheck() {
                   value={form.identifier}
                   onChange={handleInputChange}
                 placeholder="Enter your email or phone number"
-                className="mt-4 h-12 text-sm font-medium rounded-2xl border-[#1ABA7F]/20 bg-white/95 text-gray-900 placeholder:text-gray-400 focus:ring-0 focus:border-[#1ABA7F]/50 focus:shadow-[0_0_15px_rgba(26,186,127,0.3)] transition-all duration-300"
+                className="mt-4 h-12 text-sm font-medium rounded-lg border-[#1ABA7F]/20 bg-white/95 text-gray-900 placeholder:text-gray-400 focus:ring-0 focus:border-[#1ABA7F]/50 focus:shadow-[0_0_15px_rgba(26,186,127,0.3)] transition-all duration-300"
                 required
                 />
               </div>
                 <Button
                   type="submit"
-              className="w-full sm:w-auto h-12 px-4 sm:px-6 text-sm sm:text-base font-semibold rounded-full bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_20px_rgba(34,95,145,0.3)] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full sm:w-auto h-12 px-4 sm:px-6 text-sm sm:text-base font-semibold rounded-lg bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_20px_rgba(34,95,145,0.3)] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={status === 'loading'}
                 >
                   {status === 'loading' ? (
@@ -189,7 +189,7 @@ export default function StatusCheck() {
           <Button
         onClick={handleBackToHome}
         variant="outline"
-        className="w-full sm:w-auto h-12 mt-6 px-4 sm:px-6 text-sm sm:text-base font-semibold rounded-full border-[#1ABA7F] text-[#1ABA7F] hover:bg-[#1ABA7F]/10"
+        className="w-full sm:w-auto h-12 mt-6 px-4 sm:px-6 text-sm sm:text-base font-semibold rounded-lg border-[#1ABA7F] text-[#1ABA7F] hover:bg-[#1ABA7F]/10"
         aria-label="Go back to home page"
       >
         <Home className="h-4 w-4 sm:h-5 w-5 mr-2" />

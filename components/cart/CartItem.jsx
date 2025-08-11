@@ -150,10 +150,10 @@ const CartItem = ({
                 <span>Pack: {item.medication.packSizeQuantity} {item.medication.packSizeUnit || ''}</span>
               </div>
             )}
-            {item.medication.manufacturer && (
+            {item.medication.manufacturerName && (
               <div className="flex items-center gap-1">
                 <HouseIcon className="h-3 w-3 text-[#225F91]" />
-                <span className="truncate">Manufacturer: {item.medication.manufacturer}</span>
+                <span className="truncate">Manufacturer: {item.medication.manufacturerName || 'N/A'} - {item.medication.manufacturerCountry}</span>
               </div>
             )}
             {item.medication.nafdacCode && (

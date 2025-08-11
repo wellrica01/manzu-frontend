@@ -167,7 +167,7 @@ const SearchInput = ({
         className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0 text-[#225F91] hover:text-[#1A4971] hover:bg-[#225F91]/10"
         aria-label="Voice search"
       >
-        <Mic className={cn("h-4 w-4", isListening && "animate-pulse text-[#1ABA7F]")} />
+        <Mic className={cn("h-6 w-6", isListening && "animate-pulse text-[#1ABA7F]")} />
       </Button>
     </div>
   );

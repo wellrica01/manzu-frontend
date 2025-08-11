@@ -249,9 +249,14 @@ export default function Cart() {
     toast.success('Prescription uploaded successfully. Please wait for verification.', { duration: 4000 });
   };
 
- const handleBackToHome = () => {
-    router.push('/');
-  };
+const handleGoBack = () => {
+  if (window.history.length > 1) {
+    router.back();
+  } else {
+    router.push('/'); // fallback to home
+  }
+};
+
 
   const calculateItemPrice = (item) => item.quantity * item.price;
 
@@ -456,15 +461,15 @@ export default function Cart() {
         <nav className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm shadow-sm py-3 px-3 sm:px-4">
           <div className="w-full max-w-[95vw] sm:max-w-3xl lg:max-w-[90vw] xl:max-w-[85vw] mx-auto flex items-center justify-between">
             {/* Left: Back Button */}
-            <Button
-              variant="outline"
-              onClick={handleBackToHome}
-              className="border-[#1ABA7F]/20 text-[#225F91] hover:bg-[#1ABA7F]/10 h-10 px-4"
-              aria-label="Back to Cart"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
-            </Button>
+          <Button
+            variant="outline"
+            onClick={handleGoBack}
+            className="border-[#1ABA7F]/20 text-[#225F91] hover:bg-[#1ABA7F]/10 h-10 px-4"
+            aria-label="Back to Cart"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
 
             {/* Center: Title */}
             <h2 className="text-lg sm:text-2xl font-bold text-[#225F91] tracking-tight text-center flex-1">

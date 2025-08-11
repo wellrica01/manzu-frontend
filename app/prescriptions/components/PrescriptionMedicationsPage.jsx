@@ -364,7 +364,7 @@ const PrescriptionMedicationsPage = React.memo(() => {
     <div className="min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 to-gray-50/30 pt-6 pb-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 bg-[url('/svg/pattern-dots.svg')] opacity-10 pointer-events-none hidden sm:block" aria-hidden="true" />
-    <div className="py-14 px-2 sm:px-4">
+    <div className="py-10 px-2 sm:px-4">
       <HeroSection userName={null} prescriptionMetadata={prescriptionMetadata} />
       <PrescriptionInfoCard prescriptionMetadata={prescriptionMetadata} medications={medications} />
       {medications.length > 0 && (
