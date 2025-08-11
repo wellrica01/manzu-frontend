@@ -232,7 +232,7 @@ export default function PrescriptionUploadForm() {
               className="h-10 sm:h-12 px-4 sm:px-6 text-sm sm:text-base font-semibold rounded-full bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_15px_rgba(34,95,145,0.5)] transition-all duration-300"
               aria-label={t('upload.track_order')}
             >
-              <Link href="/status-check">Check Status</Link>
+              <Link href="/check-prescription-status">Check Status</Link>
             </Button>
                <Button
               variant="outline"

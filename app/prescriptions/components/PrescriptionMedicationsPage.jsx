@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
-import { Loader2, Info, X } from 'lucide-react';
+import { Loader2, Info, X, ShoppingCart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import Link from 'next/link';
@@ -15,74 +15,104 @@ import { useCart } from '@/hooks/useCart';
 import FilterControls from '@/components/search/FilterControls';
 import { Badge } from '@/components/ui/badge';
 
-// Hero Section
-const HeroSection = ({ userName }) => (
+// Hero Section with concise welcome message
+const HeroSection = ({ userName, prescriptionMetadata }) => (
   <div className="mb-8 text-center">
     <h1 className="text-4xl sm:text-5xl font-bold text-[#225F91] mb-2 animate-in slide-in-from-top-2 duration-500">
-      {userName ? `Hi ${userName}, ` : ''}Your Prescription is Ready!
+      {userName ? `Hi ${userName}, ` : ''}My Prescription Details
     </h1>
-    <div className="flex flex-wrap justify-center gap-3 mt-3 animate-in zoom-in-50 duration-700">
-      <Badge className="bg-[#1ABA7F]/20 text-[#1ABA7F] border-0">Verified by Pharmacist</Badge>
-      <Badge className="bg-[#225F91]/20 text-[#225F91] border-0">Secure & Confidential</Badge>
-      <Badge className="bg-[#1ABA7F]/20 text-[#225F91] border-0">Fast Delivery</Badge>
-    </div>
-    <p className="text-gray-600 mt-4 text-lg max-w-2xl mx-auto animate-in fade-in-20 duration-700">
-      Order your prescribed medications from trusted pharmacies below. Compare prices, choose your preferred pharmacy, and enjoy fast, secure delivery or pickup.
+    <p className="text-gray-600 mt-4 text-base sm:text-lg max-w-2xl mx-auto animate-in fade-in-20 duration-700">
+      Review your prescribed medications below, compare prices, select pharmacies, and order with fast, secure delivery or pickup.
     </p>
+    {prescriptionMetadata && (
+      <div className="flex flex-wrap justify-center gap-3 mt-3 animate-in zoom-in-50 duration-700">
+        <Badge className="bg-[#1ABA7F]/20 text-[#1ABA7F] border-0">Verified on {new Date(prescriptionMetadata.uploadedAt).toLocaleDateString()}</Badge>
+        <Badge className="bg-[#225F91]/20 text-[#225F91] border-0">Secure & Confidential</Badge>
+        <Badge className="bg-[#1ABA7F]/20 text-[#225F91] border-0">Fast Delivery</Badge>
+      </div>
+    )}
   </div>
 );
 
-// Prescription Summary Card
-const PrescriptionSummaryCard = ({ metadata, onViewPrescription, onHelp }) => {
-  if (!metadata) return null;
-  const statusSteps = [
-    { label: 'Uploaded', complete: true },
-    { label: 'Verified', complete: metadata.status === 'VERIFIED' },
-    { label: 'Ready to Order', complete: metadata.status === 'VERIFIED' },
-  ];
+// Prescription Info Card to display detailed prescription information
+const PrescriptionInfoCard = ({ prescriptionMetadata, medications }) => {
+  if (!prescriptionMetadata) return null;
+
+  const renderMedicationList = () => (
+    <div className="mt-4">
+      <h4 className="text-base sm:text-lg font-semibold text-[#225F91] mb-3">Prescribed Medications</h4>
+      {medications.length === 0 ? (
+        <p className="text-gray-600">No medications found for this prescription.</p>
+      ) : (
+        <ul className="space-y-3">
+          {medications.map((med) => (
+            <li key={med.id} className="border-b border-gray-200 pb-2">
+              <p className="text-gray-800 text-sm sm:text-base font-medium">{med.displayName}</p>
+              {med.manufacturer && (
+                <p className="text-xs text-gray-600">Manufacturer: {med.manufacturer}</p>
+              )}
+              <p className="text-xs text-gray-600">Quantity: {med.quantity} {med.packSizeUnit}</p>
+              {med.dosageInstructions && (
+                <p className="text-xs text-gray-600">Dosage: {med.dosageInstructions}</p>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+
   return (
-    <Card className="mb-8 shadow-xl border border-[#1ABA7F]/20 rounded-2xl bg-white/95 backdrop-blur-sm animate-in slide-in-from-bottom-2 duration-500">
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-6">
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-sm font-semibold text-gray-700">Prescription #{metadata.id}</span>
-            <span className="text-xs text-gray-500">Uploaded: {new Date(metadata.uploadedAt).toLocaleDateString()}</span>
-          </div>
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-xs font-medium text-gray-500">Status:</span>
-            <span className="text-sm font-bold text-[#225F91] capitalize">{metadata.status.replace('_', ' ')}</span>
-          </div>
-          <div className="flex items-center gap-2 mt-2">
-            {statusSteps.map((step, idx) => (
-              <React.Fragment key={step.label}>
-                <div className={`h-6 w-6 rounded-full flex items-center justify-center font-semibold text-xs ${step.complete ? 'bg-[#1ABA7F] text-white' : 'bg-gray-200 text-gray-400'}`}>{step.complete ? '✓' : idx + 1}</div>
-                {idx < statusSteps.length - 1 && <div className="w-8 h-1 rounded-full bg-[#1ABA7F]/30" />}
-              </React.Fragment>
-            ))}
-          </div>
+    <Card className="shadow-xl border border-[#1ABA7F]/20 rounded-2xl bg-white/95 backdrop-blur-sm px-4 py-6 sm:px-6 mb-6">
+      <div className="absolute top-0 left-0 w-12 h-12 bg-[#1ABA7F]/20 rounded-br-full" />
+      {prescriptionMetadata.status === 'VERIFIED' ? (
+        <div>
+          <h3 className="text-xl sm:text-2xl font-bold text-[#225F91] mb-2">Prescription Summary</h3>
+          <p className="text-sm sm:text-base text-gray-600 mb-4">
+            Your prescription, uploaded on {new Date(prescriptionMetadata.uploadedAt).toLocaleDateString()}, is verified and ready to order.{' '}
+            <Link
+              href="/support"
+              className="text-[#225F91] hover:text-[#1A4971] underline font-semibold"
+              aria-label="Contact support"
+            >
+              Contact us
+            </Link>{' '}
+            if anything looks incorrect.
+          </p>
+          {renderMedicationList()}
         </div>
-        <div className="flex flex-col gap-2 items-end">
-          {metadata.fileUrl && (
-            <Button variant="outline" onClick={onViewPrescription} className="h-10 px-4 text-sm font-semibold rounded-full border-[#1ABA7F]/20 text-gray-700 hover:bg-[#1ABA7F]/10 animate-in fade-in-20 duration-700">View Prescription</Button>
-          )}
-          <Button variant="ghost" onClick={onHelp} className="h-10 px-4 text-sm font-semibold rounded-full text-[#225F91] hover:bg-[#225F91]/10 animate-in fade-in-20 duration-700">Need Help?</Button>
+      ) : (
+        <div>
+          <h2 className="text-2xl font-bold text-[#225F91] mb-2">Prescription Under Review</h2>
+          <p className="text-base text-gray-600 mb-4">
+            Your prescription, uploaded on {new Date(prescriptionMetadata.uploadedAt).toLocaleDateString()}, is currently under review. We’ll notify you when it’s ready to order.{' '}
+            <Link
+              href="/support"
+              className="text-[#225F91] hover:text-[#1A4971] underline font-semibold"
+              aria-label="Contact support"
+            >
+              Contact support
+            </Link>{' '}
+            for assistance.
+          </p>
+          {renderMedicationList()}
         </div>
-      </div>
+      )}
     </Card>
   );
 };
 
-// Floating Cart Summary
 const FloatingCartSummary = ({ cartItemsCount, onViewCart }) => {
   if (cartItemsCount === 0) return null;
   return (
     <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-2 duration-500">
       <Button
         onClick={onViewCart}
-        className="h-14 px-8 text-lg font-bold rounded-full bg-gradient-to-r from-[#1ABA7F] to-[#225F91] text-white shadow-xl hover:scale-105 transition-transform duration-200"
+        className="h-12 px-8 text-lg font-bold rounded-full bg-gradient-to-r from-[#1ABA7F] to-[#225F91] text-white shadow-xl hover:scale-105 transition-transform duration-200"
         aria-label="View Cart"
       >
-        View Cart ({cartItemsCount})
+        Go to cart ({cartItemsCount})
+        <ShoppingCart className="ml-2 h-6 w-6" />
       </Button>
     </div>
   );
@@ -152,7 +182,6 @@ const PrescriptionMedicationsPage = React.memo(() => {
   const filterAndSortAvailability = useCallback((availability) => {
     if (!availability) return [];
     let filtered = [...availability];
-    // Only sort, since filtering is now backend
     switch (sortBy) {
       case 'price':
         filtered.sort((a, b) => a.price - b.price);
@@ -182,6 +211,7 @@ const PrescriptionMedicationsPage = React.memo(() => {
     }
   }, [userIdentifier]);
 
+  // Attempt to fetch geolocation, but don't set error on failure
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -192,10 +222,13 @@ const PrescriptionMedicationsPage = React.memo(() => {
           });
         },
         () => {
-          toast.error('Unable to fetch location. Showing all pharmacies.', { duration: 4000 });
-          setError('Unable to fetch location; showing all pharmacies');
+          toast.info('Unable to fetch location. Showing all pharmacies.', { duration: 4000 });
+          setUserLocation(null);
         }
       );
+    } else {
+      toast.info('Geolocation not supported. Showing all pharmacies.', { duration: 4000 });
+      setUserLocation(null);
     }
   }, []);
 
@@ -211,7 +244,7 @@ const PrescriptionMedicationsPage = React.memo(() => {
       if (filterState) queryParams.append('state', filterState);
       if (filterLga) queryParams.append('lga', filterLga);
       if (filterWard) queryParams.append('ward', filterWard);
-      const url = `http://localhost:5000/api/prescription/prescriptions/${userIdentifier}?${queryParams.toString()}`;
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/api/prescription/prescriptions/${userIdentifier}?${queryParams.toString()}`;
       const response = await fetch(url, {
         headers: { 'x-guest-id': guestId },
       });
@@ -223,7 +256,7 @@ const PrescriptionMedicationsPage = React.memo(() => {
       setMedications(data.medications || []);
       setPrescriptionMetadata(data.prescriptionMetadata || null);
     } catch (err) {
-      setError(err.message || 'Unknown error');
+      setError(err.message || 'Failed to load prescription');
       toast.error(err.message || 'Failed to load prescription', { duration: 4000 });
       if (typeof window !== 'undefined' && window.gtag) {
         window.gtag('event', 'error', {
@@ -237,21 +270,21 @@ const PrescriptionMedicationsPage = React.memo(() => {
   }, [userIdentifier, userLocation, guestId, filterState, filterLga, filterWard]);
 
   useEffect(() => {
-    if (userIdentifier && (userLocation || error)) {
+    if (userIdentifier) {
       fetchPrescriptionOrder();
       fetchCart();
     }
-  }, [userIdentifier, userLocation, error, fetchPrescriptionOrder, fetchCart, filterState, filterLga, filterWard]);
+  }, [userIdentifier, userLocation, fetchPrescriptionOrder, fetchCart, filterState, filterLga, filterWard]);
 
   useEffect(() => {
     setCartItems(cart?.pharmacies?.flatMap(p => p.items) || []);
   }, [cart]);
 
-  const handleAddToCart = useCallback(async (medicationId, pharmacyId, medicationName) => {
+  const handleAddToCart = async (medicationId, pharmacyId, medicationName) => {
     const quantity = 1;
     const itemKey = `${medicationId}-${pharmacyId}`;
     try {
-      if (!medicationId || !pharmacyId) throw new Error('Invalid medication or pharmacy');
+      if (!medicationId || !pharmacyId) throw new Error('Invalid selection');
       setIsAddingToCart(prev => ({ ...prev, [itemKey]: true }));
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart/add`, {
         method: 'POST',
@@ -265,15 +298,6 @@ const PrescriptionMedicationsPage = React.memo(() => {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to add to cart');
       }
-      setCartItems(prev => [
-        ...prev,
-        {
-          medicationAvailabilityMedicationId: medicationId,
-          medicationAvailabilityPharmacyId: pharmacyId,
-          quantity,
-          medication: { displayName: medicationName },
-        },
-      ]);
       setLastAddedItem(medicationName);
       setOpenCartDialog(true);
       if (typeof window !== 'undefined' && window.gtag) {
@@ -281,74 +305,19 @@ const PrescriptionMedicationsPage = React.memo(() => {
       }
       await fetchCart();
     } catch (err) {
-      toast.error(`Error: ${err.message}`, { duration: 4000 });
-      setCartItems(prev => prev.filter(item =>
-        !(item.medicationAvailabilityMedicationId === medicationId &&
-          item.medicationAvailabilityPharmacyId === pharmacyId)
-      ));
+      toast.error(`Error: ${err.message}`);
     } finally {
       setIsAddingToCart(prev => ({ ...prev, [itemKey]: false }));
     }
-  }, [guestId, fetchCart]);
-
-  const isInCart = useCallback((medicationId, pharmacyId) => {
-    if (!Array.isArray(cartItems)) return false;
-    return cartItems.some(
-      item => item.medicationAvailabilityMedicationId === medicationId &&
-              item.medicationAvailabilityPharmacyId === pharmacyId
-    );
-  }, [cartItems]);
-
-  const getIntroMessage = () => {
-    if (!prescriptionMetadata) return null;
-    switch (prescriptionMetadata.status) {
-      case 'VERIFIED':
-        return (
-          <Card className="shadow-xl border border-[#1ABA7F]/20 rounded-2xl bg-white/95 backdrop-blur-sm p-6 mb-6 text-center">
-            <div className="absolute top-0 left-0 w-12 h-12 bg-[#1ABA7F]/20 rounded-br-full" />
-            <p className="text-base text-gray-600">
-              Your prescription has been verified by our team. Select your preferred pharmacies below to order your medications.{' '}
-              <Link
-                href="/support"
-                className="text-[#225F91] hover:text-[#1A4971] underline font-semibold"
-                aria-label="Contact support"
-              >
-                Contact us
-              </Link>{' '}
-              if anything looks incorrect.
-            </p>
-          </Card>
-        );
-      case 'PENDING':
-        return (
-          <Card className="shadow-xl border border-yellow-100/50 rounded-2xl bg-yellow-50/90 backdrop-blur-md p-6 mb-6 text-center">
-            <div className="absolute top-0 left-0 w-12 h-12 bg-[#1ABA7F]/20 rounded-br-full" />
-            <h1 className="text-3xl font-extrabold text-[#225F91] mb-2">Prescription Under Review</h1>
-            <p className="text-base text-gray-600">
-              Your prescription is currently under review by our team. We’ll notify you when it’s ready to order.{' '}
-              <Link
-                href="/support"
-                className="text-[#225F91] hover:text-[#1A4971] underline font-semibold"
-                aria-label="Contact support"
-              >
-                Contact support
-              </Link>{' '}
-              for assistance.
-            </p>
-          </Card>
-        );
-      default:
-        return null;
-    }
   };
 
-  const steps = [
-    { label: 'Uploaded', description: 'You submitted the prescription' },
-    { label: 'Verifying', description: 'Pharmacist is reviewing' },
-    { label: 'Ready to Order', description: 'Place your order' },
-  ];
+  const isInCart = (medicationId, pharmacyId) => {
+    return cart?.pharmacies?.some(pharmacy =>
+      pharmacy.pharmacy.id === pharmacyId &&
+      pharmacy.items?.some(item => item.medication.id === medicationId)
+    ) || false;
+  };
 
-  // Modal state for help
   const [showHelp, setShowHelp] = useState(false);
 
   if (loading) {
@@ -392,14 +361,12 @@ const PrescriptionMedicationsPage = React.memo(() => {
   }
 
   return (
-    <div className="container mx-auto max-w-5xl py-8">
-      <HeroSection userName={null} />
-      <PrescriptionSummaryCard
-        metadata={prescriptionMetadata}
-        onViewPrescription={() => setShowPreview(true)}
-        onHelp={() => setShowHelp(true)}
-      />
-      {/* Filter Controls for pharmacies (as-is) */}
+    <div className="min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 to-gray-50/30 pt-6 pb-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 bg-[url('/svg/pattern-dots.svg')] opacity-10 pointer-events-none hidden sm:block" aria-hidden="true" />
+    <div className="py-14 px-2 sm:px-4">
+      <HeroSection userName={null} prescriptionMetadata={prescriptionMetadata} />
+      <PrescriptionInfoCard prescriptionMetadata={prescriptionMetadata} medications={medications} />
       {medications.length > 0 && (
         <FilterControls
           sortBy={sortBy}
@@ -436,7 +403,6 @@ const PrescriptionMedicationsPage = React.memo(() => {
           searchTerm={''}
         />
       )}
-      {/* Medications List */}
       <div className="space-y-10 mt-8">
         {prescriptionMetadata?.status === 'VERIFIED' && medications.length === 0 && (
           <Card className="shadow-xl border border-[#1ABA7F]/20 rounded-2xl text-center py-10 bg-white/95 backdrop-blur-sm animate-in fade-in-20 duration-700">
@@ -468,22 +434,18 @@ const PrescriptionMedicationsPage = React.memo(() => {
             handleAddToCart={handleAddToCart}
             isInCart={isInCart}
             isAddingToCart={isAddingToCart}
-            // Optionally pass extra props for enhanced UI
           />
         ))}
       </div>
-      {/* Floating Cart Summary */}
       <FloatingCartSummary
         cartItemsCount={cartItems.length}
         onViewCart={() => window.location.href = '/cart'}
       />
-      {/* Cart Dialog */}
       <CartDialog
         openCartDialog={openCartDialog}
         setOpenCartDialog={setOpenCartDialog}
         lastAddedItem={lastAddedItem}
       />
-      {/* Prescription Image Modal */}
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
         <DialogContent className="sm:max-w-lg p-6 rounded-2xl bg-white/95 border border-[#1ABA7F]/20">
           <DialogTitle>
@@ -496,7 +458,6 @@ const PrescriptionMedicationsPage = React.memo(() => {
           />
         </DialogContent>
       </Dialog>
-      {/* Help Modal */}
       <Dialog open={showHelp} onOpenChange={setShowHelp}>
         <DialogContent className="sm:max-w-lg p-6 rounded-2xl bg-white/95 border border-[#1ABA7F]/20">
           <DialogTitle>Need Help?</DialogTitle>
@@ -511,6 +472,7 @@ const PrescriptionMedicationsPage = React.memo(() => {
           </div>
         </DialogContent>
       </Dialog>
+    </div>
     </div>
   );
 });
