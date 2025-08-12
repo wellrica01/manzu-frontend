@@ -103,7 +103,7 @@ const HeroSection = ({ onSearchClick, onUploadClick }) => {
   }, []);
   
   return (
-    <header ref={heroRef} className="text-center mb-8 sm:mb-12 lg:mb-16 relative z-10 px-1 sm:px-2">
+    <header ref={heroRef} className="text-center mb-2 sm:mb-12 lg:mb-16 relative z-10 px-1 sm:px-2">
       <div className={`inline-block mb-3 sm:mb-4 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-[#1ABA7F]/20 text-[#1ABA7F] text-xs sm:text-sm font-semibold transition-all duration-500 ${
         isVisible ? 'animate-in zoom-in-50 opacity-100' : 'opacity-0 scale-95'
       }`}>
@@ -127,7 +127,7 @@ const HeroSection = ({ onSearchClick, onUploadClick }) => {
         {t('hero.subtitle')}
       </p>
       
-      <div className={`mt-8 sm:mt-8 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 transition-all duration-1000 delay-500 ${
+      <div className={`mt-12 sm:mt-8 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 transition-all duration-1000 delay-500 ${
         isVisible ? 'animate-in zoom-in-50 opacity-100' : 'opacity-0 scale-95'
       }`}>
         <Button
@@ -163,7 +163,7 @@ const HeroSection = ({ onSearchClick, onUploadClick }) => {
           {t('hero.other_access_methods')} 
           <ChevronDown className="w-2 h-2 sm:w-3 sm:h-3 transition-transform duration-200 group-open:rotate-180" />
         </summary>
-        <div className="mt-3 sm:mt-4 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 animate-in slide-in-from-top duration-300">
+        <div className="mt-5 sm:mt-4 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 animate-in slide-in-from-top duration-300">
           <Button
             asChild
             className="group h-9 sm:h-10 px-4 sm:px-6 text-xs sm:text-sm font-semibold rounded-full bg-[#25D366] text-white hover:bg-[#20B85A] hover:shadow-lg transition-all duration-300 relative overflow-hidden"
@@ -243,135 +243,16 @@ const ServiceCard = ({ title, icon: Icon, children, ref, className = "", isActiv
   );
 };
 
-// Services Section
-const ServicesSection = ({ searchRef, uploadRef }) => {
-  const { t } = useTranslation();
-  
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 relative z-10">
-      <ServiceCard 
-        ref={searchRef} 
-        title={t('services.search_medications')} 
-        icon={Pill}
-        isActive={true}
-        gradient="from-[#1ABA7F] to-[#225F91]"
-      >
-        <div className="space-y-4 sm:space-y-6">
-          <div className="text-center">
-            <div className="inline-flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full bg-[#1ABA7F]/10 text-[#1ABA7F] text-xs sm:text-sm font-medium mb-2 sm:mb-3">
-              <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
-              Most Popular
-            </div>
-            <p className="text-gray-600 text-sm sm:text-base leading-relaxed max-w-full sm:max-w-md mx-auto">
-              Find medications instantly and compare prices from verified pharmacies
-            </p>
-          </div>
-          <SearchBar />
-        </div>
-      </ServiceCard>
-      
-      <ServiceCard 
-        ref={uploadRef} 
-        title={t('services.upload_prescription')}
-        icon={Zap}
-        gradient="from-[#225F91] to-[#1A4971]"
-      >
-        <div className="space-y-4 sm:space-y-6">
-          <div className="text-center">
-            <div className="inline-flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full bg-[#225F91]/10 text-[#225F91] text-xs sm:text-sm font-medium mb-2 sm:mb-3">
-              <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
-              24-Hour Processing
-            </div>
-            <p className="text-gray-600 text-sm sm:text-base leading-relaxed max-w-full sm:max-w-md mx-auto">
-              Upload your prescription and get your medications ready within 24 hours
-            </p>
-          </div>
-          <PrescriptionUploadForm />
-        </div>
-      </ServiceCard>
-      
-      <ServiceCard 
-        title={t('services.for_pharmacies')}
-        icon={Users}
-        gradient="from-[#1A4971] to-[#225F91]"
-      >
-        <div className="space-y-4 sm:space-y-6">
-          <div className="text-center">
-            <div className="inline-flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full bg-[#1A4971]/10 text-[#1A4971] text-xs sm:text-sm font-medium mb-2 sm:mb-3">
-              <Users className="h-3 w-3 sm:h-4 sm:w-4" />
-              For Pharmacies
-            </div>
-            <p className="text-gray-600 text-sm sm:text-base leading-relaxed max-w-full sm:max-w-md mx-auto mb-4 sm:mb-6">
-              Join our network and grow your business with verified customers
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 gap-3 sm:gap-4 mb-4 sm:mb-6">
-            <div className="p-3 sm:p-4 bg-gradient-to-br from-[#1ABA7F]/5 to-[#1ABA7F]/10 rounded-lg sm:rounded-xl border border-[#1ABA7F]/20">
-              <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
-                <div className="p-1.5 sm:p-2 bg-[#1ABA7F]/20 rounded-lg">
-                  <Users className="h-4 w-4 sm:h-5 sm:w-5 text-[#1ABA7F]" />
-                </div>
-                <h4 className="font-semibold text-[#225F91] text-sm sm:text-base">Reach More Customers</h4>
-              </div>
-              <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
-                Connect with customers looking for medications in your area
-              </p>
-            </div>
-            
-            <div className="p-3 sm:p-4 bg-gradient-to-br from-[#225F91]/5 to-[#225F91]/10 rounded-lg sm:rounded-xl border border-[#225F91]/20">
-              <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
-                <div className="p-1.5 sm:p-2 bg-[#225F91]/20 rounded-lg">
-                  <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-[#225F91]" />
-                </div>
-                <h4 className="font-semibold text-[#225F91] text-sm sm:text-base">Manage Orders</h4>
-              </div>
-              <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
-                Handle orders efficiently with our management dashboard
-              </p>
-            </div>
-          </div>
-          
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center">
-            <Button
-              asChild
-              variant="outline"
-              className="group w-full sm:w-auto h-12 sm:h-12 px-4 sm:px-6 text-sm sm:text-base font-semibold rounded-lg border-[#1ABA7F] text-[#1ABA7F] hover:bg-[#1ABA7F]/10 hover:shadow-[0_0_15px_rgba(26,186,127,0.3)] transition-all duration-300 relative overflow-hidden"
-              aria-label={t('services.register_pharmacy')}
-            >
-              <Link href="/pharmacy/register" target="_blank" rel="noopener noreferrer">
-                <span className="relative z-10 flex items-center gap-1 sm:gap-2">
-                  {t('services.register_pharmacy')}
-                  <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4" />
-                </span>
-                <div className="absolute inset-0 bg-[#1ABA7F]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              </Link>
-            </Button>
-            <Button
-              asChild
-              className="group w-full sm:w-auto h-12 sm:h-12 px-4 sm:px-6 text-sm sm:text-base font-semibold rounded-lg bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_20px_rgba(34,95,145,0.5)] transition-all duration-300 relative overflow-hidden"
-              aria-label={t('services.pharmacy_login')}
-            >
-              <Link href="/pharmacy/login" target="_blank" rel="noopener noreferrer">
-                <span className="relative z-10 flex items-center gap-1 sm:gap-2">
-                  {t('services.pharmacy_login')}
-                  <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4" />
-                </span>
-                <div className="absolute inset-0 bg-[#1A4971] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </ServiceCard>
-    </div>
-  );
-};
 
 export default function HomePage() {
   const router = useRouter();
   const { t } = useTranslation();
   const [isConsentOpen, setIsConsentOpen] = useState(false);
   const [isPageLoaded, setIsPageLoaded] = useState(false);
+
+  // NEW: which section to show ("search", "upload", or null)
+  const [visibleSection, setVisibleSection] = useState(null);
+
   const searchRef = useRef(null);
   const uploadRef = useRef(null);
 
@@ -379,7 +260,6 @@ export default function HomePage() {
     if (!localStorage.getItem('manzu_consent')) {
       setIsConsentOpen(true);
     }
-    
     const timer = setTimeout(() => setIsPageLoaded(true), 100);
     return () => clearTimeout(timer);
   }, []);
@@ -389,35 +269,80 @@ export default function HomePage() {
   }, []);
 
   const handleSearchClick = useCallback(() => {
-    if (searchRef.current) {
-      searchRef.current.scrollIntoView({ 
-        behavior: 'smooth', 
-        block: 'center' 
-      });
-    }
+    setVisibleSection("search");
+    setTimeout(() => {
+      searchRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 50);
   }, []);
 
   const handleUploadClick = useCallback(() => {
-    if (uploadRef.current) {
-      uploadRef.current.scrollIntoView({ 
-        behavior: 'smooth', 
-        block: 'center' 
-      });
-    }
+    setVisibleSection("upload");
+    setTimeout(() => {
+      uploadRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 50);
   }, []);
 
   return (
-    <div className={`min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 via-gray-50/50 to-white/80 pt-8 pb-12 sm:py-8 px-1 relative overflow-hidden transition-all duration-1000 ${
-      isPageLoaded ? 'opacity-100' : 'opacity-0'
-    }`}>
+    <div
+      className={`min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 via-gray-50/50 to-white/80 pt-12 pb-48 sm:py-8 px-1 relative overflow-hidden transition-all duration-1000 ${
+        isPageLoaded ? "opacity-100" : "opacity-0"
+      }`}
+    >
       <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-      
+
       <div className="absolute inset-0 bg-[url('/svg/pattern-dots.svg')] opacity-10 pointer-events-none animate-pulse sm:block" aria-hidden="true" />
-      
+
       <div className="w-full max-w-[95vw] sm:max-w-3xl lg:max-w-[90vw] xl:max-w-[85vw] mx-auto flex flex-col items-center px-1 sm:px-2">
         <LanguageToggle />
         <HeroSection onSearchClick={handleSearchClick} onUploadClick={handleUploadClick} />
-        <ServicesSection searchRef={searchRef} uploadRef={uploadRef} />
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 relative z-10">
+          {visibleSection === "search" && (
+            <ServiceCard
+              ref={searchRef}
+              title={t("services.search_medications")}
+              icon={Pill}
+              isActive={true}
+              gradient="from-[#1ABA7F] to-[#225F91]"
+            >
+            <div className="text-center">
+            <div className="inline-flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full bg-[#1ABA7F]/10 text-[#1ABA7F] text-xs sm:text-sm font-medium mb-2 sm:mb-3">
+              <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
+              Most Popular
+            </div>
+            <p className="text-gray-600 text-sm sm:text-base leading-relaxed max-w-full sm:max-w-md mx-auto">
+              Find medications instantly and compare prices from verified pharmacies
+            </p>
+          </div>
+          <div className='mt-6'>
+              <SearchBar />
+          </div>
+            </ServiceCard>
+          )}
+
+          {visibleSection === "upload" && (
+            <ServiceCard
+              ref={uploadRef}
+              title={t("services.upload_prescription")}
+              icon={Zap}
+              gradient="from-[#225F91] to-[#1A4971]"
+            >
+          <div className="text-center">
+            <div className="inline-flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full bg-[#225F91]/10 text-[#225F91] text-xs sm:text-sm font-medium mb-2 sm:mb-3">
+              <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
+              24-Hour Processing
+            </div>
+            <p className="text-gray-600 text-sm sm:text-base leading-relaxed max-w-full sm:max-w-md mx-auto">
+              Upload your prescription and get your medications ready within 24 hours
+            </p>
+          </div>
+          <div className='mt-6'>
+              <PrescriptionUploadForm />
+              </div>
+            </ServiceCard>
+          )}
+        </div>
+
         <ConsentModal isOpen={isConsentOpen} onClose={handleConsentClose} />
       </div>
     </div>

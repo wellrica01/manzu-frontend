@@ -5,7 +5,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Menu, X, Twitter, Instagram, Facebook, ShoppingCart, Home, FileText, MapPin, ChevronUp } from 'lucide-react';
+import { Menu, X, Twitter, Instagram, Facebook, ShoppingCart, Home, FileText, MapPin, ChevronUp, HospitalIcon } from 'lucide-react';
 import Image from 'next/image';
 import { useCart } from '@/hooks/useCart';
 import { useTranslation } from 'react-i18next';
@@ -169,69 +169,110 @@ export default function MainLayout({ children }) {
       <main className="flex-1 w-full mx-auto sm:px-2 pt-[50px] sm:pt-[68px] max-w-[95vw] sm:max-w-3xl lg:max-w-[90vw] xl:max-w-[85vw]">
         {children}
       </main>
+    {/* Pharmacy CTA */}
+    <div className="p-7 bg-white border border-[#1ABA7F]/30 text-center">
+      <HospitalIcon className='w-6 h-6 sm:w-8 sm:h-8 text-[#1ABA7F] transition-all duration-300'/>
+   <h3 className="text-xl text-[#225F91] font-semibold mb-2">{t('footer.pharmacy_invite_title', 'Are you a Pharmacy?')}</h3>
+      <p className="text-sm text-gray-600 mb-4">
+        {t('footer.pharmacy_invite_text', 'Join Manzu and connect with verified customers in your area.')}
+      </p>
+      <div className="flex flex-col sm:flex-row gap-3 justify-center">
+         <Button
+          asChild
+          variant="outline"
+          className="group h-12 sm:h-12 px-6 sm:px-8 text-sm sm:text-base font-semibold rounded-lg bg-[#225F91] text-white"
+          aria-label={t('services.register_pharmacy')}
+        >
+          <Link href="/pharmacy/register" target="_blank" rel="noopener noreferrer">
+            <span className="relative z-10 flex items-center gap-1 sm:gap-2">
+              Pharmacy Register
+            </span>
+            <div className="absolute inset-0 bg-[#1ABA7F]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          </Link>
+        </Button>
+        <Button
+          asChild
+          variant="outline"
+          className="group h-12 sm:h-12 px-6 sm:px-8 text-sm sm:text-base font-semibold rounded-lg bg-transparent border-2 border-[#1ABA7F] text-[#1ABA7F]"
+          aria-label={t('services.register_pharmacy')}
+        >
+          <Link href="/pharmacy/register" target="_blank" rel="noopener noreferrer">
+            <span className="relative z-10 flex items-center gap-1 sm:gap-2">
+              Pharmacy Login
+            </span>
+            <div className="absolute inset-0 bg-[#1ABA7F]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          </Link>
+        </Button>
+      </div>
+    </div>
 
-      <footer className="bg-[#225F91] text-white">
-        <div className="w-full max-w-[95vw] sm:max-w-3xl lg:max-w-[90vw] xl:max-w-[85vw] mx-auto px-1 sm:px-2 py-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
-           
-            <div className="flex flex-col items-center text-center">
-              <h3 className="text-sm sm:text-base font-semibold text-white mb-3 flex items-center justify-center gap-2">
-                <span className="w-1 h-5 bg-[#1ABA7F] rounded-full" />
-                {t('footer.quick_links')}
-                <span className="w-1 h-5 bg-[#1ABA7F] rounded-full" />
+    <footer className="bg-[#225F91] text-white">
+  <div className="w-full max-w-[95vw] sm:max-w-3xl lg:max-w-[90vw] xl:max-w-[85vw] mx-auto px-1 sm:px-2 py-8">
 
-              </h3>
-              <div className="space-y-2 w-full">
-                {['About', 'Contact', 'Privacy Policy'].map((item) => (
-                  <Link
-                    key={item}
-                    href={`/${item.toLowerCase().replace(' ', '-')}`}
-                    className="text-white/90 hover:text-[#1ABA7F] text-sm sm:text-sm transition-colors duration-200 flex items-center justify-center gap-2"
-                    aria-label={t(`footer.${item.toLowerCase().replace(' ', '_')}`)}
-                  >
-                    <span className="w-1 h-1 bg-[#1ABA7F] rounded-full" />
-                    {t(`footer.${item.toLowerCase().replace(' ', '_')}`)}
-                    
-                  </Link>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex flex-col items-center text-center">
-              <h3 className="text-sm sm:text-base font-semibold text-white mb-3 flex items-center justify-center gap-2">
-                <span className="w-1 h-5 bg-[#1ABA7F] rounded-full" />
-                {t('footer.connect')}
-             <span className="w-1 h-5 bg-[#1ABA7F] rounded-full" />
-              </h3>
-              <div className="flex justify-center gap-3 w-full">
-                {[
-                  { name: 'Twitter', href: 'https://twitter.com/manzu_pharmacy', icon: Twitter },
-                  { name: 'Instagram', href: 'https://instagram.com/manzu_pharmacy', icon: Instagram },
-                  { name: 'Facebook', href: 'https://facebook.com/manzu.pharmacy', icon: Facebook },
-                ].map((social) => (
-                  <a
-                    key={social.name}
-                    href={social.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-white hover:text-[#1ABA7F] p-2 rounded-full transition-colors duration-200"
-                    aria-label={social.name}
-                  >
-                    <social.icon className="h-5 w-5 sm:h-5 sm:w-5" />
-                  </a>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-6 pt-6 border-t border-[#1ABA7F]/20 text-center">
-            <p className="text-xs sm:text-sm text-white/80 w-full">
-              © 2025 Manzu. {t('footer.powered_by')} <Image src="/logo_1.png" alt="Manzu Logo" width={16} height={16} className="inline-block align-middle ml-1" />
-            </p>
-            <span className="text-xs sm:text-sm text-white/80 w-full">All rights reserved.</span>
-          </div>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+      {/* Quick Links */}
+      <div className="flex flex-col items-center text-center">
+        <h3 className="text-sm sm:text-base font-semibold text-white mb-3 flex items-center justify-center gap-2">
+          <span className="w-1 h-5 bg-[#1ABA7F] rounded-full" />
+          {t('footer.quick_links')}
+          <span className="w-1 h-5 bg-[#1ABA7F] rounded-full" />
+        </h3>
+        <div className="space-y-2 w-full">
+          {['About', 'Contact', 'Privacy Policy'].map((item) => (
+            <Link
+              key={item}
+              href={`/${item.toLowerCase().replace(' ', '-')}`}
+              className="text-white/90 hover:text-[#1ABA7F] text-sm sm:text-sm transition-colors duration-200 flex items-center justify-center gap-2"
+              aria-label={t(`footer.${item.toLowerCase().replace(' ', '_')}`)}
+            >
+              <span className="w-1 h-1 bg-[#1ABA7F] rounded-full" />
+              {t(`footer.${item.toLowerCase().replace(' ', '_')}`)}
+            </Link>
+          ))}
         </div>
-      </footer>
+      </div>
+
+      {/* Social Media */}
+      <div className="flex flex-col items-center text-center">
+        <h3 className="text-sm sm:text-base font-semibold text-white mb-3 flex items-center justify-center gap-2">
+          <span className="w-1 h-5 bg-[#1ABA7F] rounded-full" />
+          {t('footer.connect')}
+          <span className="w-1 h-5 bg-[#1ABA7F] rounded-full" />
+        </h3>
+        <div className="flex justify-center gap-3 w-full">
+          {[
+            { name: 'Twitter', href: 'https://twitter.com/manzu_pharmacy', icon: Twitter },
+            { name: 'Instagram', href: 'https://instagram.com/manzu_pharmacy', icon: Instagram },
+            { name: 'Facebook', href: 'https://facebook.com/manzu.pharmacy', icon: Facebook },
+          ].map((social) => (
+            <a
+              key={social.name}
+              href={social.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white hover:text-[#1ABA7F] p-2 rounded-full transition-colors duration-200"
+              aria-label={social.name}
+            >
+              <social.icon className="h-5 w-5 sm:h-5 sm:w-5" />
+            </a>
+          ))}
+        </div>
+      </div>
+    </div>
+
+
+
+    {/* Copyright */}
+    <div className="mt-6 pt-6 border-t border-[#1ABA7F]/20 text-center">
+      <p className="text-xs sm:text-sm text-white/80 w-full">
+        © 2025 Manzu. {t('footer.powered_by')}
+        <Image src="/logo_1.png" alt="Manzu Logo" width={16} height={16} className="inline-block align-middle ml-1" />
+      </p>
+      <span className="text-xs sm:text-sm text-white/80 w-full">All rights reserved.</span>
+    </div>
+  </div>
+</footer>
+
 
       <Button
         onClick={scrollToTop}
