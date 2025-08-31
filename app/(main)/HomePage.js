@@ -341,6 +341,8 @@ export default function HomePage() {
               </div>
             </ServiceCard>
           )}
+
+          
         </div>
 
         <ConsentModal isOpen={isConsentOpen} onClose={handleConsentClose} />

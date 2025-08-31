@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Mic } from 'lucide-react';
@@ -142,7 +142,7 @@ const SearchInput = ({
   return (
     <div className="relative w-full">
       <Search
-        className="absolute left-4 top-1/2 -translate-y-1/2 h-6 w-6 text-[#225F91]/70"
+        className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#225F91]/70"
         aria-hidden="true"
       />
       <Input
@@ -159,16 +159,21 @@ const SearchInput = ({
         aria-expanded={showDropdown || showHistory}
         aria-controls="suggestions-list"
       />
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={startVoiceSearch}
-        disabled={isListening}
-        className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0 text-[#225F91] hover:text-[#1A4971] hover:bg-[#225F91]/10"
-        aria-label="Voice search"
-      >
-        <Mic className={cn("h-6 w-6", isListening && "animate-pulse text-[#1ABA7F]")} />
-      </Button>
+    <Button
+      variant="ghost"
+      size="lg"
+      onClick={startVoiceSearch}
+      disabled={isListening}
+      className={cn(
+        "absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-[#1ABA7F] hover:bg-[#20BD5A] text-white p-0 border-0 transition-all duration-200",
+        isListening 
+          ? "scale-110 animate-pulse shadow-lg shadow-[#1ABA7F]/50" 
+          : "hover:scale-105 active:scale-95"
+      )}
+      aria-label="Voice search"
+    >
+      <Mic className={cn("h-5 w-5", isListening && "animate-pulse")} />
+    </Button>
     </div>
   );
 };

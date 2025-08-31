@@ -179,15 +179,14 @@ export default function MainLayout({ children }) {
       <div className="flex flex-col sm:flex-row gap-3 justify-center">
          <Button
           asChild
-          variant="outline"
+          variant="primary"
           className="group h-12 sm:h-12 px-6 sm:px-8 text-sm sm:text-base font-semibold rounded-lg bg-[#225F91] text-white"
           aria-label={t('services.register_pharmacy')}
         >
-          <Link href="/pharmacy/register" target="_blank" rel="noopener noreferrer">
-            <span className="relative z-10 flex items-center gap-1 sm:gap-2">
-              Pharmacy Register
+          <Link href="/pharmacy/register">
+            <span className="flex items-center gap-1 sm:gap-2">
+              Register
             </span>
-            <div className="absolute inset-0 bg-[#1ABA7F]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           </Link>
         </Button>
         <Button
@@ -196,11 +195,10 @@ export default function MainLayout({ children }) {
           className="group h-12 sm:h-12 px-6 sm:px-8 text-sm sm:text-base font-semibold rounded-lg bg-transparent border-2 border-[#1ABA7F] text-[#1ABA7F]"
           aria-label={t('services.register_pharmacy')}
         >
-          <Link href="/pharmacy/register" target="_blank" rel="noopener noreferrer">
-            <span className="relative z-10 flex items-center gap-1 sm:gap-2">
-              Pharmacy Login
+          <Link href="/pharmacy/register">
+            <span className="flex items-center gap-1 sm:gap-2">
+              Login
             </span>
-            <div className="absolute inset-0 bg-[#1ABA7F]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           </Link>
         </Button>
       </div>
