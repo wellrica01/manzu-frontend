@@ -236,7 +236,7 @@ const ServiceCard = ({ title, icon: Icon, children, ref, className = "", isActiv
         </CardTitle>
       </CardHeader>
       
-      <CardContent className="p-4 sm:p-6 relative z-10">
+      <CardContent className="p-3 sm:p-6 relative z-10">
         {children}
       </CardContent>
     </Card>
@@ -314,7 +314,7 @@ export default function HomePage() {
               Find medications instantly and compare prices from verified pharmacies
             </p>
           </div>
-          <div className='mt-6'>
+          <div className='mt-10'>
               <SearchBar />
           </div>
             </ServiceCard>
@@ -336,7 +336,7 @@ export default function HomePage() {
               Upload your prescription and get your medications ready within 24 hours
             </p>
           </div>
-          <div className='mt-6'>
+          <div className='mt-10'>
               <PrescriptionUploadForm />
               </div>
             </ServiceCard>

@@ -142,7 +142,7 @@ const SearchInput = ({
   return (
     <div className="relative w-full">
       <Search
-        className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#225F91]/70"
+        className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-[#225F91]/70"
         aria-hidden="true"
       />
       <Input
@@ -153,7 +153,7 @@ const SearchInput = ({
         onChange={handleInputChange}
         onKeyDown={handleKeyDown}
         onFocus={handleInputFocus}
-        className="pl-12 pr-20 h-12 text-sm sm:text-base font-medium rounded-xl border border-[#1ABA7F]/20 bg-white/95 text-gray-900 placeholder:text-gray-400 focus:ring-0 focus:border-[#1ABA7F]/50 focus:shadow-[0_0_15px_rgba(26,186,127,0.3)] transition-all duration-300 w-full"
+        className="pl-10 pr-16 h-12 text-sm sm:text-base font-medium rounded-sm border border-[#1ABA7F]/20 bg-white/95 text-gray-900 placeholder:text-gray-400 focus:ring-0 focus:border-[#1ABA7F]/50 focus:shadow-[0_0_15px_rgba(26,186,127,0.3)] transition-all duration-300 w-full"
         autoComplete="off"
         aria-autocomplete="list"
         aria-expanded={showDropdown || showHistory}
@@ -165,9 +165,9 @@ const SearchInput = ({
       onClick={startVoiceSearch}
       disabled={isListening}
       className={cn(
-        "absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-[#1ABA7F] hover:bg-[#20BD5A] text-white p-0 border-0 transition-all duration-200",
+        "absolute right-2 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-[#1ABA7F] hover:bg-[#20BD5A] text-white p-0 border-0 transition-all duration-200",
         isListening 
-          ? "scale-110 animate-pulse shadow-lg shadow-[#1ABA7F]/50" 
+          ? "scale-120 animate-pulse shadow-lg shadow-[#1ABA7F]/50" 
           : "hover:scale-105 active:scale-95"
       )}
       aria-label="Voice search"

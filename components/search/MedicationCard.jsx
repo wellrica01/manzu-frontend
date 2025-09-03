@@ -33,7 +33,7 @@ const MedicationCard = ({ med, handleAddToCart, isInCart, isAddingToCart }) => {
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <h3 className="text-lg sm:text-3xl font-bold text-[#225F91] tracking-tight leading-tight">
-                {med.displayName}
+                {med.fullName}
               </h3>
               <div className="flex items-center text-xs gap-2 mt-2 flex-wrap">
                 {med.prescriptionRequired && (
@@ -42,6 +42,10 @@ const MedicationCard = ({ med, handleAddToCart, isInCart, isAddingToCart }) => {
                     Prescription Required
                   </Badge>
                 )}
+             <div>
+                <span className="font-semibold text-gray-600">Generic Name:</span>
+                <span className="ml-2 text-gray-600">{med.genericName || 'N/A'}</span>
+              </div>
                {med.manufacturerName && (
               <div>
                 <span className="text-gray-600 font-semibold">Manufacturer:</span>
@@ -54,12 +58,12 @@ const MedicationCard = ({ med, handleAddToCart, isInCart, isAddingToCart }) => {
               </div>
             </div>
             {/* Medication image or fallback */}
-            <div className="relative w-24 h-24 sm:w-32 sm:h-32 flex-shrink-0 flex items-center justify-center bg-white">
+            <div className="relative w-24 h-24 sm:w-32 rounded-xl sm:h-32 flex-shrink-0 flex items-center justify-center bg-white">
               {med.imageUrl ? (
                 <img
                   src={med.imageUrl}
                   alt={med.displayName}
-                  className="w-full h-full object-cover rounded-xl border border-[#1ABA7F]/20 shadow-md transition-transform duration-300 hover:scale-105"
+                  className="w-full h-full object-cover rounded-xl p-1 border border-[#1ABA7F]/20 shadow-md transition-transform duration-300 hover:scale-105"
                 />
               ) : (
                 <Pill className="w-12 h-12 sm:w-20 sm:h-20 text-[#1ABA7F]/60" aria-label="Medication" />

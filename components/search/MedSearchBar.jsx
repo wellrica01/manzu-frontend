@@ -192,7 +192,7 @@ export default function SearchBar() {
   };
 
   const handleSelectMedication = async (med) => {
-    setSearchTerm(med.displayName);
+    setSearchTerm(med.fullName);
     setShowDropdown(false);
     setFocusedSuggestionIndex(-1);
     try {
@@ -360,9 +360,18 @@ console.log('Search results:', results);
                       role="option"
                       aria-selected={focusedSuggestionIndex === index}
                     >
+                      {suggestion.imageUrl ? (
+                        <img
+                          src={suggestion.imageUrl}
+                          alt={suggestion.fullName}
+                          className="w-8 h-8 object-cover rounded-sm p-0.5 border border-[#1ABA7F]/20 shadow-md transition-transform duration-300 hover:scale-105"
+                        />
+                      ) : (
                       <TrendingUp className="h-3 sm:h-4 w-3 sm:w-4 text-[#225F91]" />
+                      )}
                       <div className="flex-1">
-                        <div className="font-medium">{suggestion.displayName}</div>
+                        <div className="font-medium">{suggestion.fullName}</div>
+                        <div className="font-light">{suggestion.genericName}</div>
                       </div>
                     </button>
                   ))}
@@ -404,20 +413,24 @@ console.log('Search results:', results);
         showFilters={showFilters}
         setShowFilters={setShowFilters}
       />
+
+      <hr className="border-t border-gray-300 my-4 sm:my-6" />
+
+      
       <ErrorMessage error={error} />
       {isSearching ? (
         <SearchSkeleton />
       ) : (
         <div className="space-y-6 sm:space-y-8">
           {results.length === 0 && !error && searchTerm ? (
-            <div className="text-center py-8 sm:py-10 bg-white/95 border border-[#1ABA7F]/20 rounded-lg sm:rounded-2xl shadow-lg">
-              <p className="text-gray-600 text-sm sm:text-base leading-relaxed max-w-full sm:max-w-md mx-auto">
+            <div className="text-center py-8 sm:py-10 bg-white/95 border border-[#1ABA7F]/20 rounded-sm sm:rounded-2xl shadow-lg">
+              <p className="text-gray-600 text-sm font-light sm:text-base leading-relaxed max-w-full sm:max-w-md mx-auto">
                 {t('search.no_results', { searchTerm })}
               </p>
             </div>
           ) : results.length === 0 && !searchTerm ? (
-            <div className="text-center py-8 sm:py-10 bg-white/95 border border-[#1ABA7F]/20 rounded-lg sm:rounded-2xl shadow-lg">
-              <p className="text-gray-600 text-sm sm:text-base leading-relaxed max-w-full sm:max-w-md mx-auto">
+            <div className="text-center py-8 sm:py-10 bg-white/95 border border-[#1ABA7F]/20 rounded-sm sm:rounded-2xl shadow-lg">
+              <p className="text-gray-600 text-sm font-light sm:text-base leading-relaxed max-w-full sm:max-w-md mx-auto">
                 {t('search.enter_medication')}
               </p>
             </div>

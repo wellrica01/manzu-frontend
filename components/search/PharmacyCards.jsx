@@ -1,12 +1,32 @@
 import React, { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Phone, Navigation, Clock, HouseIcon, HospitalIcon } from 'lucide-react';
+import { MapPin, HospitalIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { formatOperatingHours, getOperatingHoursColor, getOperatingHoursTextColor } from '@/lib/pharmacyUtils';
+import { formatOperatingHours, getOperatingHoursTextColor } from '@/lib/pharmacyUtils';
 
 const PharmacyCards = ({ availability, medId, handleAddToCart, isInCart, displayName, isAddingToCart }) => {
   const [expandedCard, setExpandedCard] = useState(null);
+  const [sortOption, setSortOption] = useState('default'); // 🔹 default = backend smart order
+
+  // 🔹 Apply sorting logic
+  const sortedAvailability = useMemo(() => {
+    if (!availability) return [];
+
+    if (sortOption === 'cheapest') {
+      return [...availability].sort((a, b) => a.price - b.price);
+    }
+
+    if (sortOption === 'closest') {
+      return [...availability].sort((a, b) => {
+        if (isNaN(a.distance_km)) return 1;
+        if (isNaN(b.distance_km)) return -1;
+        return a.distance_km - b.distance_km;
+      });
+    }
+
+    return availability; // 🔹 backend order stays untouched
+  }, [availability, sortOption]);
 
   if (!availability || availability.length === 0) {
     return (
@@ -22,28 +42,52 @@ const PharmacyCards = ({ availability, medId, handleAddToCart, isInCart, display
 
   return (
     <div className="block sm:hidden space-y-4">
-      {availability.map((avail, index) => {
-        
-        const validDistances = useMemo(() => {
-          return availability
-            .filter((a) => typeof a.distance_km === 'number' && !isNaN(a.distance_km))
-            .map((a) => a.distance_km);
-        }, [availability]);
+      {/* 🔹 Sorting buttons */}
 
-        const isCheapest = useMemo(() => {
-          return avail.price === Math.min(...availability.map((a) => a.price));
-        }, [availability, avail.price]);
+<div className="flex flex-wrap gap-2 mb-4">
+  <Button
+    variant={sortOption === 'default' ? 'default' : 'outline'}
+    onClick={() => setSortOption('default')}
+    className="flex-1 min-w-[90px] flex items-center justify-center gap-1"
+  >
+    Best Deal
+  </Button>
+  <Button
+    variant={sortOption === 'cheapest' ? 'default' : 'outline'}
+    onClick={() => setSortOption('cheapest')}
+    className="flex-1 min-w-[90px] flex items-center justify-center gap-1"
+  >
+    Cheapest
+  </Button>
+  <Button
+    variant={sortOption === 'closest' ? 'default' : 'outline'}
+    onClick={() => setSortOption('closest')}
+    className="flex-1 min-w-[90px] flex items-center justify-center gap-1"
+  >
+    Closest
+  </Button>
+</div>
 
-        const isClosest = useMemo(() => {
-          return (
-            validDistances.length > 0 &&
-            typeof avail.distance_km === 'number' &&
-            !isNaN(avail.distance_km) &&
-            avail.distance_km === Math.min(...validDistances)
-          );
-        }, [validDistances, avail.distance_km]);
+<div className="mb-4 text-sm text-gray-600 font-medium">
+  {sortOption === 'default' && "Get The Best Deals"}
+  {sortOption === 'cheapest' && "Sorted by Cheapest"}
+  {sortOption === 'closest' && "Sorted by Closest"}
+</div>
 
+
+      {/* 🔹 Render sorted cards */}
+      {sortedAvailability.map((avail, index) => {
         const isExpanded = expandedCard === index;
+
+        const isCheapest = avail.price === Math.min(...availability.map((a) => a.price));
+        const validDistances = availability
+          .filter((a) => typeof a.distance_km === 'number' && !isNaN(a.distance_km))
+          .map((a) => a.distance_km);
+        const isClosest =
+          validDistances.length > 0 &&
+          typeof avail.distance_km === 'number' &&
+          !isNaN(avail.distance_km) &&
+          avail.distance_km === Math.min(...validDistances);
 
         return (
           <div 
