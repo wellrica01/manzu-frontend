@@ -101,14 +101,28 @@ const FilterControls = ({
     localStorage.setItem("savedFilters", JSON.stringify(newSaved));
   };
 
-  const applySavedFilter = (filter) => {
+const applySavedFilter = async (filter) => {
+  try {
+    // 1. Set state filter first
     setFilterState(filter.filterState);
+
+    // 2. Wait for LGAs to update before applying LGA
+    await updateLgas(filter.filterState);
     setFilterLga(filter.filterLga);
+
+    // 3. Wait for wards to update before applying Ward
+    await updateWards(filter.filterState, filter.filterLga);
     setFilterWard(filter.filterWard);
-    updateLgas(filter.filterState);
-    updateWards(filter.filterState, filter.filterLga);
-    if (searchTerm) handleSearch(searchTerm);
-  };
+
+    // 4. Trigger search (optional, depending on UX choice)
+    if (searchTerm !== undefined) {
+      handleSearch(searchTerm);
+    }
+  } catch (error) {
+    console.error("Failed to apply saved filter:", error);
+  }
+};
+
 
   const deleteSavedFilter = (id) => {
     const newSaved = savedFilters.filter((f) => f.id !== id);

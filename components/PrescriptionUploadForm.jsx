@@ -350,7 +350,7 @@ export default function PrescriptionUploadForm() {
                     )} aria-hidden="true" />
                   </div>
                   <div className="space-y-1 sm:space-y-2">
-                    <p className="text-base sm:text-lg font-medium text-gray-900">
+                    <p className="text-sm sm:base font-medium text-gray-900">
                       {isDragOver ? "Drop your file here" : "Drag & drop your prescription"}
                     </p>
                     <p className="text-sm sm:text-base text-gray-600">
@@ -363,6 +363,7 @@ export default function PrescriptionUploadForm() {
                         browse files
                       </button>
                     </p>
+
                   </div>
                   <div className="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm text-gray-500">
                     <Badge variant="outline" className="border-[#1ABA7F]/20 text-[#225F91]">
@@ -372,6 +373,9 @@ export default function PrescriptionUploadForm() {
                       Max 10MB
                     </Badge>
                   </div>
+                     <p className="text-xs sm:sm font-light text-gray-600">
+                    Ensure your prescription is clearly visible and readable.
+                    </p>
                 </div>
               </div>
             )}
@@ -471,22 +475,6 @@ export default function PrescriptionUploadForm() {
               </span>
             )}
           </Button>
-
-          {/* Info Section */}
-          <div className="p-3 sm:p-4 bg-[#1ABA7F]/5 rounded-lg sm:rounded-xl border border-[#1ABA7F]/20">
-            <div className="flex items-start gap-2 sm:gap-3">
-              <Info className="h-4 sm:h-5 w-4 sm:w-5 text-[#225F91] mt-0.5 flex-shrink-0" />
-              <div className="text-xs sm:text-sm text-gray-600 space-y-1">
-                <p className="text-sm sm:text-base font-medium text-gray-700">Upload Guidelines:</p>
-                <ul className="list-disc list-inside space-y-0.5 sm:space-y-1 text-sm sm:text-base">
-                  <li>Ensure your prescription is clearly visible and readable</li>
-                  <li>Supported formats: PDF, JPG, PNG (max 10MB)</li>
-                  <li>We'll process your prescription within few minutes.</li>
-                  <li>You'll receive updates via your provided contact</li>
-                </ul>
-              </div>
-            </div>
-          </div>
         </form>
       </div>
     </div>

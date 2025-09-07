@@ -166,43 +166,43 @@ export default function MainLayout({ children }) {
         </div>
       </nav>
 
-      <main className="flex-1 w-full mx-auto sm:px-2 pt-[50px] sm:pt-[68px] max-w-[95vw] sm:max-w-3xl lg:max-w-[90vw] xl:max-w-[85vw]">
+      <main className="flex-1 w-full mx-auto sm:px-2 pt-[10px] sm:pt-[68px] max-w-[100vw] sm:max-w-3xl lg:max-w-[100vw] xl:max-w-[100vw]">
         {children}
       </main>
-    {/* Pharmacy CTA */}
-    <div className="p-7 bg-white border border-[#1ABA7F]/30 text-center">
-      <HospitalIcon className='w-6 h-6 sm:w-8 sm:h-8 text-[#1ABA7F] transition-all duration-300'/>
-   <h3 className="text-xl text-[#225F91] font-semibold mb-2">{t('footer.pharmacy_invite_title', 'Are you a Pharmacy?')}</h3>
-      <p className="text-sm text-gray-600 mb-4">
-        {t('footer.pharmacy_invite_text', 'Join Manzu and connect with verified customers in your area.')}
-      </p>
-      <div className="flex flex-col sm:flex-row gap-3 justify-center">
-         <Button
-          asChild
-          variant="primary"
-          className="group h-12 sm:h-12 px-6 sm:px-8 text-sm sm:text-base font-semibold rounded-lg bg-[#225F91] text-white"
-          aria-label={t('services.register_pharmacy')}
-        >
-          <Link href="/pharmacy/register">
-            <span className="flex items-center gap-1 sm:gap-2">
-              Register
-            </span>
-          </Link>
-        </Button>
-        <Button
-          asChild
-          variant="outline"
-          className="group h-12 sm:h-12 px-6 sm:px-8 text-sm sm:text-base font-semibold rounded-lg bg-transparent border-2 border-[#1ABA7F] text-[#1ABA7F]"
-          aria-label={t('services.register_pharmacy')}
-        >
-          <Link href="/pharmacy/register">
-            <span className="flex items-center gap-1 sm:gap-2">
-              Login
-            </span>
-          </Link>
-        </Button>
-      </div>
+
+{/* Pharmacy CTA */}
+<div className="relative overflow-hidden text-center mb-1 shadow-sm">
+  {/* Background Image */}
+  <img 
+    src="https://xhfkqugxrkvqspsuthmq.supabase.co/storage/v1/object/public/pharmacies/images/f2b75fd8-3913-40c3-b892-20512d36605f.jpg" 
+    alt="Pharmacy background" 
+    className="absolute inset-0 w-full h-full object-cover"
+  />
+  {/* Overlay for readability */}
+  <div className="absolute inset-0 bg-black/60" />
+
+  {/* Content */}
+  <div className="relative z-10 p-8 sm:py-14">
+    <div className="bg-white/15 px-3 py-12 mb-2 rounded-2xl">
+    <h3 className="text-2xl sm:text-3xl text-white font-semibold mb-3">
+      {t('footer.pharmacy_invite_title', 'Are you a Pharmacy?')}
+    </h3>
+    <p className="text-sm sm:text-base text-white mb-6 max-w-xl mx-auto">
+      {t('footer.pharmacy_invite_text', 'Join Manzu and connect with verified customers in your area.')}
+    </p>
+      <Button
+        asChild
+        variant="outline"
+        className="group h-12 px-8 text-sm sm:text-base font-semibold rounded-lg bg-transparent border-2 border-[#1ABA7F] text-[#1ABA7F] hover:bg-[#1ABA7F]/10"
+        aria-label={t('services.register_pharmacy')}
+      >
+        <Link href="/pharmacy/register">Join Us Now</Link>
+      </Button>
     </div>
+
+  </div>
+</div>
+
 
     <footer className="bg-[#225F91] text-white">
   <div className="w-full max-w-[95vw] sm:max-w-3xl lg:max-w-[90vw] xl:max-w-[85vw] mx-auto px-1 sm:px-2 py-8">

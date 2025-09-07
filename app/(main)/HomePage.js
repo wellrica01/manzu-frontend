@@ -46,7 +46,7 @@ const LanguageToggle = ({ onLanguageChange }) => {
   const currentLang = languages.find(lang => lang.code === selectedLang);
 
   return (
-    <div className="flex justify-end mb-4 sm:mb-6 px-1 sm:px-2" role="region" aria-label="Language selection">
+    <div className="flex justify-center mb-6 sm:mb-6 px-1 sm:px-2" role="region" aria-label="Language selection">
       <div className="relative" ref={dropdownRef}>
         <button
           onClick={() => setIsOpen(!isOpen)}
@@ -103,93 +103,128 @@ const HeroSection = ({ onSearchClick, onUploadClick }) => {
   }, []);
   
   return (
-    <header ref={heroRef} className="text-center mb-2 sm:mb-12 lg:mb-16 relative z-10 px-1 sm:px-2">
-      <div className={`inline-block mb-3 sm:mb-4 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-[#1ABA7F]/20 text-[#1ABA7F] text-xs sm:text-sm font-semibold transition-all duration-500 ${
-        isVisible ? 'animate-in zoom-in-50 opacity-100' : 'opacity-0 scale-95'
-      }`}>
-        <Shield className="inline-block w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-        {t('hero.trusted_platform')}
-      </div>
+<header 
+  ref={heroRef} 
+  className="relative text-center mb-12 mt-2 sm:mb-12 lg:mb-16 px-4 sm:px-6 py-16 sm:py-20 lg:py-28 overflow-hidden"
+>
+  {/* Background image */}
+  <img
+    src="https://xhfkqugxrkvqspsuthmq.supabase.co/storage/v1/object/public/pharmacies/images/c0c0bc97-043e-400c-a575-a3a3f5ba1017.jpg"
+    alt="Hero background"
+    className="absolute inset-0 w-full h-full object-cover"
+  />
+  
+  {/* Overlay for readability */}
+  <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/50 to-black/60" />
 
-      <h1 className={`text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 tracking-tight leading-tight transition-all duration-1000 ${
+  {/* Hero Content */}
+  <div className="relative z-10">
+    <LanguageToggle />
+    {/* Trusted badge */}
+    <div
+      className={`inline-block mb-3 sm:mb-4 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-[#1ABA7F]/20 text-[#1ABA7F] text-xs sm:text-sm font-semibold transition-all duration-500 ${
+        isVisible ? 'animate-in zoom-in-50 opacity-100' : 'opacity-0 scale-95'
+      }`}
+    >
+      <Shield className="inline-block w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+      {t('hero.trusted_platform')}
+    </div>
+
+    {/* Title */}
+    <h1
+      className={`text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white tracking-tight leading-tight transition-all duration-1000 ${
         isVisible ? 'animate-in slide-in-from-top opacity-100' : 'opacity-0 translate-y-8'
-      }`}>
-        {t('hero.title')} {' '}
-        <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#1ABA7F] to-[#225F91] relative">
-          Manzu
-          <Sparkles className="absolute -top-1 sm:-top-2 -right-4 sm:-right-8 w-4 h-4 sm:w-6 sm:h-6 text-[#1ABA7F] animate-pulse" />
-        </span>
-      </h1>
+      }`}
+    >
+      {t('hero.title')}{" "}
+      <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#1ABA7F] to-[#76D1F3] relative">
+        Manzu
+        <Sparkles className="absolute -top-1 sm:-top-2 -right-4 sm:-right-8 w-4 h-4 sm:w-6 sm:h-6 text-[#1ABA7F] animate-pulse" />
+      </span>
+    </h1>
 
-      <p className={`mt-4 sm:mt-4 text-base sm:text-lg md:text-xl text-gray-600 font-medium max-w-xl sm:max-w-2xl md:max-w-3xl mx-auto transition-all duration-1000 delay-300 ${
+    {/* Subtitle */}
+    <p
+      className={`mt-4 text-base sm:text-lg md:text-xl text-gray-200 font-medium max-w-xl sm:max-w-2xl md:max-w-3xl mx-auto transition-all duration-1000 delay-300 ${
         isVisible ? 'animate-in slide-in-from-bottom opacity-100' : 'opacity-0 translate-y-8'
-      }`}>
-        {t('hero.subtitle')}
-      </p>
-      
-      <div className={`mt-12 sm:mt-8 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 transition-all duration-1000 delay-500 ${
+      }`}
+    >
+      {t('hero.subtitle')}
+    </p>
+
+    {/* Buttons */}
+    <div
+      className={`mt-10 sm:mt-12 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 transition-all duration-1000 delay-500 ${
         isVisible ? 'animate-in zoom-in-50 opacity-100' : 'opacity-0 scale-95'
-      }`}>
+      }`}
+    >
+      <Button
+        onClick={onSearchClick}
+        className="group h-12 sm:h-12 px-6 sm:px-8 text-sm sm:text-base font-semibold rounded-lg bg-[#225F91]  text-white hover:bg-[#1A4971] hover:shadow-lg transition-all duration-300 relative overflow-hidden"
+        aria-label={t('hero.find_medications')}
+      >
+        <span className="relative z-10 flex items-center gap-1 sm:gap-2">
+          <Pill className="w-4 h-4 sm:w-5 sm:h-5" />
+          {t('hero.find_medications')}
+        </span>
+        <div className="absolute inset-0 bg-gradient-to-r from-[#1A4971] to-[#225F91] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      </Button>
+      
+      <Button
+        onClick={onUploadClick}
+        className="group h-12 sm:h-12 px-6 sm:px-8 text-sm sm:text-base font-semibold rounded-lg bg-transparent border-2 border-[#1ABA7F] text-[#1ABA7F] hover:bg-[#1ABA7F]/10 hover:shadow-lg transition-all duration-300 relative overflow-hidden"
+        aria-label={t('hero.upload_prescription')}
+      >
+        <span className="relative z-10 flex items-center gap-1 sm:gap-2">
+          <Zap className="w-4 h-4 sm:w-5 sm:h-5" />
+          {t('hero.upload_prescription')}
+        </span>
+        <div className="absolute inset-0 bg-[#1ABA7F]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      </Button>
+    </div>
+
+    {/* Extra options */}
+    <details
+      className={`mt-6 group transition-all duration-1000 delay-700 ${
+        isVisible ? 'animate-in slide-in-from-bottom opacity-100' : 'opacity-0 translate-y-8'
+      }`}
+    >
+      <summary className="text-xs sm:text-sm text-gray-300 cursor-pointer hover:text-[#1ABA7F] transition-colors duration-200 flex items-center justify-center gap-1">
+        <Globe className="w-3 h-3 sm:w-4 sm:h-4" />
+        {t('hero.other_access_methods')} 
+        <ChevronDown className="w-2 h-2 sm:w-3 sm:h-3 transition-transform duration-200 group-open:rotate-180" />
+      </summary>
+
+      <div className="mt-5 sm:mt-4 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 animate-in slide-in-from-top duration-300">
         <Button
-          onClick={onSearchClick}
-          className="group h-12 sm:h-12 px-6 sm:px-8 text-sm sm:text-base font-semibold rounded-lg bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-lg transition-all duration-300 relative overflow-hidden"
-          aria-label={t('hero.find_medications')}
+          asChild
+          className="group h-9 sm:h-10 px-4 sm:px-6 text-xs sm:text-sm font-semibold rounded-full bg-[#25D366] text-white hover:bg-[#20B85A] hover:shadow-lg transition-all duration-300 relative overflow-hidden"
+          aria-label={t('hero.whatsapp_search')}
         >
-          <span className="relative z-10 flex items-center gap-1 sm:gap-2">
-            <Pill className="w-4 h-4 sm:w-5 sm:h-5" />
-            {t('hero.find_medications')}
-          </span>
-          <div className="absolute inset-0 bg-gradient-to-r from-[#1A4971] to-[#225F91] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <a href="https://wa.me/+2341234567890?text=Find%20medication" target="_blank" rel="noopener noreferrer">
+            <span className="relative z-10 flex items-center gap-1 sm:gap-2">
+              <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+              {t('hero.whatsapp_search')}
+            </span>
+            <div className="absolute inset-0 bg-[#20B85A] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          </a>
         </Button>
-        
+
         <Button
-          onClick={onUploadClick}
-          className="group h-12 sm:h-12 px-6 sm:px-8 text-sm sm:text-base font-semibold rounded-lg bg-transparent border-2 border-[#1ABA7F] text-[#1ABA7F] hover:bg-[#1ABA7F]/10 hover:shadow-lg transition-all duration-300 relative overflow-hidden"
-          aria-label={t('hero.upload_prescription')}
+          className="group h-9 sm:h-10 px-4 sm:px-6 text-xs sm:text-sm font-semibold rounded-full bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-lg transition-all duration-300 relative overflow-hidden"
+          aria-label={t('hero.ussd_search')}
         >
           <span className="relative z-10 flex items-center gap-1 sm:gap-2">
-            <Zap className="w-4 h-4 sm:w-5 sm:h-5" />
-            {t('hero.upload_prescription')}
+            <Phone className="h-3 w-3 sm:h-4 sm:w-4" />
+            {t('hero.ussd_search')} (*123*456#)
           </span>
-          <div className="absolute inset-0 bg-[#1ABA7F]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <div className="absolute inset-0 bg-[#1A4971] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         </Button>
       </div>
-      
-      <details className={`mt-4 sm:mt-6 group transition-all duration-1000 delay-700 ${
-        isVisible ? 'animate-in slide-in-from-bottom opacity-100' : 'opacity-0 translate-y-8'
-      }`}>
-        <summary className="text-xs sm:text-sm text-gray-500 cursor-pointer hover:text-[#1ABA7F] transition-colors duration-200 flex items-center justify-center gap-1">
-          <Globe className="w-3 h-3 sm:w-4 sm:h-4" />
-          {t('hero.other_access_methods')} 
-          <ChevronDown className="w-2 h-2 sm:w-3 sm:h-3 transition-transform duration-200 group-open:rotate-180" />
-        </summary>
-        <div className="mt-5 sm:mt-4 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 animate-in slide-in-from-top duration-300">
-          <Button
-            asChild
-            className="group h-9 sm:h-10 px-4 sm:px-6 text-xs sm:text-sm font-semibold rounded-full bg-[#25D366] text-white hover:bg-[#20B85A] hover:shadow-lg transition-all duration-300 relative overflow-hidden"
-            aria-label={t('hero.whatsapp_search')}
-          >
-            <a href="https://wa.me/+2341234567890?text=Find%20medication" target="_blank" rel="noopener noreferrer">
-              <span className="relative z-10 flex items-center gap-1 sm:gap-2">
-                <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4" />
-                {t('hero.whatsapp_search')}
-              </span>
-              <div className="absolute inset-0 bg-[#20B85A] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            </a>
-          </Button>
-          <Button
-            className="group h-9 sm:h-10 px-4 sm:px-6 text-xs sm:text-sm font-semibold rounded-full bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-lg transition-all duration-300 relative overflow-hidden"
-            aria-label={t('hero.ussd_search')}
-          >
-            <span className="relative z-10 flex items-center gap-1 sm:gap-2">
-              <Phone className="h-3 w-3 sm:h-4 sm:w-4" />
-              {t('hero.ussd_search')} (*123*456#)
-            </span>
-            <div className="absolute inset-0 bg-[#1A4971] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          </Button>
-        </div>
-      </details>
-    </header>
+    </details>
+  </div>
+</header>
+
   );
 };
 
@@ -284,7 +319,7 @@ export default function HomePage() {
 
   return (
     <div
-      className={`min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 via-gray-50/50 to-white/80 pt-12 pb-48 sm:py-8 px-1 relative overflow-hidden transition-all duration-1000 ${
+      className={`min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 via-gray-50/50 to-white/80 pt-12 pb-48 sm:py-8 relative overflow-hidden transition-all duration-1000 ${
         isPageLoaded ? "opacity-100" : "opacity-0"
       }`}
     >
@@ -292,14 +327,13 @@ export default function HomePage() {
 
       <div className="absolute inset-0 bg-[url('/svg/pattern-dots.svg')] opacity-10 pointer-events-none animate-pulse sm:block" aria-hidden="true" />
 
-      <div className="w-full max-w-[95vw] sm:max-w-3xl lg:max-w-[90vw] xl:max-w-[85vw] mx-auto flex flex-col items-center px-1 sm:px-2">
-        <LanguageToggle />
+      <div className="w-full max-w-[100vw] lg:max-w-[100vw] xl:max-w-[100vw] mx-auto flex flex-col items-center">
+        
         <HeroSection onSearchClick={handleSearchClick} onUploadClick={handleUploadClick} />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 relative z-10">
+        <div className="sm:gap-4 px-3 relative z-10">
           {visibleSection === "search" && (
             <ServiceCard
-              ref={searchRef}
               title={t("services.search_medications")}
               icon={Pill}
               isActive={true}
@@ -314,20 +348,19 @@ export default function HomePage() {
               Find medications instantly and compare prices from verified pharmacies
             </p>
           </div>
-          <div className='mt-10'>
-              <SearchBar />
+          <div className='mt-10' >
+              <SearchBar ref={searchRef}/>
           </div>
             </ServiceCard>
           )}
 
           {visibleSection === "upload" && (
             <ServiceCard
-              ref={uploadRef}
               title={t("services.upload_prescription")}
               icon={Zap}
               gradient="from-[#225F91] to-[#1A4971]"
             >
-          <div className="text-center">
+          <div ref={uploadRef} className="text-center">
             <div className="inline-flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full bg-[#225F91]/10 text-[#225F91] text-xs sm:text-sm font-medium mb-2 sm:mb-3">
               <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
               24-Hour Processing

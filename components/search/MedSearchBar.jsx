@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, forwardRef } from 'react';
 import dynamic from 'next/dynamic';
 import { toast } from 'sonner';
 import { Button } from '../ui/button';
@@ -27,10 +27,11 @@ const SearchSkeleton = () => (
   </div>
 );
 
-export default function SearchBar() {
+const SearchBar = forwardRef((props, ref) => {
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [results, setResults] = useState([]);
+  const [defaultResults, setDefaultResults] = useState([]); // ✅ store baseline
   const [suggestions, setSuggestions] = useState([]);
   const [error, setError] = useState(null);
   const [cartItems, setCartItems] = useState([]);
@@ -78,32 +79,110 @@ export default function SearchBar() {
       });
   }, [t]);
 
-  const updateLgas = (state) => {
-    if (!geoData) return;
-    const stateData = geoData.find(s => s.state === state);
-    setLgas(stateData ? stateData.lgas.map(lga => ({ value: lga.name, label: lga.name })) : []);
+
+  function haversineDistance(lat1, lon1, lat2, lon2) {
+      const toRad = (deg) => (deg * Math.PI) / 180;
+      const R = 6371; // Earth radius in km
+      const dLat = toRad(lat2 - lat1);
+      const dLon = toRad(lon2 - lon1);
+
+      const a =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos(toRad(lat1)) *
+          Math.cos(toRad(lat2)) *
+          Math.sin(dLon / 2) ** 2;
+
+      return 2 * R * Math.asin(Math.sqrt(a)); // distance in km
+    }
+
+
+ function reverseGeocode(userLat, userLng, geoData) {
+      let closest = null;
+      let minDistance = Infinity;
+
+      geoData.forEach((state) => {
+        state.lgas.forEach((lga) => {
+          lga.wards.forEach((ward) => {
+            const dist = haversineDistance(
+              userLat, userLng,
+              ward.latitude, ward.longitude
+            );
+            if (dist < minDistance) {
+              minDistance = dist;
+              closest = {
+                state: state.state,
+                lga: lga.name,
+                ward: ward.name,
+                distance: dist,
+              };
+            }
+          });
+        });
+      });
+
+      return closest;
+    }
+   
+
+  useEffect(() => {
+  if (userLocation && geoData) {
+    const match = reverseGeocode(userLocation.lat, userLocation.lng, geoData);
+
+    if (match) {
+      setFilterState(match.state);
+      updateLgas(match.state, false); // populate LGAs for dropdown
+      setFilterLga(match.lga);
+      updateWards(match.state, match.lga, false); // populate Wards for dropdown
+      setFilterWard(match.ward);
+
+      console.log("Auto-populated filters:", match);
+    }
+  }
+}, [userLocation, geoData]);
+
+
+const updateLgas = (state, reset = true) => {
+  if (!geoData) return;
+  const stateData = geoData.find(s => s.state === state);
+  setLgas(stateData ? stateData.lgas.map(lga => ({ value: lga.name, label: lga.name })) : []);
+  if (reset) {
     setWards([]);
     setFilterLga('');
     setFilterWard('');
-  };
+  }
+};
 
-  const updateWards = (state, lga) => {
-    if (!geoData) return;
-    const stateData = geoData.find(s => s.state === state);
-    const lgaData = stateData?.lgas.find(l => l.name === lga);
-    setWards(lgaData ? lgaData.wards.map(ward => ({ value: ward.name, label: ward.name })) : []);
-    setFilterWard('');
-  };
+const updateWards = (state, lga, reset = true) => {
+  if (!geoData) return;
+  const stateData = geoData.find(s => s.state === state);
+  const lgaData = stateData?.lgas.find(l => l.name === lga);
+  setWards(lgaData ? lgaData.wards.map(ward => ({ value: ward.name, label: ward.name })) : []);
+  if (reset) setFilterWard('');
+};
 
-  const clearFilters = () => {
-    setFilterState('');
-    setFilterLga('');
-    setFilterWard('');
-    setSortBy('cheapest');
-    setLgas([]);
-    setWards([]);
-    if (searchTerm) handleSearch(searchTerm);
-  };
+
+const clearFilters = () => {
+  setFilterState('');
+  setFilterLga('');
+  setFilterWard('');
+  setSortBy('cheapest');
+  setLgas([]);
+  setWards([]);
+
+  // ✅ Restore original unfiltered results
+  setResults(defaultResults.length > 0 ? defaultResults : []);
+
+};
+
+useEffect(() => {
+  const noFilters = !filterState && !filterLga && !filterWard;
+
+  if (noFilters) {
+    // ✅ If no filters are left, reset back to the default results
+    setResults(defaultResults);
+  }
+}, [filterState, filterLga, filterWard, defaultResults]);
+
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -156,68 +235,103 @@ export default function SearchBar() {
     }
   };
 
-  const handleSearch = async (term) => {
-    try {
-      setError(null);
-      setIsSearching(true);
-      const queryParams = new URLSearchParams({ q: term });
-      if (userLocation) {
-        queryParams.append('lat', userLocation.lat);
-        queryParams.append('lng', userLocation.lng);
-        queryParams.append('radius', '10');
-      }
+const handleSearch = async (term, options = {}) => {
+  try {
+    setError(null);
+    setIsSearching(true);
+    const queryParams = new URLSearchParams({ q: term });
+
+    if (userLocation) {
+      queryParams.append('lat', userLocation.lat);
+      queryParams.append('lng', userLocation.lng);
+      queryParams.append('radius', '10');
+    }
+
+    if (!options.ignoreFilters) {
       if (filterState) queryParams.append('state', filterState);
       if (filterLga) queryParams.append('lga', filterLga);
       if (filterWard) queryParams.append('ward', filterWard);
-      queryParams.append('sortBy', sortBy);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/search?${queryParams.toString()}`);
-      if (!response.ok) throw new Error(t('errors.search_failed'));
-      const data = await response.json();
-      setResults(data);
-      setShowDropdown(false);
-      setFocusedSuggestionIndex(-1);
-      await fetchCart();
-      setSearchHistory(prev => {
-        const newHistory = [term, ...prev];
-        return [...new Set(newHistory)];
-      });
-      localStorage.setItem('searchHistory', JSON.stringify(searchHistory));
-    } catch (err) {
-      setError(err.message);
-      setResults([]);
-      toast.error(err.message);
-    } finally {
-      setIsSearching(false);
     }
-  };
 
-  const handleSelectMedication = async (med) => {
-    setSearchTerm(med.fullName);
+    queryParams.append('sortBy', sortBy);
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/search?${queryParams}`
+    );
+    if (!response.ok) throw new Error(t('errors.search_failed'));
+
+    const data = await response.json();
+    setResults(data);
+
+    // ✅ Save the "baseline" results only when filters are ignored
+    if (options.ignoreFilters || (!filterState && !filterLga && !filterWard)) {
+      setDefaultResults(data);
+    }
+
     setShowDropdown(false);
     setFocusedSuggestionIndex(-1);
-    try {
-      setError(null);
-      const queryParams = new URLSearchParams({ medicationId: med.id });
-      if (userLocation) {
-        queryParams.append('lat', userLocation.lat);
-        queryParams.append('lng', userLocation.lng);
-        queryParams.append('radius', '10');
-      }
-      if (filterState) queryParams.append('state', filterState);
-      if (filterLga) queryParams.append('lga', filterLga);
-      if (filterWard) queryParams.append('ward', filterWard);
-      queryParams.append('sortBy', sortBy);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/search?${queryParams.toString()}`);
-      if (!response.ok) throw new Error(t('errors.search_failed'));
-      const data = await response.json();
-      setResults(data);
-      await fetchCart();
-    } catch (err) {
-      setError(err.message);
-      setResults([]);
-      toast.error(err.message);
+
+    await fetchCart();
+    setSearchHistory(prev => {
+      const newHistory = [term, ...prev];
+      const uniqueHistory = [...new Set(newHistory)];
+      localStorage.setItem('searchHistory', JSON.stringify(uniqueHistory));
+      return uniqueHistory;
+    });
+
+  } catch (err) {
+    setError(err.message);
+    setResults([]);
+    toast.error(err.message);
+  } finally {
+    setIsSearching(false);
+  }
+};
+
+
+const handleSelectMedication = async (med) => {
+  const medName = med.fullName || med.displayName || med.genericName;
+
+  setSearchTerm(medName);
+  setShowDropdown(false);
+  setFocusedSuggestionIndex(-1);
+
+  try {
+    setError(null);
+    const queryParams = new URLSearchParams({ medicationId: med.id });
+
+    if (userLocation) {
+      queryParams.append('lat', userLocation.lat);
+      queryParams.append('lng', userLocation.lng);
+      queryParams.append('radius', '10');
     }
-  };
+    if (filterState) queryParams.append('state', filterState);
+    if (filterLga) queryParams.append('lga', filterLga);
+    if (filterWard) queryParams.append('ward', filterWard);
+
+    queryParams.append('sortBy', sortBy);
+
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/search?${queryParams.toString()}`);
+    if (!response.ok) throw new Error(t('errors.search_failed'));
+
+    const data = await response.json();
+    setResults(data);
+    await fetchCart();
+
+    // ✅ Store medication name in history
+    setSearchHistory(prev => {
+      const newHistory = [medName, ...prev];
+      const uniqueHistory = [...new Set(newHistory)];
+      localStorage.setItem('searchHistory', JSON.stringify(uniqueHistory));
+      return uniqueHistory;
+    });
+
+  } catch (err) {
+    setError(err.message);
+    setResults([]);
+    toast.error(err.message);
+  }
+};
+
 
 const handleAddToCart = async (medicationId, pharmacyId, medicationName) => {
   const quantity = 1;
@@ -271,7 +385,7 @@ console.log('Search results:', results);
       />
       
       {/* Search Input and Dropdown */}
-      <div className="relative w-full">
+      <div ref={ref} className="relative w-full">
         <SearchInput
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
@@ -331,7 +445,7 @@ console.log('Search results:', results);
                         setShowHistory(false);
                         handleSearch(term);
                       }}
-                      className="w-full px-3 sm:px-4 py-2 sm:py-3 text-left hover:bg-[#1ABA7F]/10 transition-colors duration-200 flex items-center gap-2 sm:gap-3 text-sm sm:text-base"
+                      className="w-full px-3 sm:px-4 py-3 sm:py-3 text-left hover:bg-[#1ABA7F]/10 transition-colors duration-200 flex items-center gap-2 sm:gap-3 text-sm sm:text-base"
                       role="option"
                     >
                       <History className="h-3 sm:h-4 w-3 sm:w-4 text-gray-400" />
@@ -343,7 +457,7 @@ console.log('Search results:', results);
 
               {/* Suggestions Dropdown */}
               {showDropdown && suggestions.length > 0 && (
-                <div>
+                <div className='pt-2 pb-4'>
                   {suggestions.map((suggestion, index) => (
                     <button
                       key={suggestion.id}
@@ -364,7 +478,7 @@ console.log('Search results:', results);
                         <img
                           src={suggestion.imageUrl}
                           alt={suggestion.fullName}
-                          className="w-8 h-8 object-cover rounded-sm p-0.5 border border-[#1ABA7F]/20 shadow-md transition-transform duration-300 hover:scale-105"
+                          className="w-16 h-16 object-cover rounded-sm p-0.5 border border-[#1ABA7F]/20 shadow-md transition-transform duration-300 hover:scale-105"
                         />
                       ) : (
                       <TrendingUp className="h-3 sm:h-4 w-3 sm:w-4 text-[#225F91]" />
@@ -449,4 +563,8 @@ console.log('Search results:', results);
       )}
     </div>
   );
-}
+});
+
+SearchBar.displayName = "SearchBar"; // needed for forwardRef
+
+export default SearchBar;

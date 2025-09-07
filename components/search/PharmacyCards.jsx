@@ -90,14 +90,26 @@ const PharmacyCards = ({ availability, medId, handleAddToCart, isInCart, display
           avail.distance_km === Math.min(...validDistances);
 
         return (
-          <div 
-            key={index} 
-            className={cn(
-              "p-4 rounded-xl bg-white/95 border border-[#1ABA7F]/10 transition-all duration-300",
-              isExpanded && "shadow-md"
-            )}
-          >
-            <div className="space-y-3">
+            <div 
+              key={index} 
+              className={cn(
+                "overflow-hidden rounded-xl bg-white/95 border border-[#1ABA7F]/10 transition-all duration-300",
+                isExpanded && "shadow-md"
+              )}
+            >
+              {/* 🔹 Cover Photo */}
+              {avail.logoUrl && (
+                <div className="relative w-full h-28 overflow-hidden rounded-t-xl">
+                  <img
+                    src={avail.logoUrl}
+                    alt={`${avail.pharmacyName} cover`}
+                    className="w-full h-full object-cover"
+                  />
+                  {/* Optional: gradient overlay for text readability */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                </div>
+              )}
+            <div className="p-4 space-y-3">
               <div className="flex justify-between items-start">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-2">
@@ -112,16 +124,19 @@ const PharmacyCards = ({ availability, medId, handleAddToCart, isInCart, display
                       <p className="text-sm text-gray-500 line-clamp-2">{avail.address}</p>
                     </div>
                   )}
+                   {avail.operatingHours && (() => {
+                      const formattedHours = formatOperatingHours(avail.operatingHours);
+                      if (!formattedHours) return null;
+                        return (
+                          <div className="flex items-start text-xs mb-2 gap-2">
+                            <span className="text-gray-500 min-w-[60px]">Operating Hours:</span>
+                            <span className={cn('font-bold', getOperatingHoursTextColor(avail.operatingHours))}>
+                            {formattedHours.status === 'unknown' ? avail.operatingHours : formattedHours.text}</span>
+                          </div>
+                        );
+                      })()}
 
                   <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-base font-bold text-gray-800">₦{avail.price.toLocaleString()}</span>
-                      {isCheapest && (
-                        <Badge variant="secondary" className="text-xs bg-[#1ABA7F]/20 text-[#1ABA7F] border-[#1ABA7F]/30">
-                          Cheapest
-                        </Badge>
-                      )}
-                    </div>
                     <div className="flex items-center gap-2">
                       <span className="text-sm text-gray-600">
                         {typeof avail.distance_km === 'number' && !isNaN(avail.distance_km)
@@ -133,6 +148,14 @@ const PharmacyCards = ({ availability, medId, handleAddToCart, isInCart, display
                           Closest
                         </Badge>
                       )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                       {isCheapest && (
+                        <Badge variant="secondary" className="text-xs bg-[#1ABA7F]/20 text-[#1ABA7F] border-[#1ABA7F]/30">
+                          Cheapest
+                        </Badge>
+                      )}
+                      <span className="text-base font-bold text-gray-800">₦{avail.price.toLocaleString()}</span>
                     </div>
                   </div>
 
@@ -201,17 +224,6 @@ const PharmacyCards = ({ availability, medId, handleAddToCart, isInCart, display
                             <span className="text-gray-800 font-mono text-xs">{avail.licenseNumber}</span>
                           </div>
                         )}
-                      {avail.operatingHours && (() => {
-                      const formattedHours = formatOperatingHours(avail.operatingHours);
-                      if (!formattedHours) return null;
-                        return (
-                          <div className="flex items-start gap-2">
-                            <span className="text-gray-600 min-w-[60px]">Operating Hours:</span>
-                            <span className={cn('font-bold', getOperatingHoursTextColor(avail.operatingHours))}>
-                            {formattedHours.status === 'unknown' ? avail.operatingHours : formattedHours.text}</span>
-                          </div>
-                        );
-                      })()}
                       </div>
                     </div>
                     <div className="space-y-2">
