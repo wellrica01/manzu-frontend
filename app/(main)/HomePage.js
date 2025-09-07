@@ -105,7 +105,7 @@ const HeroSection = ({ onSearchClick, onUploadClick }) => {
   return (
 <header 
   ref={heroRef} 
-  className="relative text-center mb-12 mt-2 sm:mb-12 lg:mb-16 px-4 sm:px-6 py-16 sm:py-20 lg:py-28 overflow-hidden"
+  className="relative text-center mt-2 px-4 sm:px-6 py-16 sm:py-20 lg:py-28 overflow-hidden"
 >
   {/* Background image */}
   <img
@@ -236,7 +236,7 @@ const ServiceCard = ({ title, icon: Icon, children, ref, className = "", isActiv
   return (
     <Card 
       ref={ref || cardRef} 
-      className={`relative bg-white/95 border-0 rounded-2xl mt-4 sm:rounded-3xl shadow-lg sm:shadow-xl overflow-hidden backdrop-blur-sm transition-all duration-500 hover:-translate-y-1 sm:hover:-translate-y-2 hover:shadow-xl sm:hover:shadow-2xl w-full max-w-[95vw] sm:max-w-xl lg:max-w-2xl xl:max-w-3xl mx-0 ring-2 ring-[#1ABA7F]/50 shadow-xl sm:shadow-2xl ${className}`}
+      className={`relative bg-white/95 border-0 rounded-2xl mt-16 mb-16 sm:rounded-3xl shadow-lg sm:shadow-xl overflow-hidden backdrop-blur-sm transition-all duration-500 hover:-translate-y-1 sm:hover:-translate-y-2 hover:shadow-xl sm:hover:shadow-2xl sm:max-w-3xl lg:max-w-4xl xl:max-w-5xl mx-auto ring-2 ring-[#1ABA7F]/50 ${className}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -266,7 +266,7 @@ const ServiceCard = ({ title, icon: Icon, children, ref, className = "", isActiv
             </Badge>
           )}
         </div>
-        <CardTitle className="text-2xl sm:text-xl font-bold text-[#225F91] tracking-tight text-center">
+        <CardTitle className="text-2xl sm:text-4xl font-bold text-[#225F91] tracking-tight text-center">
           {title}
         </CardTitle>
       </CardHeader>
@@ -319,7 +319,7 @@ export default function HomePage() {
 
   return (
     <div
-      className={`min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 via-gray-50/50 to-white/80 pt-12 pb-48 sm:py-8 relative overflow-hidden transition-all duration-1000 ${
+      className={`min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 via-gray-50/50 to-white/80 pt-12 pb-24 sm:py-8 relative overflow-hidden transition-all duration-1000 ${
         isPageLoaded ? "opacity-100" : "opacity-0"
       }`}
     >
@@ -327,11 +327,11 @@ export default function HomePage() {
 
       <div className="absolute inset-0 bg-[url('/svg/pattern-dots.svg')] opacity-10 pointer-events-none animate-pulse sm:block" aria-hidden="true" />
 
-      <div className="w-full max-w-[100vw] lg:max-w-[100vw] xl:max-w-[100vw] mx-auto flex flex-col items-center">
+      <div className="mx-auto flex-1 flex-col">
         
         <HeroSection onSearchClick={handleSearchClick} onUploadClick={handleUploadClick} />
 
-        <div className="sm:gap-4 px-3 relative z-10">
+        <div className="px-3 relative z-10">
           {visibleSection === "search" && (
             <ServiceCard
               title={t("services.search_medications")}
@@ -374,7 +374,6 @@ export default function HomePage() {
               </div>
             </ServiceCard>
           )}
-
           
         </div>
 

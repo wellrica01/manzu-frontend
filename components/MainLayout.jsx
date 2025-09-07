@@ -81,7 +81,7 @@ export default function MainLayout({ children }) {
         role="navigation"
         aria-label={t('nav.medication_navigation')}
       >
-        <div className="w-full max-w-[95vw] sm:max-w-3xl lg:max-w-[90vw] xl:max-w-[85vw] mx-auto px-1 sm:px-2 py-3 flex justify-between items-center">
+        <div className="w-full mx-auto px-2 sm:px-4 py-3 flex justify-between items-center">
           <Link
             href="/"
             className="flex items-center focus:outline-none focus:ring-2 focus:ring-[#1ABA7F] rounded-md p-1"
@@ -91,13 +91,16 @@ export default function MainLayout({ children }) {
               src="/logo_1.png"
               alt="Manzu Logo"
               width={100}
-              height={32}
-              className="h-8 w-auto object-contain"
+              height={48}
+              className="h-7 sm:h-8 w-auto object-contain"
               priority
             />
           </Link>
+        
+        
+         {/* Mobile Menu (hidden on md and up) */}
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 md:hidden">
             <Link
               href="/cart"
               className="relative p-2 text-[#225F91] hover:text-[#1ABA7F] focus:outline-none focus:ring-2 focus:ring-[#1ABA7F] rounded-md"
@@ -144,6 +147,9 @@ export default function MainLayout({ children }) {
               </SheetContent>
             </Sheet>
           </div>
+          
+
+          {/* Desktop Nav (hidden on mobile) */}
 
           <div className="hidden md:flex items-center gap-4 lg:gap-6">
             {navItems.map(({ label, icon: Icon, href, badge }) => (
@@ -166,7 +172,7 @@ export default function MainLayout({ children }) {
         </div>
       </nav>
 
-      <main className="flex-1 w-full mx-auto sm:px-2 pt-[10px] sm:pt-[68px] max-w-[100vw] sm:max-w-3xl lg:max-w-[100vw] xl:max-w-[100vw]">
+      <main className="w-full mx-auto pt-2 sm:pt-6">
         {children}
       </main>
 
@@ -204,10 +210,10 @@ export default function MainLayout({ children }) {
 </div>
 
 
-    <footer className="bg-[#225F91] text-white">
+ <footer className="bg-[#225F91] text-white">
   <div className="w-full max-w-[95vw] sm:max-w-3xl lg:max-w-[90vw] xl:max-w-[85vw] mx-auto px-1 sm:px-2 py-8">
 
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 items-center gap-4 sm:gap-6">
       {/* Quick Links */}
       <div className="flex flex-col items-center text-center">
         <h3 className="text-sm sm:text-base font-semibold text-white mb-3 flex items-center justify-center gap-2">

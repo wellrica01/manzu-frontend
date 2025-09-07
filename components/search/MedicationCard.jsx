@@ -43,17 +43,17 @@ const MedicationCard = ({ med, handleAddToCart, isInCart, isAddingToCart }) => {
                 )}
                 <div>
                   <span className="font-semibold text-gray-600">Generic Name:</span>
-                  <span className="ml-2 text-gray-600">{med.genericName || 'N/A'}</span>
+                  <span className="ml-2 text-gray-600 font-medium">{med.genericName || 'N/A'}</span>
                 </div>
                 {med.manufacturerName && (
                   <div>
                     <span className="text-gray-600 font-semibold">Manufacturer:</span>
-                    <span className="ml-2 text-gray-600">{med.manufacturerName || 'N/A'} - {med.manufacturerCountry}</span>
+                    <span className="ml-2 text-gray-600 font-medium">{med.manufacturerName || 'N/A'} - {med.manufacturerCountry}</span>
                   </div>
                 )}
                 <div>
                   <span className="font-semibold text-gray-600">NAFDAC Code:</span>
-                  <span className="ml-2 text-gray-600">{med.nafdacCode || 'N/A'}</span>
+                  <span className="ml-2 text-gray-600 font-medium">{med.nafdacCode || 'N/A'}</span>
                 </div>
               </div>
             </div>

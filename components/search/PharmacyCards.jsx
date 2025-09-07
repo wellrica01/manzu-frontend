@@ -129,8 +129,8 @@ const PharmacyCards = ({ availability, medId, handleAddToCart, isInCart, display
                       if (!formattedHours) return null;
                         return (
                           <div className="flex items-start text-xs mb-2 gap-2">
-                            <span className="text-gray-500 min-w-[60px]">Operating Hours:</span>
-                            <span className={cn('font-bold', getOperatingHoursTextColor(avail.operatingHours))}>
+                            <span className="text-gray-500 font-medium min-w-[60px]">Operating Hours:</span>
+                            <span className={cn('font-semibold', getOperatingHoursTextColor(avail.operatingHours))}>
                             {formattedHours.status === 'unknown' ? avail.operatingHours : formattedHours.text}</span>
                           </div>
                         );
