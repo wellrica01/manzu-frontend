@@ -96,49 +96,52 @@ const SearchBar = forwardRef((props, ref) => {
     }
 
 
- function reverseGeocode(userLat, userLng, geoData) {
-      let closest = null;
-      let minDistance = Infinity;
+function reverseGeocode(userLat, userLng, geoData) {
+  let closest = null;
+  let minDistance = Infinity;
 
-      geoData.forEach((state) => {
-        state.lgas.forEach((lga) => {
-          lga.wards.forEach((ward) => {
-            const dist = haversineDistance(
-              userLat, userLng,
-              ward.latitude, ward.longitude
-            );
-            if (dist < minDistance) {
-              minDistance = dist;
-              closest = {
-                state: state.state,
-                lga: lga.name,
-                ward: ward.name,
-                distance: dist,
-              };
-            }
-          });
-        });
-      });
+  geoData.forEach((state) => {
+    state.lgas.forEach((lga) => {
+      // Approximate LGA centroid from ward coordinates
+      const lgaCoords = lga.wards.map(w => [w.latitude, w.longitude]);
+      const avgLat = lgaCoords.reduce((sum, [lat]) => sum + lat, 0) / lgaCoords.length;
+      const avgLng = lgaCoords.reduce((sum, [, lng]) => sum + lng, 0) / lgaCoords.length;
 
-      return closest;
-    }
+      const dist = haversineDistance(userLat, userLng, avgLat, avgLng);
+      if (dist < minDistance) {
+        minDistance = dist;
+        closest = {
+          state: state.state,
+          lga: lga.name,
+          distance: dist,
+        };
+      }
+    });
+  });
+
+  return closest;
+}
+
    
 
-  useEffect(() => {
+useEffect(() => {
   if (userLocation && geoData) {
     const match = reverseGeocode(userLocation.lat, userLocation.lng, geoData);
 
     if (match) {
       setFilterState(match.state);
-      updateLgas(match.state, false); // populate LGAs for dropdown
+      updateLgas(match.state, false); 
       setFilterLga(match.lga);
-      updateWards(match.state, match.lga, false); // populate Wards for dropdown
-      setFilterWard(match.ward);
 
-      console.log("Auto-populated filters:", match);
+      // 🚫 Don’t auto-fill ward
+      updateWards(match.state, match.lga, true); // populate ward list
+      setFilterWard('');
+
+      console.log("Auto-populated filters (no ward):", match);
     }
   }
 }, [userLocation, geoData]);
+
 
 
 const updateLgas = (state, reset = true) => {
@@ -373,8 +376,19 @@ const isInCart = (medicationId, pharmacyId) => {
   ) || false;
 };
 
-// Add logging for results
-console.log('Search results:', results);
+
+const getLocationText = () => {
+  if (!results || results.length === 0) return null; // only show after search ran
+  if (!filterState && !filterLga && !filterWard) return null;
+
+  let text = `Filtered by Pharmacies near: ${filterState || ''}`;
+  if (filterLga) text += `, ${filterLga}`;
+  if (filterWard) text += ` (Ward: ${filterWard})`;
+
+  return text;
+};
+
+
 
   return (
     <div className="w-full space-y-4 sm:space-y-6">
@@ -505,6 +519,8 @@ console.log('Search results:', results);
           </div>
         ) : null}
       </div>
+
+      
       
       <FilterControls
         filterState={filterState}
@@ -528,24 +544,23 @@ console.log('Search results:', results);
         setShowFilters={setShowFilters}
       />
 
-      <hr className="border-t border-gray-300 my-4 sm:my-6" />
+      {/* Location context text */}
+      {getLocationText() && (
+        <p className="text-sm text-gray-600 mt-2 italic">
+          {getLocationText()}
+        </p>
+      )}
 
-      
+            
       <ErrorMessage error={error} />
       {isSearching ? (
         <SearchSkeleton />
       ) : (
         <div className="space-y-6 sm:space-y-8">
           {results.length === 0 && !error && searchTerm ? (
-            <div className="text-center py-8 sm:py-10 bg-white/95 border border-[#1ABA7F]/20 rounded-sm sm:rounded-2xl shadow-lg">
+            <div className="text-center px-1 py-8 sm:py-10 bg-white/95 border border-[#1ABA7F]/20 rounded-sm sm:rounded-2xl shadow-lg">
               <p className="text-gray-600 text-sm font-light sm:text-base leading-relaxed max-w-full sm:max-w-md mx-auto">
                 {t('search.no_results', { searchTerm })}
-              </p>
-            </div>
-          ) : results.length === 0 && !searchTerm ? (
-            <div className="text-center py-8 sm:py-10 bg-white/95 border border-[#1ABA7F]/20 rounded-sm sm:rounded-2xl shadow-lg">
-              <p className="text-gray-600 text-sm font-light sm:text-base leading-relaxed max-w-full sm:max-w-md mx-auto">
-                {t('search.enter_medication')}
               </p>
             </div>
           ) : (
@@ -556,6 +571,10 @@ console.log('Search results:', results);
                 handleAddToCart={handleAddToCart}
                 isInCart={isInCart}
                 isAddingToCart={isAddingToCart}
+                searchTerm={searchTerm}
+                state={filterState}
+                lga={filterLga}
+                ward={filterWard}
               />
             ))
           )}

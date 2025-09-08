@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
@@ -47,7 +47,7 @@ const PrescriptionInfoCard = ({ prescriptionMetadata, medications }) => {
         <ul className="space-y-3">
           {medications.map((med) => (
             <li key={med.id} className="border-b border-gray-200 pb-2">
-              <p className="text-gray-800 text-sm sm:text-base font-medium">{med.displayName}</p>
+              <p className="text-gray-800 text-sm sm:text-base font-medium">{med.fullName}</p>
               {med.manufacturer && (
                 <p className="text-xs text-gray-600">Manufacturer: {med.manufacturer}</p>
               )}
@@ -120,6 +120,7 @@ const FloatingCartSummary = ({ cartItemsCount, onViewCart }) => {
 
 const PrescriptionMedicationsPage = React.memo(() => {
   const [medications, setMedications] = useState([]);
+  const [defaultMedications, setDefaultMedications] = useState([]);
   const [prescriptionMetadata, setPrescriptionMetadata] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -159,59 +160,7 @@ const PrescriptionMedicationsPage = React.memo(() => {
       });
   }, []);
 
-  // Update LGAs when state changes
-  const updateLgas = useCallback((state) => {
-    if (!geoData) return;
-    const stateData = geoData.find(s => s.state === state);
-    setLgas(stateData ? stateData.lgas.map(lga => ({ value: lga.name, label: lga.name })) : []);
-    setWards([]);
-    setFilterLga('');
-    setFilterWard('');
-  }, [geoData]);
-
-  // Update wards when LGA changes
-  const updateWards = useCallback((state, lga) => {
-    if (!geoData) return;
-    const stateData = geoData.find(s => s.state === state);
-    const lgaData = stateData?.lgas.find(l => l.name === lga);
-    setWards(lgaData ? lgaData.wards.map(ward => ({ value: ward.name, label: ward.name })) : []);
-    setFilterWard('');
-  }, [geoData]);
-
-  // Filtering logic for pharmacies
-  const filterAndSortAvailability = useCallback((availability) => {
-    if (!availability) return [];
-    let filtered = [...availability];
-    switch (sortBy) {
-      case 'price':
-        filtered.sort((a, b) => a.price - b.price);
-        break;
-      case 'distance':
-        filtered.sort((a, b) => {
-          const aDist = typeof a.distance_km === 'number' ? a.distance_km : Infinity;
-          const bDist = typeof b.distance_km === 'number' ? b.distance_km : Infinity;
-          return aDist - bDist;
-        });
-        break;
-      case 'name':
-        filtered.sort((a, b) => a.pharmacyName.localeCompare(b.pharmacyName));
-        break;
-      default:
-        break;
-    }
-    return filtered;
-  }, [sortBy]);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined' && window.gtag) {
-      window.gtag('event', 'page_view', {
-        page_title: 'Prescription Medications',
-        page_path: `/prescriptions/${userIdentifier}`,
-      });
-    }
-  }, [userIdentifier]);
-
-  // Attempt to fetch geolocation, but don't set error on failure
+    // Attempt to fetch geolocation, but don't set error on failure
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -232,9 +181,113 @@ const PrescriptionMedicationsPage = React.memo(() => {
     }
   }, []);
 
+
+  function haversineDistance(lat1, lon1, lat2, lon2) {
+        const toRad = (deg) => (deg * Math.PI) / 180;
+        const R = 6371; // Earth radius in km
+        const dLat = toRad(lat2 - lat1);
+        const dLon = toRad(lon2 - lon1);
+  
+        const a =
+          Math.sin(dLat / 2) ** 2 +
+          Math.cos(toRad(lat1)) *
+            Math.cos(toRad(lat2)) *
+            Math.sin(dLon / 2) ** 2;
+  
+        return 2 * R * Math.asin(Math.sqrt(a)); // distance in km
+      }
+  
+  
+  function reverseGeocode(userLat, userLng, geoData) {
+    let closest = null;
+    let minDistance = Infinity;
+  
+    geoData.forEach((state) => {
+      state.lgas.forEach((lga) => {
+        // Approximate LGA centroid from ward coordinates
+        const lgaCoords = lga.wards.map(w => [w.latitude, w.longitude]);
+        const avgLat = lgaCoords.reduce((sum, [lat]) => sum + lat, 0) / lgaCoords.length;
+        const avgLng = lgaCoords.reduce((sum, [, lng]) => sum + lng, 0) / lgaCoords.length;
+  
+        const dist = haversineDistance(userLat, userLng, avgLat, avgLng);
+        if (dist < minDistance) {
+          minDistance = dist;
+          closest = {
+            state: state.state,
+            lga: lga.name,
+            distance: dist,
+          };
+        }
+      });
+    });
+  
+    return closest;
+  }
+  
+     
+  
+  useEffect(() => {
+    if (userLocation && geoData) {
+      const match = reverseGeocode(userLocation.lat, userLocation.lng, geoData);
+  
+      if (match) {
+        setFilterState(match.state);
+        updateLgas(match.state, false); 
+        setFilterLga(match.lga);
+  
+        // 🚫 Don’t auto-fill ward
+        updateWards(match.state, match.lga, true); // populate ward list
+        setFilterWard('');
+  
+        console.log("Auto-populated filters (no ward):", match);
+      }
+    }
+  }, [userLocation, geoData]);
+  
+
+  // Update LGAs when state changes
+  const updateLgas = useCallback((state) => {
+    if (!geoData) return;
+    const stateData = geoData.find(s => s.state === state);
+    setLgas(stateData ? stateData.lgas.map(lga => ({ value: lga.name, label: lga.name })) : []);
+    setWards([]);
+    setFilterLga('');
+    setFilterWard('');
+  }, [geoData]);
+
+  // Update wards when LGA changes
+  const updateWards = useCallback((state, lga) => {
+    if (!geoData) return;
+    const stateData = geoData.find(s => s.state === state);
+    const lgaData = stateData?.lgas.find(l => l.name === lga);
+    setWards(lgaData ? lgaData.wards.map(ward => ({ value: ward.name, label: ward.name })) : []);
+    setFilterWard('');
+  }, [geoData]);
+
+
+  useEffect(() => {
+    const noFilters = !filterState && !filterLga && !filterWard;
+  
+    if (noFilters) {
+      // ✅ If no filters are left, reset back to the default medications
+      setMedications(defaultMedications);
+    }
+  }, [filterState, filterLga, filterWard, defaultMedications]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.gtag) {
+      window.gtag('event', 'page_view', {
+        page_title: 'Prescription Medications',
+        page_path: `/prescriptions/${userIdentifier}`,
+      });
+    }
+  }, [userIdentifier]);
+
+
+
   const fetchPrescriptionOrder = useCallback(async () => {
     try {
-      setLoading(true);
+      //setLoading(true);
       const queryParams = new URLSearchParams();
       if (userLocation) {
         queryParams.append('lat', userLocation.lat);
@@ -254,6 +307,7 @@ const PrescriptionMedicationsPage = React.memo(() => {
       }
       const data = await response.json();
       setMedications(data.medications || []);
+      setDefaultMedications(data.medications || []);
       setPrescriptionMetadata(data.prescriptionMetadata || null);
     } catch (err) {
       setError(err.message || 'Failed to load prescription');
@@ -361,12 +415,13 @@ const PrescriptionMedicationsPage = React.memo(() => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 to-gray-50/30 pt-6 pb-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 via-gray-300/50 to-white/10 sm:py-8 pt-6 pb-12 px-2 sm:px-6 lg:px-8 relative opacity-100 overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 bg-[url('/svg/pattern-dots.svg')] opacity-10 pointer-events-none hidden sm:block" aria-hidden="true" />
     <div className="py-10 px-2 sm:px-4">
       <HeroSection userName={null} prescriptionMetadata={prescriptionMetadata} />
       <PrescriptionInfoCard prescriptionMetadata={prescriptionMetadata} medications={medications} />
+      <hr className="border-t border-gray-300 my-4 sm:my-6" />
       {medications.length > 0 && (
         <FilterControls
           sortBy={sortBy}
@@ -398,6 +453,8 @@ const PrescriptionMedicationsPage = React.memo(() => {
             setSortBy('price');
             setLgas([]);
             setWards([]);
+
+            setMedications(defaultMedications.length > 0 ? defaultMedications : []);
           }}
           handleSearch={() => {}}
           searchTerm={''}
@@ -428,6 +485,17 @@ const PrescriptionMedicationsPage = React.memo(() => {
           </Card>
         )}
         {prescriptionMetadata?.status === 'VERIFIED' && medications.length > 0 && medications.map((med) => (
+    <Card 
+    key={med.id}
+      className="bg-white/95 border-0 rounded-2xl mt-16 mb-16 sm:rounded-3xl shadow-lg sm:shadow-xl overflow-hidden backdrop-blur-sm transition-all duration-500 hover:-translate-y-1 sm:hover:-translate-y-2 mx-auto ring-2 ring-[#1ABA7F]/50"
+    >
+      <div className="absolute inset-0 bg-gradient-to-br from-[#1ABA7F] to-[#225F91] opacity-5 transition-opacity duration-300 pointer-events-none" />
+
+      <div className="absolute top-0 left-0 w-8 sm:w-12 h-8 sm:h-12 bg-gradient-to-br from-[#1ABA7F]/10 to-[#225F91]/10 rounded-br-2xl sm:rounded-br-3xl" />
+      <div className="absolute top-3 sm:top-4 right-3 sm:right-4">
+        <div className="w-1.5 sm:w-2 h-1.5 sm:h-2 bg-gradient-to-r from-[#1ABA7F] to-[#225F91] rounded-full animate-pulse" />
+      </div>
+      <CardContent className="p-3 sm:p-6">
           <MedicationCard
             key={med.id}
             med={med}
@@ -435,6 +503,8 @@ const PrescriptionMedicationsPage = React.memo(() => {
             isInCart={isInCart}
             isAddingToCart={isAddingToCart}
           />
+          </CardContent>
+          </Card>
         ))}
       </div>
       <FloatingCartSummary

@@ -226,10 +226,10 @@ export default function PrescriptionUploadForm() {
             {t('upload.success_message_end')}
           </p>
 
-          <DialogFooter className="mt-2 sm:mt-8 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
+          <DialogFooter className="p-2 sm:mt-8 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
             <Button
               asChild
-              className="h-10 sm:h-12 px-4 sm:px-6 text-sm sm:text-base font-semibold rounded-full bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_15px_rgba(34,95,145,0.5)] transition-all duration-300"
+              className="h-12 sm:h-12 px-4 sm:px-6 text-sm sm:text-base font-semibold rounded-lg bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_15px_rgba(34,95,145,0.5)] transition-all duration-300"
               aria-label={t('upload.track_order')}
             >
               <Link href="/check-prescription-status">Check Status</Link>
@@ -237,7 +237,7 @@ export default function PrescriptionUploadForm() {
                <Button
               variant="outline"
               onClick={handleUploadAnother}
-              className="h-10 sm:h-12 px-4 sm:px-6 text-sm sm:text-base font-semibold rounded-full border-[#1ABA7F] text-[#1ABA7F] hover:bg-[#1ABA7F]/10 hover:shadow-[0_0_10px_rgba(26,186,127,0.3)] transition-all duration-300"
+              className="h-12 sm:h-12 px-4 sm:px-6 text-sm sm:text-base font-semibold rounded-lg border-[#1ABA7F] text-[#1ABA7F] hover:bg-[#1ABA7F]/10 hover:shadow-[0_0_10px_rgba(26,186,127,0.3)] transition-all duration-300"
               aria-label={t('upload.upload_another')}
             >
               Close

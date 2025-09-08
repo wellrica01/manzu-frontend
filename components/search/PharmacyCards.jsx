@@ -1,11 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, HospitalIcon } from 'lucide-react';
+import { MapPin, HospitalIcon, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatOperatingHours, getOperatingHoursTextColor } from '@/lib/pharmacyUtils';
 
-const PharmacyCards = ({ availability, medId, handleAddToCart, isInCart, displayName, isAddingToCart }) => {
+const PharmacyCards = ({ availability, medId, handleAddToCart, isInCart, displayName, isAddingToCart, state, lga, ward }) => {
   const [expandedCard, setExpandedCard] = useState(null);
   const [sortOption, setSortOption] = useState('default'); // 🔹 default = backend smart order
 
@@ -30,21 +30,56 @@ const PharmacyCards = ({ availability, medId, handleAddToCart, isInCart, display
 
   if (!availability || availability.length === 0) {
     return (
-      <div className="block sm:hidden text-center py-8">
-        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <MapPin className="h-8 w-8 text-gray-400" />
-        </div>
-        <p className="text-gray-500 text-lg font-medium">Not available at any verified pharmacy</p>
-        <p className="text-gray-400 text-sm mt-1">Try adjusting your location or filters</p>
+<div className="block sm:hidden text-center py-8">
+      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <MapPin className="h-8 w-8 text-gray-400" />
       </div>
+      <p className="text-gray-500 text-base font-medium">
+        No pharmacies found for {searchTerm}
+      </p>
+      
+      {(state || lga || ward) && (
+        <p className="text-gray-400 text-base mt-2 italic">
+          Location: {state}{lga ? `, ${lga}` : ''}{ward ? ` (Ward: ${ward})` : ''}
+        </p>
+      )}
+      
+      <p className="text-gray-400 text-sm mt-3">
+        Try another location
+      </p>
+    </div>
     );
   }
+
+  if (!availability || availability.length === 0) {
+  return (
+    <div className="block sm:hidden text-center py-8">
+      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <MapPin className="h-8 w-8 text-gray-400" />
+      </div>
+      <p className="text-gray-500 text-lg font-medium">
+        No verified pharmacies found for this medication
+      </p>
+      
+      {(state || lga || ward) && (
+        <p className="text-gray-400 text-sm mt-2 italic">
+          in {state}{lga ? `, ${lga}` : ''}{ward ? ` (Ward: ${ward})` : ''}
+        </p>
+      )}
+      
+      <p className="text-gray-400 text-sm mt-3">
+        Try adjusting your location or filters
+      </p>
+    </div>
+  );
+}
+
 
   return (
     <div className="block sm:hidden space-y-4">
       {/* 🔹 Sorting buttons */}
 
-<div className="flex flex-wrap gap-2 mb-4">
+<div className="flex flex-wrap gap-2 mb-6">
   <Button
     variant={sortOption === 'default' ? 'default' : 'outline'}
     onClick={() => setSortOption('default')}
@@ -68,7 +103,7 @@ const PharmacyCards = ({ availability, medId, handleAddToCart, isInCart, display
   </Button>
 </div>
 
-<div className="mb-4 text-sm text-gray-600 font-medium">
+<div className="mb-5 text-sm text-gray-600 font-medium">
   {sortOption === 'default' && "Get The Best Deals"}
   {sortOption === 'cheapest' && "Sorted by Cheapest"}
   {sortOption === 'closest' && "Sorted by Closest"}
@@ -113,34 +148,35 @@ const PharmacyCards = ({ availability, medId, handleAddToCart, isInCart, display
               <div className="flex justify-between items-start">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-2">
-                    <HospitalIcon className="h-4 w-4 text-gray-400" />
+                    <HospitalIcon className="h-5 w-5 text-gray-400" />
                     <h3 className="text-base font-semibold text-gray-900 truncate">
                       {avail.pharmacyName}
                     </h3>
                   </div>
                   {avail.address && (
                     <div className="flex items-start gap-1 mb-2">
-                      <MapPin className="h-3 w-3 text-gray-400 mt-0.5 flex-shrink-0" />
+                      <MapPin className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
                       <p className="text-sm text-gray-500 line-clamp-2">{avail.address}</p>
                     </div>
                   )}
-                   {avail.operatingHours && (() => {
-                      const formattedHours = formatOperatingHours(avail.operatingHours);
-                      if (!formattedHours) return null;
-                        return (
-                          <div className="flex items-start text-xs mb-2 gap-2">
-                            <span className="text-gray-500 font-medium min-w-[60px]">Operating Hours:</span>
-                            <span className={cn('font-semibold', getOperatingHoursTextColor(avail.operatingHours))}>
-                            {formattedHours.status === 'unknown' ? avail.operatingHours : formattedHours.text}</span>
-                          </div>
-                        );
-                      })()}
+                  {avail.operatingHours && (() => {
+                    const formattedHours = formatOperatingHours(avail.operatingHours);
+                    if (!formattedHours) return null;
+                    return (
+                      <div className="flex items-center mb-2 gap-1">
+                        <span className="text-gray-500 text-xs font-semibold min-w-[60px]">Opening Hours:</span>
+                        <span className={cn('text-xs font-medium', getOperatingHoursTextColor(avail.operatingHours))}>
+                          {formattedHours.text}
+                        </span>
+                      </div>
+                    );
+                  })()}
 
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-between mt-4 mb-3">
+                    <div className="flex flex-col items-center gap-2">
                       <span className="text-sm text-gray-600">
                         {typeof avail.distance_km === 'number' && !isNaN(avail.distance_km)
-                          ? `${avail.distance_km.toFixed(1)} km`
+                          ? `${avail.distance_km.toFixed(1)} km away`
                           : 'N/A'}
                       </span>
                       {isClosest && (
@@ -149,17 +185,17 @@ const PharmacyCards = ({ availability, medId, handleAddToCart, isInCart, display
                         </Badge>
                       )}
                     </div>
-                    <div className="flex items-center gap-2">
-                       {isCheapest && (
+                    <div className="flex flex-col items-center gap-2">
+                      <span className="text-base font-bold text-gray-800">₦{avail.price.toLocaleString()}</span>
+                      {isCheapest && (
                         <Badge variant="secondary" className="text-xs bg-[#1ABA7F]/20 text-[#1ABA7F] border-[#1ABA7F]/30">
                           Cheapest
                         </Badge>
                       )}
-                      <span className="text-base font-bold text-gray-800">₦{avail.price.toLocaleString()}</span>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-center gap-2">
+                  <div className="flex items-center justify-center gap-4">
                    <Button
                       variant="outline"
                       size="sm"

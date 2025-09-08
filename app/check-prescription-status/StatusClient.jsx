@@ -122,24 +122,22 @@ export default function StatusCheck() {
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 to-gray-50/30 relative overflow-hidden">
       <div className="absolute inset-0 bg-[url('/svg/pattern-dots.svg')] opacity-10 pointer-events-none hidden sm:block" aria-hidden="true" />
       <div className="flex-1 py-12 px-5 sm:px-6">
-        <h1 className="text-4xl sm:text-5xl font-bold text-[#225F91] mb-8 text-center tracking-tight animate-in slide-in-from-top duration-700">
+        <header className="text-3xl sm:text-5xl font-bold text-[#225F91] mb-8 text-center tracking-tight animate-in slide-in-from-top duration-700">
           Check Your Prescription Status
-        </h1>
-      <Card className="relative bg-white/95 border border-[#1ABA7F]/20 rounded-lg shadow-lg sm:p-6 transition-all duration-500 hover:ring-2 hover:ring-[#1ABA7F]/30">
+        </header>
+      <Card className="relative bg-white/50 border border-[#1ABA7F]/20 rounded-lg shadow-lg sm:p-6 transition-all duration-500 hover:ring-2 hover:ring-[#1ABA7F]/30">
             <div className="absolute top-0 left-0 w-16 h-16 bg-[#1ABA7F]/20 rounded-br-3xl" />
             <CardContent className="p-6 sm:p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <Label htmlFor="identifier" className="text-xs sm:text-sm font-semibold text-[#225F91] uppercase tracking-wider">
-                Email or Phone Number
-                </Label>
+
                 <Input
                   id="identifier"
                 type="text"
                   value={form.identifier}
                   onChange={handleInputChange}
                 placeholder="Enter your email or phone number"
-                className="mt-4 h-12 text-sm font-medium rounded-lg border-[#1ABA7F]/20 bg-white/95 text-gray-900 placeholder:text-gray-400 focus:ring-0 focus:border-[#1ABA7F]/50 focus:shadow-[0_0_15px_rgba(26,186,127,0.3)] transition-all duration-300"
+                className="mt-4 h-12 text-sm font-medium rounded-lg border-[#1ABA7F]/50 bg-white/95 text-gray-900 placeholder:text-gray-400 focus:ring-0 focus:border-[#1ABA7F]/50 focus:shadow-[0_0_15px_rgba(26,186,127,0.3)] transition-all duration-300"
                 required
                 />
               </div>
@@ -164,7 +162,7 @@ export default function StatusCheck() {
                 <>
                   <CheckCircle className="h-10 w-10 text-[#1ABA7F] mx-auto mb-2" />
                   <p className="text-lg font-semibold text-[#225F91] mb-2">Your prescription is under review.</p>
-                  <p className="text-base text-gray-600 mb-4">You’ll be notified when it’s ready to order.</p>
+                  <p className="text-base text-gray-600 mb-4">You’ll be notified when it’s ready.</p>
                 </>
               ) : (
                 <>

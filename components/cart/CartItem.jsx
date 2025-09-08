@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogTrigger, DialogTitle } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+
 import { 
   Plus, 
   Minus, 
@@ -19,7 +22,8 @@ import {
   Building,
   Box,
   Hospital,
-  HouseIcon
+  HouseIcon,
+  PillIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -106,88 +110,96 @@ const CartItem = ({
   return (
     <Card
       className={cn(
-        "relative bg-white/95 backdrop-blur-sm border rounded-2xl shadow-md transition-all duration-200 hover:shadow-lg group overflow-hidden flex flex-col gap-0 p-0",
+        "relative bg-white/95 backdrop-blur-sm border rounded-2xl shadow-md transition-all duration-200 hover:shadow-lg group overflow-hidden flex flex-col gap-0 pb-2",
         itemStatus.borderColor
       )}
       aria-label={`Cart item: ${item.medication.name}`}
     >
-     <div className="flex items-center gap-4 p-5 pb-0">
-    
-        {/* Details Section */}
-        <div className="flex-1 min-w-0 flex flex-col gap-1">
-          <div className="flex items-center gap-2 mb-0.5">
-            <h3 className="font-bold text-[#225F91] text-lg" title={item.medication.displayName}>{item.medication.displayName}</h3>
-          </div>
-          {item.medication.genericName && (
-            <div className="text-sm text-gray-600 italic mb-0.5">
-              Generic: {item.medication.genericName}
-            </div>
-          )}
-         {item.medication.description && (
-            <div className="text-sm text-gray-600 mb-0.5 line-clamp-2">
-              {item.medication.description}
-            </div>
-          )}
-          {/* Status & Badges */}
-          <div className="flex items-center gap-2 mt-1 mb-1.5">
-            {item.medication.prescriptionRequired ? (
-              <Badge className="bg-purple-50 text-purple-700 border-purple-200 text-xs font-medium px-2 py-0.5 rounded-md flex items-center gap-1">
-                <FileText className="h-3 w-3 mr-1" />
-                Prescription
-              </Badge>
-            ) : (
-              <Badge className="bg-[#225F91]/10 text-[#225F91] border-[#225F91]/20 text-xs font-medium px-2 py-0.5 rounded-md flex items-center gap-1">
-                <Package className="h-3 w-3 mr-1" />
-                OTC
-              </Badge>
-            )}
-          </div>
-          {/* Meta with Icons */}
-          <div className="flex flex-wrap items-center gap-3 text-xs text-gray-600 mb-0.5">
-            {item.medication.packSizeQuantity && (
-              <div className="flex items-center gap-1">
-                <Box className="h-3 w-3 text-[#225F91]" />
-                <span>Pack: {item.medication.packSizeQuantity} {item.medication.packSizeUnit || ''}</span>
-              </div>
-            )}
-            {item.medication.manufacturerName && (
-              <div className="flex items-center gap-1">
-                <HouseIcon className="h-3 w-3 text-[#225F91]" />
-                <span className="truncate">Manufacturer: {item.medication.manufacturerName || 'N/A'} - {item.medication.manufacturerCountry}</span>
-              </div>
-            )}
-            {item.medication.nafdacCode && (
-              <div className="flex items-center gap-1 text-gray-600">
-                <FileText className="h-3 w-3 text-[#225F91]" />
-                <span>NAFDAC Code: {item.medication.nafdacCode}</span>
-              </div>
-            )}
-          </div>
-        </div>
-          {/* Image & Status Overlay */}
-        <div className="relative w-20 h-20 flex-shrink-0">
-          <div className="w-20 h-20 bg-gradient-to-br from-[#1ABA7F]/20 to-[#225F91]/20 rounded-xl flex items-center justify-center shadow-sm">
-            {item.medication.imageUrl ? (
-              <img 
-                src={item.medication.imageUrl} 
-                alt={item.medication.name}
-                className="w-16 h-16 object-cover rounded-lg border border-gray-100"
-              />
-            ) : (
-              <Pill className="h-10 w-10 text-[#225F91]" />
-            )}
-          </div>
-          {/* Status Indicator Overlay */}
-          <div className={cn(
-            "absolute -top-2 -right-2 w-7 h-7 rounded-full flex items-center justify-center border-2 shadow bg-white",
-            itemStatus.bgColor,
-            itemStatus.borderColor
-          )} title={itemStatus.text}>
-            <StatusIcon className="h-4 w-4" />
-          </div>
-        </div>
+  <div className="flex justify-center items-center px-4">
+  <div className='flex flex-col gap-1'>
+  <h3 
+    className="text-lg sm:text-3xl font-bold text-[#225F91] tracking-tight leading-tight" 
+    title={item.medication.displayName}
+  >
+    {item.medication.displayName}
+  </h3>
+  <div className="my-1">
+    {item.medication.prescriptionRequired ? (
+    <Badge className="bg-purple-50 text-purple-700 border-purple-200 text-xs font-medium px-2 py-0.5 rounded-md flex items-center gap-1">
+      <FileText className="h-3 w-3 mr-1" />
+      Prescription
+    </Badge>
+  ) : (
+    <Badge className="bg-[#225F91]/10 text-[#225F91] border-[#225F91]/20 text-xs font-medium px-2 py-0.5 rounded-md flex items-center gap-1">
+      <Package className="h-3 w-3 mr-1" />
+      OTC
+    </Badge>
+  )}
+  </div>
+  </div>
+      
+  {/* Image */}
+  <div className="relative w-24 h-24 sm:w-32 sm:h-32 flex">
+    <div className="w-20 h-20 bg-gradient-to-br from-[#1ABA7F]/20 to-[#225F91]/20 rounded-xl flex items-center justify-center shadow-sm">
+      {item.medication.imageUrl ? (
+        <Dialog>
+        <DialogTrigger asChild>
+          <img 
+          src={item.medication.imageUrl} 
+          alt={item.medication.displayName}
+          className="w-18 h-18 object-cover text-xs rounded-lg border border-gray-100"
+        />
+              </DialogTrigger>
+              <DialogContent className="max-w-3xl">
+                <VisuallyHidden>
+                  <DialogTitle>{item.medication.displayName}</DialogTitle>
+                </VisuallyHidden>
+                <img
+                  src={item.medication.imageUrl}
+                  alt={item.medication.displayName}
+                  className="w-full h-auto rounded-lg shadow-lg"
+                />
+              </DialogContent>
+            </Dialog>
+      ) : (
+        <Pill className="h-10 w-10 text-[#225F91]" />
+      )}
+    </div>
+  </div>
+</div>
+
+
+      
+    {/* Meta with Icons */}
+    <div className="flex flex-col gap-2 px-3 text-xs text-gray-600 mb-0.5">
+    {item.medication.genericName && (
+      <div className="flex items-center gap-1 text-gray-600">
+        <PillIcon className="h-3 w-3 text-[#225F91]" />
+        Generic Name: {item.medication.genericName}
       </div>
-      {/* Divider */}
+    )}
+        {item.medication.manufacturerName && (
+        <div className="flex items-center gap-1">
+          <HouseIcon className="h-3 w-3 text-[#225F91]" />
+          <span className="truncate">
+            Manufacturer: {item.medication.manufacturerName || 'N/A'} - {item.medication.manufacturerCountry}
+          </span>
+        </div>
+      )}
+      {item.medication.nafdacCode && (
+        <div className="flex items-center gap-1 text-gray-600">
+          <FileText className="h-3 w-3 text-[#225F91]" />
+          <span>NAFDAC Code: {item.medication.nafdacCode}</span>
+        </div>
+      )}
+       {item.medication.packSizeQuantity && (
+        <div className="flex items-center gap-1">
+          <Box className="h-3 w-3 text-[#225F91]" />
+          <span>Pack: {item.medication.packSizeQuantity} {item.medication.packSizeUnit || ''}</span>
+        </div>
+      )}
+    </div>
+
       {/* Price Section */}
       <div className="flex justify-end">
         <div className="p-3 flex flex-col min-w-[110px] items-end">
@@ -201,7 +213,9 @@ const CartItem = ({
           </div>
         </div>
       </div>
+
       <div className="border-t border-gray-100 my-0.5" />
+
       {/* Actions Section */}
       <div className="flex items-center justify-between px-5 py-3 bg-white/80 rounded-b-2xl">
         <div className="flex items-center gap-2">

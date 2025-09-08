@@ -172,7 +172,7 @@ export default function MainLayout({ children }) {
         </div>
       </nav>
 
-      <main className="w-full mx-auto pt-2 sm:pt-6">
+      <main className="w-full mx-auto pt-1 sm:pt-6">
         {children}
       </main>
 

@@ -14,7 +14,7 @@ const customSelectStyles = {
   }),
   valueContainer: (provided) => ({
     ...provided,
-    padding: "0 6px",
+    padding: "6px 6px",
     fontSize: "0.8rem", // smaller text inside input
   }),
   input: (provided) => ({
@@ -87,10 +87,22 @@ const FilterControls = ({
     setActiveFilters(count);
   }, [filterState, filterLga, filterWard]);
 
+  const formatLocationName = (state, lga, ward) => {
+  if (!state && !lga && !ward) return "All Locations";
+  let name = state || "";
+  if (lga) name += `, ${lga}`;
+  if (ward) name += ` (Ward: ${ward})`;
+  return name;
+}
+
+
   const saveCurrentFilter = () => {
+
+    const locationName = formatLocationName(filterState, filterLga, filterWard);
+
     const currentFilter = {
       id: Date.now(),
-      name: `Filter ${savedFilters.length + 1}`,
+      name: locationName,
       filterState,
       filterLga,
       filterWard,
@@ -131,7 +143,7 @@ const applySavedFilter = async (filter) => {
   };
 
   return (
-    <div className="space-y-3 mt-6 mb-12">
+    <div className="space-y-3 mt-6 mb-10">
       {/* Saved Filters row */}
       {savedFilters.length > 0 && (
         <div className="flex flex-wrap items-center gap-2">
@@ -158,7 +170,7 @@ const applySavedFilter = async (filter) => {
       )}
 
       {/* Filters inline */}
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-wrap justify-center gap-2">
   <div className="flex-1 min-w-[120px] max-w-[200px]">
     <Select
       inputId="state-filter"

@@ -319,7 +319,7 @@ export default function HomePage() {
 
   return (
     <div
-      className={`min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 via-gray-50/50 to-white/80 pt-12 pb-24 sm:py-8 relative overflow-hidden transition-all duration-1000 ${
+      className={`min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 via-gray-300/50 to-white/10 pt-12 pb-24 sm:py-8 relative overflow-hidden transition-all duration-1000 ${
         isPageLoaded ? "opacity-100" : "opacity-0"
       }`}
     >

@@ -9,20 +9,15 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { 
   User, 
-  Mail, 
-  Phone, 
-  MapPin, 
   Truck, 
-  Store, 
-  CheckCircle, 
-  AlertCircle,
   Package,
   Shield,
   Info,
   CreditCard,
-  ArrowRight,
   Loader2,
-  HospitalIcon
+  HospitalIcon,
+  Map,
+  MapPin
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -33,8 +28,8 @@ const CheckoutForm = ({
   handleDeliveryMethodChange,
   handleCheckout,
   segments,
-  getUniquePharmacyAddresses,
-  loading,
+  getUniquePharmacies,
+  loading
 }) => {
   const [showUploadStatus, setShowUploadStatus] = useState(false);
 
@@ -247,22 +242,35 @@ const CheckoutForm = ({
             </div>
           )}
 
-          {/* Pickup Information */}
-          {form.deliveryMethod === 'PICKUP' && (
-            <div className="p-2 bg-blue-50 rounded-xl border border-blue-200">
-              <div className="flex items-start gap-3">
-                <Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                <div className="text-sm text-blue-800">
-                  <p className="font-medium mb-1">Pickup Locations</p>
-                  <div className="space-y-1">
-                    {getUniquePharmacyAddresses().map((address, index) => (
-                      <p key={index} className="text-blue-700">{address}</p>
-                    ))}
-                  </div>
-                </div>
-              </div>
+      {/* Pickup Information */}
+      {form.deliveryMethod === 'PICKUP' && (
+        <div className="p-3 bg-blue-50 rounded-xl border border-blue-200">
+          <div className="flex flex-col gap-2">
+            {/* Icon + Heading */}
+            <div className="flex items-center gap-2">
+              <MapPin className="h-5 w-5 text-blue-600 flex-shrink-0" />
+              <p className="text-sm text-blue-800 font-medium">Pickup Locations</p>
             </div>
-          )}
+
+            {/* Custom bullet-style list */}
+            <div className="p-1 flex flex-col gap-1 text-blue-700">
+              {getUniquePharmacies().map((pharmacy, index) => (
+                <div key={index} className="p-2 flex items-start gap-3 border-2">
+                  {/* Custom bullet (small circle) */}
+                  <HospitalIcon className="h-5 w-5" />
+                  <p className="text-sm">
+                    {pharmacy.name} at {pharmacy.address}
+                  </p>
+
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+
+
 
           <Separator />
 

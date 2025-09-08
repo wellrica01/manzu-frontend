@@ -148,7 +148,7 @@ const SearchInput = ({
       <Input
         ref={inputRef}
         type="text"
-        placeholder="Search for medications..."
+        placeholder="Enter name of the medication..."
         value={searchTerm}
         onChange={handleInputChange}
         onKeyDown={handleKeyDown}

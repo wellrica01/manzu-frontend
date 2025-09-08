@@ -172,10 +172,26 @@ export default function Checkout() {
 
   const calculateItemPrice = (item) => item.quantity * item.price;
 
-  const getUniquePharmacyAddresses = () => {
-    const addresses = [...new Set(segments.readyForCheckout.map((item) => item.pharmacy?.address).filter(Boolean))];
-    return addresses;
-  };
+// Get unique pharmacies by combining name + address
+const getUniquePharmacies = () => {
+  const pharmacies = segments.readyForCheckout
+    .map((item) => item.pharmacy)
+    .filter(Boolean);
+
+  // Deduplicate by pharmacy name + address
+  const unique = new Map();
+  pharmacies.forEach((pharmacy) => {
+    const key = `${pharmacy.name}-${pharmacy.address}`;
+    if (!unique.has(key)) {
+      unique.set(key, pharmacy);
+    }
+  });
+
+  return [...unique.values()];
+};
+
+
+
 
   const PaymentError = () => (
     <Card className="bg-red-50 border-red-200 w-full max-w-[95vw] sm:max-w-xl mx-auto">
@@ -264,8 +280,7 @@ export default function Checkout() {
             className="border-[#1ABA7F]/20 text-[#225F91] hover:bg-[#1ABA7F]/10 h-10 px-4"
             aria-label="Back to Cart"
           >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
+            <ArrowLeft className="h-6 w-6" />
           </Button>
           <h2 className="text-lg sm:text-2xl font-bold text-[#225F91] tracking-tight">Checkout</h2>
           <div className="w-12"></div> {/* Spacer for alignment */}
@@ -299,7 +314,7 @@ export default function Checkout() {
                   handleDeliveryMethodChange={handleDeliveryMethodChange}
                   handleCheckout={handleCheckout}
                   segments={segments}
-                  getUniquePharmacyAddresses={getUniquePharmacyAddresses}
+                  getUniquePharmacies={getUniquePharmacies}
                   loading={loading}
                 />
               </div>

@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { formatOperatingHours, getOperatingHoursTextColor } from '@/lib/pharmacyUtils';
+
 import { 
   MapPin, 
   Phone, 
@@ -109,9 +111,21 @@ const PharmacyCartCard = ({
 
   return (
     <Card className={cn(
-      "relative bg-white/95 border border-[#1ABA7F]/20 rounded-xl shadow-lg sm:p-6 transition-all duration-500 hover:ring-2 hover:ring-[#1ABA7F]/30",
+      "overflow-hidden bg-white/95 border border-[#1ABA7F]/20 rounded-xl p-0 shadow-lg sm:p-6",
       pharmacyStatus.borderColor
     )}>
+    {/* 🔹 Cover Photo */}
+    {pharmacy.pharmacy.logoUrl && (
+      <div className="relative w-full h-28 overflow-hidden rounded-t-xl">
+        <img
+          src={pharmacy.pharmacy.logoUrl}
+          alt={`${pharmacy.pharmacy.name} cover`}
+          className="w-full h-full object-cover"
+        />
+        {/* Optional: gradient overlay for text readability */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+      </div>
+    )}
       <div className="absolute inset-0 bg-[url('/svg/pattern-dots.svg')] opacity-10 pointer-events-none hidden sm:block" aria-hidden="true" />
       <CardHeader className="bg-gradient-to-r from-[#1ABA7F]/10 to-transparent pb-4">
         <div className="flex flex-wrap items-start justify-between">
@@ -143,33 +157,19 @@ const PharmacyCartCard = ({
 
               {/* Enhanced Pharmacy Details */}
               <div className="flex flex-wrap items-center gap-3 text-xs text-gray-600">
-                {/* License Number */}
-                {pharmacy.pharmacy.licenseNumber && (
-                  <div className="flex items-center gap-1">
-                    <Award className="h-3 w-3 text-[#225F91]" />
-                    <span>License: {pharmacy.pharmacy.licenseNumber}</span>
-                  </div>
-                )}
+                  {pharmacy.pharmacy.operatingHours && (() => {
+                  const formattedHours = formatOperatingHours(pharmacy.pharmacy.operatingHours);
+                  if (!formattedHours) return null;
+                  return (
+                    <div className="flex items-center mb-2 gap-1">
+                      <span className="text-gray-500 text-xs font-semibold min-w-[60px]">Opening Hours:</span>
+                      <span className={cn('text-xs font-medium', getOperatingHoursTextColor(pharmacy.pharmacy.operatingHours))}>
+                        {formattedHours.text}
+                      </span>
+                    </div>
+                  );
+                })()}
 
-                {/* Operating Hours */}
-                {pharmacy.pharmacy.operatingHours && (
-                  <div className="flex items-center gap-1">
-                    <Clock className="h-3 w-3 text-[#225F91]" />
-                    <span>{pharmacy.pharmacy.operatingHours}</span>
-                  </div>
-                )}
-
-                {/* Verification Status */}
-                <div className="flex items-center gap-1">
-                  <Shield className="h-3 w-3 text-[#1ABA7F]" />
-                  <span className={cn(
-                    pharmacy.pharmacy.status === 'VERIFIED' ? 'text-green-600' : 
-                    pharmacy.pharmacy.status === 'PENDING' ? 'text-orange-600' : 'text-gray-500'
-                  )}>
-                    {pharmacy.pharmacy.status === 'VERIFIED' ? 'Verified Pharmacy' :
-                     pharmacy.pharmacy.status === 'PENDING' ? 'Pending Verification' : 'Unverified'}
-                  </span>
-                </div>
               </div>
             </div>
           </div>
@@ -195,7 +195,7 @@ const PharmacyCartCard = ({
       </CardHeader>
 
       {expanded && (
-        <CardContent className="p-0 px-3">
+        <CardContent className="pb-6 px-3">
           <div className="space-y-4">
             {pharmacy.items.map((item, index) => (
               <div key={item.id}>

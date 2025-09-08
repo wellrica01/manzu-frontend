@@ -7,7 +7,7 @@ import PharmacyTable from './PharmacyTable';
 import PharmacyCards from './PharmacyCards';
 import { cn } from '@/lib/utils';
 
-const MedicationCard = ({ med, handleAddToCart, isInCart, isAddingToCart }) => {
+const MedicationCard = ({ med, handleAddToCart, isInCart, isAddingToCart, searchTerm, state, lga, ward }) => {
   const getAvailabilityCount = () => med.availability?.length || 0;
 
   const getAveragePrice = () => {
@@ -26,7 +26,9 @@ const MedicationCard = ({ med, handleAddToCart, isInCart, isAddingToCart }) => {
   const availabilityCount = getAvailabilityCount();
 
   return (
+    
     <div className="w-full space-y-4 mt-7">
+      <hr className="border-t border-gray-300 mb-8" />
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
         <div className="flex-1">
           <div className="flex items-start justify-between">
@@ -99,16 +101,30 @@ const MedicationCard = ({ med, handleAddToCart, isInCart, isAddingToCart }) => {
           )}
         </div>
 
+
+
         {availabilityCount === 0 ? (
-          <div className="text-center py-8">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <MapPin className="h-8 w-8 text-gray-400" />
-            </div>
-            <p className="text-gray-500 text-lg font-medium">Not available at any verified pharmacy</p>
-            <p className="text-gray-400 text-sm mt-1">Try adjusting your location or filters</p>
-          </div>
+    <div className="block sm:hidden text-center py-8">
+      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <MapPin className="h-8 w-8 text-gray-400" />
+      </div>
+      <p className="text-gray-500 text-base font-medium">
+        No pharmacies found for {searchTerm}
+      </p>
+      
+      {(state || lga || ward) && (
+        <p className="text-gray-400 text-base mt-2 italic">
+          Location: {state}{lga ? `, ${lga}` : ''}{ward ? ` (Ward: ${ward})` : ''}
+        </p>
+      )}
+      
+      <p className="text-gray-400 text-sm mt-3">
+        Try another location
+      </p>
+    </div>
         ) : (
           <>
+            
             <PharmacyCards
               availability={med.availability}
               medId={med.id}
@@ -116,6 +132,10 @@ const MedicationCard = ({ med, handleAddToCart, isInCart, isAddingToCart }) => {
               isInCart={isInCart}
               displayName={med.displayName}
               isAddingToCart={isAddingToCart}
+              searchTerm={searchTerm}
+              state={state}
+              lga={lga}
+              ward={ward}
             />
             <PharmacyTable
               availability={med.availability}
@@ -124,6 +144,10 @@ const MedicationCard = ({ med, handleAddToCart, isInCart, isAddingToCart }) => {
               isInCart={isInCart}
               displayName={med.displayName}
               isAddingToCart={isAddingToCart}
+              searchTerm={searchTerm}
+              state={state}
+              lga={lga}
+              ward={ward}
             />
           </>
         )}

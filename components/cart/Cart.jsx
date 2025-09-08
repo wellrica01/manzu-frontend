@@ -464,11 +464,10 @@ const handleGoBack = () => {
           <Button
             variant="outline"
             onClick={handleGoBack}
-            className="border-[#1ABA7F]/20 text-[#225F91] hover:bg-[#1ABA7F]/10 h-10 px-4"
+            className="border-[#1ABA7F]/20 text-[#225F91] hover:bg-[#1ABA7F]/10 h-10"
             aria-label="Back to Cart"
           >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
+            <ArrowLeft className="h-6 w-6" />
           </Button>
 
             {/* Center: Title */}
