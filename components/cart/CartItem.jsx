@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -7,6 +7,7 @@ import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 import { 
   Plus, 
+  Info,
   Minus, 
   Trash2, 
   Clock, 
@@ -35,6 +36,18 @@ const CartItem = ({
   calculateItemPrice,
   segment = 'ready'
 }) => {
+
+  const [showMeta, setShowMeta] = useState(false); 
+    const metaRef = useRef(null);
+  const [metaHeight, setMetaHeight] = useState('0px');
+
+  // Adjust max-height whenever toggle state changes
+  useEffect(() => {
+    if (metaRef.current) {
+      setMetaHeight(showMeta ? `${metaRef.current.scrollHeight}px` : '0px');
+    }
+  }, [showMeta, item]);
+
   const getItemStatus = () => {
     if (item.medication?.prescriptionRequired) {
       if (item.prescriptionStatus === 'VERIFIED') {
@@ -108,14 +121,14 @@ const CartItem = ({
   };
 
   return (
-    <Card
-      className={cn(
-        "relative bg-white/95 backdrop-blur-sm border rounded-2xl shadow-md transition-all duration-200 hover:shadow-lg group overflow-hidden flex flex-col gap-0 pb-2",
-        itemStatus.borderColor
-      )}
-      aria-label={`Cart item: ${item.medication.name}`}
-    >
-  <div className="flex justify-center items-center px-4">
+<Card
+  className={cn(
+    "relative bg-white/95 backdrop-blur-sm border rounded-2xl shadow-md transition-all duration-200 hover:shadow-lg group overflow-hidden flex flex-col gap-0 pb-2",
+    itemStatus.borderColor
+  )}
+  aria-label={`Cart item: ${item.medication.name}`}
+>
+  <div className="flex justify-between items-center px-4">
   <div className='flex flex-col gap-1'>
   <h3 
     className="text-lg sm:text-3xl font-bold text-[#225F91] tracking-tight leading-tight" 
@@ -139,7 +152,7 @@ const CartItem = ({
   </div>
       
   {/* Image */}
-  <div className="relative w-24 h-24 sm:w-32 sm:h-32 flex">
+  <div className="relative w-24 h-24 flex">
     <div className="w-20 h-20 bg-gradient-to-br from-[#1ABA7F]/20 to-[#225F91]/20 rounded-xl flex items-center justify-center shadow-sm">
       {item.medication.imageUrl ? (
         <Dialog>
@@ -169,50 +182,65 @@ const CartItem = ({
 </div>
 
 
-      
-    {/* Meta with Icons */}
-    <div className="flex flex-col gap-2 px-3 text-xs text-gray-600 mb-0.5">
-    {item.medication.genericName && (
-      <div className="flex items-center gap-1 text-gray-600">
-        <PillIcon className="h-3 w-3 text-[#225F91]" />
-        Generic Name: {item.medication.genericName}
+{/* Price + Info Row */}
+<div className="flex justify-between items-center px-4 py-2">
+  {/* Info Toggle Button */}
+  <Button
+    variant="outline"
+    size="sm"
+    onClick={() => setShowMeta(!showMeta)}
+    className="text-[#225F91] text-xs flex items-center gap-1"
+  >
+    {showMeta ? <Minus className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
+    Medication Info
+  </Button>
+
+  {/* Price */}
+  <div className="flex flex-col items-end min-w-[110px]">
+    {item.quantity > 1 && (
+      <div className="text-sm text-[#1ABA7F] font-medium">
+        {item.quantity} × ₦{item.price.toLocaleString()}
       </div>
     )}
-        {item.medication.manufacturerName && (
-        <div className="flex items-center gap-1">
-          <HouseIcon className="h-3 w-3 text-[#225F91]" />
-          <span className="truncate">
-            Manufacturer: {item.medication.manufacturerName || 'N/A'} - {item.medication.manufacturerCountry}
-          </span>
-        </div>
-      )}
-      {item.medication.nafdacCode && (
-        <div className="flex items-center gap-1 text-gray-600">
-          <FileText className="h-3 w-3 text-[#225F91]" />
-          <span>NAFDAC Code: {item.medication.nafdacCode}</span>
-        </div>
-      )}
-       {item.medication.packSizeQuantity && (
-        <div className="flex items-center gap-1">
-          <Box className="h-3 w-3 text-[#225F91]" />
-          <span>Pack: {item.medication.packSizeQuantity} {item.medication.packSizeUnit || ''}</span>
-        </div>
-      )}
+    <div className="text-base font-extrabold text-[#225F91]">
+      ₦{calculateItemPrice(item).toLocaleString()}
     </div>
+  </div>
+</div>
 
-      {/* Price Section */}
-      <div className="flex justify-end">
-        <div className="p-3 flex flex-col min-w-[110px] items-end">
-          {item.quantity > 1 && (
-            <div className="text-sm text-[#1ABA7F] font-medium mt-0.5">
-              {item.quantity} × ₦{item.price.toLocaleString()}
-            </div>
-          )}
-          <div className="text-base font-extrabold text-[#225F91] leading-tight">
-            ₦{calculateItemPrice(item).toLocaleString()}
-          </div>
-        </div>
-      </div>
+{/* Sliding Meta Section (Below the row) */}
+<div
+  ref={metaRef}
+  style={{ maxHeight: metaHeight }}
+  className="overflow-hidden transition-max-height duration-300 ease-in-out px-4 flex flex-col gap-1 text-xs text-gray-600 mb-2"
+>
+  {item.medication.genericName && (
+    <div className="flex items-center gap-1">
+      <PillIcon className="h-3 w-3 text-[#225F91]" /> Generic: {item.medication.genericName}
+    </div>
+  )}
+  {item.medication.manufacturerName && (
+    <div className="flex items-center gap-1">
+      <HouseIcon className="h-3 w-3 text-[#225F91]" /> Manufacturer: {item.medication.manufacturerName}
+    </div>
+  )}
+  {item.medication.nafdacCode && (
+    <div className="flex items-center gap-1">
+      <FileText className="h-3 w-3 text-[#225F91]" /> NAFDAC Code: {item.medication.nafdacCode}
+    </div>
+  )}
+  {item.medication.packSizeQuantity && (
+    <div className="flex items-center gap-1">
+      <Box className="h-3 w-3 text-[#225F91]" /> Pack: {item.medication.packSizeQuantity} {item.medication.packSizeUnit}
+    </div>
+  )}
+    {item.medication.brandDescription && (
+    <div className="flex items-center gap-1">
+      <Info className="h-3 w-3 text-[#225F91]" /> Description: {item.medication.brandDescription}
+    </div>
+  )}
+</div>
+
 
       <div className="border-t border-gray-100 my-0.5" />
 

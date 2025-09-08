@@ -134,7 +134,7 @@ const PharmacyCards = ({ availability, medId, handleAddToCart, isInCart, display
             >
               {/* 🔹 Cover Photo */}
               {avail.logoUrl && (
-                <div className="relative w-full h-28 overflow-hidden rounded-t-xl">
+                <div className="relative w-full h-32 sm:h-56 overflow-hidden rounded-t-xl">
                   <img
                     src={avail.logoUrl}
                     alt={`${avail.pharmacyName} cover`}
@@ -148,8 +148,10 @@ const PharmacyCards = ({ availability, medId, handleAddToCart, isInCart, display
               <div className="flex justify-between items-start">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-2">
-                    <HospitalIcon className="h-5 w-5 text-gray-400" />
-                    <h3 className="text-base font-semibold text-gray-900 truncate">
+                     <div className="p-2 rounded-xl bg-[#1ABA7F]/10 shadow-sm">
+                      <HospitalIcon className="h-5 w-5 text-[#225F91]"/>
+                    </div>
+                    <h3 className="text-lg font-bold text-[#225F91] truncate">
                       {avail.pharmacyName}
                     </h3>
                   </div>
@@ -203,7 +205,7 @@ const PharmacyCards = ({ availability, medId, handleAddToCart, isInCart, display
                       className="flex-1 h-10 px-3 border-[#1ABA7F]/20 text-[#225F91] hover:bg-[#1ABA7F]/10"
                       aria-label={isExpanded ? 'Hide details' : 'Show details'}
                     >
-                      {isExpanded ? '−' : '+'}
+                      {isExpanded ? '− Details' : '+ Details'}
                     </Button>
                     <Button
                       id={`add-to-cart-${medId}-${avail.pharmacyId}`}

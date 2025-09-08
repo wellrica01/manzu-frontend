@@ -33,7 +33,7 @@ const MedicationCard = ({ med, handleAddToCart, isInCart, isAddingToCart, search
         <div className="flex-1">
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <h3 className="text-lg sm:text-3xl font-bold text-[#225F91] tracking-tight leading-tight">
+              <h3 className="text-xl sm:text-3xl font-bold text-[#225F91] tracking-tight leading-tight">
                 {med.fullName}
               </h3>
               <div className="flex items-center text-xs gap-2 mt-2 flex-wrap">

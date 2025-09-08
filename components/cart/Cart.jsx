@@ -818,7 +818,7 @@ const handleGoBack = () => {
             )}
 
                 {/* Enhanced Mobile Cart Summary */}
-                <div className="lg:hidden">
+                <div >
                   <CartSummary 
                     cart={cart} 
                     segments={segments}
@@ -831,18 +831,7 @@ const handleGoBack = () => {
                 </div>
               </div>
             </div>
-            {/* Enhanced Desktop Cart Summary - sticky, not fixed */}
-            <div className="hidden lg:block lg:w-80 lg:shrink-0 lg:sticky lg:top-24">
-            <CartSummary 
-              cart={cart} 
-              segments={segments}
-              handleCheckout={handleCheckout}
-              canCheckout={canCheckout}
-              cartType={cartType}
-                activeTab={activeTab}
-                tabSummary={tabSummary}
-            />
-            </div>
+ 
           </div>
         )}
       </main>

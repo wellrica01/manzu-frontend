@@ -116,7 +116,7 @@ const PharmacyCartCard = ({
     )}>
     {/* 🔹 Cover Photo */}
     {pharmacy.pharmacy.logoUrl && (
-      <div className="relative w-full h-28 overflow-hidden rounded-t-xl">
+      <div className="relative w-full h-32 sm:h-56 overflow-hidden rounded-t-xl">
         <img
           src={pharmacy.pharmacy.logoUrl}
           alt={`${pharmacy.pharmacy.name} cover`}
