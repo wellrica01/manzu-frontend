@@ -3,152 +3,156 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { MapPin, HospitalIcon, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { formatOperatingHours, getOperatingHoursTextColor } from '@/lib/pharmacyUtils';
+import { formatOperatingHours, getOperatingHoursTextColor, isPharmacyOpenNow  } from '@/lib/pharmacyUtils';
 
-const PharmacyCards = ({ availability, medId, handleAddToCart, isInCart, displayName, isAddingToCart, state, lga, ward }) => {
+const PharmacyCards = ({ availability, medId, quantity = 1, handleAddToCart, isInCart, fullName, isAddingToCart, state, lga, ward, showSeeMore = false }) => {
   const [expandedCard, setExpandedCard] = useState(null);
-  const [sortOption, setSortOption] = useState('default'); // 🔹 default = backend smart order
+  const [sortOption, setSortOption] = useState('default');
+  const [showAll, setShowAll] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
 
-  // 🔹 Apply sorting logic
-  const sortedAvailability = useMemo(() => {
-    if (!availability) return [];
+const sortedAvailability = useMemo(() => {
+  if (!availability) return [];
 
-    if (sortOption === 'cheapest') {
-      return [...availability].sort((a, b) => a.price - b.price);
-    }
+  let filtered = availability;
+  if (filterOpen) {
+    filtered = availability.filter(avail => isPharmacyOpenNow(avail.operatingHours));
+  }
 
-    if (sortOption === 'closest') {
-      return [...availability].sort((a, b) => {
-        if (isNaN(a.distance_km)) return 1;
-        if (isNaN(b.distance_km)) return -1;
-        return a.distance_km - b.distance_km;
-      });
-    }
+  if (sortOption === 'cheapest') {
+    return [...filtered].sort((a, b) => a.price - b.price);
+  }
+  if (sortOption === 'nearest') {
+    return [...filtered].sort((a, b) => {
+      if (isNaN(a.distance_km)) return 1;
+      if (isNaN(b.distance_km)) return -1;
+      return a.distance_km - b.distance_km;
+    });
+  }
+  return filtered;
+}, [availability, sortOption, filterOpen]);
 
-    return availability; // 🔹 backend order stays untouched
-  }, [availability, sortOption]);
 
   if (!availability || availability.length === 0) {
     return (
-<div className="block sm:hidden text-center py-8">
-      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-        <MapPin className="h-8 w-8 text-gray-400" />
-      </div>
-      <p className="text-gray-500 text-base font-medium">
-        No pharmacies found for {searchTerm}
-      </p>
-      
-      {(state || lga || ward) && (
-        <p className="text-gray-400 text-base mt-2 italic">
-          Location: {state}{lga ? `, ${lga}` : ''}{ward ? ` (Ward: ${ward})` : ''}
+      <div className="block sm:hidden text-center py-8">
+        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <MapPin className="h-8 w-8 text-gray-400" />
+        </div>
+        <p className="text-gray-500 text-base font-medium">
+          No pharmacies found for {fullName}
         </p>
-      )}
-      
-      <p className="text-gray-400 text-sm mt-3">
-        Try another location
-      </p>
-    </div>
+        {(state || lga || ward) && (
+          <p className="text-gray-400 text-base mt-2 italic">
+            Location: {state}{lga ? `, ${lga}` : ''}{ward ? ` (Ward: ${ward})` : ''}
+          </p>
+        )}
+        <p className="text-gray-400 text-sm mt-3">
+          Try another location
+        </p>
+      </div>
     );
   }
 
-  if (!availability || availability.length === 0) {
-  return (
-    <div className="block sm:hidden text-center py-8">
-      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-        <MapPin className="h-8 w-8 text-gray-400" />
-      </div>
-      <p className="text-gray-500 text-lg font-medium">
-        No verified pharmacies found for this medication
-      </p>
-      
-      {(state || lga || ward) && (
-        <p className="text-gray-400 text-sm mt-2 italic">
-          in {state}{lga ? `, ${lga}` : ''}{ward ? ` (Ward: ${ward})` : ''}
-        </p>
-      )}
-      
-      <p className="text-gray-400 text-sm mt-3">
-        Try adjusting your location or filters
-      </p>
-    </div>
-  );
-}
-
-
   return (
     <div className="block sm:hidden space-y-4">
-      {/* 🔹 Sorting buttons */}
+      <div className="flex flex-wrap gap-2 mb-6">
+        <Button
+          variant={sortOption === 'default' ? 'default' : 'outline'}
+          onClick={() => setSortOption('default')}
+          className="flex-1 min-w-[90px] flex items-center justify-center gap-1"
+        >
+          Best Deal
+        </Button>
+        <Button
+          variant={sortOption === 'cheapest' ? 'default' : 'outline'}
+          onClick={() => setSortOption('cheapest')}
+          className="flex-1 min-w-[90px] flex items-center justify-center gap-1"
+        >
+          Cheapest
+        </Button>
+        <Button
+          variant={sortOption === 'nearest' ? 'default' : 'outline'}
+          onClick={() => setSortOption('nearest')}
+          className="flex-1 min-w-[90px] flex items-center justify-center gap-1"
+        >
+          Nearest
+        </Button>
+        <Button
+          variant={filterOpen ? 'default' : 'outline'}
+          onClick={() => setFilterOpen(!filterOpen)}
+          className="flex-1 min-w-[90px] flex items-center justify-center gap-1"
+        >
+          Open Now
+        </Button>
 
-<div className="flex flex-wrap gap-2 mb-6">
-  <Button
-    variant={sortOption === 'default' ? 'default' : 'outline'}
-    onClick={() => setSortOption('default')}
-    className="flex-1 min-w-[90px] flex items-center justify-center gap-1"
-  >
-    Best Deal
-  </Button>
-  <Button
-    variant={sortOption === 'cheapest' ? 'default' : 'outline'}
-    onClick={() => setSortOption('cheapest')}
-    className="flex-1 min-w-[90px] flex items-center justify-center gap-1"
-  >
-    Cheapest
-  </Button>
-  <Button
-    variant={sortOption === 'closest' ? 'default' : 'outline'}
-    onClick={() => setSortOption('closest')}
-    className="flex-1 min-w-[90px] flex items-center justify-center gap-1"
-  >
-    Closest
-  </Button>
-</div>
+      </div>
 
-<div className="mb-5 text-sm text-gray-600 font-medium">
-  {sortOption === 'default' && "Get The Best Deals"}
-  {sortOption === 'cheapest' && "Sorted by Cheapest"}
-  {sortOption === 'closest' && "Sorted by Closest"}
-</div>
+      {/* Sort explanation */}
+        <div className="mb-5 text-sm text-gray-600 font-medium">
+        {filterOpen && <span className="text-green-600">Showing only open pharmacies · </span>}
+        {sortOption === 'default' && 'Sorted by Most Medications Available'}
+        {sortOption === 'cheapest' && 'Sorted by Cheapest Total Price'}
+        {sortOption === 'nearest' && 'Sorted by Nearest Distance'}
+        </div>
 
-
-      {/* 🔹 Render sorted cards */}
       {sortedAvailability.map((avail, index) => {
+        if (!showAll && index >= 3) return null; // Limit to 3 unless expanded
         const isExpanded = expandedCard === index;
-
         const isCheapest = avail.price === Math.min(...availability.map((a) => a.price));
         const validDistances = availability
           .filter((a) => typeof a.distance_km === 'number' && !isNaN(a.distance_km))
           .map((a) => a.distance_km);
-        const isClosest =
+        const isNearest =
           validDistances.length > 0 &&
           typeof avail.distance_km === 'number' &&
           !isNaN(avail.distance_km) &&
           avail.distance_km === Math.min(...validDistances);
 
         return (
-            <div 
-              key={index} 
-              className={cn(
-                "overflow-hidden rounded-xl bg-white/95 border border-[#1ABA7F]/10 transition-all duration-300",
-                isExpanded && "shadow-md"
-              )}
-            >
-              {/* 🔹 Cover Photo */}
-              {avail.logoUrl && (
-                <div className="relative w-full h-32 sm:h-56 overflow-hidden rounded-t-xl">
-                  <img
-                    src={avail.logoUrl}
-                    alt={`${avail.pharmacyName} cover`}
-                    className="w-full h-full object-cover"
-                  />
-                  {/* Optional: gradient overlay for text readability */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-                </div>
-              )}
+          <div
+            key={index}
+            className={cn(
+              "overflow-hidden rounded-xl bg-white/95 border border-[#1ABA7F]/10 transition-all duration-300",
+              isExpanded && "shadow-md"
+            )}
+          >
+            {avail.logoUrl && (
+              <div className="relative w-full h-32 sm:h-56 overflow-hidden rounded-t-xl">
+                <img
+                  src={avail.logoUrl}
+                  alt={`${avail.pharmacyName} cover`}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+
+                {/* Nearest badge - top left */}
+                {isNearest && (
+                  <Badge
+                    variant="secondary"
+                    className="absolute top-2 left-2 text-xs bg-[#225F91]/90 text-white border border-white/30 shadow-md"
+                  >
+                    Nearest
+                  </Badge>
+                )}
+
+                {/* Cheapest badge - top right */}
+                {isCheapest && (
+                  <Badge
+                    variant="secondary"
+                    className="absolute top-2 right-2 text-xs bg-[#1ABA7F]/90 text-white border border-white/30 shadow-md"
+                  >
+                    Cheapest
+                  </Badge>
+                )}
+              </div>
+            )}
+
             <div className="p-4 space-y-3">
               <div className="flex justify-between items-start">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-2">
-                     <div className="p-2 rounded-xl bg-[#1ABA7F]/10 shadow-sm">
+                    <div className="p-2 rounded-xl bg-[#1ABA7F]/10 shadow-sm">
                       <HospitalIcon className="h-5 w-5 text-[#225F91]"/>
                     </div>
                     <h3 className="text-lg font-bold text-[#225F91] truncate">
@@ -173,32 +177,30 @@ const PharmacyCards = ({ availability, medId, handleAddToCart, isInCart, display
                       </div>
                     );
                   })()}
+                <div className="flex items-center justify-between mt-4 mb-3">
+                    <span className="text-sm text-gray-600">
+                      {typeof avail.distance_km === 'number' && !isNaN(avail.distance_km)
+                        ? `${avail.distance_km.toFixed(1)} km away`
+                        : 'N/A'}
+                    </span>
 
-                  <div className="flex items-center justify-between mt-4 mb-3">
-                    <div className="flex flex-col items-center gap-2">
-                      <span className="text-sm text-gray-600">
-                        {typeof avail.distance_km === 'number' && !isNaN(avail.distance_km)
-                          ? `${avail.distance_km.toFixed(1)} km away`
-                          : 'N/A'}
+                    {quantity > 1 ? (
+                      <div className="flex flex-col text-right">
+                        <span className="text-sm text-gray-500">
+                          ₦{avail.price.toLocaleString()} each
+                        </span>
+                        <span className="text-base font-bold text-gray-800">
+                          ₦{(avail.price * quantity).toLocaleString()} total (x{quantity})
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-base font-bold text-gray-800">
+                        ₦{avail.price.toLocaleString()}
                       </span>
-                      {isClosest && (
-                        <Badge variant="secondary" className="text-xs bg-[#225F91]/20 text-[#225F91] border-[#225F91]/30">
-                          Closest
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="flex flex-col items-center gap-2">
-                      <span className="text-base font-bold text-gray-800">₦{avail.price.toLocaleString()}</span>
-                      {isCheapest && (
-                        <Badge variant="secondary" className="text-xs bg-[#1ABA7F]/20 text-[#1ABA7F] border-[#1ABA7F]/30">
-                          Cheapest
-                        </Badge>
-                      )}
-                    </div>
+                    )}
                   </div>
-
                   <div className="flex items-center justify-center gap-4">
-                   <Button
+                    <Button
                       variant="outline"
                       size="sm"
                       onClick={() => setExpandedCard(isExpanded ? null : index)}
@@ -209,7 +211,7 @@ const PharmacyCards = ({ availability, medId, handleAddToCart, isInCart, display
                     </Button>
                     <Button
                       id={`add-to-cart-${medId}-${avail.pharmacyId}`}
-                      onClick={() => handleAddToCart(medId, avail.pharmacyId, displayName)}
+                      onClick={() => handleAddToCart(medId, avail.pharmacyId, fullName)}
                       disabled={isInCart(medId, avail.pharmacyId) || isAddingToCart[`${medId}-${avail.pharmacyId}`]}
                       className={cn(
                         'flex-1 h-10 text-sm rounded-lg transition-all duration-300',
@@ -228,28 +230,26 @@ const PharmacyCards = ({ availability, medId, handleAddToCart, isInCart, display
                         <span>{isInCart(medId, avail.pharmacyId) ? '✓ Added' : 'Add to Cart'}</span>
                       )}
                     </Button>
-
                   </div>
                 </div>
               </div>
-
               {isExpanded && (
                 <div className="mt-4 pt-4 border-t border-[#1ABA7F]/10 animate-in slide-in-from-top-2 duration-300">
                   <div className="space-y-3">
-                   <div className="flex items-center gap-2 text-sm">
-                        <HospitalIcon className="h-4 w-4 text-gray-400" />
-                        <span className="text-gray-600 font-medium">Pharmacy Info</span>
-                      </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <HospitalIcon className="h-4 w-4 text-gray-400" />
+                      <span className="text-gray-600 font-medium">Pharmacy Info</span>
+                    </div>
                     <div className="bg-[#1ABA7F]/5 rounded-lg p-3">
                       <div className="space-y-1 text-xs">
                         <div className="flex items-center gap-2">
                           <span className="text-gray-600">Status:</span>
-                          <Badge 
-                            variant="secondary" 
+                          <Badge
+                            variant="secondary"
                             className={cn(
                               "text-xs",
-                              avail.status === 'VERIFIED' 
-                                ? "bg-green-100 text-green-700 border-green-200" 
+                              avail.status === 'VERIFIED'
+                                ? "bg-green-100 text-green-700 border-green-200"
                                 : "bg-yellow-100 text-yellow-700 border-yellow-200"
                             )}
                           >
@@ -270,7 +270,6 @@ const PharmacyCards = ({ availability, medId, handleAddToCart, isInCart, display
                         <span className="text-gray-600 font-medium">Location Details</span>
                       </div>
                       <div className="bg-gray-50 rounded-lg p-3 space-y-2 text-xs">
-
                         {avail.address && (
                           <div className="flex items-start gap-2">
                             <span className="text-gray-600 min-w-[60px]">Address:</span>
@@ -297,7 +296,6 @@ const PharmacyCards = ({ availability, medId, handleAddToCart, isInCart, display
                         )}
                       </div>
                     </div>
-
                   </div>
                 </div>
               )}
@@ -305,6 +303,15 @@ const PharmacyCards = ({ availability, medId, handleAddToCart, isInCart, display
           </div>
         );
       })}
+      {showSeeMore && !showAll && (
+        <Button
+          variant="outline"
+          onClick={() => setShowAll(true)}
+          className="w-full mt-4 border-[#1ABA7F] text-[#225F91]"
+        >
+          See More Pharmacies
+        </Button>
+      )}
     </div>
   );
 };

@@ -87,7 +87,7 @@ const SearchInput = ({
     } else if (e.key === 'Enter' && focusedSuggestionIndex >= 0) {
       e.preventDefault();
       const suggestion = suggestions[focusedSuggestionIndex];
-      const newHistory = [suggestion.displayName, ...searchHistory.filter(item => item !== suggestion.displayName)].slice(0, 5);
+      const newHistory = [suggestion.fullName, ...searchHistory.filter(item => item !== suggestion.fullName)].slice(0, 5);
       setSearchHistory(newHistory);
       localStorage.setItem('searchHistory', JSON.stringify(newHistory));
       handleSelectMedication(suggestion);

@@ -41,7 +41,7 @@ const SearchBar = forwardRef((props, ref) => {
   const [isAddingToCart, setIsAddingToCart] = useState({});
   const [focusedSuggestionIndex, setFocusedSuggestionIndex] = useState(-1);
   const [openCartDialog, setOpenCartDialog] = useState(false);
-  const [lastAddedItem, setLastAddedItem] = useState(null);
+  const [lastAddedItems, setLastAddedItems] = useState(null);
   const [filterState, setFilterState] = useState('');
   const [filterLga, setFilterLga] = useState('');
   const [filterWard, setFilterWard] = useState('');
@@ -97,7 +97,7 @@ const SearchBar = forwardRef((props, ref) => {
 
 
 function reverseGeocode(userLat, userLng, geoData) {
-  let closest = null;
+  let nearest = null;
   let minDistance = Infinity;
 
   geoData.forEach((state) => {
@@ -110,7 +110,7 @@ function reverseGeocode(userLat, userLng, geoData) {
       const dist = haversineDistance(userLat, userLng, avgLat, avgLng);
       if (dist < minDistance) {
         minDistance = dist;
-        closest = {
+        nearest = {
           state: state.state,
           lga: lga.name,
           distance: dist,
@@ -119,7 +119,7 @@ function reverseGeocode(userLat, userLng, geoData) {
     });
   });
 
-  return closest;
+  return nearest;
 }
 
    
@@ -292,7 +292,7 @@ const handleSearch = async (term, options = {}) => {
 
 
 const handleSelectMedication = async (med) => {
-  const medName = med.fullName || med.displayName || med.genericName;
+  const medName = med.fullName || med.fullName || med.genericName;
 
   setSearchTerm(medName);
   setShowDropdown(false);
@@ -355,7 +355,7 @@ const handleAddToCart = async (medicationId, pharmacyId, medicationName) => {
       const errorData = await response.json();
       throw new Error(errorData.message || t('errors.add_to_cart_failed'));
     }
-    setLastAddedItem(medicationName);
+    setLastAddedItems(medicationName);
     setOpenCartDialog(true);
     if (typeof window !== 'undefined' && window.gtag) {
       window.gtag('event', 'add_to_cart', { medicationId, pharmacyId });
@@ -377,25 +377,13 @@ const isInCart = (medicationId, pharmacyId) => {
 };
 
 
-const getLocationText = () => {
-  if (!results || results.length === 0) return null; // only show after search ran
-  if (!filterState && !filterLga && !filterWard) return null;
-
-  let text = `Filtered by Pharmacies near: ${filterState || ''}`;
-  if (filterLga) text += `, ${filterLga}`;
-  if (filterWard) text += ` (Ward: ${filterWard})`;
-
-  return text;
-};
-
-
 
   return (
     <div className="w-full space-y-4 sm:space-y-6">
       <CartDialog
         openCartDialog={openCartDialog}
         setOpenCartDialog={setOpenCartDialog}
-        lastAddedItem={lastAddedItem}
+        lastAddedItems={lastAddedItems}
       />
       
       {/* Search Input and Dropdown */}
@@ -543,14 +531,8 @@ const getLocationText = () => {
         showFilters={showFilters}
         setShowFilters={setShowFilters}
       />
-
-      {/* Location context text */}
-      {getLocationText() && (
-        <p className="text-sm text-gray-600 mt-2 italic">
-          {getLocationText()}
-        </p>
-      )}
-
+       
+      <hr className="border-t border-gray-300 mb-6" />
             
       <ErrorMessage error={error} />
       {isSearching ? (
@@ -584,6 +566,6 @@ const getLocationText = () => {
   );
 });
 
-SearchBar.displayName = "SearchBar"; // needed for forwardRef
+SearchBar.fullName = "SearchBar"; // needed for forwardRef
 
 export default SearchBar;

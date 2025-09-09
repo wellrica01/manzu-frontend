@@ -5,7 +5,7 @@ import { ShoppingCart, MapPin, Phone, Navigation, Star, Clock, ArrowUpDown, Arro
 import { cn } from '@/lib/utils';
 import { formatOperatingHours, getOperatingHoursColor, getOperatingHoursTextColor } from '@/lib/pharmacyUtils';
 
-const PharmacyTable = ({ availability, medId, handleAddToCart, isInCart, displayName, isAddingToCart }) => {
+const PharmacyTable = ({ availability, medId, handleAddToCart, isInCart, fullName, isAddingToCart }) => {
   const [sortField, setSortField] = useState('price');
   const [sortDirection, setSortDirection] = useState('asc');
   const [expandedRow, setExpandedRow] = useState(null);
@@ -74,7 +74,7 @@ const PharmacyTable = ({ availability, medId, handleAddToCart, isInCart, display
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse" aria-describedby={`pharmacy-comparison-${medId}`}>
           <caption id={`pharmacy-comparison-${medId}`} className="sr-only">
-            Comparison of pharmacies for {displayName}
+            Comparison of pharmacies for {fullName}
           </caption>
           <thead>
             <tr className="bg-[#1ABA7F]/10 text-sm font-semibold text-[#225F91]">
@@ -117,7 +117,7 @@ const PharmacyTable = ({ availability, medId, handleAddToCart, isInCart, display
                 .filter((a) => typeof a.distance_km === 'number' && !isNaN(a.distance_km))
                 .map((a) => a.distance_km);
               const isCheapest = avail.price === Math.min(...availability.map((a) => a.price));
-              const isClosest =
+              const isNearest =
                 validDistances.length > 0 &&
                 typeof avail.distance_km === 'number' &&
                 !isNaN(avail.distance_km) &&
@@ -181,9 +181,9 @@ const PharmacyTable = ({ availability, medId, handleAddToCart, isInCart, display
                           <span className="text-base text-gray-600">
                             {avail.distance_km.toFixed(1)} km
                           </span>
-                          {isClosest && (
+                          {isNearest && (
                             <Badge variant="secondary" className="text-xs bg-[#225F91]/20 text-[#225F91] border-[#225F91]/30">
-                              Closest
+                              Nearest
                             </Badge>
                           )}
                         </div>
@@ -194,7 +194,7 @@ const PharmacyTable = ({ availability, medId, handleAddToCart, isInCart, display
                     <td className="p-4">
                       <Button
                         id={`add-to-cart-${medId}-${avail.pharmacyId}`}
-                        onClick={() => handleAddToCart(medId, avail.pharmacyId, displayName)}
+                        onClick={() => handleAddToCart(medId, avail.pharmacyId, fullName)}
                         disabled={isInCart(medId, avail.pharmacyId) || isAddingToCart[`${medId}-${avail.pharmacyId}`]}
                         className={cn(
                           'h-10 px-5 text-base font-semibold rounded-full transition-all duration-300',

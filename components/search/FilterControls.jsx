@@ -142,8 +142,17 @@ const applySavedFilter = async (filter) => {
     localStorage.setItem("savedFilters", JSON.stringify(newSaved));
   };
 
+  const locationText = (() => {
+  if (!filterState && !filterLga && !filterWard) return null;
+  let text = `Filtered by Pharmacies near: ${filterState || ''}`;
+  if (filterLga) text += `, ${filterLga}`;
+  if (filterWard) text += ` (Ward: ${filterWard})`;
+  return text;
+})();
+
+
   return (
-    <div className="space-y-3 mt-6 mb-10">
+    <div className="space-y-3 mt-2 mb-3">
       {/* Saved Filters row */}
       {savedFilters.length > 0 && (
         <div className="flex flex-wrap items-center gap-2">
@@ -223,7 +232,6 @@ const applySavedFilter = async (filter) => {
   </div>
 </div>
 
-
       {/* Actions row - only show when filters active */}
       {activeFilters > 0 && (
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -254,6 +262,14 @@ const applySavedFilter = async (filter) => {
           </Button>
         </div>
       )}
+          
+          {/* Location context text */}
+        {locationText && (
+          <p className="text-sm text-gray-600 italic mt-8">
+            {locationText}
+          </p>
+        )}
+
     </div>
   );
 };

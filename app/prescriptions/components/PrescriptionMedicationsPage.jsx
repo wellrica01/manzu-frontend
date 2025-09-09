@@ -3,104 +3,23 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+import { Dialog, DialogContent, DialogTrigger, DialogTitle } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Loader2, Info, X, ShoppingCart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
 import MedicationCard from '@/components/search/MedicationCard';
+import PharmacyRecommendations from './PharmacyRecommendations';
+import HeroSection from './HeroSection';
+import PrescriptionInfoCard from './PrescriptionInfoCard';
 import CartDialog from '@/components/search/CartDialog';
 import { useCart } from '@/hooks/useCart';
 import FilterControls from '@/components/search/FilterControls';
 import { Badge } from '@/components/ui/badge';
 
-// Hero Section with concise welcome message
-const HeroSection = ({ userName, prescriptionMetadata }) => (
-  <div className="mb-8 text-center">
-    <h1 className="text-4xl sm:text-5xl font-bold text-[#225F91] mb-2 animate-in slide-in-from-top-2 duration-500">
-      {userName ? `Hi ${userName}, ` : ''}My Prescription Details
-    </h1>
-    <p className="text-gray-600 mt-4 text-base sm:text-lg max-w-2xl mx-auto animate-in fade-in-20 duration-700">
-      Review your prescribed medications below, compare prices, select pharmacies, and order with fast, secure delivery or pickup.
-    </p>
-    {prescriptionMetadata && (
-      <div className="flex flex-wrap justify-center gap-3 mt-3 animate-in zoom-in-50 duration-700">
-        <Badge className="bg-[#1ABA7F]/20 text-[#1ABA7F] border-0">Verified on {new Date(prescriptionMetadata.uploadedAt).toLocaleDateString()}</Badge>
-        <Badge className="bg-[#225F91]/20 text-[#225F91] border-0">Secure & Confidential</Badge>
-        <Badge className="bg-[#1ABA7F]/20 text-[#225F91] border-0">Fast Delivery</Badge>
-      </div>
-    )}
-  </div>
-);
 
-// Prescription Info Card to display detailed prescription information
-const PrescriptionInfoCard = ({ prescriptionMetadata, medications }) => {
-  if (!prescriptionMetadata) return null;
-
-  const renderMedicationList = () => (
-    <div className="mt-4">
-      <h4 className="text-base sm:text-lg font-semibold text-[#225F91] mb-3">Prescribed Medications</h4>
-      {medications.length === 0 ? (
-        <p className="text-gray-600">No medications found for this prescription.</p>
-      ) : (
-        <ul className="space-y-3">
-          {medications.map((med) => (
-            <li key={med.id} className="border-b border-gray-200 pb-2">
-              <p className="text-gray-800 text-sm sm:text-base font-medium">{med.fullName}</p>
-              {med.manufacturer && (
-                <p className="text-xs text-gray-600">Manufacturer: {med.manufacturer}</p>
-              )}
-              <p className="text-xs text-gray-600">Quantity: {med.quantity} {med.packSizeUnit}</p>
-              {med.dosageInstructions && (
-                <p className="text-xs text-gray-600">Dosage: {med.dosageInstructions}</p>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-
-  return (
-    <Card className="shadow-xl border border-[#1ABA7F]/20 rounded-2xl bg-white/95 backdrop-blur-sm px-4 py-6 sm:px-6 mb-6">
-      <div className="absolute top-0 left-0 w-12 h-12 bg-[#1ABA7F]/20 rounded-br-full" />
-      {prescriptionMetadata.status === 'VERIFIED' ? (
-        <div>
-          <h3 className="text-xl sm:text-2xl font-bold text-[#225F91] mb-2">Prescription Summary</h3>
-          <p className="text-sm sm:text-base text-gray-600 mb-4">
-            Your prescription, uploaded on {new Date(prescriptionMetadata.uploadedAt).toLocaleDateString()}, is verified and ready to order.{' '}
-            <Link
-              href="/support"
-              className="text-[#225F91] hover:text-[#1A4971] underline font-semibold"
-              aria-label="Contact support"
-            >
-              Contact us
-            </Link>{' '}
-            if anything looks incorrect.
-          </p>
-          {renderMedicationList()}
-        </div>
-      ) : (
-        <div>
-          <h2 className="text-2xl font-bold text-[#225F91] mb-2">Prescription Under Review</h2>
-          <p className="text-base text-gray-600 mb-4">
-            Your prescription, uploaded on {new Date(prescriptionMetadata.uploadedAt).toLocaleDateString()}, is currently under review. We’ll notify you when it’s ready to order.{' '}
-            <Link
-              href="/support"
-              className="text-[#225F91] hover:text-[#1A4971] underline font-semibold"
-              aria-label="Contact support"
-            >
-              Contact support
-            </Link>{' '}
-            for assistance.
-          </p>
-          {renderMedicationList()}
-        </div>
-      )}
-    </Card>
-  );
-};
 
 const FloatingCartSummary = ({ cartItemsCount, onViewCart }) => {
   if (cartItemsCount === 0) return null;
@@ -122,15 +41,17 @@ const PrescriptionMedicationsPage = React.memo(() => {
   const [medications, setMedications] = useState([]);
   const [defaultMedications, setDefaultMedications] = useState([]);
   const [prescriptionMetadata, setPrescriptionMetadata] = useState(null);
+  const [pharmacyRecommendations, setPharmacyRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [cartItems, setCartItems] = useState([]);
   const [userLocation, setUserLocation] = useState(null);
   const [openCartDialog, setOpenCartDialog] = useState(false);
   const [lastAddedItem, setLastAddedItem] = useState(null);
+  const [lastAddedItems, setLastAddedItems] = useState([]);
   const [showPreview, setShowPreview] = useState(false);
-  const [showInfo, setShowInfo] = useState(false);
-  const [showMedImage, setShowMedImage] = useState(null);
+  const [showHelp, setShowHelp] = useState(false);
+  const [viewMode, setViewMode] = useState('med'); // 'med' or 'pharmacy'
   const [isAddingToCart, setIsAddingToCart] = useState({});
   const { userIdentifier } = useParams();
   const { cart, fetchCart, guestId } = useCart();
@@ -160,7 +81,7 @@ const PrescriptionMedicationsPage = React.memo(() => {
       });
   }, []);
 
-    // Attempt to fetch geolocation, but don't set error on failure
+  // Attempt to fetch geolocation
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -181,71 +102,48 @@ const PrescriptionMedicationsPage = React.memo(() => {
     }
   }, []);
 
-
   function haversineDistance(lat1, lon1, lat2, lon2) {
-        const toRad = (deg) => (deg * Math.PI) / 180;
-        const R = 6371; // Earth radius in km
-        const dLat = toRad(lat2 - lat1);
-        const dLon = toRad(lon2 - lon1);
-  
-        const a =
-          Math.sin(dLat / 2) ** 2 +
-          Math.cos(toRad(lat1)) *
-            Math.cos(toRad(lat2)) *
-            Math.sin(dLon / 2) ** 2;
-  
-        return 2 * R * Math.asin(Math.sqrt(a)); // distance in km
-      }
-  
-  
+    const toRad = (deg) => (deg * Math.PI) / 180;
+    const R = 6371; // Earth radius in km
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(a));
+  }
+
   function reverseGeocode(userLat, userLng, geoData) {
-    let closest = null;
+    let nearest = null;
     let minDistance = Infinity;
-  
     geoData.forEach((state) => {
       state.lgas.forEach((lga) => {
-        // Approximate LGA centroid from ward coordinates
         const lgaCoords = lga.wards.map(w => [w.latitude, w.longitude]);
         const avgLat = lgaCoords.reduce((sum, [lat]) => sum + lat, 0) / lgaCoords.length;
         const avgLng = lgaCoords.reduce((sum, [, lng]) => sum + lng, 0) / lgaCoords.length;
-  
         const dist = haversineDistance(userLat, userLng, avgLat, avgLng);
         if (dist < minDistance) {
           minDistance = dist;
-          closest = {
-            state: state.state,
-            lga: lga.name,
-            distance: dist,
-          };
+          nearest = { state: state.state, lga: lga.name, distance: dist };
         }
       });
     });
-  
-    return closest;
+    return nearest;
   }
-  
-     
-  
+
   useEffect(() => {
     if (userLocation && geoData) {
       const match = reverseGeocode(userLocation.lat, userLocation.lng, geoData);
-  
       if (match) {
         setFilterState(match.state);
-        updateLgas(match.state, false); 
+        updateLgas(match.state);
         setFilterLga(match.lga);
-  
-        // 🚫 Don’t auto-fill ward
-        updateWards(match.state, match.lga, true); // populate ward list
+        updateWards(match.state, match.lga);
         setFilterWard('');
-  
-        console.log("Auto-populated filters (no ward):", match);
       }
     }
   }, [userLocation, geoData]);
-  
 
-  // Update LGAs when state changes
   const updateLgas = useCallback((state) => {
     if (!geoData) return;
     const stateData = geoData.find(s => s.state === state);
@@ -255,7 +153,6 @@ const PrescriptionMedicationsPage = React.memo(() => {
     setFilterWard('');
   }, [geoData]);
 
-  // Update wards when LGA changes
   const updateWards = useCallback((state, lga) => {
     if (!geoData) return;
     const stateData = geoData.find(s => s.state === state);
@@ -264,12 +161,9 @@ const PrescriptionMedicationsPage = React.memo(() => {
     setFilterWard('');
   }, [geoData]);
 
-
   useEffect(() => {
     const noFilters = !filterState && !filterLga && !filterWard;
-  
     if (noFilters) {
-      // ✅ If no filters are left, reset back to the default medications
       setMedications(defaultMedications);
     }
   }, [filterState, filterLga, filterWard, defaultMedications]);
@@ -283,45 +177,43 @@ const PrescriptionMedicationsPage = React.memo(() => {
     }
   }, [userIdentifier]);
 
-
-
-  const fetchPrescriptionOrder = useCallback(async () => {
-    try {
-      //setLoading(true);
-      const queryParams = new URLSearchParams();
-      if (userLocation) {
-        queryParams.append('lat', userLocation.lat);
-        queryParams.append('lng', userLocation.lng);
-        queryParams.append('radius', '10');
-      }
-      if (filterState) queryParams.append('state', filterState);
-      if (filterLga) queryParams.append('lga', filterLga);
-      if (filterWard) queryParams.append('ward', filterWard);
-      const url = `${process.env.NEXT_PUBLIC_API_URL}/api/prescription/${userIdentifier}?${queryParams.toString()}`;
-      const response = await fetch(url, {
-        headers: { 'x-guest-id': guestId },
-      });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to fetch prescription order');
-      }
-      const data = await response.json();
-      setMedications(data.medications || []);
-      setDefaultMedications(data.medications || []);
-      setPrescriptionMetadata(data.prescriptionMetadata || null);
-    } catch (err) {
-      setError(err.message || 'Failed to load prescription');
-      toast.error(err.message || 'Failed to load prescription', { duration: 4000 });
-      if (typeof window !== 'undefined' && window.gtag) {
-        window.gtag('event', 'error', {
-          error_message: err.message,
-          page: 'Prescription Medications',
-        });
-      }
-    } finally {
-      setLoading(false);
+const fetchPrescriptionOrder = useCallback(async () => {
+  try {
+    const queryParams = new URLSearchParams();
+    if (userLocation) {
+      queryParams.append('lat', userLocation.lat);
+      queryParams.append('lng', userLocation.lng);
+      queryParams.append('radius', '10');
     }
-  }, [userIdentifier, userLocation, guestId, filterState, filterLga, filterWard]);
+    if (filterState) queryParams.append('state', filterState);
+    if (filterLga) queryParams.append('lga', filterLga);
+    if (filterWard) queryParams.append('ward', filterWard);
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/api/prescription/${userIdentifier}?${queryParams.toString()}`;
+    const response = await fetch(url, {
+      headers: { 'x-guest-id': guestId },
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to fetch prescription order');
+    }
+    const data = await response.json();
+    setMedications(data.medications || []);
+    setDefaultMedications(data.medications || []);
+    setPrescriptionMetadata(data.prescriptionMetadata || null);
+    setPharmacyRecommendations(data.pharmacyRecommendations || []); // Add this
+  } catch (err) {
+    setError(err.message || 'Failed to load prescription');
+    toast.error(err.message || 'Failed to load prescription', { duration: 4000 });
+    if (typeof window !== 'undefined' && window.gtag) {
+      window.gtag('event', 'error', {
+        error_message: err.message,
+        page: 'Prescription Medications',
+      });
+    }
+  } finally {
+    setLoading(false);
+  }
+}, [userIdentifier, userLocation, guestId, filterState, filterLga, filterWard]);
 
   useEffect(() => {
     if (userIdentifier) {
@@ -334,36 +226,97 @@ const PrescriptionMedicationsPage = React.memo(() => {
     setCartItems(cart?.pharmacies?.flatMap(p => p.items) || []);
   }, [cart]);
 
-  const handleAddToCart = async (medicationId, pharmacyId, medicationName) => {
-    const quantity = 1;
-    const itemKey = `${medicationId}-${pharmacyId}`;
-    try {
-      if (!medicationId || !pharmacyId) throw new Error('Invalid selection');
-      setIsAddingToCart(prev => ({ ...prev, [itemKey]: true }));
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart/add`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-guest-id': guestId,
-        },
-        body: JSON.stringify({ medicationId, pharmacyId, quantity }),
-      });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to add to cart');
-      }
-      setLastAddedItem(medicationName);
-      setOpenCartDialog(true);
-      if (typeof window !== 'undefined' && window.gtag) {
-        window.gtag('event', 'add_to_cart', { medicationId, pharmacyId });
-      }
-      await fetchCart();
-    } catch (err) {
-      toast.error(`Error: ${err.message}`);
-    } finally {
-      setIsAddingToCart(prev => ({ ...prev, [itemKey]: false }));
+const handleAddToCart = async (medicationId, pharmacyId, fullName) => {
+  setIsAddingToCart(prev => ({ ...prev, [`${medicationId}-${pharmacyId}`]: true }));
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart/add`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-guest-id': guestId,
+      },
+      body: JSON.stringify({
+        userIdentifier,
+        medicationId,
+        pharmacyId,
+        quantity: medications.find(med => med.id === medicationId)?.quantity || 1,
+        prescriptionId: prescriptionMetadata?.id,
+      }),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to add to cart');
     }
-  };
+    await fetchCart();
+    setLastAddedItems([fullName]); // Update to array
+    setOpenCartDialog(true);
+    toast.success(`${fullName} added to cart`);
+  } catch (error) {
+    console.error('Add to cart error:', error);
+    toast.error(error.message || 'Failed to add to cart');
+  } finally {
+    setIsAddingToCart(prev => ({ ...prev, [`${medicationId}-${pharmacyId}`]: false }));
+  }
+};
+
+const handleBulkAdd = async () => {
+  setIsAddingToCart(prev => ({ ...prev, bulk: true }));
+  try {
+    const prescriptionId = prescriptionMetadata?.id;
+    if (!prescriptionId) {
+      throw new Error('Prescription ID not found');
+    }
+
+    // Select the "best" pharmacy for each medication (e.g., cheapest)
+    const items = medications.map(med => {
+      const bestAvailability = med.availability?.reduce((best, current) => {
+        if (!best || current.price < best.price) return current;
+        return best;
+      }, null);
+
+      if (!bestAvailability) {
+        throw new Error(`No available pharmacy for ${med.fullName}`);
+      }
+
+      return {
+        medicationId: med.id,
+        pharmacyId: bestAvailability.pharmacyId,
+        quantity: med.quantity || 1,
+        fullName: med.fullName,
+      };
+    });
+
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart/addbulk`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-guest-id': guestId,
+      },
+      body: JSON.stringify({
+        userIdentifier,
+        guestId,
+        items,
+        prescriptionId,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to add medications to cart');
+    }
+
+    const result = await response.json();
+    await fetchCart();
+    setLastAddedItems(result.addedItems.map(item => item.fullName));
+    setOpenCartDialog(true);
+    toast.success(`Added ${result.addedItems.length} medications to cart`);
+  } catch (error) {
+    console.error('Bulk add error:', error);
+    toast.error(error.message || 'Failed to add medications to cart');
+  } finally {
+    setIsAddingToCart(prev => ({ ...prev, bulk: false }));
+  }
+};
 
   const isInCart = (medicationId, pharmacyId) => {
     return cart?.pharmacies?.some(pharmacy =>
@@ -371,8 +324,6 @@ const PrescriptionMedicationsPage = React.memo(() => {
       pharmacy.items?.some(item => item.medication.id === medicationId)
     ) || false;
   };
-
-  const [showHelp, setShowHelp] = useState(false);
 
   if (loading) {
     return (
@@ -414,53 +365,208 @@ const PrescriptionMedicationsPage = React.memo(() => {
     );
   }
 
+
+  const getLocationText = () => {
+  if (!medications || medications.length === 0) return null; // only show after search ran
+  if (!filterState && !filterLga && !filterWard) return null;
+
+  let text = `Filtered by Pharmacies near: ${filterState || ''}`;
+  if (filterLga) text += `, ${filterLga}`;
+  if (filterWard) text += ` (Ward: ${filterWard})`;
+
+  return text;
+};
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 via-gray-300/50 to-white/10 sm:py-8 pt-6 pb-12 px-2 sm:px-6 lg:px-8 relative opacity-100 overflow-hidden">
-      {/* Background Pattern */}
       <div className="absolute inset-0 bg-[url('/svg/pattern-dots.svg')] opacity-10 pointer-events-none hidden sm:block" aria-hidden="true" />
-    <div className="py-10 px-2 sm:px-4">
-      <HeroSection userName={null} prescriptionMetadata={prescriptionMetadata} />
-      <PrescriptionInfoCard prescriptionMetadata={prescriptionMetadata} medications={medications} />
-      <hr className="border-t border-gray-300 my-4 sm:my-6" />
-      {medications.length > 0 && (
-        <FilterControls
-          sortBy={sortBy}
-          setSortBy={setSortBy}
-          showFilters={showFilters}
-          setShowFilters={setShowFilters}
-          filterState={filterState}
-          setFilterState={state => {
-            setFilterState(state);
-            updateLgas(state);
-          }}
-          filterLga={filterLga}
-          setFilterLga={lga => {
-            setFilterLga(lga);
-            updateWards(filterState, lga);
-          }}
-          filterWard={filterWard}
-          setFilterWard={setFilterWard}
-          states={states}
-          lgas={lgas}
-          wards={wards}
-          geoData={geoData}
-          updateLgas={updateLgas}
-          updateWards={updateWards}
-          clearFilters={() => {
-            setFilterState('');
-            setFilterLga('');
-            setFilterWard('');
-            setSortBy('price');
-            setLgas([]);
-            setWards([]);
-
-            setMedications(defaultMedications.length > 0 ? defaultMedications : []);
-          }}
-          handleSearch={() => {}}
-          searchTerm={''}
+      <div className="py-10 px-2 sm:px-4">
+        <HeroSection
+          userName={null}
+          prescriptionMetadata={prescriptionMetadata}
+          medications={medications}
         />
-      )}
-      <div className="space-y-10 mt-8">
+        <PrescriptionInfoCard
+          prescriptionMetadata={prescriptionMetadata}
+          medications={medications}
+        />
+        <hr className="border-t border-gray-300 my-4 sm:my-6" />
+        {medications.length > 0 && (
+          <>
+            <div className="flex flex-col sm:flex-row justify-between items-center my-6 gap-4">
+               
+           {/* Section Title */}
+          <h3 className="text-xl sm:text-2xl font-bold text-[#225F91]">
+            Filter Pharmacies by Location
+          </h3>
+
+          {/* Filter Controls */}
+              <FilterControls
+                sortBy={sortBy}
+                setSortBy={setSortBy}
+                showFilters={showFilters}
+                setShowFilters={setShowFilters}
+                filterState={filterState}
+                setFilterState={state => {
+                  setFilterState(state);
+                  updateLgas(state);
+                }}
+                filterLga={filterLga}
+                setFilterLga={lga => {
+                  setFilterLga(lga);
+                  updateWards(filterState, lga);
+                }}
+                filterWard={filterWard}
+                setFilterWard={setFilterWard}
+                states={states}
+                lgas={lgas}
+                wards={wards}
+                geoData={geoData}
+                updateLgas={updateLgas}
+                updateWards={updateWards}
+                clearFilters={() => {
+                  setFilterState('');
+                  setFilterLga('');
+                  setFilterWard('');
+                  setSortBy('price');
+                  setLgas([]);
+                  setWards([]);
+                  setMedications(defaultMedications.length > 0 ? defaultMedications : []);
+                }}
+                handleSearch={() => {}}
+                searchTerm={''}
+              />
+    </div>
+    <hr className="border-t border-gray-300 mb-8" />
+
+
+  <div className="flex flex-col sm:flex-row gap-2 sm:justify-between sm:items-center mb-6">
+    {/* Bulk add button */}
+    <Button
+      onClick={handleBulkAdd}
+      className="h-12 bg-[#1ABA7F] text-white hover:bg-[#1A4971] w-full sm:w-auto mb-4"
+    >
+      Add Best Options to Cart ({medications.length} meds)
+    </Button>
+
+    {/* Simple side-by-side toggle buttons */}
+    <div className="flex w-full sm:w-auto gap-2 justify-center">
+      <Button
+        onClick={() => setViewMode('med')}
+        className={cn(
+          "h-12 px-4 text-xs sm:text-base font-medium w-1/2 sm:w-auto",
+          viewMode === 'med'
+            ? "bg-[#225F91] text-white border border-[#225F91]"
+            : "bg-white text-[#225F91] border border-gray-300 hover:bg-gray-50"
+        )}
+      >
+        {viewMode === 'med' ? "Grouped by Medications" : "Group by Medications"}
+      </Button>
+
+      <Button
+        onClick={() => setViewMode('pharmacy')}
+        className={cn(
+          "h-12 px-4 text-xs sm:text-base font-medium w-1/2 sm:w-auto",
+          viewMode === 'pharmacy'
+            ? "bg-[#225F91] text-white border border-[#225F91]"
+            : "bg-white text-[#225F91] border border-gray-300 hover:bg-gray-50"
+        )}
+      >
+        {viewMode === 'pharmacy' ? "Grouped by Pharmacies" : "Group by Pharmacies"}
+      </Button>
+    </div>
+  </div>
+  <hr className="border-t border-gray-300 mb-8" />
+
+            {viewMode === 'med' ? (
+              <Accordion type="single" collapsible className="space-y-4">
+                {medications.map((med, index) => (
+                  <AccordionItem key={med.id} value={med.id} className="bg-white/95 border border-[#1ABA7F]/20 rounded-2xl shadow-lg 
+                  transition-all duration-300 hover:shadow-xl hover:border-[#1ABA7F]/40">
+                    <AccordionTrigger className="p-4 flex justify-between items-start gap-2 hover:text-[#1ABA7F] hover:no-underline">
+                    <div className="flex flex-col sm:flex-row gap-2 items-start">
+                      <h4 className="text-base sm:text-lg font-bold text-[#225F91]">{med.fullName}</h4>
+                        <div className='text-xs'>
+                          <span className="font-semibold text-gray-600">Generic Name:</span>
+                          <span className="ml-2 text-gray-600 font-medium">{med.genericName || 'N/A'}</span>
+                        </div>
+                        {med.manufacturerName && (
+                          <div className='text-xs'>
+                            <span className="text-gray-600 font-semibold">Manufacturer:</span>
+                            <span className="ml-2 text-gray-600 font-medium">{med.manufacturerName || 'N/A'} - {med.manufacturerCountry}</span>
+                          </div>
+                        )}
+                        <div className='text-xs'>
+                          <span className="font-semibold text-gray-600">NAFDAC Code:</span>
+                          <span className="ml-2 text-gray-600 font-medium">{med.nafdacCode || 'N/A'}</span>
+                        </div>
+                        <Badge className="bg-[#1ABA7F]/20 text-[#1ABA7F]">
+                          Available at {med.availability?.length || 0} Pharmacies
+                        </Badge>
+                        </div>
+                          <div className="relative w-20 h-20 sm:w-32 sm:h-32 flex-shrink-0">
+                          {med.imageUrl ? (
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <img
+                                    src={med.imageUrl}
+                                    alt={med.fullName}
+                                    className="w-full h-full object-cover rounded-xl p-1 border border-[#1ABA7F]/20 shadow-md transition-transform duration-300 hover:scale-105 cursor-pointer"
+                                  />
+                                </DialogTrigger>
+                                <DialogContent className="max-w-3xl">
+                                  <VisuallyHidden>
+                                    <DialogTitle>{med.fullName}</DialogTitle>
+                                  </VisuallyHidden>
+                                  <img
+                                    src={med.imageUrl}
+                                    alt={med.fullName}
+                                    className="w-full h-auto rounded-lg shadow-lg"
+                                  />
+                                </DialogContent>
+                              </Dialog>
+                            ) : (
+                              <Pill className="w-12 h-12 sm:w-20 sm:h-20 text-[#1ABA7F]/60" aria-label="Medication" />
+                            )}
+                            </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="p-4">
+                       <hr className="border-t border-gray-300" />
+                      <MedicationCard
+                        med={med}
+                        handleAddToCart={handleAddToCart}
+                        isInCart={isInCart}
+                        isAddingToCart={isAddingToCart}
+                        isMultiMed={true}
+                        searchTerm=""
+                        state={filterState}
+                        lga={filterLga}
+                        ward={filterWard}
+                      />
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            ) : (
+              <PharmacyRecommendations
+                pharmacyRecommendations={pharmacyRecommendations}
+                medications={medications}
+                handleAddToCart={handleAddToCart}
+                isInCart={isInCart}
+                isAddingToCart={isAddingToCart}
+                fetchCart={fetchCart}
+                setLastAddedItems={setLastAddedItems}
+                setOpenCartDialog={setOpenCartDialog}
+                userIdentifier={userIdentifier}       
+                guestId={guestId}                      
+                prescriptionId={prescriptionMetadata?.id} 
+                state={filterState}
+                lga={filterLga}
+                ward={filterWard}
+              />
+            )}
+          </>
+        )}
         {prescriptionMetadata?.status === 'VERIFIED' && medications.length === 0 && (
           <Card className="shadow-xl border border-[#1ABA7F]/20 rounded-2xl text-center py-10 bg-white/95 backdrop-blur-sm animate-in fade-in-20 duration-700">
             <div className="absolute top-0 left-0 w-12 h-12 bg-[#1ABA7F]/20 rounded-br-full" />
@@ -484,65 +590,42 @@ const PrescriptionMedicationsPage = React.memo(() => {
             </p>
           </Card>
         )}
-        {prescriptionMetadata?.status === 'VERIFIED' && medications.length > 0 && medications.map((med) => (
-    <Card 
-    key={med.id}
-      className="bg-white/95 border-0 rounded-2xl mt-16 mb-16 sm:rounded-3xl shadow-lg sm:shadow-xl overflow-hidden backdrop-blur-sm transition-all duration-500 hover:-translate-y-1 sm:hover:-translate-y-2 mx-auto ring-2 ring-[#1ABA7F]/50"
-    >
-      <div className="absolute inset-0 bg-gradient-to-br from-[#1ABA7F] to-[#225F91] opacity-5 transition-opacity duration-300 pointer-events-none" />
-
-      <div className="absolute top-0 left-0 w-8 sm:w-12 h-8 sm:h-12 bg-gradient-to-br from-[#1ABA7F]/10 to-[#225F91]/10 rounded-br-2xl sm:rounded-br-3xl" />
-      <div className="absolute top-3 sm:top-4 right-3 sm:right-4">
-        <div className="w-1.5 sm:w-2 h-1.5 sm:h-2 bg-gradient-to-r from-[#1ABA7F] to-[#225F91] rounded-full animate-pulse" />
+        <FloatingCartSummary
+          cartItemsCount={cartItems.length}
+          onViewCart={() => window.location.href = '/cart'}
+        />
+        <CartDialog
+          openCartDialog={openCartDialog}
+          setOpenCartDialog={setOpenCartDialog}
+          lastAddedItems={lastAddedItems}
+        />
+        <Dialog open={showPreview} onOpenChange={setShowPreview}>
+          <DialogContent className="sm:max-w-lg p-6 rounded-2xl bg-white/95 border border-[#1ABA7F]/20">
+            <DialogTitle>
+              <VisuallyHidden>Prescription Image Preview</VisuallyHidden>
+            </DialogTitle>
+            <img
+              src={prescriptionMetadata?.imageUrl}
+              alt="Prescription"
+              className="w-full h-auto rounded-lg"
+            />
+          </DialogContent>
+        </Dialog>
+        <Dialog open={showHelp} onOpenChange={setShowHelp}>
+          <DialogContent className="sm:max-w-lg p-6 rounded-2xl bg-white/95 border border-[#1ABA7F]/20">
+            <DialogTitle>Need Help?</DialogTitle>
+            <p className="text-base text-gray-600 mt-2">If you have questions or need assistance, please contact our support team or chat with a pharmacist.</p>
+            <div className="flex gap-4 mt-6">
+              <Button asChild className="w-full h-12 px-6 text-base font-semibold rounded-full bg-[#225F91] text-white hover:bg-[#1A4971]">
+                <Link href="/support">Contact Support</Link>
+              </Button>
+              <Button asChild variant="outline" className="w-full h-12 px-6 text-base font-semibold rounded-full border-[#1ABA7F] text-[#1ABA7F] hover:bg-[#1ABA7F]/10">
+                <Link href="/chat">Chat with Pharmacist</Link>
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
-      <CardContent className="p-3 sm:p-6">
-          <MedicationCard
-            key={med.id}
-            med={med}
-            handleAddToCart={handleAddToCart}
-            isInCart={isInCart}
-            isAddingToCart={isAddingToCart}
-          />
-          </CardContent>
-          </Card>
-        ))}
-      </div>
-      <FloatingCartSummary
-        cartItemsCount={cartItems.length}
-        onViewCart={() => window.location.href = '/cart'}
-      />
-      <CartDialog
-        openCartDialog={openCartDialog}
-        setOpenCartDialog={setOpenCartDialog}
-        lastAddedItem={lastAddedItem}
-      />
-      <Dialog open={showPreview} onOpenChange={setShowPreview}>
-        <DialogContent className="sm:max-w-lg p-6 rounded-2xl bg-white/95 border border-[#1ABA7F]/20">
-          <DialogTitle>
-            <VisuallyHidden>Prescription Image Preview</VisuallyHidden>
-          </DialogTitle>
-          <img
-            src={prescriptionMetadata?.imageUrl}
-            alt="Prescription"
-            className="w-full h-auto rounded-lg"
-          />
-        </DialogContent>
-      </Dialog>
-      <Dialog open={showHelp} onOpenChange={setShowHelp}>
-        <DialogContent className="sm:max-w-lg p-6 rounded-2xl bg-white/95 border border-[#1ABA7F]/20">
-          <DialogTitle>Need Help?</DialogTitle>
-          <p className="text-base text-gray-600 mt-2">If you have questions or need assistance, please contact our support team or chat with a pharmacist.</p>
-          <div className="flex gap-4 mt-6">
-            <Button asChild className="w-full h-12 px-6 text-base font-semibold rounded-full bg-[#225F91] text-white hover:bg-[#1A4971]">
-              <Link href="/support">Contact Support</Link>
-            </Button>
-            <Button asChild variant="outline" className="w-full h-12 px-6 text-base font-semibold rounded-full border-[#1ABA7F] text-[#1ABA7F] hover:bg-[#1ABA7F]/10">
-              <Link href="/chat">Chat with Pharmacist</Link>
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </div>
     </div>
   );
 });

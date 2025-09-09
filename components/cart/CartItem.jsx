@@ -109,13 +109,13 @@ const CartItem = ({
 
   const handleQuantityUpdate = (newQuantity) => {
     if (newQuantity < 1) return;
-    handleQuantityChange(item.id, newQuantity, item.medication.displayName);
+    handleQuantityChange(item.id, newQuantity, item.medication.fullName);
   };
 
   const handleRemove = () => {
     setRemoveItem({
       id: item.id,
-      name: item.medication.displayName,
+      name: item.medication.fullName,
       quantity: item.quantity
     });
   };
@@ -132,9 +132,9 @@ const CartItem = ({
   <div className='flex flex-col gap-1'>
   <h3 
     className="text-lg sm:text-3xl font-bold text-[#225F91] tracking-tight leading-tight" 
-    title={item.medication.displayName}
+    title={item.medication.fullName}
   >
-    {item.medication.displayName}
+    {item.medication.fullName}
   </h3>
   <div className="my-1">
     {item.medication.prescriptionRequired ? (
@@ -159,17 +159,17 @@ const CartItem = ({
         <DialogTrigger asChild>
           <img 
           src={item.medication.imageUrl} 
-          alt={item.medication.displayName}
+          alt={item.medication.fullName}
           className="w-18 h-18 object-cover text-xs rounded-lg border border-gray-100"
         />
               </DialogTrigger>
               <DialogContent className="max-w-3xl">
                 <VisuallyHidden>
-                  <DialogTitle>{item.medication.displayName}</DialogTitle>
+                  <DialogTitle>{item.medication.fullName}</DialogTitle>
                 </VisuallyHidden>
                 <img
                   src={item.medication.imageUrl}
-                  alt={item.medication.displayName}
+                  alt={item.medication.fullName}
                   className="w-full h-auto rounded-lg shadow-lg"
                 />
               </DialogContent>
