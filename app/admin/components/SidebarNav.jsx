@@ -1,24 +1,28 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, ShoppingBag, FileText, Package, LogOut, BookOpen, Layers, FlaskConical, ListOrdered, Factory, Info } from 'lucide-react';
+import { Home, Users, ShoppingBag, FileText, Package, LogOut, BookOpen, Layers, FlaskConical, ListOrdered, Factory, Info, Heart, Pill, FlaskRound, List, BookIcon } from 'lucide-react';
 
 const navItems = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: Home },
   { href: '/admin/pharmacies', label: 'Pharmacies', icon: Package },
-  { href: '/admin/medications', label: 'Medications', icon: ShoppingBag },
-  { href: '/admin/prescriptions', label: 'Prescriptions', icon: FileText },
+  { href: '/admin/medications/brand', label: 'Medications', icon: ShoppingBag },
+  { href: '/admin/medications/prescriptions', label: 'Prescriptions', icon: FileText },
   { href: '/admin/orders', label: 'Orders', icon: FileText },
   { href: '/admin/users', label: 'Users', icon: Users },
 ];
 
 const masterDataItems = [
-  { href: '/admin/generic-medications', label: 'Generic Medications', icon: BookOpen },
-  { href: '/admin/categories', label: 'Categories', icon: Layers },
-  { href: '/admin/therapeutic-classes', label: 'Therapeutic Classes', icon: FlaskConical },
-  { href: '/admin/chemical-classes', label: 'Chemical Classes', icon: ListOrdered },
-  { href: '/admin/indications', label: 'Indications', icon: Info },
-  { href: '/admin/manufacturers', label: 'Manufacturers', icon: Factory },
+  { href: '/admin/medications/active-substances', label: 'Active Product Ingredients', icon: BookOpen },
+  { href: '/admin/medications/medication-ingredients', label: 'Medication Ingredients', icon: BookIcon },
+  { href: '/admin/medications/generic-names', label: 'Generic Names', icon: Layers },
+  { href: '/admin/medications/chemical-substances', label: 'Chemical Substances', icon: List },
+  { href: '/admin/medications/chemical-classes', label: 'Chemical Groups', icon: FlaskRound },
+  { href: '/admin/medications/pharmacological-classes', label: 'Pharmacological Groups', icon: Pill },
+  { href: '/admin/medications/therapeutic-classes', label: 'Therapeutic Groups', icon: FlaskConical },
+  { href: '/admin/medications/anatomical-classes', label: 'Anatomical Groups', icon: Heart },
+  { href: '/admin/medications/indications', label: 'Indications', icon: Info },
+  { href: '/admin/medications/manufacturers', label: 'Manufacturers', icon: Factory },
 ];
 
 export default function SidebarNav() {
