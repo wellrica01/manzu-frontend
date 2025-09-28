@@ -1,12 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Card } from "@/components/ui/card";
-import { Loader2, AlertTriangle } from "lucide-react";
 import { fetchUsers } from "./api";
+import DataTableView from "../components/DataTableView";
+import { ShoppingCart } from "lucide-react";
 
-const brandBlue = "#225F91";
-const roleOptions = ["all", "admin", "support"];
+const roleOptions = ["ADMIN", "SUPER_ADMIN", "SUPPORT"];
 
 export default function UsersPage() {
   const [users, setUsers] = useState([]);
@@ -14,8 +13,9 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
-  const [role, setRole] = useState("all");
+  const [role, setRole] = useState("");
 
+  // Fetch users
   useEffect(() => {
     async function loadUsers() {
       setLoading(true);
@@ -25,11 +25,11 @@ export default function UsersPage() {
           page: pagination.page,
           limit: pagination.limit,
           ...(search ? { email: search } : {}),
-          ...(role !== "all" ? { role } : {}),
+          ...(role ? { role } : {}),
         };
         const data = await fetchUsers(params);
-        setUsers(data.users);
-        setPagination(data.pagination);
+        setUsers(data.data?.users || []);
+        setPagination(data.pagination || { page: 1, limit: 10, total: 0, pages: 1 });
       } catch (e) {
         setError("Failed to load users.");
       } finally {
@@ -37,118 +37,92 @@ export default function UsersPage() {
       }
     }
     loadUsers();
-    // eslint-disable-next-line
   }, [pagination.page, search, role]);
 
-  function handlePageChange(newPage) {
-    setPagination((prev) => ({ ...prev, page: newPage }));
-  }
+  const handlePageChange = (newPage) => setPagination(prev => ({ ...prev, page: newPage }));
+
+  // Mobile card render
+  const renderMobileCard = (user) => (
+    <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition">
+      <div className="flex justify-between items-start mb-3">
+        <div>
+          <h3 className="font-semibold text-gray-900">{user.name}</h3>
+          <p className="text-gray-600 text-sm">{user.email}</p>
+        </div>
+        <span className="px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
+          {user.role.charAt(0) + user.role.slice(1).toLowerCase()}
+        </span>
+      </div>
+      <div className="flex justify-between items-center text-sm">
+        <span>ID: {user.id}</span>
+        <span>Created: {new Date(user.createdAt).toLocaleDateString()}</span>
+      </div>
+      <div className="pt-2 border-t border-gray-100 mt-2">
+        <Link
+          href={`/admin/users/${user.id}`}
+          className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-[#225F91] text-white font-semibold hover:bg-[#1A4971] transition text-sm"
+        >
+          View
+        </Link>
+      </div>
+    </div>
+  );
+
+  // Table columns
+  const columns = [
+    { key: "id", label: "ID", render: u => u.id },
+    { key: "name", label: "Name", render: u => u.name },
+    { key: "email", label: "Email", render: u => u.email },
+    { key: "role", label: "Role", render: u => u.role.charAt(0) + u.role.slice(1).toLowerCase() },
+    { key: "createdAt", label: "Created", render: u => new Date(u.createdAt).toLocaleDateString() },
+    { key: "actions", label: "Actions", render: u => (
+        <Link
+          href={`/admin/users/${u.id}`}
+          className="px-4 py-2 rounded-lg bg-[#225F91] text-white font-semibold hover:bg-[#1A4971] transition text-sm"
+        >
+          View
+        </Link>
+      )
+    },
+  ];
+
+  // Filters
+  const filters = [
+    {
+      value: role,
+      onChange: setRole,
+      options: roleOptions.map(r => ({ value: r, label: r })),
+      placeholder: "All Roles",
+    }
+  ];
 
   return (
-    <div className="space-y-8">
+    <div>
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold text-[#225F91]">Admin Users</h1>
       </div>
-      <Card className="p-6 bg-white/95 border border-[#1ABA7F]/20 rounded-2xl shadow-md">
-        <div className="mb-4 flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
-          <div className="flex gap-2 flex-1">
-            <input
-              type="text"
-              placeholder="Search by email..."
-              value={search}
-              onChange={(e) => {
-                setPagination((prev) => ({ ...prev, page: 1 }));
-                setSearch(e.target.value);
-              }}
-              className="w-full sm:w-64 px-4 py-2 border border-[#1ABA7F]/20 rounded-lg focus:border-[#1ABA7F] focus:outline-none"
-            />
-            <select
-              value={role}
-              onChange={(e) => {
-                setPagination((prev) => ({ ...prev, page: 1 }));
-                setRole(e.target.value);
-              }}
-              className="px-3 py-2 border border-[#1ABA7F]/20 rounded-lg focus:border-[#1ABA7F] focus:outline-none"
-            >
-              {roleOptions.map((opt) => (
-                <option key={opt} value={opt}>{opt.charAt(0).toUpperCase() + opt.slice(1)}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-        {loading ? (
-          <div className="flex justify-center items-center h-32">
-            <Loader2 className="animate-spin w-8 h-8 text-[#1ABA7F]" />
-          </div>
-        ) : error ? (
-          <div className="flex flex-col items-center gap-2 text-red-600">
-            <AlertTriangle className="w-8 h-8" />
-            <span>{error}</span>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead>
-                <tr className="text-left text-gray-600 border-b">
-                  <th className="py-2 px-3">ID</th>
-                  <th className="py-2 px-3">Name</th>
-                  <th className="py-2 px-3">Email</th>
-                  <th className="py-2 px-3">Role</th>
-                  <th className="py-2 px-3">Created</th>
-                  <th className="py-2 px-3">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.length > 0 ? (
-                  users.map((user) => (
-                    <tr key={user.id} className="border-b last:border-0">
-                      <td className="py-2 px-3 font-medium text-gray-900">{user.id}</td>
-                      <td className="py-2 px-3">{user.name}</td>
-                      <td className="py-2 px-3">{user.email}</td>
-                      <td className="py-2 px-3">{user.role.charAt(0).toUpperCase() + user.role.slice(1)}</td>
-                      <td className="py-2 px-3">{new Date(user.createdAt).toLocaleDateString()}</td>
-                      <td className="py-2 px-3">
-                        <Link
-                          href={`/admin/users/${user.id}`}
-                          className="px-4 py-2 rounded-lg bg-[#225F91] text-white font-semibold hover:bg-[#1A4971] transition"
-                        >
-                          View
-                        </Link>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={6} className="text-center py-4 text-gray-500">
-                      No users found.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
-        {/* Pagination Controls */}
-        <div className="flex justify-end items-center gap-2 mt-4">
-          <button
-            className="px-3 py-1 rounded border border-[#1ABA7F]/30 text-[#225F91] disabled:opacity-50"
-            onClick={() => handlePageChange(pagination.page - 1)}
-            disabled={pagination.page <= 1}
-          >
-            Prev
-          </button>
-          <span className="text-sm text-gray-700">
-            Page {pagination.page} of {pagination.pages}
-          </span>
-          <button
-            className="px-3 py-1 rounded border border-[#1ABA7F]/30 text-[#225F91] disabled:opacity-50"
-            onClick={() => handlePageChange(pagination.page + 1)}
-            disabled={pagination.page >= pagination.pages}
-          >
-            Next
-          </button>
-        </div>
-      </Card>
+
+      <DataTableView
+        title=""
+        description=""
+        data={users}
+        loading={loading}
+        error={error}
+        pagination={pagination}
+        onPageChange={handlePageChange}
+        searchValue={search}
+        onSearchChange={v => { setPagination(prev => ({ ...prev, page: 1 })); setSearch(v); }}
+        searchPlaceholder="Search by email..."
+        filters={filters}
+        columns={columns}
+        mobileCardRender={renderMobileCard}
+        emptyState={{
+          icon: ShoppingCart,
+          title: "No users found",
+          description: search || role !== "ALL" ? "Try adjusting your search or filters." : "Users will appear here once added.",
+          showPrimaryAction: false,
+        }}
+      />
     </div>
   );
 }

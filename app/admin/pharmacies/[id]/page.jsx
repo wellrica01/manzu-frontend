@@ -19,21 +19,22 @@ export default function PharmacyDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    async function loadPharmacy() {
-      setLoading(true);
-      setError(null);
-      try {
-        const data = await fetchPharmacy(id);
-        setPharmacy(data.pharmacy || data);
-      } catch (e) {
-        setError("Failed to load pharmacy details.");
-      } finally {
-        setLoading(false);
-      }
+useEffect(() => {
+  async function loadPharmacy() {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await fetchPharmacy(id);
+      setPharmacy(data.data?.pharmacy || null);
+    } catch (e) {
+      setError("Failed to load pharmacy details.");
+    } finally {
+      setLoading(false);
     }
-    if (id) loadPharmacy();
-  }, [id]);
+  }
+  if (id) loadPharmacy();
+}, [id]);
+
 
   return (
     <div className="max-w-2xl mx-auto space-y-8">

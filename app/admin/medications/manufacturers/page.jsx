@@ -1,38 +1,68 @@
 "use client";
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 import Dialog from "../../components/Dialog";
 import ManufacturerForm from "./ManufacturerForm";
-import { fetchManufacturers, deleteManufacturer, createManufacturer, updateManufacturer } from './api';
-import { Card } from "@/components/ui/card";
-import { Loader2, AlertTriangle, Edit, Trash2, Plus, CheckCircle } from "lucide-react";
+import {
+  fetchManufacturers,
+  deleteManufacturer,
+  createManufacturer,
+  updateManufacturer,
+} from "./api";
+import {
+  Loader2,
+  AlertTriangle,
+  Edit,
+  Trash2,
+  Plus,
+  CheckCircle,
+} from "lucide-react";
+import DataTable from "../../components/DataTable";
 
 export default function ManufacturersPage() {
   const [manufacturers, setManufacturers] = useState([]);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    pages: 1,
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [refresh, setRefresh] = useState(0);
+
+  const [search, setSearch] = useState("");
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState(null);
   const [editingManufacturer, setEditingManufacturer] = useState(null);
+
   const [deleteId, setDeleteId] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteSuccess, setDeleteSuccess] = useState(false);
 
+  // Fetch with pagination + search
   useEffect(() => {
-    setLoading(true);
-    fetchManufacturers()
-      .then(res => {
+    async function load() {
+      setLoading(true);
+      try {
+        const params = {
+          page: pagination.page,
+          limit: pagination.limit,
+          ...(search ? { name: search } : {}),
+        };
+        const res = await fetchManufacturers(params);
         setManufacturers(res.manufacturers || []);
-        setLoading(false);
-      })
-      .catch(err => {
+        if (res.pagination) setPagination(res.pagination);
+      } catch (err) {
         setError(err.message);
+      } finally {
         setLoading(false);
-      });
-  }, [refresh]);
+      }
+    }
+    load();
+  }, [pagination.page, search]);
 
-  // Handle both add and edit
+  // Handle add/edit
   const handleAddOrEdit = async (data) => {
     setFormLoading(true);
     setFormError(null);
@@ -44,7 +74,7 @@ export default function ManufacturersPage() {
       }
       setDialogOpen(false);
       setEditingManufacturer(null);
-      setRefresh(r => r + 1);
+      setPagination((prev) => ({ ...prev, page: 1 })); // reload first page
     } catch (err) {
       setFormError(err.message);
     } finally {
@@ -52,13 +82,14 @@ export default function ManufacturersPage() {
     }
   };
 
+  // Handle delete
   const handleDelete = async (id) => {
     setDeleteLoading(true);
     setDeleteSuccess(false);
     try {
       await deleteManufacturer(id);
       setDeleteSuccess(true);
-      setManufacturers(prev => prev.filter(m => m.id !== id));
+      setManufacturers((prev) => prev.filter((m) => m.id !== id));
       setTimeout(() => {
         setDeleteId(null);
         setDeleteSuccess(false);
@@ -77,6 +108,7 @@ export default function ManufacturersPage() {
 
   return (
     <div className="space-y-8">
+      {/* Add/Edit dialog */}
       <Dialog
         open={dialogOpen}
         onClose={() => {
@@ -93,6 +125,7 @@ export default function ManufacturersPage() {
         />
       </Dialog>
 
+      {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold text-[#225F91]">Manufacturers</h1>
         <button
@@ -107,72 +140,75 @@ export default function ManufacturersPage() {
         </button>
       </div>
 
-      <Card className="p-6 bg-white/95 border border-[#1ABA7F]/20 rounded-2xl shadow-md">
-        {loading ? (
-          <div className="flex justify-center items-center h-32">
-            <Loader2 className="animate-spin w-8 h-8 text-[#1ABA7F]" />
-          </div>
-        ) : error ? (
-          <div className="flex flex-col items-center gap-2 text-red-600">
-            <AlertTriangle className="w-8 h-8" />
-            <span>{error}</span>
-          </div>
+      {/* DataTable */}
+      <DataTable
+        title="Manufacturers"
+        loading={loading}
+        error={error}
+        data={manufacturers}
+        columns={["ID", "Name", "Country", "Contact Info", "Actions"]}
+        search={search}
+        onSearchChange={(val) => {
+          setPagination((prev) => ({ ...prev, page: 1 }));
+          setSearch(val);
+        }}
+        pagination={pagination}
+        onPageChange={(newPage) =>
+          setPagination((prev) => ({ ...prev, page: newPage }))
+        }
+      >
+        {manufacturers.length === 0 ? (
+          <tr>
+            <td colSpan={5} className="text-center py-4">
+              No manufacturers found.
+            </td>
+          </tr>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead>
-                <tr className="text-left text-gray-600 border-b">
-                  <th className="py-2 px-3">ID</th>
-                  <th className="py-2 px-3">Name</th>
-                  <th className="py-2 px-3">Country</th>
-                  <th className="py-2 px-3">Contact Info</th>
-                  <th className="py-2 px-3">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {manufacturers.length === 0 ? (
-                  <tr><td colSpan={5} className="text-center py-4">No manufacturers found.</td></tr>
-                ) : (
-                  manufacturers.map(m => (
-                    <tr key={m.id} className="border-b last:border-0">
-                      <td className="py-2 px-3 font-medium text-gray-900">{m.id}</td>
-                      <td className="py-2 px-3">{m.name}</td>
-                      <td className="py-2 px-3">{m.country}</td>
-                      <td className="py-2 px-3">{m.contactInfo}</td>
-                      <td className="py-2 px-3 flex gap-2">
-                        <button
-                          className="p-1 rounded hover:bg-[#1ABA7F]/10 text-[#1ABA7F]"
-                          title="Edit"
-                          onClick={() => handleEditClick(m)}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => setDeleteId(m.id)}
-                          className="p-1 rounded hover:bg-red-100 text-red-600"
-                          title="Delete"
-                          disabled={deleteLoading && deleteId === m.id}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          manufacturers.map((m) => (
+            <tr key={m.id} className="border-b last:border-0">
+              <td className="py-2 px-3 font-medium text-gray-900">{m.id}</td>
+              <td className="py-2 px-3">{m.name}</td>
+              <td className="py-2 px-3">{m.country}</td>
+              <td className="py-2 px-3">{m.contactInfo}</td>
+              <td className="py-2 px-3 flex gap-2">
+                <button
+                  className="p-1 rounded hover:bg-[#1ABA7F]/10 text-[#1ABA7F]"
+                  title="Edit"
+                  onClick={() => handleEditClick(m)}
+                >
+                  <Edit className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setDeleteId(m.id)}
+                  className="p-1 rounded hover:bg-red-100 text-red-600"
+                  title="Delete"
+                  disabled={deleteLoading && deleteId === m.id}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </td>
+            </tr>
+          ))
         )}
-        {deleteSuccess && (
-          <div className="fixed bottom-6 right-6 bg-green-100 border border-green-300 text-green-800 px-4 py-2 rounded-lg flex items-center gap-2 shadow-lg z-50">
-            <CheckCircle className="w-5 h-5" /> Manufacturer deleted successfully.
-          </div>
-        )}
-      </Card>
+      </DataTable>
 
+      {/* Success toast */}
+      {deleteSuccess && (
+        <div className="fixed bottom-6 right-6 bg-green-100 border border-green-300 text-green-800 px-4 py-2 rounded-lg flex items-center gap-2 shadow-lg z-50">
+          <CheckCircle className="w-5 h-5" /> Manufacturer deleted successfully.
+        </div>
+      )}
+
+      {/* Delete confirmation dialog */}
       {deleteId && (
-        <Dialog open={!!deleteId} onClose={() => setDeleteId(null)} title="Confirm Delete">
-          <div className="mb-4">Are you sure you want to delete this manufacturer?</div>
+        <Dialog
+          open={!!deleteId}
+          onClose={() => setDeleteId(null)}
+          title="Confirm Delete"
+        >
+          <div className="mb-4">
+            Are you sure you want to delete this manufacturer?
+          </div>
           <div className="flex justify-end gap-2">
             <button
               className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -186,7 +222,11 @@ export default function ManufacturersPage() {
               onClick={() => handleDelete(deleteId)}
               disabled={deleteLoading}
             >
-              {deleteLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Delete"}
+              {deleteLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                "Delete"
+              )}
             </button>
           </div>
         </Dialog>

@@ -6,20 +6,25 @@ import { Loader2, AlertTriangle, ArrowLeft } from "lucide-react";
 import { fetchOrder } from "../api";
 
 function StatusBadge({ status }) {
+  const normalized = status?.toLowerCase?.() || "";
   let color = "bg-gray-200 text-gray-700";
-  if (status === "pending") color = "bg-yellow-100 text-yellow-800";
-  else if (status === "confirmed") color = "bg-blue-100 text-blue-800";
-  else if (status === "processing") color = "bg-purple-100 text-purple-800";
-  else if (status === "shipped") color = "bg-indigo-100 text-indigo-800";
-  else if (status === "delivered") color = "bg-green-100 text-green-800";
-  else if (status === "ready_for_pickup") color = "bg-cyan-100 text-cyan-800";
-  else if (status === "cancelled") color = "bg-red-100 text-red-800";
+
+  if (normalized === "pending") color = "bg-yellow-100 text-yellow-800";
+  else if (normalized === "confirmed") color = "bg-blue-100 text-blue-800";
+  else if (normalized === "processing") color = "bg-purple-100 text-purple-800";
+  else if (normalized === "shipped") color = "bg-indigo-100 text-indigo-800";
+  else if (normalized === "delivered") color = "bg-green-100 text-green-800";
+  else if (normalized === "ready_for_pickup") color = "bg-cyan-100 text-cyan-800";
+  else if (normalized === "cancelled") color = "bg-red-100 text-red-800";
+  else if (normalized === "cart") color = "bg-gray-100 text-gray-800";
+
   return (
     <span className={`px-2 py-1 rounded-full text-xs font-semibold ${color}`}>
-      {status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+      {normalized.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
     </span>
   );
 }
+
 
 export default function OrderDetailsPage() {
   const router = useRouter();
@@ -35,7 +40,7 @@ export default function OrderDetailsPage() {
       setError(null);
       try {
         const data = await fetchOrder(id);
-        setOrder(data.order || data);
+        setOrder(data.data?.order || data.order || data);
       } catch (e) {
         setError("Failed to load order details.");
       } finally {
@@ -81,10 +86,10 @@ export default function OrderDetailsPage() {
             <div><span className="font-semibold">Payment Status:</span> {order.paymentStatus || '-'}</div>
             <div><span className="font-semibold">Created At:</span> {new Date(order.createdAt).toLocaleString()}</div>
             <div><span className="font-semibold">Updated At:</span> {new Date(order.updatedAt).toLocaleString()}</div>
-            <div><span className="font-semibold">Pharmacy:</span> {order.pharmacy?.name || '-'}</div>
+            <div><span className="font-semibold">Pharmacy:</span> {order.Pharmacy?.name || '-'}</div>
             {order.prescription && (
               <div className="mt-2">
-                <span className="font-semibold">Prescription:</span> ID {order.prescription.id}, Status: {order.prescription.status}
+                <span className="font-semibold">Prescription:</span> ID {order.Prescription.id}, Status: {order.Prescription.status}
                 {order.prescription.fileUrl && (
                   <>
                     {" | "}
@@ -97,7 +102,7 @@ export default function OrderDetailsPage() {
           {/* Order Items */}
           <div className="mt-8">
             <h3 className="font-semibold text-[#225F91] mb-2">Order Items</h3>
-            {order.items && order.items.length > 0 ? (
+            {order.OrderItem && order.OrderItem.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="min-w-full text-sm">
                   <thead>
@@ -109,14 +114,14 @@ export default function OrderDetailsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {order.items.map((item, idx) => (
-                      <tr key={idx} className="border-b last:border-0">
-                        <td className="py-2 px-3">{item.pharmacyMedication?.medication?.name || '-'}</td>
-                        <td className="py-2 px-3">{item.pharmacyMedication?.pharmacy?.name || '-'}</td>
-                        <td className="py-2 px-3">{item.quantity}</td>
-                        <td className="py-2 px-3">₦{item.price?.toLocaleString?.() ?? item.price}</td>
-                      </tr>
-                    ))}
+                   {order.OrderItem?.map((item, idx) => (
+                    <tr key={idx} className="border-b last:border-0">
+                      <td className="py-2 px-3">{item.MedicationAvailability?.Medication?.brandName || '-'}</td>
+                      <td className="py-2 px-3">{item.MedicationAvailability?.Pharmacy?.name || '-'}</td>
+                      <td className="py-2 px-3">{item.quantity}</td>
+                      <td className="py-2 px-3">₦{item.price?.toLocaleString?.() ?? item.price}</td>
+                    </tr>
+                  ))}
                   </tbody>
                 </table>
               </div>

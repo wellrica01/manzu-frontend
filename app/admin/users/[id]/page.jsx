@@ -16,22 +16,32 @@ export default function UserDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    async function loadUser() {
-      setLoading(true);
-      setError(null);
-      try {
-        const data = await fetchUser(id);
-        setUser(data.user || data);
-      } catch (e) {
-        setError("Failed to load user details.");
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
+useEffect(() => {
+  async function loadUser() {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await fetchUser(id);
+      setUser(data.data?.user || data.user || data);
+    } catch (e) {
+      setError("Failed to load user details.");
+      setUser(null);
+    } finally {
+      setLoading(false);
     }
-    if (id) loadUser();
-  }, [id]);
+  }
+  if (id) loadUser();
+}, [id]);
+
+
+  function formatRole(role) {
+  if (!role) return "-"; // fallback
+  return role
+    .replace(/_/g, " ") // SUPER_ADMIN → SUPER ADMIN
+    .toLowerCase()      // → super admin
+    .replace(/\b\w/g, l => l.toUpperCase()); // → Super Admin
+}
+
 
   return (
     <div className="max-w-xl mx-auto py-10">
@@ -66,7 +76,7 @@ export default function UserDetailsPage() {
                 <span className="font-semibold text-gray-700">Email:</span> {user.email}
               </div>
               <div>
-                <span className="font-semibold text-gray-700">Role:</span> {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                <span className="font-semibold text-gray-700">Role:</span> {formatRole(user.role)}
               </div>
               <div>
                 <span className="font-semibold text-gray-700">Created At:</span> {new Date(user.createdAt).toLocaleString()}

@@ -32,9 +32,7 @@ export default function AdminLogin() {
         body: JSON.stringify(values),
       });
       const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.message || 'Login failed');
-      }
+      if (!response.ok) throw new Error(data.message || 'Login failed');
       localStorage.setItem('adminToken', data.token);
       router.push('/admin/dashboard');
     } catch (err) {
@@ -43,12 +41,6 @@ export default function AdminLogin() {
   };
 
   return (
-     <div className="min-h-screen bg-gradient-to-b from-gray-50/95 to-gray-100/95 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 animate-in fade-in-20 duration-500">
-  <div className="container mx-auto max-w-md space-y-8">
-    <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-primary mb-8 text-center tracking-tight">
-      Admin Login
-      <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-600 animate-pulse"> Portal</span>
-    </h1>
     <Card className="shadow-3xl border border-gray-100/20 rounded-3xl overflow-hidden bg-gradient-to-br from-white/95 to-gray-50/95 backdrop-blur-lg transition-all duration-700 hover:-translate-y-2 hover:shadow-[0_15px_40px_rgba(59,130,246,0.3)] animate-in fade-in-20">
       <div className="absolute top-0 left-0 w-16 h-16 bg-primary/25 rounded-br-full opacity-70" />
       <CardHeader className="p-6 sm:p-8 bg-gradient-to-r from-primary/10 to-transparent">
@@ -59,10 +51,7 @@ export default function AdminLogin() {
       </CardHeader>
       <CardContent className="p-6 sm:p-8">
         {error && (
-          <div
-            className="bg-red-50/90 border-l-4 border-red-500 p-4 rounded-xl mb-6 animate-in fade-in-20 duration-300"
-            role="alert"
-          >
+          <div className="bg-red-50/90 border-l-4 border-red-500 p-4 rounded-xl mb-6 animate-in fade-in-20 duration-300" role="alert">
             <p className="text-red-600 text-base font-medium">{error}</p>
           </div>
         )}
@@ -114,7 +103,5 @@ export default function AdminLogin() {
         </Form>
       </CardContent>
     </Card>
-  </div>
-</div>
   );
 }

@@ -8,41 +8,60 @@ import {
   updateMedicationIngredient,
   deleteMedicationIngredient,
 } from "./api";
-import { Card } from "@/components/ui/card";
 import {
   Loader2,
-  AlertTriangle,
   Edit,
   Trash2,
   Plus,
   CheckCircle,
 } from "lucide-react";
+import DataTable from "../../components/DataTable";
 
 export default function MedicationIngredientsPage() {
   const [ingredients, setIngredients] = useState([]);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    pages: 1,
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [refresh, setRefresh] = useState(0);
+
+  const [search, setSearch] = useState("");
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState(null);
   const [editingIngredient, setEditingIngredient] = useState(null);
+
   const [deleteId, setDeleteId] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteSuccess, setDeleteSuccess] = useState(false);
 
   useEffect(() => {
-    setLoading(true);
-    fetchMedicationIngredients()
-      .then((res) => {
+    async function load() {
+      setLoading(true);
+      try {
+        const params = {
+          page: pagination.page,
+          limit: pagination.limit,
+          ...(search ? { search } : {}),
+        };
+        const res = await fetchMedicationIngredients(params);
         setIngredients(res.medicationIngredients || []);
-        setLoading(false);
-      })
-      .catch((err) => {
+        if (res.pagination) setPagination(res.pagination);
+      } catch (err) {
         setError(err.message);
+      } finally {
         setLoading(false);
-      });
-  }, [refresh]);
+      }
+    }
+    load();
+  }, [pagination.page, search]);
+
+  const handlePageChange = (newPage) =>
+    setPagination((prev) => ({ ...prev, page: newPage }));
 
   const handleAddOrEdit = async (data) => {
     setFormLoading(true);
@@ -55,7 +74,7 @@ export default function MedicationIngredientsPage() {
       }
       setDialogOpen(false);
       setEditingIngredient(null);
-      setRefresh((r) => r + 1);
+      setPagination((prev) => ({ ...prev, page: 1 }));
     } catch (err) {
       setFormError(err.message);
     } finally {
@@ -83,6 +102,7 @@ export default function MedicationIngredientsPage() {
 
   return (
     <div className="space-y-8">
+      {/* Add/Edit Dialog */}
       <Dialog
         open={dialogOpen}
         onClose={() => {
@@ -99,6 +119,7 @@ export default function MedicationIngredientsPage() {
         />
       </Dialog>
 
+      {/* Page Header */}
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold text-[#225F91]">Medication Ingredients</h1>
         <button
@@ -110,78 +131,68 @@ export default function MedicationIngredientsPage() {
         </button>
       </div>
 
-      <Card className="p-6 bg-white/95 border border-[#1ABA7F]/20 rounded-2xl shadow-md">
-        {loading ? (
-          <div className="flex justify-center items-center h-32">
-            <Loader2 className="animate-spin w-8 h-8 text-[#1ABA7F]" />
-          </div>
-        ) : error ? (
-          <div className="flex flex-col items-center gap-2 text-red-600">
-            <AlertTriangle className="w-8 h-8" />
-            <span>{error}</span>
-          </div>
+      {/* DataTable */}
+      <DataTable
+        title="Medication Ingredients"
+        loading={loading}
+        error={error}
+        data={ingredients}
+        columns={["ID", "Substance", "Strength", "Per Unit", "Actions"]}
+        search={search}
+        onSearchChange={(val) => {
+          setPagination((prev) => ({ ...prev, page: 1 }));
+          setSearch(val);
+        }}
+        pagination={pagination}
+        onPageChange={handlePageChange}
+      >
+        {ingredients.length === 0 ? (
+          <tr>
+            <td colSpan={5} className="text-center py-4">
+              No medication ingredients found.
+            </td>
+          </tr>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead>
-                <tr className="text-left text-gray-600 border-b">
-                  <th className="py-2 px-3">ID</th>
-                  <th className="py-2 px-3">Substance</th>
-                  <th className="py-2 px-3">Strength</th>
-                  <th className="py-2 px-3">Per Unit</th>
-                  <th className="py-2 px-3">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {ingredients.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="text-center py-4">
-                      No medication ingredients found.
-                    </td>
-                  </tr>
-                ) : (
-                  ingredients.map((ingredient) => (
-                    <tr key={ingredient.id} className="border-b last:border-0">
-                      <td className="py-2 px-3 font-medium text-gray-900">{ingredient.id}</td>
-                      <td className="py-2 px-3">{ingredient.ActiveSubstance?.name || "-"}</td>
-                      <td className="py-2 px-3">
-                        {ingredient.strengthValue ?? "-"} {ingredient.strengthUnit ?? ""}
-                      </td>
-                      <td className="py-2 px-3">
-                        {ingredient.perUnitValue ?? "-"} {ingredient.perUnitType ?? ""}
-                      </td>
-                      <td className="py-2 px-3 flex gap-2">
-                        <button
-                          className="p-1 rounded hover:bg-[#1ABA7F]/10 text-[#1ABA7F]"
-                          title="Edit"
-                          onClick={() => {
-                            setEditingIngredient(ingredient);
-                            setDialogOpen(true);
-                          }}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          className="p-1 rounded hover:bg-red-100 text-red-600"
-                          title="Delete"
-                          onClick={() => setDeleteId(ingredient.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          ingredients.map((ingredient) => (
+            <tr key={ingredient.id} className="border-b last:border-0">
+              <td className="py-2 px-3 font-medium text-gray-900">{ingredient.id}</td>
+              <td className="py-2 px-3">{ingredient.ActiveSubstance?.name || "-"}</td>
+              <td className="py-2 px-3">
+                {ingredient.strengthValue ?? "-"} {ingredient.strengthUnit ?? ""}
+              </td>
+              <td className="py-2 px-3">
+                {ingredient.perUnitValue ?? "-"} {ingredient.perUnitType ?? ""}
+              </td>
+              <td className="py-2 px-3 flex gap-2">
+                <button
+                  className="p-1 rounded hover:bg-[#1ABA7F]/10 text-[#1ABA7F]"
+                  title="Edit"
+                  onClick={() => {
+                    setEditingIngredient(ingredient);
+                    setDialogOpen(true);
+                  }}
+                >
+                  <Edit className="w-4 h-4" />
+                </button>
+                <button
+                  className="p-1 rounded hover:bg-red-100 text-red-600"
+                  title="Delete"
+                  onClick={() => setDeleteId(ingredient.id)}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </td>
+            </tr>
+          ))
         )}
-        {deleteSuccess && (
-          <div className="fixed bottom-6 right-6 bg-green-100 border border-green-300 text-green-800 px-4 py-2 rounded-lg flex items-center gap-2 shadow-lg z-50">
-            <CheckCircle className="w-5 h-5" /> Medication ingredient deleted successfully.
-          </div>
-        )}
-      </Card>
+      </DataTable>
+
+      {/* Delete success toast */}
+      {deleteSuccess && (
+        <div className="fixed bottom-6 right-6 bg-green-100 border border-green-300 text-green-800 px-4 py-2 rounded-lg flex items-center gap-2 shadow-lg z-50">
+          <CheckCircle className="w-5 h-5" /> Medication ingredient deleted successfully.
+        </div>
+      )}
 
       {/* Delete confirmation dialog */}
       {deleteId && (

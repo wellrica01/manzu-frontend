@@ -6,7 +6,11 @@ function getAuthHeaders() {
   };
 }
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL || '') + '/api/admin/medications';
+const BACKEND_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
+// Ensure API_BASE always has a valid base URL
+const API_BASE = `${BACKEND_BASE}/api/admin/medications`;
+
 
 export async function fetchMedications(params = {}) {
   const query = new URLSearchParams(params).toString();
@@ -80,3 +84,37 @@ export async function deleteMedication(id) {
   if (!res.ok) throw new Error('Failed to delete medication');
   return res.json();
 } 
+
+// --- Search functions ---
+
+
+export async function searchManufacturers(searchTerm, limit = 50) {
+  const query = new URLSearchParams({ search: searchTerm, limit }).toString();
+  const res = await fetch(`${BACKEND_BASE}/api/admin/search/manufacturers?${query}`, {
+    headers: getAuthHeaders(),
+    credentials: 'include',
+  });
+  if (!res.ok) throw new Error('Search for manufacturers failed');
+  return res.json();
+}
+
+export async function searchActiveSubstances(searchTerm, limit = 50) {
+  const query = new URLSearchParams({ search: searchTerm, limit }).toString();
+  const res = await fetch(`${BACKEND_BASE}/api/admin/search/active-substances?${query}`, {
+    headers: getAuthHeaders(),
+    credentials: 'include',
+  });
+  if (!res.ok) throw new Error('Search for active substances failed');
+  return res.json();
+}
+
+export async function searchMedicationIngredients(searchTerm, limit = 50) {
+  const query = new URLSearchParams({ search: searchTerm, limit }).toString();
+  const res = await fetch(`${BACKEND_BASE}/api/admin/search/medication-ingredients?${query}`, {
+    headers: getAuthHeaders(),
+    credentials: 'include',
+  });
+  if (!res.ok) throw new Error('Search for medication ingredients failed');
+  return res.json();
+}
+

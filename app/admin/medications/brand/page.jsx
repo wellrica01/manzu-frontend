@@ -1,58 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import { Card } from "@/components/ui/card";
-import {
-  Loader2,
-  AlertTriangle,
-  Eye,
-  Edit,
-  Trash2,
-  Plus,
-  CheckCircle,
-} from "lucide-react";
+import { Loader2, AlertTriangle, Edit, Trash2, Plus, CheckCircle, Pill } from "lucide-react";
 import { fetchMedications, deleteMedication } from "./api";
 import Dialog from "../../components/Dialog";
 import MedicationForm from "./MedicationForm";
-
-const brandBlue = "#225F91";
-const brandGreen = "#1ABA7F";
-
-function ConfirmDialog({ open, onClose, onConfirm, loading, message }) {
-  if (!open) return null;
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-      <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm border border-[#1ABA7F]/20">
-        <div className="flex items-center gap-2 mb-4">
-          <AlertTriangle className="w-6 h-6 text-red-500" />
-          <span className="font-semibold text-lg text-[#225F91]">
-            Confirm Delete
-          </span>
-        </div>
-        <div className="mb-6 text-gray-700">
-          {message ||
-            "Are you sure you want to delete this medication? This action cannot be undone."}
-        </div>
-        <div className="flex justify-end gap-2">
-          <button
-            className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200"
-            onClick={onClose}
-            disabled={loading}
-          >
-            Cancel
-          </button>
-          <button
-            className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
-            onClick={onConfirm}
-            disabled={loading}
-          >
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Delete"}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
+import DataTableView from "../../components/DataTableView";
 
 export default function MedicationsPage() {
   const [medications, setMedications] = useState([]);
@@ -64,15 +16,18 @@ export default function MedicationsPage() {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
   const [search, setSearch] = useState("");
   const [form, setForm] = useState("");
   const [prescriptionRequired, setPrescriptionRequired] = useState("");
   const [allForms, setAllForms] = useState([]);
+
   const [editingMedication, setEditingMedication] = useState(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+
   const [deleteId, setDeleteId] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteSuccess, setDeleteSuccess] = useState(false);
-  const [dialogOpen, setDialogOpen] = useState(false);
 
   // Extract unique forms for filter dropdown
   useEffect(() => {
@@ -84,21 +39,22 @@ export default function MedicationsPage() {
     }
   }, [medications]);
 
+  // Load medications
   useEffect(() => {
     async function loadMedications() {
       setLoading(true);
       setError(null);
       try {
-      const params = {
-        page: pagination.page,
-        limit: pagination.limit,
-        ...(search ? { brandName: search } : {}),
-        ...(form ? { form } : {}),
-      };
+        const params = {
+          page: pagination.page,
+          limit: pagination.limit,
+          ...(search ? { brandName: search } : {}),
+          ...(form ? { form: form.toUpperCase() } : {}),
+        };
 
-      if (prescriptionRequired === "true" || prescriptionRequired === "false") {
-        params.prescriptionRequired = prescriptionRequired; // send string
-      }
+        if (prescriptionRequired === "true" || prescriptionRequired === "false") {
+          params.prescriptionRequired = prescriptionRequired;
+        }
 
         const data = await fetchMedications(params);
         setMedications(data.medications);
@@ -110,7 +66,6 @@ export default function MedicationsPage() {
       }
     }
     loadMedications();
-    // eslint-disable-next-line
   }, [pagination.page, search, form, prescriptionRequired]);
 
   function handlePageChange(newPage) {
@@ -118,10 +73,9 @@ export default function MedicationsPage() {
   }
 
   const handleEditClick = (med) => {
-  setEditingMedication(med);
-  setDialogOpen(true);
-};
-
+    setEditingMedication(med);
+    setDialogOpen(true);
+  };
 
   async function handleDelete(id) {
     setDeleteLoading(true);
@@ -140,211 +94,331 @@ export default function MedicationsPage() {
     }
   }
 
+  // Helper function to format ingredients
+  const formatIngredients = (ingredients) => {
+    if (!ingredients || ingredients.length === 0) return "Not specified";
+    
+    const names = ingredients
+      .map((i) => i.activeSubstanceName)
+      .filter(Boolean);
+    
+    if (names.length === 0) return "Not specified";
+    if (names.length <= 2) return names.join(" / ");
+    
+    return (
+      <span title={names.join(", ")}>
+        {names.slice(0, 2).join(", ")} 
+        <span className="text-gray-500 text-xs ml-1">+{names.length - 2} more</span>
+      </span>
+    );
+  };
+
+  // Helper function to format strengths
+  const formatStrengths = (ingredients) => {
+    if (!ingredients || ingredients.length === 0) return "Not specified";
+    
+    const strengths = ingredients
+      .map((i) => `${i.strengthValue || ""} ${i.strengthUnit || ""}`.trim())
+      .filter(Boolean);
+    
+    if (strengths.length === 0) return "Not specified";
+    if (strengths.length <= 2) return strengths.join(" / ");
+    
+    return (
+      <span title={strengths.join(", ")}>
+        {strengths.slice(0, 2).join(", ")} 
+        <span className="text-gray-500 text-xs ml-1">+{strengths.length - 2} more</span>
+      </span>
+    );
+  };
+
+  // Mobile card component
+  const renderMobileCard = (med) => (
+    <div className="bg-white border border-gray-200 rounded-lg p-4 mb-3 shadow-sm hover:shadow-md transition-shadow">
+      <div className="flex justify-between items-start mb-3">
+        <div className="flex-1">
+          <h3 className="font-semibold text-gray-900 text-lg">{med.brandName}</h3>
+          <p className="text-gray-600 text-sm">{med.Manufacturer?.name || "Unknown Manufacturer"}</p>
+        </div>
+        <div className="flex gap-2 ml-3">
+          <button
+            className="p-2 rounded-full hover:bg-[#1ABA7F]/10 text-[#1ABA7F] transition-colors"
+            title="Edit medication"
+            onClick={() => handleEditClick(med)}
+            aria-label={`Edit ${med.brandName}`}
+          >
+            <Edit className="w-4 h-4" />
+          </button>
+          <button
+            className="p-2 rounded-full hover:bg-red-100 text-red-600 transition-colors"
+            title="Delete medication"
+            onClick={() => setDeleteId(med.id)}
+            disabled={deleteLoading && deleteId === med.id}
+            aria-label={`Delete ${med.brandName}`}
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-2 gap-3 text-sm">
+        <div>
+          <span className="text-gray-500 font-medium">Form:</span>
+          <p className="text-gray-900">{med.form || "Not specified"}</p>
+        </div>
+        <div>
+          <span className="text-gray-500 font-medium">Pack Size:</span>
+          <p className="text-gray-900">
+            {med.packSizeQuantity} {med.packSizeUnit}
+          </p>
+        </div>
+        <div className="col-span-2">
+          <span className="text-gray-500 font-medium">Active Ingredients:</span>
+          <p className="text-gray-900">{formatIngredients(med.ingredients)}</p>
+        </div>
+        <div className="col-span-2">
+          <span className="text-gray-500 font-medium">Strengths:</span>
+          <p className="text-gray-900">{formatStrengths(med.ingredients)}</p>
+        </div>
+      </div>
+      
+      <div className="mt-3 pt-3 border-t border-gray-100">
+        <div className="flex items-center justify-between">
+          <span className="text-gray-500 font-medium text-sm">Prescription Required:</span>
+          {med.prescriptionRequired ? (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+              Yes
+            </span>
+          ) : (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+              No
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  // Table columns configuration
+  const columns = [
+    {
+      key: 'brandName',
+      label: 'Brand',
+      render: (med) => (
+        <div className="font-medium text-gray-900">{med.brandName}</div>
+      ),
+      cellClassName: 'whitespace-nowrap'
+    },
+    {
+      key: 'ingredients',
+      label: 'Active Ingredients',
+      render: (med) => (
+        <div className="text-sm text-gray-900 max-w-xs">
+          {formatIngredients(med.ingredients)}
+        </div>
+      )
+    },
+    {
+      key: 'strengths',
+      label: 'Strengths',
+      render: (med) => (
+        <div className="text-sm text-gray-900 max-w-xs">
+          {formatStrengths(med.ingredients)}
+        </div>
+      )
+    },
+    {
+      key: 'form',
+      label: 'Form',
+      render: (med) => med.form || "Not specified",
+      cellClassName: 'whitespace-nowrap text-sm text-gray-900'
+    },
+    {
+      key: 'packSize',
+      label: 'Pack Size',
+      render: (med) => `${med.packSizeQuantity} ${med.packSizeUnit}`,
+      cellClassName: 'whitespace-nowrap text-sm text-gray-900'
+    },
+    {
+      key: 'manufacturer',
+      label: 'Manufacturer',
+      render: (med) => (
+        <div className="text-sm text-gray-900 max-w-xs truncate" title={med.Manufacturer?.name}>
+          {med.Manufacturer?.name || "Unknown"}
+        </div>
+      ),
+      cellClassName: 'whitespace-nowrap'
+    },
+    {
+      key: 'prescription',
+      label: 'Prescription',
+      render: (med) => (
+        med.prescriptionRequired ? (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+            Required
+          </span>
+        ) : (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+            Not Required
+          </span>
+        )
+      ),
+      cellClassName: 'whitespace-nowrap'
+    },
+    {
+      key: 'actions',
+      label: 'Actions',
+      render: (med) => (
+        <div className="flex gap-2">
+          <button
+            className="p-1.5 rounded-md hover:bg-[#1ABA7F]/10 text-[#1ABA7F] transition-colors"
+            title="Edit medication"
+            onClick={() => handleEditClick(med)}
+            aria-label={`Edit ${med.brandName}`}
+          >
+            <Edit className="w-4 h-4" />
+          </button>
+          <button
+            className="p-1.5 rounded-md hover:bg-red-100 text-red-600 transition-colors"
+            title="Delete medication"
+            onClick={() => setDeleteId(med.id)}
+            disabled={deleteLoading && deleteId === med.id}
+            aria-label={`Delete ${med.brandName}`}
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      ),
+      cellClassName: 'whitespace-nowrap text-sm font-medium'
+    }
+  ];
+
+  // Filter configurations
+  const filters = [
+    {
+      value: form,
+      onChange: (value) => {
+        setPagination((prev) => ({ ...prev, page: 1 }));
+        setForm(value);
+      },
+      options: allForms.map(f => ({ value: f, label: f })),
+      placeholder: "All Forms",
+      className: "sm:w-48"
+    },
+    {
+      value: prescriptionRequired,
+      onChange: (value) => {
+        setPagination((prev) => ({ ...prev, page: 1 }));
+        setPrescriptionRequired(value);
+      },
+      options: [
+        { value: "true", label: "Prescription Required" },
+        { value: "false", label: "No Prescription" }
+      ],
+      placeholder: "All Types",
+      className: "sm:w-48"
+    }
+  ];
 
   return (
-    <div className="space-y-8">
-   <Dialog
-      open={dialogOpen}
-      onClose={() => {
-        setDialogOpen(false);
-        setEditingMedication(null);
-      }}
-      title={editingMedication ? "Edit Medication" : "Add Medication"}
-    >
-      <MedicationForm
-        medication={editingMedication || {}}
-        mode={editingMedication ? "edit" : "create"}
-        onSuccess={() => {
+    <div className="space-y-6">
+      {/* Add/Edit Dialog */}
+      <Dialog
+        open={dialogOpen}
+        onClose={() => {
           setDialogOpen(false);
           setEditingMedication(null);
-          // optionally refresh medications list
-          setPagination((prev) => ({ ...prev })); 
         }}
-      />
-    </Dialog>
+        title={editingMedication ? "Edit Medication" : "Add Medication"}
+        size="lg"
+      >
+        <MedicationForm
+          medication={editingMedication || {}}
+          mode={editingMedication ? "edit" : "create"}
+          onSuccess={() => {
+            setDialogOpen(false);
+            setEditingMedication(null);
+            setPagination((prev) => ({ ...prev })); // reload
+          }}
+        />
+      </Dialog>
 
-      <ConfirmDialog
-        open={!!deleteId}
-        onClose={() => setDeleteId(null)}
-        onConfirm={() => handleDelete(deleteId)}
-        loading={deleteLoading}
-      />
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-bold text-[#225F91]">Medications</h1>
-        <button
-          onClick={() => {
+      {/* Delete Confirmation */}
+      {deleteId && (
+        <Dialog open={!!deleteId} onClose={() => setDeleteId(null)} title="Confirm Delete">
+          <div className="mb-6">
+            <div className="flex items-center gap-3 p-4 bg-red-50 rounded-lg border border-red-200">
+              <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0" />
+              <div>
+                <p className="text-red-800 font-medium">Are you sure you want to delete this medication?</p>
+                <p className="text-red-600 text-sm mt-1">This action cannot be undone.</p>
+              </div>
+            </div>
+          </div>
+          <div className="flex justify-end gap-3">
+            <button
+              className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors font-medium"
+              onClick={() => setDeleteId(null)}
+              disabled={deleteLoading}
+            >
+              Cancel
+            </button>
+            <button
+              className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 transition-colors font-medium flex items-center gap-2"
+              onClick={() => handleDelete(deleteId)}
+              disabled={deleteLoading}
+            >
+              {deleteLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
+            </button>
+          </div>
+        </Dialog>
+      )}
+
+      {/* Main Data Table View */}
+      <DataTableView
+        title="Medications"
+        description="Manage your medication inventory"
+        data={medications}
+        loading={loading}
+        error={error}
+        pagination={pagination}
+        onPageChange={handlePageChange}
+        searchValue={search}
+        onSearchChange={(value) => {
+          setPagination((prev) => ({ ...prev, page: 1 }));
+          setSearch(value);
+        }}
+        searchPlaceholder="Search by brand name..."
+        filters={filters}
+        columns={columns}
+        mobileCardRender={renderMobileCard}
+        emptyState={{
+          icon: Pill,
+          title: "No medications found",
+          showPrimaryAction: true
+        }}
+        primaryAction={{
+          label: "Add Medication",
+          icon: Plus,
+          onClick: () => {
             setEditingMedication(null);
             setDialogOpen(true);
-          }}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#1ABA7F] text-white font-semibold hover:bg-[#159e6a] transition"
-        >
-          <Plus className="w-4 h-4" />
-          Add Medication
-        </button>
-      </div>
-      <Card className="p-6 bg-white/95 border border-[#1ABA7F]/20 rounded-2xl shadow-md">
-        <div className="mb-4 flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
-          <div className="flex gap-2 flex-1">
-            <input
-              type="text"
-              placeholder="Search by brand name..."
-              value={search}
-              onChange={(e) => {
-                setPagination((prev) => ({ ...prev, page: 1 }));
-                setSearch(e.target.value);
-              }}
-              className="w-full sm:w-64 px-3 py-2 border border-[#1ABA7F]/20 rounded-lg focus:border-[#1ABA7F] focus:outline-none"
-            />
-            <select
-              value={form}
-              onChange={(e) => {
-                setPagination((prev) => ({ ...prev, page: 1 }));
-                setForm(e.target.value);
-              }}
-              className="px-3 py-2 border border-[#1ABA7F]/20 rounded-lg focus:border-[#1ABA7F] focus:outline-none"
-            >
-              <option value="">All Forms</option>
-              {allForms.map((f) => (
-                <option key={f} value={f}>
-                  {f}
-                </option>
-              ))}
-            </select>
-            <select
-              value={prescriptionRequired}
-              onChange={(e) => {
-                setPagination((prev) => ({ ...prev, page: 1 }));
-                setPrescriptionRequired(e.target.value);
-              }}
-              className="px-3 py-2 border border-[#1ABA7F]/20 rounded-lg focus:border-[#1ABA7F] focus:outline-none"
-            >
-              <option value=" ">All</option>
-              <option value="true">Prescription Required</option>
-              <option value="false">No Prescription</option>
-            </select>
-          </div>
-        </div>
-        {loading ? (
-          <div className="flex justify-center items-center h-32">
-            <Loader2 className="animate-spin w-8 h-8 text-[#1ABA7F]" />
-          </div>
-        ) : error ? (
-          <div className="flex flex-col items-center gap-2 text-red-600">
-            <AlertTriangle className="w-8 h-8" />
-            <span>{error}</span>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead>
-                <tr className="text-left text-gray-600 border-b">
-                  <th className="py-2 px-3">Brand</th>
-                  <th className="py-2 px-3">Active Substances</th> 
-                  <th className="py-2 px-3">Strengths</th>
-                  <th className="py-2 px-3">Form</th>
-                  <th className="py-2 px-3">Manufacturer</th>
-                  <th className="py-2 px-3">Prescription</th>
-                  <th className="py-2 px-3">Created</th>
-                  <th className="py-2 px-3">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {medications.length > 0 ? (
-                  medications.map((med) => (
-                    <tr key={med.id} className="border-b last:border-0">
-                      <td className="py-2 px-3 font-medium text-gray-900">
-                        {med.brandName}
-                      </td>
-                      <td className="py-2 px-3">
-                        {med.ingredients
-                          ?.map((i) => i.activeSubstanceName)
-                          .filter(Boolean)
-                          .join(", ")}
-                      </td> 
-                      <td className="py-2 px-3">
-                        {med.ingredients
-                          ?.map(
-                            (i) =>
-                              `${i.strengthValue || ""} ${
-                                i.strengthUnit || ""
-                              }`
-                          )
-                          .join(", ")}
-                      </td>
-                      <td className="py-2 px-3">{med.form}</td>
-                       <td className="py-2 px-3">
-                        {med.Manufacturer?.name || ""}
-                      </td>
-                      <td className="py-2 px-3">
-                        {med.prescriptionRequired ? (
-                          <span className="text-red-600 font-semibold">Yes</span>
-                        ) : (
-                          <span className="text-green-600 font-semibold">
-                            No
-                          </span>
-                        )}
-                      </td>
-                      <td className="py-2 px-3">
-                        {new Date(med.createdAt).toLocaleDateString()}
-                      </td>
-                      <td className="py-2 px-3 flex gap-2">
-                        <button
-                          className="p-1 rounded hover:bg-[#1ABA7F]/10 text-[#1ABA7F]"
-                          title="Edit"
-                          onClick={() => handleEditClick(med)}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
+          }
+        }}
+      />
 
-                        <button
-                          className="p-1 rounded hover:bg-red-100 text-red-600"
-                          title="Delete"
-                          onClick={() => setDeleteId(med.id)}
-                          disabled={deleteLoading && deleteId === med.id}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td
-                      colSpan={8}
-                      className="text-center py-4 text-gray-500"
-                    >
-                      No medications found.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
-        {/* Pagination Controls */}
-        <div className="flex justify-end items-center gap-2 mt-4">
-          <button
-            className="px-3 py-1 rounded border border-[#1ABA7F]/30 text-[#225F91] disabled:opacity-50"
-            onClick={() => handlePageChange(pagination.page - 1)}
-            disabled={pagination.page <= 1}
-          >
-            Prev
-          </button>
-          <span className="text-sm text-gray-700">
-            Page {pagination.page} of {pagination.pages}
-          </span>
-          <button
-            className="px-3 py-1 rounded border border-[#1ABA7F]/30 text-[#225F91] disabled:opacity-50"
-            onClick={() => handlePageChange(pagination.page + 1)}
-            disabled={pagination.page >= pagination.pages}
-          >
-            Next
-          </button>
-        </div>
-      </Card>
+      {/* Success Toast */}
       {deleteSuccess && (
-        <div className="fixed bottom-6 right-6 bg-green-100 border border-green-300 text-green-800 px-4 py-2 rounded-lg flex items-center gap-2 shadow-lg z-50">
-          <CheckCircle className="w-5 h-5" /> Medication deleted successfully.
+        <div className="fixed bottom-6 right-6 bg-green-100 border border-green-300 text-green-800 px-4 py-3 rounded-lg flex items-center gap-2 shadow-lg z-50 animate-in slide-in-from-right">
+          <CheckCircle className="w-5 h-5" />
+          <span className="font-medium">Medication deleted successfully</span>
         </div>
       )}
     </div>

@@ -1,32 +1,97 @@
-import React from 'react';
+"use client";
+import { Loader2, AlertTriangle } from "lucide-react";
 
-export default function DataTable({ columns, data, actions }) {
+export default function DataTable({
+  title,
+  loading,
+  error,
+  data,
+  columns,
+  search,
+  onSearchChange,
+  filters = [],
+  pagination,
+  onPageChange,
+  children,
+}) {
   return (
-    <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
-          <tr>
-            {columns.map((col) => (
-              <th key={col.key} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                {col.label}
-              </th>
-            ))}
-            {actions && <th className="px-6 py-3">Actions</th>}
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {data.map((row, idx) => (
-            <tr key={row.id || idx}>
-              {columns.map((col) => (
-                <td key={col.key} className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                  {row[col.key]}
-                </td>
+    <div className="p-6 bg-white/95 border border-[#1ABA7F]/20 rounded-2xl shadow-md">
+      {/* Filters */}
+      <div className="mb-4 flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
+        <div className="flex gap-2 flex-1">
+          {/* Search */}
+          <input
+            type="text"
+            placeholder="Search..."
+            value={search}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="w-full sm:w-64 px-3 py-2 border border-[#1ABA7F]/20 rounded-lg focus:border-[#1ABA7F] focus:outline-none"
+          />
+          {/* Dropdown filters */}
+          {filters.map((filter) => (
+            <select
+              key={filter.label}
+              value={filter.value}
+              onChange={(e) => filter.onChange(e.target.value)}
+              className="px-3 py-2 border border-[#1ABA7F]/20 rounded-lg focus:border-[#1ABA7F] focus:outline-none"
+            >
+              {filter.options.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
               ))}
-              {actions && <td className="px-6 py-4 whitespace-nowrap">{actions(row)}</td>}
-            </tr>
+            </select>
           ))}
-        </tbody>
-      </table>
+        </div>
+      </div>
+
+      {/* Loading/Error/Data */}
+      {loading ? (
+        <div className="flex justify-center items-center h-32">
+          <Loader2 className="animate-spin w-8 h-8 text-[#1ABA7F]" />
+        </div>
+      ) : error ? (
+        <div className="flex flex-col items-center gap-2 text-red-600">
+          <AlertTriangle className="w-8 h-8" />
+          <span>{error}</span>
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-sm">
+            <thead>
+              <tr className="text-left text-gray-600 border-b">
+                {columns.map((col) => (
+                  <th key={col} className="py-2 px-3">
+                    {col}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>{children}</tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Pagination */}
+      <div className="flex justify-end items-center gap-2 mt-4">
+        <button
+          className="px-3 py-1 rounded border border-[#1ABA7F]/30 text-[#225F91] disabled:opacity-50"
+          onClick={() => onPageChange(pagination.page - 1)}
+          disabled={pagination.page <= 1}
+        >
+          Prev
+        </button>
+        <span className="text-sm text-gray-700">
+          Page {pagination.page} of {pagination.pages}
+        </span>
+        <button
+          className="px-3 py-1 rounded border border-[#1ABA7F]/30 text-[#225F91] disabled:opacity-50"
+          onClick={() => onPageChange(pagination.page + 1)}
+          disabled={pagination.page >= pagination.pages}
+        >
+          Next
+        </button>
+      </div>
     </div>
   );
-} 
+}

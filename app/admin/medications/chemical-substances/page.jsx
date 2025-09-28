@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Dialog from "../../components/Dialog";
+import DataTable from "../../components/DataTable"; // ✅ new import
 import ChemicalSubstanceForm from "./ChemicalSubstanceForm";
 import {
   fetchChemicalSubstances,
@@ -8,10 +9,8 @@ import {
   updateChemicalSubstance,
   deleteChemicalSubstance,
 } from "./api";
-import { Card } from "@/components/ui/card";
 import {
   Loader2,
-  AlertTriangle,
   Edit,
   Trash2,
   Plus,
@@ -20,29 +19,58 @@ import {
 
 export default function ChemicalSubstancesPage() {
   const [chemicalSubstances, setChemicalSubstances] = useState([]);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    pages: 1,
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [refresh, setRefresh] = useState(0);
+
+  const [search, setSearch] = useState("");
+  const [chemicalClass, setChemicalClass] = useState("");
+  const [allClasses, setAllClasses] = useState([]);
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState(null);
   const [editingSubstance, setEditingSubstance] = useState(null);
+
   const [deleteId, setDeleteId] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteSuccess, setDeleteSuccess] = useState(false);
 
+  // Fetch data with pagination, search, filter
   useEffect(() => {
-    setLoading(true);
-    fetchChemicalSubstances()
-      .then((res) => {
+    async function load() {
+      setLoading(true);
+      try {
+        const params = {
+          page: pagination.page,
+          limit: pagination.limit,
+          ...(search ? { name: search } : {}),
+          ...(chemicalClass ? { class: chemicalClass } : {}),
+        };
+        const res = await fetchChemicalSubstances(params);
         setChemicalSubstances(res.chemicalSubstances || []);
-        setLoading(false);
-      })
-      .catch((err) => {
+        if (res.pagination) setPagination(res.pagination);
+
+        const uniqueClasses = Array.from(
+          new Set(res.chemicalSubstances.map((c) => c.ChemicalClass?.name).filter(Boolean))
+        );
+        setAllClasses(uniqueClasses);
+      } catch (err) {
         setError(err.message);
+      } finally {
         setLoading(false);
-      });
-  }, [refresh]);
+      }
+    }
+    load();
+  }, [pagination.page, search, chemicalClass]);
+
+  const handlePageChange = (newPage) =>
+    setPagination((prev) => ({ ...prev, page: newPage }));
 
   const handleAddOrEdit = async (data) => {
     setFormLoading(true);
@@ -55,29 +83,11 @@ export default function ChemicalSubstancesPage() {
       }
       setDialogOpen(false);
       setEditingSubstance(null);
-      setRefresh((r) => r + 1);
+      setPagination((prev) => ({ ...prev, page: 1 })); // reload
     } catch (err) {
       setFormError(err.message);
     } finally {
       setFormLoading(false);
-    }
-  };
-
-  const handleDelete = async (id) => {
-    setDeleteLoading(true);
-    setDeleteSuccess(false);
-    try {
-      await deleteChemicalSubstance(id);
-      setDeleteSuccess(true);
-      setChemicalSubstances((prev) => prev.filter((c) => c.id !== id));
-      setTimeout(() => {
-        setDeleteId(null);
-        setDeleteSuccess(false);
-      }, 1000);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setDeleteLoading(false);
     }
   };
 
@@ -112,70 +122,56 @@ export default function ChemicalSubstancesPage() {
         </button>
       </div>
 
-      {/* Table */}
-      <Card className="p-6 bg-white/95 border border-[#1ABA7F]/20 rounded-2xl shadow-md">
-        {loading ? (
-          <div className="flex justify-center items-center h-32">
-            <Loader2 className="animate-spin w-8 h-8 text-[#1ABA7F]" />
-          </div>
-        ) : error ? (
-          <div className="flex flex-col items-center gap-2 text-red-600">
-            <AlertTriangle className="w-8 h-8" />
-            <span>{error}</span>
-          </div>
+      {/* DataTable */}
+      <DataTable
+        title="Chemical Substances"
+        loading={loading}
+        error={error}
+        data={chemicalSubstances}
+        columns={["SN", "Name", "ATC Code", "Chemical Class", "Actions"]}
+        search={search}
+        onSearchChange={(val) => {
+          setPagination((prev) => ({ ...prev, page: 1 }));
+          setSearch(val);
+        }}
+        pagination={pagination}
+        onPageChange={handlePageChange}
+      >
+        {chemicalSubstances.length === 0 ? (
+          <tr>
+            <td colSpan={5} className="text-center py-4">
+              No chemical substances found.
+            </td>
+          </tr>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead>
-                <tr className="text-left text-gray-600 border-b">
-                  <th className="py-2 px-3">SN</th>
-                  <th className="py-2 px-3">Name</th>
-                  <th className="py-2 px-3">ATC Code</th>
-                  <th className="py-2 px-3">Chemical Class</th>
-                  <th className="py-2 px-3">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {chemicalSubstances.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="text-center py-4">
-                      No chemical substances found.
-                    </td>
-                  </tr>
-                ) : (
-                  chemicalSubstances.map((c, index) => (
-                    <tr key={c.id} className="border-b last:border-0">
-                      <td className="py-2 px-3 font-medium text-gray-900">{index + 1}</td>
-                      <td className="py-2 px-3">{c.name}</td>
-                      <td className="py-2 px-3">{c.atcCode}</td>
-                      <td className="py-2 px-3">{c.ChemicalClass?.name || "-"}</td>
-                      <td className="py-2 px-3 flex gap-2">
-                        <button
-                          className="p-1 rounded hover:bg-[#1ABA7F]/10 text-[#1ABA7F]"
-                          title="Edit"
-                          onClick={() => {
-                            setEditingSubstance(c);
-                            setDialogOpen(true);
-                          }}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                       
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          chemicalSubstances.map((c, index) => (
+            <tr key={c.id} className="border-b last:border-0">
+              <td className="py-2 px-3">{index + 1}</td>
+              <td className="py-2 px-3">{c.name}</td>
+              <td className="py-2 px-3">{c.atcCode}</td>
+              <td className="py-2 px-3">{c.ChemicalClass?.name || "-"}</td>
+              <td className="py-2 px-3 flex gap-2">
+                <button
+                  className="p-1 rounded hover:bg-[#1ABA7F]/10 text-[#1ABA7F]"
+                  onClick={() => {
+                    setEditingSubstance(c);
+                    setDialogOpen(true);
+                  }}
+                >
+                  <Edit className="w-4 h-4" />
+                </button> 
+              </td>
+            </tr>
+          ))
         )}
+      </DataTable>
 
-        {deleteSuccess && (
-          <div className="fixed bottom-6 right-6 bg-green-100 border border-green-300 text-green-800 px-4 py-2 rounded-lg flex items-center gap-2 shadow-lg z-50">
-            <CheckCircle className="w-5 h-5" /> Chemical substance deleted successfully.
-          </div>
-        )}
-      </Card>
+      {/* Success toast */}
+      {deleteSuccess && (
+        <div className="fixed bottom-6 right-6 bg-green-100 border border-green-300 text-green-800 px-4 py-2 rounded-lg flex items-center gap-2 shadow-lg z-50">
+          <CheckCircle className="w-5 h-5" /> Chemical substance deleted successfully.
+        </div>
+      )}
 
       {/* Delete confirmation */}
       {deleteId && (
@@ -188,13 +184,6 @@ export default function ChemicalSubstancesPage() {
               disabled={deleteLoading}
             >
               Cancel
-            </button>
-            <button
-              className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
-              onClick={() => handleDelete(deleteId)}
-              disabled={deleteLoading}
-            >
-              {deleteLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Delete"}
             </button>
           </div>
         </Dialog>

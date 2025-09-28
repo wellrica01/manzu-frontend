@@ -53,9 +53,12 @@ export default function PrescriptionDetailsPage() {
         });
         if (!res.ok) throw new Error(`Error: ${res.status}`);
         const data = await res.json();
-        setPrescription(data.prescription);
-        setMedications(data.prescription.prescriptionMedications || []);
-        setNewStatus(data.prescription.status);
+        const prescriptionData = data.data?.prescription;
+
+        setPrescription(prescriptionData || null);
+        setMedications(prescriptionData?.PrescriptionMedication || []);
+        setNewStatus(prescriptionData?.status || "");
+
       } catch (e) {
         setError("Failed to load prescription details.");
       } finally {
@@ -253,7 +256,7 @@ export default function PrescriptionDetailsPage() {
                   {medications.map((pm, idx) => (
                     <li key={idx} className="border-b last:border-0 py-2">
                       <span className="font-medium">ID:</span> {pm.medicationId} |
-                      <span className="font-medium"> Name:</span> {pm.medication?.brandName || pm.medicationId} |
+                      <span className="font-medium"> Name:</span> {pm.medication?.brandName || pm.Medication?.fullName} |
                       <span className="font-medium"> Quantity:</span> {pm.quantity}
                       {pm.dosageInstructions && (
                         <span> | <span className="font-medium">Dosage:</span> {pm.dosageInstructions}</span>

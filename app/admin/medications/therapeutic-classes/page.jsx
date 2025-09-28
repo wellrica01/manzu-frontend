@@ -6,39 +6,66 @@ import {
   fetchTherapeuticClasses,
   createTherapeuticClass,
   updateTherapeuticClass,
-  deleteTherapeuticClass,
 } from "./api";
 import { fetchAnatomicalClasses } from "../anatomical-classes/api";
-import { Card } from "@/components/ui/card";
-import { Loader2, AlertTriangle, CheckCircle, Edit, Trash2, Plus } from "lucide-react";
+import { Plus, Edit } from "lucide-react";
+import DataTable from "../../components/DataTable";
 
 export default function TherapeuticClassesPage() {
   const [therapeuticClasses, setTherapeuticClasses] = useState([]);
   const [anatomicalClasses, setAnatomicalClasses] = useState([]);
+  const [allAnatomicalOptions, setAllAnatomicalOptions] = useState([]);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    pages: 1,
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [refresh, setRefresh] = useState(0);
+
+  const [search, setSearch] = useState("");
+  const [anatFilter, setAnatFilter] = useState("");
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState(null);
   const [editingClass, setEditingClass] = useState(null);
-  const [deleteId, setDeleteId] = useState(null);
-  const [deleteLoading, setDeleteLoading] = useState(false);
-  const [deleteSuccess, setDeleteSuccess] = useState(false);
 
+  // Fetch classes with search/filter/pagination
   useEffect(() => {
-    setLoading(true);
-    Promise.all([fetchTherapeuticClasses(), fetchAnatomicalClasses()])
-      .then(([theraRes, anatRes]) => {
+    async function load() {
+      setLoading(true);
+      try {
+        const params = {
+          page: pagination.page,
+          limit: pagination.limit,
+          ...(search ? { name: search } : {}),
+          ...(anatFilter ? { anatomicalClassId: anatFilter } : {}),
+        };
+        const theraRes = await fetchTherapeuticClasses(params);
         setTherapeuticClasses(theraRes.therapeuticClasses || []);
+        if (theraRes.pagination) setPagination(theraRes.pagination);
+
+        const anatRes = await fetchAnatomicalClasses();
         setAnatomicalClasses(anatRes.anatomicalClasses || []);
-        setLoading(false);
-      })
-      .catch((err) => {
+        setAllAnatomicalOptions(
+          anatRes.anatomicalClasses.map((a) => ({
+            value: a.id,
+            label: a.name,
+          }))
+        );
+      } catch (err) {
         setError(err.message);
+      } finally {
         setLoading(false);
-      });
-  }, [refresh]);
+      }
+    }
+    load();
+  }, [pagination.page, search, anatFilter]);
+
+  const handlePageChange = (newPage) =>
+    setPagination((prev) => ({ ...prev, page: newPage }));
 
   const handleAddOrEdit = async (data) => {
     setFormLoading(true);
@@ -51,7 +78,7 @@ export default function TherapeuticClassesPage() {
       }
       setDialogOpen(false);
       setEditingClass(null);
-      setRefresh((r) => r + 1);
+      setPagination((prev) => ({ ...prev, page: 1 })); // reload
     } catch (err) {
       setFormError(err.message);
     } finally {
@@ -59,26 +86,9 @@ export default function TherapeuticClassesPage() {
     }
   };
 
-  const handleDelete = async (id) => {
-    setDeleteLoading(true);
-    setDeleteSuccess(false);
-    try {
-      await deleteTherapeuticClass(id);
-      setDeleteSuccess(true);
-      setTherapeuticClasses((prev) => prev.filter((c) => c.id !== id));
-      setTimeout(() => {
-        setDeleteId(null);
-        setDeleteSuccess(false);
-      }, 1200);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setDeleteLoading(false);
-    }
-  };
-
   return (
     <div className="space-y-8">
+      {/* Add/Edit Dialog */}
       <Dialog
         open={dialogOpen}
         onClose={() => {
@@ -96,6 +106,7 @@ export default function TherapeuticClassesPage() {
         />
       </Dialog>
 
+      {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold text-[#225F91]">Therapeutic Classes</h1>
         <button
@@ -106,89 +117,60 @@ export default function TherapeuticClassesPage() {
         </button>
       </div>
 
-      <Card className="p-6 bg-white/95 border border-[#1ABA7F]/20 rounded-2xl shadow-md">
-        {loading ? (
-          <div className="flex justify-center items-center h-32">
-            <Loader2 className="animate-spin w-8 h-8 text-[#1ABA7F]" />
-          </div>
-        ) : error ? (
-          <div className="flex flex-col items-center gap-2 text-red-600">
-            <AlertTriangle className="w-8 h-8" />
-            <span>{error}</span>
-          </div>
+      {/* DataTable */}
+      <DataTable
+        title="Therapeutic Classes"
+        loading={loading}
+        error={error}
+        data={therapeuticClasses}
+        columns={["SN", "ATC Code", "Name", "Anatomical Class", "Actions"]}
+        search={search}
+        onSearchChange={(val) => {
+          setPagination((prev) => ({ ...prev, page: 1 }));
+          setSearch(val);
+        }}
+        filters={[
+          {
+            label: "Anatomical Class",
+            value: anatFilter,
+            onChange: (val) => {
+              setPagination((prev) => ({ ...prev, page: 1 }));
+              setAnatFilter(val);
+            },
+            options: [{ value: "", label: "All Classes" }].concat(allAnatomicalOptions),
+          },
+        ]}
+        pagination={pagination}
+        onPageChange={handlePageChange}
+      >
+        {therapeuticClasses.length === 0 ? (
+          <tr>
+            <td colSpan={5} className="text-center py-4">
+              No therapeutic classes found.
+            </td>
+          </tr>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead>
-                <tr className="text-left text-gray-600 border-b">
-                  <th className="py-2 px-3">SN</th>
-                  <th className="py-2 px-3">ATC Code</th>
-                  <th className="py-2 px-3">Name</th>
-                  <th className="py-2 px-3">Anatomical Class</th>
-                  <th className="py-2 px-3">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {therapeuticClasses.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="text-center py-4">
-                      No therapeutic classes found.
-                    </td>
-                  </tr>
-                ) : (
-                  therapeuticClasses.map((c, i) => (
-                    <tr key={c.id} className="border-b last:border-0">
-                      <td className="py-2 px-3 font-medium text-gray-900">{i + 1}</td>
-                      <td className="py-2 px-3">{c.atcCode}</td>
-                      <td className="py-2 px-3">{c.name}</td>
-                      <td className="py-2 px-3">{c.AnatomicalClass?.name || "-"}</td>
-                      <td className="py-2 px-3 flex gap-2">
-                        <button
-                          className="p-1 rounded hover:bg-[#1ABA7F]/10 text-[#1ABA7F]"
-                          title="Edit"
-                          onClick={() => {
-                            setEditingClass(c);
-                            setDialogOpen(true);
-                          }}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>            
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          therapeuticClasses.map((c, i) => (
+            <tr key={c.id} className="border-b last:border-0">
+              <td className="py-2 px-3">{i + 1}</td>
+              <td className="py-2 px-3">{c.atcCode}</td>
+              <td className="py-2 px-3">{c.name}</td>
+              <td className="py-2 px-3">{c.AnatomicalClass?.name || "-"}</td>
+              <td className="py-2 px-3 flex gap-2">
+                <button
+                  className="p-1 rounded hover:bg-[#1ABA7F]/10 text-[#1ABA7F]"
+                  onClick={() => {
+                    setEditingClass(c);
+                    setDialogOpen(true);
+                  }}
+                >
+                  <Edit className="w-4 h-4" />
+                </button>   
+              </td>
+            </tr>
+          ))
         )}
-        {deleteSuccess && (
-          <div className="fixed bottom-6 right-6 bg-green-100 border border-green-300 text-green-800 px-4 py-2 rounded-lg flex items-center gap-2 shadow-lg z-50">
-            <CheckCircle className="w-5 h-5" /> Therapeutic class deleted successfully.
-          </div>
-        )}
-      </Card>
-
-      {deleteId && (
-        <Dialog open={!!deleteId} onClose={() => setDeleteId(null)} title="Confirm Delete">
-          <div className="mb-4">Are you sure you want to delete this therapeutic class?</div>
-          <div className="flex justify-end gap-2">
-            <button
-              className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200"
-              onClick={() => setDeleteId(null)}
-              disabled={deleteLoading}
-            >
-              Cancel
-            </button>
-            <button
-              className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
-              onClick={() => handleDelete(deleteId)}
-              disabled={deleteLoading}
-            >
-              {deleteLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Delete"}
-            </button>
-          </div>
-        </Dialog>
-      )}
+      </DataTable>
     </div>
   );
 }

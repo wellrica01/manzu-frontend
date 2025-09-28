@@ -1,10 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Card } from "@/components/ui/card";
-import { Loader2, AlertTriangle, Eye, Edit, Trash2, CheckCircle } from "lucide-react";
+import { Loader2, AlertTriangle, CheckCircle, ShoppingCart } from "lucide-react";
+import DataTableView from "../../components/DataTableView";
 
-const brandBlue = "#225F91";
 const statusOptions = ["ALL", "PENDING", "VERIFIED", "REJECTED"];
 
 function StatusBadge({ status }) {
@@ -13,41 +12,11 @@ function StatusBadge({ status }) {
   else if (status === "PENDING") color = "bg-yellow-100 text-yellow-800";
   else if (status === "REJECTED" || status === "CANCELLED") color = "bg-red-100 text-red-800";
   else if (status === "FILLED") color = "bg-blue-100 text-blue-800";
+
   return (
     <span className={`px-2 py-1 rounded-full text-xs font-semibold ${color}`}>
-      {status.charAt(0).toUpperCase() + status.slice(1)}
+      {status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()}
     </span>
-  );
-}
-
-function ConfirmDialog({ open, onClose, onConfirm, loading, message }) {
-  if (!open) return null;
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-      <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm border border-[#1ABA7F]/20">
-        <div className="flex items-center gap-2 mb-4">
-          <AlertTriangle className="w-6 h-6 text-red-500" />
-          <span className="font-semibold text-lg text-[#225F91]">Confirm Delete</span>
-        </div>
-        <div className="mb-6 text-gray-700">{message || "Are you sure you want to delete this prescription? This action cannot be undone."}</div>
-        <div className="flex justify-end gap-2">
-          <button
-            className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200"
-            onClick={onClose}
-            disabled={loading}
-          >
-            Cancel
-          </button>
-          <button
-            className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
-            onClick={onConfirm}
-            disabled={loading}
-          >
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Delete"}
-          </button>
-        </div>
-      </div>
-    </div>
   );
 }
 
@@ -57,11 +26,12 @@ export default function PrescriptionsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("ALL");
+  const [status, setStatus] = useState("");
   const [deleteId, setDeleteId] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteSuccess, setDeleteSuccess] = useState(false);
 
+  // Fetch prescriptions
   useEffect(() => {
     async function fetchPrescriptions() {
       setLoading(true);
@@ -73,7 +43,7 @@ export default function PrescriptionsPage() {
           page: pagination.page,
           limit: pagination.limit,
           ...(search ? { userIdentifier: search } : {}),
-          ...(status !== "ALL" ? { status } : {}),
+          ...(status ? { status } : {}),
         });
         const res = await fetch(`${API_BASE}/api/admin/prescriptions?${params.toString()}`, {
           headers: {
@@ -84,8 +54,8 @@ export default function PrescriptionsPage() {
         });
         if (!res.ok) throw new Error(`Error: ${res.status}`);
         const data = await res.json();
-        setPrescriptions(data.prescriptions);
-        setPagination(data.pagination);
+        setPrescriptions(Array.isArray(data.data?.prescriptions) ? data.data.prescriptions : []);
+        setPagination(data.pagination || { page: 1, limit: 10, total: 0, pages: 1 });
       } catch (e) {
         setError("Failed to load prescriptions.");
       } finally {
@@ -93,14 +63,11 @@ export default function PrescriptionsPage() {
       }
     }
     fetchPrescriptions();
-    // eslint-disable-next-line
   }, [pagination.page, search, status]);
 
-  function handlePageChange(newPage) {
-    setPagination((prev) => ({ ...prev, page: newPage }));
-  }
+  const handlePageChange = (newPage) => setPagination(prev => ({ ...prev, page: newPage }));
 
-  async function handleDelete(id) {
+  const handleDelete = async (id) => {
     setDeleteLoading(true);
     try {
       const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
@@ -118,127 +85,82 @@ export default function PrescriptionsPage() {
         throw new Error(data.message || `Error: ${res.status}`);
       }
       setDeleteSuccess(true);
-      setPrescriptions((prev) => prev.filter((p) => p.id !== id));
-      setTimeout(() => {
-        setDeleteId(null);
-        setDeleteSuccess(false);
-      }, 1000);
+      setPrescriptions(prev => prev.filter(p => p.id !== id));
+      setTimeout(() => setDeleteSuccess(false), 1000);
     } catch (e) {
       setError(e.message);
     } finally {
       setDeleteLoading(false);
+      setDeleteId(null);
     }
-  }
+  };
+
+  const renderMobileCard = (prescription) => (
+    <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition">
+      <div className="flex justify-between mb-2">
+        <div className="font-semibold">{prescription.userIdentifier}</div>
+        <StatusBadge status={prescription.status} />
+      </div>
+      <div className="flex justify-between text-sm text-gray-600 mb-2">
+        <div>Verified: {prescription.verified ? "Yes" : "No"}</div>
+        <div>Created: {new Date(prescription.createdAt).toLocaleDateString()}</div>
+      </div>
+      <Link
+        href={`/admin/medications/prescriptions/${prescription.id}`}
+        className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-[#225F91] text-white font-semibold hover:bg-[#1A4971] transition text-sm w-full"
+      >
+        View
+      </Link>
+    </div>
+  );
+
+  const columns = [
+    { key: "user", label: "User", render: p => p.userIdentifier },
+    { key: "status", label: "Status", render: p => <StatusBadge status={p.status} /> },
+    { key: "verified", label: "Verified", render: p => p.verified ? <span className="text-green-600 font-semibold">Yes</span> : <span className="text-gray-400">No</span> },
+    { key: "createdAt", label: "Created", render: p => new Date(p.createdAt).toLocaleDateString() },
+    { key: "actions", label: "Actions", render: p => (
+      <Link
+        href={`/admin/medications/prescriptions/${p.id}`}
+        className="px-4 py-2 rounded-lg bg-[#225F91] text-white font-semibold hover:bg-[#1A4971] transition text-sm"
+      >
+        View
+      </Link>
+    ) },
+  ];
+
+  const filters = [
+    {
+      value: status,
+      onChange: setStatus,
+      options: statusOptions.filter(opt => opt !== "ALL").map(opt => ({ value: opt, label: opt })),
+      placeholder: "ALL",
+    },
+  ];
 
   return (
-    <div className="space-y-8">
-      <ConfirmDialog
-        open={!!deleteId}
-        onClose={() => setDeleteId(null)}
-        onConfirm={() => handleDelete(deleteId)}
-        loading={deleteLoading}
+    <div>
+      <DataTableView
+        title="Prescriptions"
+        description="Manage prescriptions and track their status"
+        data={prescriptions}
+        loading={loading}
+        error={error}
+        pagination={pagination}
+        onPageChange={handlePageChange}
+        searchValue={search}
+        onSearchChange={v => { setPagination(prev => ({ ...prev, page: 1 })); setSearch(v); }}
+        searchPlaceholder="Search by user identifier..."
+        filters={filters}
+        columns={columns}
+        mobileCardRender={renderMobileCard}
+        emptyState={{
+          icon: ShoppingCart,
+          title: "No prescriptions found",
+          description: search || status !== "ALL" ? "Try adjusting your search or filters." : "Prescriptions will appear here once added.",
+          showPrimaryAction: false,
+        }}
       />
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-bold text-[#225F91]">Prescriptions</h1>
-      </div>
-      <Card className="p-6 bg-white/95 border border-[#1ABA7F]/20 rounded-2xl shadow-md">
-        <div className="mb-4 flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
-          <div className="flex gap-2 flex-1">
-            <input
-              type="text"
-              placeholder="Search by user identifier..."
-              value={search}
-              onChange={(e) => {
-                setPagination((prev) => ({ ...prev, page: 1 }));
-                setSearch(e.target.value);
-              }}
-              className="w-full sm:w-64 px-4 py-2 border border-[#1ABA7F]/20 rounded-lg focus:border-[#1ABA7F] focus:outline-none"
-            />
-            <select
-              value={status}
-              onChange={(e) => {
-                setPagination((prev) => ({ ...prev, page: 1 }));
-                setStatus(e.target.value);
-              }}
-              className="px-3 py-2 border border-[#1ABA7F]/20 rounded-lg focus:border-[#1ABA7F] focus:outline-none"
-            >
-              {statusOptions.map((opt) => (
-                <option key={opt} value={opt}>{opt.charAt(0).toUpperCase() + opt.slice(1)}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-        {loading ? (
-          <div className="flex justify-center items-center h-32">
-            <Loader2 className="animate-spin w-8 h-8 text-[#1ABA7F]" />
-          </div>
-        ) : error ? (
-          <div className="flex flex-col items-center gap-2 text-red-600">
-            <AlertTriangle className="w-8 h-8" />
-            <span>{error}</span>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead>
-                <tr className="text-left text-gray-600 border-b">
-                  <th className="py-2 px-3">User</th>
-                  <th className="py-2 px-3">Status</th>
-                  <th className="py-2 px-3">Verified</th>
-                  <th className="py-2 px-3">Created</th>
-                  <th className="py-2 px-3">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {prescriptions.length > 0 ? (
-                  prescriptions.map((prescription) => (
-                    <tr key={prescription.id} className="border-b last:border-0">
-                      <td className="py-2 px-3 font-medium text-gray-900">{prescription.userIdentifier}</td>
-                      <td className="py-2 px-3"><StatusBadge status={prescription.status} /></td>
-                      <td className="py-2 px-3">{prescription.verified ? <span className="text-green-600 font-semibold">Yes</span> : <span className="text-gray-400">No</span>}</td>
-                      <td className="py-2 px-3">{new Date(prescription.createdAt).toLocaleDateString()}</td>
-                      <td className="py-2 px-3">
-                        <Link
-                          href={`/admin/prescriptions/${prescription.id}`}
-                          className="px-4 py-2 rounded-lg bg-[#225F91] text-white font-semibold hover:bg-[#1A4971] transition"
-                        >
-                          View
-                        </Link>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={5} className="text-center py-4 text-gray-500">
-                      No prescriptions found.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
-        {/* Pagination Controls */}
-        <div className="flex justify-end items-center gap-2 mt-4">
-          <button
-            className="px-3 py-1 rounded border border-[#1ABA7F]/30 text-[#225F91] disabled:opacity-50"
-            onClick={() => handlePageChange(pagination.page - 1)}
-            disabled={pagination.page <= 1}
-          >
-            Prev
-          </button>
-          <span className="text-sm text-gray-700">
-            Page {pagination.page} of {pagination.pages}
-          </span>
-          <button
-            className="px-3 py-1 rounded border border-[#1ABA7F]/30 text-[#225F91] disabled:opacity-50"
-            onClick={() => handlePageChange(pagination.page + 1)}
-            disabled={pagination.page >= pagination.pages}
-          >
-            Next
-          </button>
-        </div>
-      </Card>
       {deleteSuccess && (
         <div className="fixed bottom-6 right-6 bg-green-100 border border-green-300 text-green-800 px-4 py-2 rounded-lg flex items-center gap-2 shadow-lg z-50">
           <CheckCircle className="w-5 h-5" /> Prescription deleted successfully.

@@ -6,7 +6,7 @@ function getAuthHeaders() {
   };
 }
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL || '') + '/api/admin/users';
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || '') + '/api/admin/admin-users';
 
 export async function fetchUsers(params = {}) {
   const query = new URLSearchParams(params).toString();
