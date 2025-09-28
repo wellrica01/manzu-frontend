@@ -88,7 +88,7 @@ export async function deleteMedication(id) {
 // --- Search functions ---
 
 
-export async function searchManufacturers(searchTerm, limit = 50) {
+export async function searchManufacturers(searchTerm, limit = 20) {
   const query = new URLSearchParams({ search: searchTerm, limit }).toString();
   const res = await fetch(`${BACKEND_BASE}/api/admin/search/manufacturers?${query}`, {
     headers: getAuthHeaders(),
@@ -98,7 +98,7 @@ export async function searchManufacturers(searchTerm, limit = 50) {
   return res.json();
 }
 
-export async function searchActiveSubstances(searchTerm, limit = 50) {
+export async function searchActiveSubstances(searchTerm, limit = 20) {
   const query = new URLSearchParams({ search: searchTerm, limit }).toString();
   const res = await fetch(`${BACKEND_BASE}/api/admin/search/active-substances?${query}`, {
     headers: getAuthHeaders(),
@@ -108,7 +108,7 @@ export async function searchActiveSubstances(searchTerm, limit = 50) {
   return res.json();
 }
 
-export async function searchMedicationIngredients(searchTerm, limit = 50) {
+export async function searchMedicationIngredients(searchTerm, limit = 20) {
   const query = new URLSearchParams({ search: searchTerm, limit }).toString();
   const res = await fetch(`${BACKEND_BASE}/api/admin/search/medication-ingredients?${query}`, {
     headers: getAuthHeaders(),

@@ -8,7 +8,8 @@ import {
 import { fetchManufacturers } from "../manufacturers/api";
 import { fetchActiveSubstances } from "../active-substances/api";
 import { fetchMedicationIngredients } from "../medication-ingredients/api";
-import { createMedication, updateMedication } from "./api";
+import { createMedication, updateMedication, searchManufacturers, searchActiveSubstances, searchMedicationIngredients } from "./api";
+import { AutocompleteInput } from "../../components/AutocompleteInput";
 
 
 // Constants
@@ -377,139 +378,149 @@ export default function MedicationForm({ medication = {}, mode = "create", onSuc
     }
   };
 
-  // Render ingredient item
-  const renderIngredientItem = (ing, idx) => {
-    const isExisting = !!ing.medicationIngredientId;
-    const selectedExisting = isExisting ? medicationIngredients.find(mi => mi.id === parseInt(ing.medicationIngredientId)) : null;
+// Render ingredient item
+const renderIngredientItem = (ing, idx) => {
+  const isExisting = !!ing.medicationIngredientId;
+  const selectedExisting = isExisting
+    ? medicationIngredients.find(mi => mi.id === parseInt(ing.medicationIngredientId))
+    : null;
 
-    return (
-      <div key={idx} className="bg-gray-50 border border-gray-200 rounded-lg p-4 relative">
-        <div className="flex items-center justify-between mb-3">
-          <h4 className="font-medium text-gray-900">Ingredient {idx + 1}</h4>
-          {ingredients.length > 1 && (
-            <button
-              type="button"
-              onClick={() => removeIngredient(idx)}
-              className="p-1 text-red-500 hover:text-red-700 hover:bg-red-100 rounded-full transition-colors"
-              aria-label={`Remove ingredient ${idx + 1}`}
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
-        </div>
+  // Error handling per ingredient
+  const ingredientErrors = fieldErrors.ingredients?.[idx] || {};
 
-        <div className="space-y-4">
-          {/* Existing ingredient selector */}
-          <FormField
-            label="Use Existing Ingredient"
-            help="Select from pre-defined medication ingredients, or leave blank to create custom"
+  return (
+    <div key={idx} className="bg-gray-50 border border-gray-200 rounded-lg p-4 relative">
+      <div className="flex items-center justify-between mb-3">
+        <h4 className="font-medium text-gray-900">Ingredient {idx + 1}</h4>
+        {ingredients.length > 1 && (
+          <button
+            type="button"
+            onClick={() => removeIngredient(idx)}
+            className="p-1 text-red-500 hover:text-red-700 hover:bg-red-100 rounded-full transition-colors"
+            aria-label={`Remove ingredient ${idx + 1}`}
           >
-            <Select
-              value={ing.medicationIngredientId || ""}
-              onChange={(e) => {
-                const val = e.target.value;
-                handleIngredientChange(idx, "medicationIngredientId", val);
-                if (val) {
-                  // Clear custom fields when existing is selected
-                  handleIngredientChange(idx, "activeSubstanceId", "");
-                  handleIngredientChange(idx, "strengthValue", "");
-                  handleIngredientChange(idx, "strengthUnit", "");
-                  handleIngredientChange(idx, "perUnitValue", 1);
-                  handleIngredientChange(idx, "perUnitType", form.packSizeUnit || "");
-                }
-              }}
-            >
-              <option value="">Create custom ingredient</option>
-              {medicationIngredients.map(mi => (
-                <option key={mi.id} value={mi.id}>
-                  {mi.ActiveSubstance?.name} - {mi.strengthValue}{mi.strengthUnit}
-                </option>
-              ))}
-            </Select>
-          </FormField>
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </div>
 
-          {selectedExisting && (
-            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm font-medium text-blue-900">Selected Ingredient Details:</p>
-              <div className="text-sm text-blue-700 mt-1">
-                <p><strong>Active Substance:</strong> {selectedExisting.ActiveSubstance?.name}</p>
-                <p><strong>Strength:</strong> {selectedExisting.strengthValue} {selectedExisting.strengthUnit}</p>
-                <p><strong>Per Unit:</strong> {selectedExisting.perUnitValue} {selectedExisting.perUnitType}</p>
-              </div>
+      <div className="space-y-4">
+        {/* Existing ingredient selector */}
+<FormField label="Medication Ingredient">
+  <AutocompleteInput
+    value={medicationIngredients.find(mi => mi.id === ing.medicationIngredientId) || null}
+    onChange={(selected) => {
+      handleIngredientChange(idx, "medicationIngredientId", selected?.id || null);
+
+      if (selected) {
+        // Clear custom fields when an existing ingredient is selected
+        handleIngredientChange(idx, "activeSubstanceId", "");
+        handleIngredientChange(idx, "strengthValue", "");
+        handleIngredientChange(idx, "strengthUnit", "");
+        handleIngredientChange(idx, "perUnitValue", selected.perUnitValue || 1);
+        handleIngredientChange(
+          idx,
+          "perUnitType",
+          selected.perUnitType || form.packSizeUnit || ""
+        );
+      }
+    }}
+    fetchOptions={searchMedicationIngredients}
+    placeholder="Type medication ingredient..."
+    displayFn={(option) =>
+      option.ActiveSubstance
+        ? `${option.ActiveSubstance.name}${option.strengthValue ? ` - ${option.strengthValue}${option.strengthUnit || ''}` : ''}`
+        : option.name
+    }
+    minChars={1} // allows search after 1 character
+  />
+</FormField>
+
+
+        {selectedExisting && (
+          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm font-medium text-blue-900">Selected Ingredient Details:</p>
+            <div className="text-sm text-blue-700 mt-1">
+              <p><strong>Active Substance:</strong> {selectedExisting.ActiveSubstance?.name}</p>
+              <p><strong>Strength:</strong> {selectedExisting.strengthValue} {selectedExisting.strengthUnit}</p>
+              <p><strong>Per Unit:</strong> {selectedExisting.perUnitValue} {selectedExisting.perUnitType}</p>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Custom ingredient fields */}
-          {!isExisting && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField label="Active Substance" required>
-                <Select
-                  value={ing.activeSubstanceId}
-                  onChange={(e) => handleIngredientChange(idx, "activeSubstanceId", e.target.value)}
-                  required
-                >
-                  <option value="">Select active substance</option>
-                  {activeSubstances.map(as => (
-                    <option key={as.id} value={as.id}>{as.name}</option>
-                  ))}
-                </Select>
-              </FormField>
+        {/* Custom ingredient fields */}
+        {!isExisting && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Active Substance */}
+            <FormField label="Active Substance" required error={ingredientErrors.activeSubstanceId}>
+              <AutocompleteInput
+                value={activeSubstances.find(a => a.id === ing.activeSubstanceId) || null}
+                onChange={(selected) => handleIngredientChange(idx, "activeSubstanceId", selected?.id || null)}
+                fetchOptions={searchActiveSubstances}
+                placeholder="Type active substance..."
+              />
+            </FormField>
 
-              <FormField label="Strength" required>
-                <div className="flex gap-2">
-                  <Input
-                    type="number"
-                    step="0.01"
-                    placeholder="Amount"
-                    value={ing.strengthValue}
-                    onChange={(e) => handleIngredientChange(idx, "strengthValue", e.target.value)}
-                    required
-                    className="flex-1"
-                  />
-                  <Select
-                    value={ing.strengthUnit}
-                    onChange={(e) => handleIngredientChange(idx, "strengthUnit", e.target.value)}
-                    required
-                    className="w-20"
-                  >
-                    <option value="">Unit</option>
-                    {STRENGTH_UNITS.map(u => (
-                      <option key={u} value={u}>{u}</option>
-                    ))}
-                  </Select>
-                </div>
-              </FormField>
-
-              <FormField 
-                label="Per Unit Value" 
-                help="How much of this ingredient per unit (e.g., per tablet)"
-              >
+            {/* Strength */}
+            <FormField label="Strength" required error={ingredientErrors.strengthValue}>
+              <div className="flex gap-2">
                 <Input
                   type="number"
                   step="0.01"
-                  min="1"
-                  value={ing.perUnitValue || 1}
-                  onChange={(e) => handleIngredientChange(idx, "perUnitValue", e.target.value)}
+                  placeholder="Amount"
+                  value={ing.strengthValue}
+                  onChange={(e) => handleIngredientChange(idx, "strengthValue", e.target.value)}
+                  required
+                  className="flex-1"
                 />
-              </FormField>
-
-              <FormField label="Per Unit Type">
                 <Select
-                  value={ing.perUnitType || form.packSizeUnit || ""}
-                  onChange={(e) => handleIngredientChange(idx, "perUnitType", e.target.value)}
+                  value={ing.strengthUnit}
+                  onChange={(e) => handleIngredientChange(idx, "strengthUnit", e.target.value)}
+                  required
+                  className="w-20"
                 >
-                  <option value="">Select unit type</option>
-                  {PACK_SIZE_UNITS.map(u => (
+                  <option value="">Unit</option>
+                  {STRENGTH_UNITS.map(u => (
                     <option key={u} value={u}>{u}</option>
                   ))}
                 </Select>
-              </FormField>
-            </div>
-          )}
-        </div>
+              </div>
+            </FormField>
+
+            {/* Per Unit Value */}
+            <FormField 
+              label="Per Unit Value" 
+              help="How much of this ingredient per unit (e.g., per tablet)"
+              error={ingredientErrors.perUnitValue}
+            >
+              <Input
+                type="number"
+                step="0.01"
+                min="1"
+                value={ing.perUnitValue || 1}
+                onChange={(e) => handleIngredientChange(idx, "perUnitValue", e.target.value)}
+              />
+            </FormField>
+
+            {/* Per Unit Type */}
+            <FormField label="Per Unit Type" error={ingredientErrors.perUnitType}>
+              <Select
+                value={ing.perUnitType || form.packSizeUnit || ""}
+                onChange={(e) => handleIngredientChange(idx, "perUnitType", e.target.value)}
+              >
+                <option value="">Select unit type</option>
+                {PACK_SIZE_UNITS.map(u => (
+                  <option key={u} value={u}>{u}</option>
+                ))}
+              </Select>
+            </FormField>
+          </div>
+        )}
       </div>
-    );
-  };
+    </div>
+  );
+};
+
 
   return (
     <div className="max-w-8xl mx-auto">
@@ -555,18 +566,18 @@ export default function MedicationForm({ medication = {}, mode = "create", onSuc
                 placeholder="Brief description of the medication"
               />
             </FormField>
-
-            <FormField label="Manufacturer">
-              <Select
-                name="manufacturerId"
-                value={form.manufacturerId}
-                onChange={handleChange}
-              >
-                <option value="">Select manufacturer</option>
-                {manufacturerOptions.map(m => (
-                  <option key={m.id} value={m.id}>{m.name}</option>
-                ))}
-              </Select>
+            <FormField label="Manufacturer" error={fieldErrors.manufacturerId}>
+              <AutocompleteInput
+                value={manufacturerOptions.find(m => m.id === form.manufacturerId) || null}
+                onChange={(selected) => {
+                  setForm(prev => ({
+                    ...prev,
+                    manufacturerId: selected?.id || null, // null instead of empty string
+                  }));
+                }}
+                fetchOptions={searchManufacturers} // your API function
+                placeholder="Type manufacturer name..."
+              />
             </FormField>
           </div>
         </FormSection>
