@@ -129,27 +129,43 @@ const CartItem = ({
   aria-label={`Cart item: ${item.medication.name}`}
 >
   <div className="flex justify-between items-center px-4">
-  <div className='flex flex-col gap-1'>
+<div className='flex flex-col gap-1'>
   <h3 
     className="text-lg sm:text-3xl font-bold text-[#225F91] tracking-tight leading-tight" 
     title={item.medication.fullName}
   >
     {item.medication.fullName}
   </h3>
+
+  {/* Ingredients description */}
+  {item.medication.ingredients && item.medication.ingredients.length > 0 && (
+    <p className="text-sm text-gray-600">
+      (
+      {item.medication.ingredients
+        .map(
+          (ing) =>
+            `${ing.activeSubstance} ${ing.strengthValue}${ing.strengthUnit}`
+        )
+        .join(" + ")}
+      )
+    </p>
+  )}
+
   <div className="my-1">
     {item.medication.prescriptionRequired ? (
-    <Badge className="bg-purple-50 text-purple-700 border-purple-200 text-xs font-medium px-2 py-0.5 rounded-md flex items-center gap-1">
-      <FileText className="h-3 w-3 mr-1" />
-      Prescription
-    </Badge>
-  ) : (
-    <Badge className="bg-[#225F91]/10 text-[#225F91] border-[#225F91]/20 text-xs font-medium px-2 py-0.5 rounded-md flex items-center gap-1">
-      <Package className="h-3 w-3 mr-1" />
-      OTC
-    </Badge>
-  )}
+      <Badge className="bg-purple-50 text-purple-700 border-purple-200 text-xs font-medium px-2 py-0.5 rounded-md flex items-center gap-1">
+        <FileText className="h-3 w-3 mr-1" />
+        Prescription
+      </Badge>
+    ) : (
+      <Badge className="bg-[#225F91]/10 text-[#225F91] border-[#225F91]/20 text-xs font-medium px-2 py-0.5 rounded-md flex items-center gap-1">
+        <Package className="h-3 w-3 mr-1" />
+        OTC
+      </Badge>
+    )}
   </div>
-  </div>
+</div>
+
       
   {/* Image */}
   <div className="relative w-24 h-24 flex">

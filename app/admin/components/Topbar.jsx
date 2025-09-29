@@ -19,11 +19,7 @@ export default function Topbar({ onSidebarToggle, isMobile }) {
             <Menu className="w-5 h-5 text-gray-600" />
           </button>
         )}
-        
-        <div>
-          <h1 className="text-lg font-semibold text-[#225F91]">Admin Panel</h1>
-          <p className="text-sm text-gray-500 hidden sm:block">Manage your pharmacy network</p>
-        </div>
+ 
       </div>
 
       {/* Right side */}

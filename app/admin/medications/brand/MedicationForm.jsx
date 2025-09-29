@@ -123,11 +123,12 @@ export default function MedicationForm({ medication = {}, mode = "create", onSuc
     brandName: medication.brandName || "",
     brandDescription: medication.brandDescription || "",
     manufacturerId: medication.manufacturerId || "",
-    form: medication.form || "",
+    form: medication.form?.toUpperCase() || "",
     packSizeQuantity: medication.packSizeQuantity || "",
-    packSizeUnit: medication.packSizeUnit || "",
+    packSizeUnit: medication.packSizeUnit?.toUpperCase() || "",
     nafdacCode: medication.nafdacCode || "",
     prescriptionRequired: medication.prescriptionRequired ?? false,
+    manufacturerId: medication.manufacturerId || medication.Manufacturer?.id || "",
     imageUrl: medication.imageUrl || "",
     image: null,
   });
@@ -597,7 +598,7 @@ const renderIngredientItem = (ing, idx) => {
                 <option value="">Select form</option>
                 {DOSAGE_FORMS.map(form => (
                   <option key={form} value={form}>
-                    {form.replace('_', ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase())}
+                    {form}
                   </option>
                 ))}
               </Select>
@@ -679,35 +680,56 @@ const renderIngredientItem = (ing, idx) => {
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
               />
               
-              {form.image ? (
-                <div className="text-center">
-                  <div className="relative inline-block">
-                    <img
-                      src={URL.createObjectURL(form.image)}
-                      alt="Preview"
-                      className="w-32 h-32 object-cover rounded-lg border"
-                    />
-                    <button
-                      type="button"
-                      onClick={removeImage}
-                      className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                  <p className="text-sm text-gray-600 mt-2">{form.image.name}</p>
-                </div>
-              ) : (
-                <div className="text-center">
-                  <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                  <div className="mt-4">
-                    <p className="text-sm font-medium text-gray-900">
-                      Drop an image here, or click to select
-                    </p>
-                    <p className="text-sm text-gray-500">PNG, JPG, GIF up to 10MB</p>
-                  </div>
-                </div>
-              )}
+         {form.image ? (
+  // Case 1: User uploaded a new file
+  <div className="text-center">
+    <div className="relative inline-block">
+      <img
+        src={URL.createObjectURL(form.image)}
+        alt="Preview"
+        className="w-32 h-32 object-cover rounded-lg border"
+      />
+      <button
+        type="button"
+        onClick={removeImage}
+        className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+      >
+        <X className="w-4 h-4" />
+      </button>
+    </div>
+    <p className="text-sm text-gray-600 mt-2">{form.image.name}</p>
+  </div>
+) : form.imageUrl ? (
+  // Case 2: Medication already has an image from DB
+  <div className="text-center">
+    <div className="relative inline-block">
+      <img
+        src={form.imageUrl}
+        alt="Medication"
+        className="w-32 h-32 object-cover rounded-lg border"
+      />
+      <button
+        type="button"
+        onClick={() => setForm(prev => ({ ...prev, imageUrl: "" }))}
+        className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+      >
+        <X className="w-4 h-4" />
+      </button>
+    </div>
+  </div>
+) : (
+  // Case 3: No image at all → show placeholder
+  <div className="text-center">
+    <Upload className="mx-auto h-12 w-12 text-gray-400" />
+    <div className="mt-4">
+      <p className="text-sm font-medium text-gray-900">
+        Drop an image here, or click to select
+      </p>
+      <p className="text-sm text-gray-500">PNG, JPG, GIF up to 10MB</p>
+    </div>
+  </div>
+)}
+
             </div>
           </div>
         </FormSection>

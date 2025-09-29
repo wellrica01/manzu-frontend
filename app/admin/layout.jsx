@@ -61,10 +61,10 @@ export default function AdminLayout({ children }) {
           onSidebarToggle={handleSidebarToggle}
           isMobile={isMobile}
         />
-        <main className={`flex-1 p-4 sm:p-6 lg:p-8 transition-all duration-300 ${
+        <main className={`flex-1 p-2 sm:p-6 lg:p-8 transition-all duration-300 ${
           !isMobile && sidebarCollapsed ? 'ml-0' : ''
         }`}>
-          <div className="max-w-7xl mx-auto">
+          <div>
             {children}
           </div>
         </main>

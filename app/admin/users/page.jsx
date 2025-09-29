@@ -98,12 +98,9 @@ export default function UsersPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-bold text-[#225F91]">Admin Users</h1>
-      </div>
 
       <DataTableView
-        title=""
+        title="Admin Platform Users"
         description=""
         data={users}
         loading={loading}
@@ -122,6 +119,7 @@ export default function UsersPage() {
           description: search || role !== "ALL" ? "Try adjusting your search or filters." : "Users will appear here once added.",
           showPrimaryAction: false,
         }}
+        className = "p-3"
       />
     </div>
   );

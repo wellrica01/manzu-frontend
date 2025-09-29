@@ -10,9 +10,9 @@ import {
 
 const navItems = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: Home },
-  { href: '/admin/pharmacies', label: 'Pharmacies', icon: Package },
   { href: '/admin/medications/brand', label: 'Medications', icon: ShoppingBag },
   { href: '/admin/medications/prescriptions', label: 'Prescriptions', icon: FileText },
+  { href: '/admin/pharmacies', label: 'Pharmacies', icon: Package },
   { href: '/admin/orders', label: 'Orders', icon: ListOrdered },
   { href: '/admin/users', label: 'Users', icon: Users },
 ];
@@ -165,17 +165,14 @@ export default function SidebarNav({ isCollapsed, onToggle, isMobile, isOpen, on
                 )}
               </button>
               
-              <div className={`space-y-1 mt-2 transition-all duration-300 overflow-hidden ${
-                masterDataOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+             <div className={`space-y-1 mt-2 transition-all duration-300 ${
+                masterDataOpen ? 'max-h-[calc(100vh-12rem)] overflow-y-auto opacity-100' : 'max-h-0 opacity-0 overflow-hidden'
               }`}>
                 {masterDataItems.map((item) => (
-                  <NavItem 
-                    key={item.href} 
-                    {...item} 
-                    onClick={isMobile ? onClose : undefined}
-                  />
+                  <NavItem key={item.href} {...item} onClick={isMobile ? onClose : undefined} />
                 ))}
               </div>
+
             </div>
           )}
 

@@ -33,31 +33,49 @@ const MedicationCard = ({ med, handleAddToCart, isInCart, isAddingToCart, search
         <div className="flex-1">
           <div className="flex items-center justify-between">
             <div className="flex-1">
-                <h3 className="text-xl sm:text-3xl font-bold text-[#225F91] tracking-tight leading-tight">
-                  {med.fullName}
-                </h3>
-                <div className="flex items-center text-xs gap-2 mt-2 flex-wrap">
-                  { med.prescriptionRequired && (
-                    <Badge variant="secondary" className="bg-[#225F91]/10 text-[#225F91] border-primary">
+              <h3 className="text-xl sm:text-3xl font-bold text-[#225F91] tracking-tight leading-tight">
+                {med.fullName || med.brandName || "Unnamed Medication"}
+              </h3>
+
+              <div className="flex items-center text-xs gap-2 mt-2 flex-wrap">
+                {med.prescriptionRequired && (
+                  <Badge variant="secondary" className="bg-[#225F91]/10 text-[#225F91] border-primary">
                     <Clock className="h-3 w-3 mr-1" />
                     Prescription Required
                   </Badge>
-                  )}
-                  <div>
-                  <span className="font-semibold text-gray-600">Generic Name:</span>
-                  <span className="ml-2 text-gray-600 font-medium">{med.genericName || 'N/A'}</span>
+                )}
+
+                {/* Brand name */}
+                <div>
+                  <span className="font-semibold text-gray-600">Brand Name:</span>
+                  <span className="ml-2 text-gray-600 font-medium">{med.brandName || "N/A"}</span>
                 </div>
+
+                {/* Ingredients instead of generic name */}
+                {med.ingredients?.length > 0 && (
+                  <div>
+                    <span className="font-semibold text-gray-600">Ingredients:</span>
+                    <span className="ml-2 text-gray-600 font-medium">
+                      {med.ingredients.map(i => `${i.activeSubstance} ${i.strengthValue}${i.strengthUnit}`).join(", ")}
+                    </span>
+                  </div>
+                )}
+
                 {med.manufacturerName && (
                   <div>
                     <span className="text-gray-600 font-semibold">Manufacturer:</span>
-                    <span className="ml-2 text-gray-600 font-medium">{med.manufacturerName || 'N/A'} - {med.manufacturerCountry}</span>
+                    <span className="ml-2 text-gray-600 font-medium">
+                      {med.manufacturerName} - {med.manufacturerCountry}
+                    </span>
                   </div>
                 )}
+
                 <div>
                   <span className="font-semibold text-gray-600">NAFDAC Code:</span>
-                  <span className="ml-2 text-gray-600 font-medium">{med.nafdacCode || 'N/A'}</span>
+                  <span className="ml-2 text-gray-600 font-medium">{med.nafdacCode || "N/A"}</span>
                 </div>
               </div>
+
             </div>
             <div className="relative w-24 h-24 sm:w-32 sm:h-32 flex-shrink-0">
               {med.imageUrl ? (

@@ -216,6 +216,7 @@ export default function OrdersPage() {
           : "Orders will appear here once customers start placing them.",
         showPrimaryAction: false
       }}
+      className = "p-3"
     />
   );
 }

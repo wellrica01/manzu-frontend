@@ -412,6 +412,7 @@ export default function MedicationsPage() {
             setDialogOpen(true);
           }
         }}
+        className = "p-3"
       />
 
       {/* Success Toast */}

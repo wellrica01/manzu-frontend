@@ -160,6 +160,7 @@ export default function PrescriptionsPage() {
           description: search || status !== "ALL" ? "Try adjusting your search or filters." : "Prescriptions will appear here once added.",
           showPrimaryAction: false,
         }}
+        className = "p-3"
       />
       {deleteSuccess && (
         <div className="fixed bottom-6 right-6 bg-green-100 border border-green-300 text-green-800 px-4 py-2 rounded-lg flex items-center gap-2 shadow-lg z-50">

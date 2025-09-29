@@ -63,7 +63,7 @@ const PharmacyItems = ({ cart, calculateItemPrice }) => {
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
-                              <h4 className="text-gray-900 text-base font-semibold">{item.medication.displayName}</h4>
+                              <h4 className="text-gray-900 text-base font-semibold">{item.medication.fullName}</h4>
                               <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs">
                                 OTC
                               </Badge>
