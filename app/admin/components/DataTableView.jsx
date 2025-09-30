@@ -25,6 +25,8 @@ export default function DataTableView({
   
   // Actions
   primaryAction = null, // { label, icon, onClick, className }
+  refreshAction = null, // { label?, icon?, onClick, className, loading? }
+
   
   // Additional props
   className = "",
@@ -86,15 +88,38 @@ export default function DataTableView({
           <h1 className="text-2xl sm:text-3xl font-bold text-[#225F91]">{title}</h1>
           {description && <p className="text-gray-600 mt-1">{description}</p>}
         </div>
-        {primaryAction && (
-          <button
-            onClick={primaryAction.onClick}
-            className={primaryAction.className || "flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-[#1ABA7F] text-white font-semibold hover:bg-[#159e6a] transition-colors shadow-sm"}
-          >
-            {primaryAction.icon && <primaryAction.icon className="w-4 h-4" />}
-            {primaryAction.label}
-          </button>
-        )}
+        <div className="flex gap-2">
+         {refreshAction && (
+            <button
+              onClick={refreshAction.onClick}
+              disabled={refreshAction.loading}
+              className={refreshAction.className || "flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"}
+              title={refreshAction.label || "Refresh"}
+            >
+              {refreshAction.loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Refreshing...
+                </>
+              ) : (
+                <>
+                  {refreshAction.icon && <refreshAction.icon className="w-4 h-4" />}
+                  {refreshAction.label || "Refresh"}
+                </>
+              )}
+            </button>
+          )}
+
+          {primaryAction && (
+            <button
+              onClick={primaryAction.onClick}
+              className={primaryAction.className || "flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-[#1ABA7F] text-white font-semibold hover:bg-[#159e6a] transition-colors shadow-sm"}
+            >
+              {primaryAction.icon && <primaryAction.icon className="w-4 h-4" />}
+              {primaryAction.label}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Filters */}

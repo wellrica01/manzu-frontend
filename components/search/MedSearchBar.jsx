@@ -292,7 +292,7 @@ const handleSearch = async (term, options = {}) => {
 
 
 const handleSelectMedication = async (med) => {
-  const medName = med.fullName || med.fullName || med.genericName;
+  const medName = med.displayName || med.brandName;
 
   setSearchTerm(medName);
   setShowDropdown(false);
@@ -479,15 +479,26 @@ const isInCart = (medicationId, pharmacyId) => {
                       {suggestion.imageUrl ? (
                         <img
                           src={suggestion.imageUrl}
-                          alt={suggestion.fullName}
+                          alt={suggestion.displayName}
                           className="w-16 h-16 object-cover rounded-sm p-0.5 border border-[#1ABA7F]/20 shadow-md transition-transform duration-300 hover:scale-105"
                         />
                       ) : (
                       <TrendingUp className="h-3 sm:h-4 w-3 sm:w-4 text-[#225F91]" />
                       )}
                       <div className="flex-1">
-                        <div className="font-medium">{suggestion.fullName}</div>
-                        <div className="font-light">{suggestion.genericName}</div>
+                        <div className="font-medium">{suggestion.displayName}</div>
+                        <div className="font-light text-sm text-gray-600">
+                          {suggestion.ingredients && suggestion.ingredients.length > 0
+                            ? suggestion.ingredients.map((ing, i) => {
+                                const strength = ing.strengthValue ? ` ${ing.strengthValue}${ing.strengthUnit ?? ''}` : '';
+                                return (
+                                  <span key={i}>
+                                    {ing.activeSubstance}{strength}{i < suggestion.ingredients.length - 1 ? ', ' : ''}
+                                  </span>
+                                );
+                              })
+                            : 'No ingredients listed'}
+                        </div>
                       </div>
                     </button>
                   ))}
@@ -566,6 +577,6 @@ const isInCart = (medicationId, pharmacyId) => {
   );
 });
 
-SearchBar.fullName = "SearchBar"; // needed for forwardRef
+SearchBar.displayName = "SearchBar"; // needed for forwardRef
 
 export default SearchBar;

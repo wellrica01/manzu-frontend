@@ -5,7 +5,7 @@ import { ShoppingCart, MapPin, Phone, Navigation, Star, Clock, ArrowUpDown, Arro
 import { cn } from '@/lib/utils';
 import { formatOperatingHours, getOperatingHoursColor, getOperatingHoursTextColor } from '@/lib/pharmacyUtils';
 
-const PharmacyTable = ({ availability, medId, handleAddToCart, isInCart, fullName, isAddingToCart }) => {
+const PharmacyTable = ({ availability, medId, handleAddToCart, isInCart, displayName, isAddingToCart }) => {
   const [sortField, setSortField] = useState('price');
   const [sortDirection, setSortDirection] = useState('asc');
   const [expandedRow, setExpandedRow] = useState(null);
@@ -74,7 +74,7 @@ const PharmacyTable = ({ availability, medId, handleAddToCart, isInCart, fullNam
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse" aria-describedby={`pharmacy-comparison-${medId}`}>
           <caption id={`pharmacy-comparison-${medId}`} className="sr-only">
-            Comparison of pharmacies for {fullName}
+            Comparison of pharmacies for {displayName}
           </caption>
           <thead>
             <tr className="bg-[#1ABA7F]/10 text-sm font-semibold text-[#225F91]">
@@ -194,7 +194,7 @@ const PharmacyTable = ({ availability, medId, handleAddToCart, isInCart, fullNam
                     <td className="p-4">
                       <Button
                         id={`add-to-cart-${medId}-${avail.pharmacyId}`}
-                        onClick={() => handleAddToCart(medId, avail.pharmacyId, fullName)}
+                        onClick={() => handleAddToCart(medId, avail.pharmacyId, displayName)}
                         disabled={isInCart(medId, avail.pharmacyId) || isAddingToCart[`${medId}-${avail.pharmacyId}`]}
                         className={cn(
                           'h-10 px-5 text-base font-semibold rounded-full transition-all duration-300',

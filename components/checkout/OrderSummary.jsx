@@ -55,7 +55,7 @@ const OrderSummary = ({ pharmacies = [], calculateItemPrice, totalPrice = 0 }) =
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-gray-900 truncate">
-                          {item.medication.fullName}
+                          {item.medication.displayName}
                         </span>
                         {item.medication.prescriptionRequired && (
                           <Badge variant="outline" className="text-xs border-green-200 text-green-700">

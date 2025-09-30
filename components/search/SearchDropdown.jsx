@@ -73,14 +73,14 @@ export default function SearchDropdown({
                 {s.imageUrl ? (
                   <img
                     src={s.imageUrl}
-                    alt={s.fullName}
+                    alt={s.displayName}
                     className="w-8 h-8 object-cover rounded-sm border border-[#1ABA7F]/20"
                   />
                 ) : (
                   <TrendingUp className="h-4 w-4 text-[#225F91]" />
                 )}
                 <div className="flex-1">
-                  <div className="font-medium">{s.fullName}</div>
+                  <div className="font-medium">{s.displayName}</div>
                   <div className="text-gray-500 text-xs">{s.genericName}</div>
                 </div>
               </button>

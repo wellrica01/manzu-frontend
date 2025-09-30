@@ -124,7 +124,8 @@ export default function MedicationForm({ medication = {}, mode = "create", onSuc
     brandDescription: medication.brandDescription || "",
     manufacturerId: medication.manufacturerId || "",
     form: medication.form?.toUpperCase() || "",
-    packSizeQuantity: medication.packSizeQuantity || "",
+    pharmacopeia: medication.pharmacopeia || "",
+    packSizeExpression: medication.packSizeExpression || "",
     packSizeUnit: medication.packSizeUnit?.toUpperCase() || "",
     nafdacCode: medication.nafdacCode || "",
     prescriptionRequired: medication.prescriptionRequired ?? false,
@@ -144,8 +145,8 @@ export default function MedicationForm({ medication = {}, mode = "create", onSuc
       strengthValue: mi.MedicationIngredient?.strengthValue || "",
       strengthUnit: mi.MedicationIngredient?.strengthUnit || "",
       perUnitValue: mi.MedicationIngredient?.perUnitValue || 1,
-      perUnitType: mi.MedicationIngredient?.perUnitType || form.packSizeUnit || "",
-    })) || [{ medicationIngredientId: null, activeSubstanceId: "", strengthValue: "", strengthUnit: "", perUnitValue: 1, perUnitType: "" }]
+      perUnitType: mi.MedicationIngredient?.perUnitType || form.packSizeUnit || "ML",
+    })) || [{ medicationIngredientId: null, activeSubstanceId: "", strengthValue: "", strengthUnit: "", perUnitValue: 1, perUnitType: "ML" }]
   );
 
   // Options State
@@ -201,11 +202,13 @@ export default function MedicationForm({ medication = {}, mode = "create", onSuc
           delete errors.nafdacCode;
         }
         break;
-      case 'packSizeQuantity':
-        if (value && (isNaN(value) || parseFloat(value) <= 0)) {
-          errors.packSizeQuantity = 'Pack size must be a positive number';
+      case 'packSizeExpression':
+        if (!value?.trim()) {
+          errors.packSizeExpression = 'Pack size is required';
+        } else if (value.length > 50) {
+          errors.packSizeExpression = 'Pack size must be 50 characters or less';
         } else {
-          delete errors.packSizeQuantity;
+          delete errors.packSizeExpression;
         }
         break;
       default:
@@ -280,104 +283,105 @@ export default function MedicationForm({ medication = {}, mode = "create", onSuc
     setForm(prev => ({ ...prev, image: null }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    setSuccess(false);
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setError(null);
+  setSuccess(false);
 
-    // Validate all fields
-    const isValid = [
-      validateField('brandName', form.brandName),
-      validateField('nafdacCode', form.nafdacCode),
-      validateField('packSizeQuantity', form.packSizeQuantity),
-    ].every(Boolean);
+  // Validate all fields
+  const isValid = [
+    validateField('brandName', form.brandName),
+    validateField('nafdacCode', form.nafdacCode),
+    validateField('packSizeExpression', form.packSizeExpression),
+  ].every(Boolean);
 
-    if (!isValid) {
-      setLoading(false);
-      setError('Please fix the form errors before submitting');
-      return;
+  if (!isValid) {
+    setLoading(false);
+    setError('Please fix the form errors before submitting');
+    return;
+  }
+
+  try {
+    const formData = new FormData();
+
+    // Required fields
+    formData.append("brandName", form.brandName.trim());
+    formData.append("nafdacCode", form.nafdacCode.trim());
+
+    // Optional fields
+    if (form.brandDescription?.trim()) formData.append("brandDescription", form.brandDescription.trim());
+    if (form.form) formData.append("form", form.form);
+    if (form.packSizeUnit) formData.append("packSizeUnit", form.packSizeUnit);
+    if (form.packSizeExpression?.trim()) formData.append("packSizeExpression", form.packSizeExpression.trim());
+    if (form.pharmacopeia) formData.append("pharmacopeia", form.pharmacopeia); 
+
+
+    // Handle manufacturer
+    if (form.manufacturerId) {
+      formData.append("manufacturerId", String(form.manufacturerId));
+    } else if (form.customManufacturerName?.trim()) {
+      formData.append("manufacturerName", form.customManufacturerName.trim());
+    } else {
+      throw new Error("Manufacturer is required");
     }
 
-    try {
-      const formData = new FormData();
+    formData.append("prescriptionRequired", String(form.prescriptionRequired));
 
-      // Required fields
-      formData.append("brandName", form.brandName.trim());
-      formData.append("nafdacCode", form.nafdacCode.trim());
-
-      // Optional fields
-      if (form.brandDescription?.trim()) {
-        formData.append("brandDescription", form.brandDescription.trim());
-      }
-      if (form.form) {
-        formData.append("form", form.form);
-      }
-      if (form.packSizeUnit) {
-        formData.append("packSizeUnit", form.packSizeUnit);
-      }
-      if (form.packSizeQuantity) {
-        formData.append("packSizeQuantity", String(form.packSizeQuantity));
-      }
-      if (form.manufacturerId) {
-        formData.append("manufacturerId", String(form.manufacturerId));
-      }
-
-      formData.append("prescriptionRequired", String(form.prescriptionRequired));
-
-      if (form.image instanceof File) {
-        formData.append("image", form.image);
-      }
-
-      // Validate ingredients
-      const validIngredients = ingredients.filter(ing => 
-        ing.medicationIngredientId || (ing.activeSubstanceId && ing.activeSubstanceId !== "")
-      );
-
-      if (validIngredients.length === 0) {
-        throw new Error('At least one valid ingredient is required');
-      }
-
-      formData.append("ingredients", JSON.stringify(
-        validIngredients.map((ing) => {
-          if (ing.medicationIngredientId) {
-            const existing = medicationIngredients.find(mi => mi.id === parseInt(ing.medicationIngredientId));
-            if (!existing) throw new Error("Selected medication ingredient not found");
-
-            return {
-              activeSubstanceId: existing.substanceId,
-              strengthValue: existing.strengthValue,
-              strengthUnit: existing.strengthUnit,
-              perUnitValue: existing.perUnitValue || 1,
-              perUnitType: existing.perUnitType || form.packSizeUnit || null,
-            };
-          } else {
-            return {
-              activeSubstanceId: parseInt(ing.activeSubstanceId),
-              strengthValue: parseFloat(ing.strengthValue),
-              strengthUnit: ing.strengthUnit,
-              perUnitValue: parseFloat(ing.perUnitValue || 1),
-              perUnitType: ing.perUnitType || null,
-            };
-          }
-        })
-      ));
-
-      if (mode === "edit") {
-        await updateMedication(medication.id, formData);
-      } else {
-        await createMedication(formData);
-      }
-
-      setSuccess(true);
-      if (onSuccess) onSuccess();
-    } catch (e) {
-      console.error('Submit error:', e);
-      setError(e.message);
-    } finally {
-      setLoading(false);
+    if (form.image instanceof File) {
+      formData.append("image", form.image);
     }
-  };
+
+    // Validate ingredients
+    const validIngredients = ingredients.filter(ing =>
+      ing.medicationIngredientId || (ing.activeSubstanceId && ing.activeSubstanceId !== "")
+    );
+
+    if (validIngredients.length === 0) {
+      throw new Error('At least one valid ingredient is required');
+    }
+
+    formData.append("ingredients", JSON.stringify(
+      validIngredients.map((ing) => {
+        if (ing.medicationIngredientId) {
+          const existing = medicationIngredients.find(mi => mi.id === parseInt(ing.medicationIngredientId));
+          if (!existing) throw new Error("Selected medication ingredient not found");
+
+          return {
+            activeSubstanceId: existing.substanceId,
+            strengthValue: existing.strengthValue,
+            strengthUnit: existing.strengthUnit,
+            perUnitValue: existing.perUnitValue || 1,
+            perUnitType: existing.perUnitType || form.packSizeUnit || null,
+          };
+        } else {
+          return {
+            activeSubstanceId: parseInt(ing.activeSubstanceId),
+            strengthValue: parseFloat(ing.strengthValue),
+            strengthUnit: ing.strengthUnit,
+            perUnitValue: parseFloat(ing.perUnitValue || 1),
+            perUnitType: ing.perUnitType || null,
+          };
+        }
+      })
+    ));
+
+    // Submit
+    if (mode === "edit") {
+      await updateMedication(medication.id, formData);
+    } else {
+      await createMedication(formData);
+    }
+
+    setSuccess(true);
+    if (onSuccess) onSuccess();
+  } catch (e) {
+    console.error('Submit error:', e);
+    setError(e.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
 // Render ingredient item
 const renderIngredientItem = (ing, idx) => {
@@ -407,35 +411,35 @@ const renderIngredientItem = (ing, idx) => {
 
       <div className="space-y-4">
         {/* Existing ingredient selector */}
-<FormField label="Medication Ingredient">
-  <AutocompleteInput
-    value={medicationIngredients.find(mi => mi.id === ing.medicationIngredientId) || null}
-    onChange={(selected) => {
-      handleIngredientChange(idx, "medicationIngredientId", selected?.id || null);
+      <FormField label="Medication Ingredient">
+        <AutocompleteInput
+          value={medicationIngredients.find(mi => mi.id === ing.medicationIngredientId) || null}
+          onChange={(selected) => {
+            handleIngredientChange(idx, "medicationIngredientId", selected?.id || null);
 
-      if (selected) {
-        // Clear custom fields when an existing ingredient is selected
-        handleIngredientChange(idx, "activeSubstanceId", "");
-        handleIngredientChange(idx, "strengthValue", "");
-        handleIngredientChange(idx, "strengthUnit", "");
-        handleIngredientChange(idx, "perUnitValue", selected.perUnitValue || 1);
-        handleIngredientChange(
-          idx,
-          "perUnitType",
-          selected.perUnitType || form.packSizeUnit || ""
-        );
-      }
-    }}
-    fetchOptions={searchMedicationIngredients}
-    placeholder="Type medication ingredient..."
-    displayFn={(option) =>
-      option.ActiveSubstance
-        ? `${option.ActiveSubstance.name}${option.strengthValue ? ` - ${option.strengthValue}${option.strengthUnit || ''}` : ''}`
-        : option.name
-    }
-    minChars={1} // allows search after 1 character
-  />
-</FormField>
+            if (selected) {
+              // Clear custom fields when an existing ingredient is selected
+              handleIngredientChange(idx, "activeSubstanceId", "");
+              handleIngredientChange(idx, "strengthValue", "");
+              handleIngredientChange(idx, "strengthUnit", "");
+              handleIngredientChange(idx, "perUnitValue", selected.perUnitValue || 1);
+              handleIngredientChange(
+                idx,
+                "perUnitType",
+                selected.perUnitType || form.packSizeUnit || ""
+              );
+            }
+          }}
+          fetchOptions={searchMedicationIngredients}
+          placeholder="Type medication ingredient..."
+          displayFn={(option) =>
+            option.ActiveSubstance
+              ? `${option.ActiveSubstance.name}${option.strengthValue ? ` - ${option.strengthValue}${option.strengthUnit || ''}` : ''}`
+              : option.name
+          }
+          minChars={1} // allows search after 1 character
+        />
+      </FormField>
 
 
         {selectedExisting && (
@@ -543,7 +547,52 @@ const renderIngredientItem = (ing, idx) => {
               />
             </FormField>
 
-            <FormField 
+            <FormField label="Manufacturer" error={fieldErrors.manufacturerId}>
+              <AutocompleteInput
+                value={
+                  // If an existing manufacturer is selected
+                  manufacturerOptions.find(m => m.id === form.manufacturerId) ||
+                  // If a custom manufacturer is typed
+                  (form.customManufacturerName ? { name: form.customManufacturerName } : null)
+                }
+                onChange={(selected) => {
+                  if (selected?.id) {
+                    // User selected an existing manufacturer
+                    setForm(prev => ({
+                      ...prev,
+                      manufacturerId: selected.id,
+                      customManufacturerName: "", // clear custom input
+                    }));
+                  }
+                }}
+                fetchOptions={searchManufacturers}
+                placeholder="Type manufacturer name..."
+                allowCustomInput={true}
+                onCustomInput={(text) => {
+                  setForm(prev => ({
+                    ...prev,
+                    manufacturerId: null,        // clear any selected existing manufacturer
+                    customManufacturerName: text // store custom name
+                  }));
+                }}
+                displayFn={(option) => option.name}
+              />
+            </FormField>
+
+
+
+            <FormField label="Brand Description" help="Optional description of the medication">
+              <textarea
+                name="brandDescription"
+                value={form.brandDescription}
+                onChange={handleChange}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1ABA7F] focus:border-transparent resize-none"
+                placeholder="Brief description of the medication"
+              />
+            </FormField>
+
+           <FormField 
               label="NAFDAC Code" 
               required 
               error={fieldErrors.nafdacCode}
@@ -557,29 +606,21 @@ const renderIngredientItem = (ing, idx) => {
               />
             </FormField>
 
-            <FormField label="Brand Description" help="Optional description of the medication">
-              <textarea
-                name="brandDescription"
-                value={form.brandDescription}
+            <FormField label="Pharmacopeia (Optional)" error={fieldErrors.pharmacopeia}>
+              <Select
+                name="pharmacopeia"
+                value={form.pharmacopeia}
                 onChange={handleChange}
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1ABA7F] focus:border-transparent resize-none"
-                placeholder="Brief description of the medication"
-              />
+              >
+                <option value="">Pharmacopeia</option>
+                <option value="USP">USP</option>
+                <option value="BP">BP</option>
+                <option value="IP">IP</option>
+                <option value="OTHER">Other</option>
+              </Select>
             </FormField>
-            <FormField label="Manufacturer" error={fieldErrors.manufacturerId}>
-              <AutocompleteInput
-                value={manufacturerOptions.find(m => m.id === form.manufacturerId) || null}
-                onChange={(selected) => {
-                  setForm(prev => ({
-                    ...prev,
-                    manufacturerId: selected?.id || null, // null instead of empty string
-                  }));
-                }}
-                fetchOptions={searchManufacturers} // your API function
-                placeholder="Type manufacturer name..."
-              />
-            </FormField>
+
+ 
           </div>
         </FormSection>
 
@@ -604,22 +645,19 @@ const renderIngredientItem = (ing, idx) => {
               </Select>
             </FormField>
 
-            <FormField 
-              label="Pack Size Quantity" 
-              error={fieldErrors.packSizeQuantity}
-              help="Number of units in the package"
-            >
-              <Input
-                name="packSizeQuantity"
-                type="number"
-                step="1"
-                min="1"
-                value={form.packSizeQuantity}
-                onChange={handleChange}
-                error={fieldErrors.packSizeQuantity}
-                placeholder="e.g., 30"
-              />
-            </FormField>
+             <FormField 
+                label="Pack Size Quantity" 
+                error={fieldErrors.packSizeExpression}
+              >
+                <Input
+                  name="packSizeExpression"
+                  type="text"
+                  value={form.packSizeExpression}
+                  onChange={handleChange}
+                  error={fieldErrors.packSizeExpression}
+                  placeholder="e.g., 10 x 10 or 100"
+                />
+              </FormField>
 
             <FormField label="Pack Size Unit">
               <Select
@@ -657,7 +695,27 @@ const renderIngredientItem = (ing, idx) => {
           </div>
         </FormSection>
 
-        {/* Medication Image */}
+
+        {/* Ingredients */}
+        <FormSection 
+          title="Active Ingredients" 
+          description="Define the active pharmaceutical ingredients and their concentrations"
+        >
+          <div className="space-y-4">
+            {ingredients.map((ing, idx) => renderIngredientItem(ing, idx))}
+            
+            <button
+              type="button"
+              onClick={addIngredient}
+              className="flex items-center gap-2 px-4 py-2 border border-[#1ABA7F] text-[#1ABA7F] rounded-lg hover:bg-[#1ABA7F]/5 transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              Add Another Ingredient
+            </button>
+          </div>
+        </FormSection>
+
+                {/* Medication Image */}
         <FormSection title="Medication Image" description="Upload an image of the medication">
           <div className="space-y-4">
             <div
@@ -681,75 +739,56 @@ const renderIngredientItem = (ing, idx) => {
               />
               
          {form.image ? (
-  // Case 1: User uploaded a new file
-  <div className="text-center">
-    <div className="relative inline-block">
-      <img
-        src={URL.createObjectURL(form.image)}
-        alt="Preview"
-        className="w-32 h-32 object-cover rounded-lg border"
-      />
-      <button
-        type="button"
-        onClick={removeImage}
-        className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
-      >
-        <X className="w-4 h-4" />
-      </button>
-    </div>
-    <p className="text-sm text-gray-600 mt-2">{form.image.name}</p>
-  </div>
-) : form.imageUrl ? (
-  // Case 2: Medication already has an image from DB
-  <div className="text-center">
-    <div className="relative inline-block">
-      <img
-        src={form.imageUrl}
-        alt="Medication"
-        className="w-32 h-32 object-cover rounded-lg border"
-      />
-      <button
-        type="button"
-        onClick={() => setForm(prev => ({ ...prev, imageUrl: "" }))}
-        className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
-      >
-        <X className="w-4 h-4" />
-      </button>
-    </div>
-  </div>
-) : (
-  // Case 3: No image at all → show placeholder
-  <div className="text-center">
-    <Upload className="mx-auto h-12 w-12 text-gray-400" />
-    <div className="mt-4">
-      <p className="text-sm font-medium text-gray-900">
-        Drop an image here, or click to select
-      </p>
-      <p className="text-sm text-gray-500">PNG, JPG, GIF up to 10MB</p>
-    </div>
-  </div>
-)}
+            // Case 1: User uploaded a new file
+            <div className="text-center">
+              <div className="relative inline-block">
+                <img
+                  src={URL.createObjectURL(form.image)}
+                  alt="Preview"
+                  className="w-32 h-32 object-cover rounded-lg border"
+                />
+                <button
+                  type="button"
+                  onClick={removeImage}
+                  className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <p className="text-sm text-gray-600 mt-2">{form.image.name}</p>
+            </div>
+          ) : form.imageUrl ? (
+            // Case 2: Medication already has an image from DB
+            <div className="text-center">
+              <div className="relative inline-block">
+                <img
+                  src={form.imageUrl}
+                  alt="Medication"
+                  className="w-32 h-32 object-cover rounded-lg border"
+                />
+                <button
+                  type="button"
+                  onClick={() => setForm(prev => ({ ...prev, imageUrl: "" }))}
+                  className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          ) : (
+            // Case 3: No image at all → show placeholder
+            <div className="text-center">
+              <Upload className="mx-auto h-12 w-12 text-gray-400" />
+              <div className="mt-4">
+                <p className="text-sm font-medium text-gray-900">
+                  Drop an image here, or click to select
+                </p>
+                <p className="text-sm text-gray-500">PNG, JPG, GIF up to 10MB</p>
+              </div>
+            </div>
+          )}
 
             </div>
-          </div>
-        </FormSection>
-
-        {/* Ingredients */}
-        <FormSection 
-          title="Active Ingredients" 
-          description="Define the active pharmaceutical ingredients and their concentrations"
-        >
-          <div className="space-y-4">
-            {ingredients.map((ing, idx) => renderIngredientItem(ing, idx))}
-            
-            <button
-              type="button"
-              onClick={addIngredient}
-              className="flex items-center gap-2 px-4 py-2 border border-[#1ABA7F] text-[#1ABA7F] rounded-lg hover:bg-[#1ABA7F]/5 transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              Add Another Ingredient
-            </button>
           </div>
         </FormSection>
 

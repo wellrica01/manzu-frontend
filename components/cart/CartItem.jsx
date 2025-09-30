@@ -109,13 +109,13 @@ const CartItem = ({
 
   const handleQuantityUpdate = (newQuantity) => {
     if (newQuantity < 1) return;
-    handleQuantityChange(item.id, newQuantity, item.medication.fullName);
+    handleQuantityChange(item.id, newQuantity, item.medication.displayName);
   };
 
   const handleRemove = () => {
     setRemoveItem({
       id: item.id,
-      name: item.medication.fullName,
+      name: item.medication.displayName,
       quantity: item.quantity
     });
   };
@@ -132,9 +132,9 @@ const CartItem = ({
 <div className='flex flex-col gap-1'>
   <h3 
     className="text-lg sm:text-3xl font-bold text-[#225F91] tracking-tight leading-tight" 
-    title={item.medication.fullName}
+    title={item.medication.displayName}
   >
-    {item.medication.fullName}
+    {item.medication.displayName}
   </h3>
 
   {/* Ingredients description */}
@@ -175,17 +175,17 @@ const CartItem = ({
         <DialogTrigger asChild>
           <img 
           src={item.medication.imageUrl} 
-          alt={item.medication.fullName}
+          alt={item.medication.displayName}
           className="w-18 h-18 object-cover text-xs rounded-lg border border-gray-100"
         />
               </DialogTrigger>
               <DialogContent className="max-w-3xl">
                 <VisuallyHidden>
-                  <DialogTitle>{item.medication.fullName}</DialogTitle>
+                  <DialogTitle>{item.medication.displayName}</DialogTitle>
                 </VisuallyHidden>
                 <img
                   src={item.medication.imageUrl}
-                  alt={item.medication.fullName}
+                  alt={item.medication.displayName}
                   className="w-full h-auto rounded-lg shadow-lg"
                 />
               </DialogContent>
@@ -247,7 +247,7 @@ const CartItem = ({
   )}
   {item.medication.packSizeQuantity && (
     <div className="flex items-center gap-1">
-      <Box className="h-3 w-3 text-[#225F91]" /> Pack: {item.medication.packSizeQuantity} {item.medication.packSizeUnit}
+      <Box className="h-3 w-3 text-[#225F91]" /> Pack Size: {item.medication.packSizeExpression} {item.medication.packSizeUnit}
     </div>
   )}
     {item.medication.brandDescription && (

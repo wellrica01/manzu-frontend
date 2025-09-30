@@ -427,28 +427,40 @@ export default function Track() {
                           <Package className="h-5 w-5 text-[#1ABA7F]" />
                           Medications
                         </div>
-                         <div className="space-y-2">
-                              {order.items.map(item => (
-                                <div
-                                  key={item.id}
-                                  className="flex justify-between items-start border-b last:border-b-0"
-                                >
-                                  {/* Medication name (full wrap allowed) */}
-                                  <span className="flex items-start gap-2 font-medium text-gray-900 text-sm">
-                                    <span className="w-2 h-2 rounded-full bg-[#1ABA7F] flex-shrink-0 mt-1" />
-                                    <span>{item.medication.displayName || item.medication.genericName}</span>
-                                  </span>
+                        <div className="space-y-2">
+                        {order.items.map(item => (
+                          <div
+                            key={item.id}
+                            className="flex justify-between items-start border-b last:border-b-0"
+                          >
+                            {/* Medication name and ingredients */}
+                            <span className="flex flex-col gap-1 text-gray-900 text-sm">
+                              <span className="flex items-start gap-2 font-medium">
+                                <span className="w-2 h-2 rounded-full bg-[#1ABA7F] flex-shrink-0 mt-1" />
+                                <span>{item.medication.displayName || item.medication.brandName}</span>
+                              </span>
 
-                                  {/* Qty + Price locked on right */}
-                                  <div className="flex items-center gap-4 flex-shrink-0 whitespace-nowrap">
-                                    <span className="text-gray-600 text-sm">x {item.quantity}</span>
-                                    <span className="text-[#225F91] font-semibold text-sm">
-                                      ₦{(item.price * item.quantity).toLocaleString()}
-                                    </span>
-                                  </div>
-                                </div>
-                              ))}
+                              {/* Ingredients display */}
+                              {item.medication.ingredients && item.medication.ingredients.length > 0 && (
+                                <span className="text-gray-600 text-xs ml-4">
+                                  {item.medication.ingredients
+                                    .map(ing => `${ing.activeSubstance || ''} ${ing.strengthValue ?? ''}${ing.strengthUnit ?? ''}`)
+                                    .join(' + ')}
+                                </span>
+                              )}
+                            </span>
+
+                            {/* Qty + Price on the right */}
+                            <div className="flex items-center gap-4 flex-shrink-0 whitespace-nowrap">
+                              <span className="text-gray-600 text-sm">x {item.quantity}</span>
+                              <span className="text-[#225F91] font-semibold text-sm">
+                                ₦{(item.price * item.quantity).toLocaleString()}
+                              </span>
                             </div>
+                          </div>
+                        ))}
+                      </div>
+
                       </div>
                       {/* Prescription Section */}
                       {order.prescription && (

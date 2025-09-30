@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Loader2, AlertTriangle, Edit, Trash2, Plus, CheckCircle, Pill } from "lucide-react";
+import { Loader2, AlertTriangle, Edit, Trash2, Plus, CheckCircle, Pill, RefreshCw } from "lucide-react";
 import { fetchMedications, deleteMedication } from "./api";
 import Dialog from "../../components/Dialog";
 import MedicationForm from "./MedicationForm";
@@ -27,7 +27,23 @@ export default function MedicationsPage() {
 
   const [deleteId, setDeleteId] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const [deleteSuccess, setDeleteSuccess] = useState(false);
+
+  const [refreshCounter, setRefreshCounter] = useState(0);
+
+
+  const [toast, setToast] = useState({
+  message: "",
+  type: "success", // "success" | "error" | "warning"
+  visible: false
+  });
+
+  const showToast = (message, type = "success", duration = 3000) => {
+    setToast({ message, type, visible: true });
+    setTimeout(() => {
+      setToast(prev => ({ ...prev, visible: false }));
+    }, duration);
+  };
+
 
   // Extract unique forms for filter dropdown
   useEffect(() => {
@@ -66,7 +82,8 @@ export default function MedicationsPage() {
       }
     }
     loadMedications();
-  }, [pagination.page, search, form, prescriptionRequired]);
+  }, [pagination.page, search, form, prescriptionRequired, refreshCounter]);
+
 
   function handlePageChange(newPage) {
     setPagination((prev) => ({ ...prev, page: newPage }));
@@ -77,22 +94,21 @@ export default function MedicationsPage() {
     setDialogOpen(true);
   };
 
+
   async function handleDelete(id) {
     setDeleteLoading(true);
     try {
       await deleteMedication(id);
-      setDeleteSuccess(true);
-      setMedications((prev) => prev.filter((m) => m.id !== id));
-      setTimeout(() => {
-        setDeleteId(null);
-        setDeleteSuccess(false);
-      }, 1000);
+      setMedications(prev => prev.filter(m => m.id !== id));
+      showToast("Medication deleted successfully", "success");
     } catch (e) {
-      setError(e.message);
+      showToast(e.message || "Failed to delete medication", "error");
     } finally {
       setDeleteLoading(false);
+      setDeleteId(null);
     }
   }
+
 
   // Helper function to format ingredients
   const formatIngredients = (ingredients) => {
@@ -134,7 +150,7 @@ export default function MedicationsPage() {
 
   // Mobile card component
   const renderMobileCard = (med) => (
-    <div className="bg-white border border-gray-200 rounded-lg p-4 mb-3 shadow-sm hover:shadow-md transition-shadow">
+    <div key={med.id} className="bg-white border border-gray-200 rounded-lg p-4 mb-3 shadow-sm hover:shadow-md transition-shadow">
       <div className="flex justify-between items-start mb-3">
         <div className="flex-1">
           <h3 className="font-semibold text-gray-900 text-lg">{med.brandName}</h3>
@@ -169,7 +185,7 @@ export default function MedicationsPage() {
         <div>
           <span className="text-gray-500 font-medium">Pack Size:</span>
           <p className="text-gray-900">
-            {med.packSizeQuantity} {med.packSizeUnit}
+            {med.packSizeExpression} {med.packSizeUnit}
           </p>
         </div>
         <div className="col-span-2">
@@ -179,6 +195,10 @@ export default function MedicationsPage() {
         <div className="col-span-2">
           <span className="text-gray-500 font-medium">Strengths:</span>
           <p className="text-gray-900">{formatStrengths(med.ingredients)}</p>
+        </div>
+        <div>
+          <span className="text-gray-500 font-medium">Pharmacopeia:</span>
+          <p className="text-gray-900">{med?.pharmacopeia || "Not specified"}</p>
         </div>
       </div>
       
@@ -236,7 +256,7 @@ export default function MedicationsPage() {
     {
       key: 'packSize',
       label: 'Pack Size',
-      render: (med) => `${med.packSizeQuantity} ${med.packSizeUnit}`,
+      render: (med) => `${med.packSizeExpression} ${med.packSizeUnit}`,
       cellClassName: 'whitespace-nowrap text-sm text-gray-900'
     },
     {
@@ -248,6 +268,12 @@ export default function MedicationsPage() {
         </div>
       ),
       cellClassName: 'whitespace-nowrap'
+    },
+    {
+      key: 'pharmacopeia',
+      label: 'Pharmacopeia',
+      render: (med) => med?.pharmacopeia || "Not specified",
+      cellClassName: 'whitespace-nowrap text-sm text-gray-900'
     },
     {
       key: 'prescription',
@@ -332,15 +358,19 @@ export default function MedicationsPage() {
         title={editingMedication ? "Edit Medication" : "Add Medication"}
         size="lg"
       >
-        <MedicationForm
-          medication={editingMedication || {}}
-          mode={editingMedication ? "edit" : "create"}
-          onSuccess={() => {
-            setDialogOpen(false);
-            setEditingMedication(null);
-            setPagination((prev) => ({ ...prev })); // reload
-          }}
-        />
+      <MedicationForm
+        medication={editingMedication || {}}
+        mode={editingMedication ? "edit" : "create"}
+        onSuccess={() => {
+          setDialogOpen(false);
+          setEditingMedication(null);
+          setPagination((prev) => ({ ...prev })); // reload table
+          showToast(
+            editingMedication ? "Medication updated successfully" : "Medication created successfully",
+            "success"
+          );
+        }}
+      />
       </Dialog>
 
       {/* Delete Confirmation */}
@@ -412,16 +442,27 @@ export default function MedicationsPage() {
             setDialogOpen(true);
           }
         }}
+         refreshAction={{
+          icon: RefreshCw,
+          loading: loading, // pass page loading state
+          onClick: () => setRefreshCounter(prev => prev + 1) // triggers refetch
+        }}
         className = "p-3"
       />
 
-      {/* Success Toast */}
-      {deleteSuccess && (
-        <div className="fixed bottom-6 right-6 bg-green-100 border border-green-300 text-green-800 px-4 py-3 rounded-lg flex items-center gap-2 shadow-lg z-50 animate-in slide-in-from-right">
-          <CheckCircle className="w-5 h-5" />
-          <span className="font-medium">Medication deleted successfully</span>
-        </div>
-      )}
+      {toast.visible && (
+      <div className={`
+        fixed bottom-6 right-6 px-4 py-3 rounded-lg flex items-center gap-2 shadow-lg z-50
+        ${toast.type === "success" ? "bg-green-100 border border-green-300 text-green-800" : ""}
+        ${toast.type === "error" ? "bg-red-100 border border-red-300 text-red-800" : ""}
+        ${toast.type === "warning" ? "bg-yellow-100 border border-yellow-300 text-yellow-800" : ""}
+        animate-in slide-in-from-right
+      `}>
+        <CheckCircle className="w-5 h-5" />
+        <span className="font-medium">{toast.message}</span>
+      </div>
+    )}
+
     </div>
   );
 }

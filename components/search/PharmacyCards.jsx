@@ -5,7 +5,7 @@ import { MapPin, HospitalIcon, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatOperatingHours, getOperatingHoursTextColor, isPharmacyOpenNow  } from '@/lib/pharmacyUtils';
 
-const PharmacyCards = ({ availability, medId, quantity = 1, handleAddToCart, isInCart, fullName, isAddingToCart, state, lga, ward, showSeeMore = false }) => {
+const PharmacyCards = ({ availability, medId, quantity = 1, handleAddToCart, isInCart, displayName, isAddingToCart, state, lga, ward, showSeeMore = false }) => {
   const [expandedCard, setExpandedCard] = useState(null);
   const [sortOption, setSortOption] = useState('default');
   const [showAll, setShowAll] = useState(false);
@@ -40,7 +40,7 @@ const sortedAvailability = useMemo(() => {
           <MapPin className="h-8 w-8 text-gray-400" />
         </div>
         <p className="text-gray-500 text-base font-medium">
-          No pharmacies found for {fullName}
+          No pharmacies found for {displayName}
         </p>
         {(state || lga || ward) && (
           <p className="text-gray-400 text-base mt-2 italic">
@@ -211,7 +211,7 @@ const sortedAvailability = useMemo(() => {
                     </Button>
                     <Button
                       id={`add-to-cart-${medId}-${avail.pharmacyId}`}
-                      onClick={() => handleAddToCart(medId, avail.pharmacyId, fullName)}
+                      onClick={() => handleAddToCart(medId, avail.pharmacyId, displayName)}
                       disabled={isInCart(medId, avail.pharmacyId) || isAddingToCart[`${medId}-${avail.pharmacyId}`]}
                       className={cn(
                         'flex-1 h-10 text-sm rounded-lg transition-all duration-300',

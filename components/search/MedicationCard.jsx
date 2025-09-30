@@ -34,7 +34,7 @@ const MedicationCard = ({ med, handleAddToCart, isInCart, isAddingToCart, search
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <h3 className="text-xl sm:text-3xl font-bold text-[#225F91] tracking-tight leading-tight">
-                {med.fullName || med.brandName || "Unnamed Medication"}
+                {med.displayName || med.brandName || "Unnamed Medication"}
               </h3>
 
               <div className="flex items-center text-xs gap-2 mt-2 flex-wrap">
@@ -54,7 +54,7 @@ const MedicationCard = ({ med, handleAddToCart, isInCart, isAddingToCart, search
                 {/* Ingredients instead of generic name */}
                 {med.ingredients?.length > 0 && (
                   <div>
-                    <span className="font-semibold text-gray-600">Ingredients:</span>
+                    <span className="font-semibold text-gray-600">Composition:</span>
                     <span className="ml-2 text-gray-600 font-medium">
                       {med.ingredients.map(i => `${i.activeSubstance} ${i.strengthValue}${i.strengthUnit}`).join(", ")}
                     </span>
@@ -83,17 +83,17 @@ const MedicationCard = ({ med, handleAddToCart, isInCart, isAddingToCart, search
                   <DialogTrigger asChild>
                     <img
                       src={med.imageUrl}
-                      alt={med.fullName}
+                      alt={med.displayName}
                       className="w-full h-full object-cover rounded-xl p-1 border border-[#1ABA7F]/20 shadow-md transition-transform duration-300 hover:scale-105 cursor-pointer"
                     />
                   </DialogTrigger>
                   <DialogContent className="max-w-3xl">
                     <VisuallyHidden>
-                      <DialogTitle>{med.fullName}</DialogTitle>
+                      <DialogTitle>{med.displayName}</DialogTitle>
                     </VisuallyHidden>
                     <img
                       src={med.imageUrl}
-                      alt={med.fullName}
+                      alt={med.displayName}
                       className="w-full h-auto rounded-lg shadow-lg"
                     />
                   </DialogContent>
@@ -122,7 +122,7 @@ const MedicationCard = ({ med, handleAddToCart, isInCart, isAddingToCart, search
               <MapPin className="h-8 w-8 text-gray-400" />
             </div>
             <p className="text-gray-500 text-base font-medium">
-              No pharmacies found for {searchTerm || med.fullName}
+              No pharmacies found for {searchTerm || med.displayName}
             </p>
             {(state || lga || ward) && (
               <p className="text-gray-400 text-base mt-2 italic">
@@ -140,7 +140,7 @@ const MedicationCard = ({ med, handleAddToCart, isInCart, isAddingToCart, search
               medId={med.id}
               handleAddToCart={handleAddToCart}
               isInCart={isInCart}
-              fullName={med.fullName}
+              displayName={med.displayName}
               isAddingToCart={isAddingToCart}
               searchTerm={searchTerm}
               state={state}
@@ -155,7 +155,7 @@ const MedicationCard = ({ med, handleAddToCart, isInCart, isAddingToCart, search
                 medId={med.id}
                 handleAddToCart={handleAddToCart}
                 isInCart={isInCart}
-                fullName={med.fullName}
+                displayName={med.displayName}
                 isAddingToCart={isAddingToCart}
                 searchTerm={searchTerm}
                 state={state}

@@ -1,5 +1,7 @@
 'use client';
 
+import { QRCode } from 'react-qrcode-logo';
+
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -204,6 +206,21 @@ export default function ConfirmationInner() {
               {/* Order summary section */}
                 <div className="flex flex-col p-2 sm:flex-row gap-2 sm:gap-6 ">
                   <span className="text-[#225F91] font-semibold text-sm sm:text-sm">Tracking Code: <span className="text-gray-500 font-medium">{confirmationData.trackingCode}</span></span>
+                 {confirmationData.trackingCode && typeof window !== 'undefined' && (
+                    <div className="flex flex-col items-center mt-4">
+                      <span className="text-[#225F91] font-semibold text-xs sm:text-sm mb-1">
+                        Scan to track your order
+                      </span>
+                      <QRCode
+                        value={`${window.location.protocol}//${window.location.host}/track-order?trackingCode=${encodeURIComponent(confirmationData.trackingCode)}`}
+                        size={160}          // slightly larger for easy scanning
+                        fgColor="#225F91"
+                        bgColor="#ffffff"
+                        qrStyle="squares"   // optional: cleaner QR style
+                      />
+                    </div>
+                  )}
+
                   {(() => {
                     const deliveryOrder = confirmationData.pharmacies.flatMap(p => p.orders).find(o => o.deliveryMethod === 'COURIER');
                     if (deliveryOrder && deliveryOrder.address) {
@@ -263,26 +280,38 @@ export default function ConfirmationInner() {
                               Medications:
                             </div>
                             <div className="space-y-2">
-                              {order.items.map(item => (
-                                <div
-                                  key={item.id}
-                                  className="flex justify-between items-start px-2 py-1 border-b last:border-b-0"
-                                >
-                                  {/* Medication name (full wrap allowed) */}
-                                  <span className="flex items-start gap-2 text-gray-600 text-sm">
-                                    <span className="w-2 h-2 rounded-full bg-[#1ABA7F] flex-shrink-0 mt-1" />
-                                    <span>{item.medication.fullName || item.medication.brandName}</span>
-                                  </span>
+                           {order.items.map(item => (
+                            <div
+                              key={item.id}
+                              className="flex justify-between items-start px-2 py-1 border-b last:border-b-0"
+                            >
+                              {/* Medication name and ingredients */}
+                              <span className="flex flex-col gap-1 text-gray-600 text-sm">
+                                <span className="flex items-start gap-2">
+                                  <span className="w-2 h-2 rounded-full bg-[#1ABA7F] flex-shrink-0 mt-1" />
+                                  <span>{item.medication.displayName || item.medication.brandName}</span>
+                                </span>
 
-                                  {/* Qty + Price locked on right */}
-                                  <div className="flex items-center gap-4 flex-shrink-0 whitespace-nowrap">
-                                    <span className="text-gray-600 text-sm">x {item.quantity}</span>
-                                    <span className="text-[#225F91] font-semibold text-sm">
-                                      ₦{(item.price * item.quantity).toLocaleString()}
-                                    </span>
-                                  </div>
-                                </div>
-                              ))}
+                                {/* Ingredients list */}
+                                {item.medication.ingredients && item.medication.ingredients.length > 0 && (
+                                  <span className="text-gray-500 text-xs ml-4">
+                                    {item.medication.ingredients
+                                      .map(ing => `${ing.activeSubstance || ''} ${ing.strengthValue ?? ''}${ing.strengthUnit ?? ''}`)
+                                      .join(' + ')}
+                                  </span>
+                                )}
+                              </span>
+
+                              {/* Qty + Price locked on right */}
+                              <div className="flex items-center gap-4 flex-shrink-0 whitespace-nowrap">
+                                <span className="text-gray-600 text-sm">x {item.quantity}</span>
+                                <span className="text-[#225F91] font-semibold text-sm">
+                                  ₦{(item.price * item.quantity).toLocaleString()}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+
                             </div>
                           </div>
                           <div className="flex justify-end mt-2 text-base sm:text-base font-bold text-[#225F91]">Order Total: ₦{order.totalPrice.toLocaleString()}</div>
