@@ -204,7 +204,7 @@ export default function MedicationsPage() {
       
       <div className="mt-3 pt-3 border-t border-gray-100">
         <div className="flex items-center justify-between">
-          <span className="text-gray-500 font-medium text-sm">Prescription Required:</span>
+          <span className="text-gray-500 font-medium text-sm">Prescription-Required:</span>
           {med.prescriptionRequired ? (
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
               Yes
