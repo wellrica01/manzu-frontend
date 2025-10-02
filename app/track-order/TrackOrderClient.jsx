@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +10,12 @@ import { Loader2, Home, AlertCircle, CheckCircle, Store, MapPin, Package, FileTe
 import { toast } from 'sonner';
 import Link from 'next/link';
 import React from 'react';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
+if (!API_URL) {
+  console.error('NEXT_PUBLIC_API_URL is not defined');
+}
 
 const DELIVERY_STEPS = [
   { key: 'CONFIRMED', label: 'Confirmed', icon: CheckCircle },
@@ -44,100 +50,127 @@ export default function Track() {
   const searchParams = useSearchParams();
   const formRef = useRef(null);
 
-  const toggleOrder = (orderId) => {
+  const abortControllerRef = useRef(null);
+
+  const toggleOrder = useCallback((orderId) => {
     setExpandedOrders((prev) => ({ ...prev, [orderId]: !prev[orderId] }));
-  };
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const codeFromUrl = searchParams.get('trackingCode');
     if (codeFromUrl && codeFromUrl !== trackingCode) {
       setTrackingCode(codeFromUrl);
       if (/^TRK-[A-Z0-9]{4}-[A-Z0-9]{6}-[A-Z0-9]{3}$/.test(codeFromUrl)) {
+        let isMounted = true; // Add this
+        
         (async () => {
           setError(null);
           setOrders([]);
           setLoading(true);
           try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/med-track?trackingCode=${encodeURIComponent(codeFromUrl)}`);
+            const response = await fetch(`${API_URL || ''}/api/med-track?trackingCode=${encodeURIComponent(codeFromUrl)}`);
             if (!response.ok) {
               const errorData = await response.json();
-              setError(errorData.message || 'Order not found');
+              if (isMounted) setError(errorData.message || 'Order not found'); // Add check
               return;
             }
             const data = await response.json();
-            setOrders(data.orders);
+            if (isMounted) setOrders(data.orders); // Add check
             if (typeof window !== 'undefined' && window.gtag) {
               window.gtag('event', 'track_order', { trackingCode: codeFromUrl });
             }
           } catch (err) {
-            setError('Error fetching order');
+            if (isMounted) setError('Error fetching order'); // Add check
           } finally {
-            setLoading(false);
+            if (isMounted) setLoading(false); // Add check
           }
         })();
+        
+        return () => { isMounted = false; }; // Add cleanup
       }
     }
-  }, [searchParams]);
+  }, [searchParams]); 
 
-  const validateTrackingCode = (code) => {
-    return /^TRK-[A-Z0-9]{4}-[A-Z0-9]{6}-[A-Z0-9]{3}$/.test(code);
-  };
+    const validateTrackingCode = (code) => {
+      return /^TRK-[A-Z0-9]{4}-[A-Z0-9]{6}-[A-Z0-9]{3}$/.test(code);
+    };
 
-  const handleTrack = async (e) => {
-    e.preventDefault();
-    if (!trackingCode) {
-      setError('Please enter a tracking code');
-      toast.error('Please enter a tracking code', { duration: 4000 });
-      return;
-    }
-    if (!validateTrackingCode(trackingCode)) {
-      setError('Invalid tracking code format (e.g., TRK-00A7-LMK6X1-J8Q)');
-      toast.error('Invalid tracking code format', { duration: 4000 });
-      return;
-    }
-    
-    try {
-      setError(null);
-      setOrders([]);
-      setLoading(true);
-      
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/med-track?trackingCode=${encodeURIComponent(trackingCode)}`);
-      
-      if (!response.ok) {
-        let errorData;
-        try {
-          errorData = await response.json();
-        } catch (jsonErr) {
-          errorData = { message: 'An unexpected error occurred. Please try again.' };
-        }
-        
-        let errorMsg = errorData.message || 'Order not found';
-        if ((response.status === 404 && errorMsg === 'Orders not found or not ready for tracking') ||
-            errorMsg === 'Orders not found or not ready for tracking') {
-          errorMsg = 'No orders were found for this tracking code, or your order is not yet ready for tracking. Please check your code or try again later.';
-        } else if (response.status === 500) {
-          errorMsg = 'A server error occurred. Please try again later or contact support.';
-        }
-        
-        setError(errorMsg);
-        toast.error(errorMsg, { duration: 6000 });
+    const handleTrack = async (e) => {
+      e.preventDefault();
+
+      // Cancel previous request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+
+      abortControllerRef.current = new AbortController();
+
+      if (!trackingCode) {
+        setError('Please enter a tracking code');
+        toast.error('Please enter a tracking code', { duration: 4000 });
+        return;
+      }
+      if (!validateTrackingCode(trackingCode)) {
+        setError('Invalid tracking code format (e.g., TRK-00A7-LMK6X1-J8Q)');
+        toast.error('Invalid tracking code format', { duration: 4000 });
         return;
       }
       
-      const data = await response.json();
-      setOrders(data.orders);
-      toast.success('Order details found!', { duration: 6000 });
-      
-      if (typeof window !== 'undefined' && window.gtag) {
-        window.gtag('event', 'track_order', { trackingCode });
-      }
-    } catch (err) {
+      try {
+        setError(null);
+        setOrders([]);
+        setLoading(true);
+        
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/med-track?trackingCode=${encodeURIComponent(trackingCode)}`,
+          { signal: abortControllerRef.current.signal } // Add signal
+        );
+        
+        if (!response.ok) {
+          let errorData;
+          try {
+            errorData = await response.json();
+          } catch (jsonErr) {
+            errorData = { message: 'An unexpected error occurred. Please try again.' };
+          }
+          
+          let errorMsg = errorData.message || 'Order not found';
+          if ((response.status === 404 && errorMsg === 'Orders not found or not ready for tracking') ||
+              errorMsg === 'Orders not found or not ready for tracking') {
+            errorMsg = 'No orders were found for this tracking code, or your order is not yet ready for tracking. Please check your code or try again later.';
+          } else if (response.status === 500) {
+            errorMsg = 'A server error occurred. Please try again later or contact support.';
+          }
+          
+          setError(errorMsg);
+          toast.error(errorMsg, { duration: 6000 });
+          return;
+        }
+        
+        const data = await response.json();
+        setOrders(data.orders);
+        toast.success('Order details found!', { duration: 6000 });
+        
+        if (typeof window !== 'undefined' && window.gtag) {
+          window.gtag('event', 'track_order', { trackingCode });
+        }
+      } catch (err) {
+      if (err.name === 'AbortError') return; // Ignore abort errors
       setError('A network or server error occurred. Please try again later.');
       toast.error('A network or server error occurred. Please try again later.', { duration: 6000 });
     } finally {
       setLoading(false);
     }
   };
+
 
   const handleTrackAnother = () => {
     setTrackingCode('');

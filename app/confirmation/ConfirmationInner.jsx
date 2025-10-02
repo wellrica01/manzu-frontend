@@ -30,44 +30,53 @@ export default function ConfirmationInner() {
   const [showConfetti, setShowConfetti] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const guestId = typeof window !== 'undefined' ? localStorage.getItem('guestId') : null;
+  const [guestId, setGuestId] = useState(null);
   const reference = searchParams.get('reference');
   const session = searchParams.get('session');
 
-  const validateQueryParams = () => {
-    if (!guestId) return 'Missing guest ID';
-    if (!session) return 'Missing session ID';
-    return null;
-  };
+
+  useEffect(() => {
+    const id = localStorage.getItem('guestId');
+    setGuestId(id);
+  }, []);
+
+
+useEffect(() => {
+  // Guard clause: exit early if no guestId or session
+  if (!guestId || !session) {
+    if (guestId !== null) { // Only show error after we've checked localStorage
+      setError('Missing guest ID or session ID');
+      toast.error('Missing guest ID or session ID', { duration: 4000 });
+    }
+    setLoading(false);
+    return;
+  }
 
   const fetchConfirmation = async () => {
-    const validationError = validateQueryParams();
-    if (validationError) {
-      setError(validationError);
-      toast.error(validationError, { duration: 4000 });
-      setLoading(false);
-      return;
-    }
-
     try {
       setError(null);
       const query = new URLSearchParams();
       query.append('session', session);
       if (reference) query.append('reference', reference);
+      
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/med-confirmation?${query.toString()}`, {
         headers: { 'x-guest-id': guestId },
       });
+      
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to verify payment');
       }
+      
       const data = await response.json();
       setConfirmationData({
         pharmacies: data.pharmacies,
         trackingCode: data.trackingCode,
         checkoutSessionId: data.checkoutSessionId,
       });
+      
       toast.success('Order confirmed! You will receive an email with your tracking code.', { duration: 6000 });
+      
       if (typeof window !== 'undefined' && window.gtag) {
         window.gtag('event', 'order_confirmed', {
           trackingCode: data.trackingCode,
@@ -82,20 +91,14 @@ export default function ConfirmationInner() {
     }
   };
 
-  useEffect(() => {
-    if (guestId && session) {
-      fetchConfirmation();
-    } else {
-      setError('Missing guest ID or session ID');
-      toast.error('Missing guest ID or session ID', { duration: 4000 });
-      setLoading(false);
-    }
-  }, [reference, session]);
+  fetchConfirmation();
+}, [guestId, session, reference]);
 
   useEffect(() => {
     if (!loading && !error) {
       setShowConfetti(true);
-      setTimeout(() => setShowConfetti(false), 3500);
+      const timer = setTimeout(() => setShowConfetti(false), 3500);
+      return () => clearTimeout(timer);
     }
   }, [loading, error]);
 
@@ -125,7 +128,7 @@ export default function ConfirmationInner() {
             </div>
           </div>
 
-          <div className="text-center space-y-3">
+          <div role="status" aria-live="polite" className="text-center space-y-3">
             <h2 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#225F91] to-[#1ABA7F] animate-pulse">
               Confirming Your Order
             </h2>

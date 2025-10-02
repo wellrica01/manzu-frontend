@@ -1,67 +1,68 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, HospitalIcon, Clock, Shield, ChevronDown, TrendingDown, Navigation, Store, Plus, Minus } from 'lucide-react';
+import { MapPin, HospitalIcon, Clock, Shield, ChevronDown, TrendingDown, Navigation, Store, Plus, Minus, Award, DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatOperatingHours, getOperatingHoursTextColor, isPharmacyOpenNow } from '@/lib/pharmacyUtils';
 
-/* ----------------------------- Sort & Filter Bar ----------------------------- */
-const SortFilterBar = ({ sortOption, setSortOption, filterOpen, setFilterOpen }) => (
-  <div className="flex flex-wrap gap-1 mt-10 mb-10">
-    <Button
-      variant={sortOption === 'default' ? 'default' : 'outline'}
-      onClick={() => setSortOption('default')}
-      className={cn(
-        "flex-1 min-w-[90px] h-10 flex items-center justify-center gap-2 rounded-xl font-semibold text-sm transition-all duration-300",
-        sortOption === 'default'
-          ? "bg-gradient-to-r from-[#225F91] to-[#1a4a73] text-white shadow-lg hover:shadow-xl border-0"
-          : "border-2 border-gray-200 text-gray-700 hover:border-[#225F91] hover:bg-[#225F91]/5"
-      )}
-    >
-      <Store className="h-4 w-4" />
-      Best Deal
-    </Button>
-    <Button
-      variant={sortOption === 'cheapest' ? 'default' : 'outline'}
-      onClick={() => setSortOption('cheapest')}
-      className={cn(
-        "flex-1 min-w-[90px] h-10 flex items-center justify-center gap-2 rounded-xl font-semibold text-sm transition-all duration-300",
-        sortOption === 'cheapest'
-          ? "bg-gradient-to-r from-[#1ABA7F] to-[#16a876] text-white shadow-lg hover:shadow-xl border-0"
-          : "border-2 border-gray-200 text-gray-700 hover:border-[#1ABA7F] hover:bg-[#1ABA7F]/5"
-      )}
-    >
-      <TrendingDown className="h-4 w-4" />
-      Cheapest
-    </Button>
-    <Button
-      variant={sortOption === 'nearest' ? 'default' : 'outline'}
-      onClick={() => setSortOption('nearest')}
-      className={cn(
-        "flex-1 min-w-[90px] h-10 flex items-center justify-center gap-2 rounded-xl font-semibold text-sm transition-all duration-300",
-        sortOption === 'nearest'
-          ? "bg-gradient-to-r from-[#76D1F3] to-[#5bc0de] text-white shadow-lg hover:shadow-xl border-0"
-          : "border-2 border-gray-200 text-gray-700 hover:border-[#76D1F3] hover:bg-[#76D1F3]/5"
-      )}
-    >
-      <Navigation className="h-4 w-4" />
-      Nearest
-    </Button>
-    <Button
-      variant={filterOpen ? 'default' : 'outline'}
-      onClick={() => setFilterOpen(!filterOpen)}
-      className={cn(
-        "flex-1 min-w-[90px] h-10 flex items-center justify-center gap-2 rounded-xl font-semibold text-sm transition-all duration-300",
-        filterOpen
-          ? "bg-gradient-to-r from-[#FF6B6B] to-[#ee5a5a] text-white shadow-lg hover:shadow-xl border-0"
-          : "border-2 border-gray-200 text-gray-700 hover:border-[#FF6B6B] hover:bg-[#FF6B6B]/5"
-      )}
-    >
-      <Clock className="h-4 w-4" />
-      Open Now
-    </Button>
-  </div>
-);
+/* ----------------------------- Premium Sort & Filter Controls ----------------------------- */
+const SortFilterBar = ({ sortOption, setSortOption, filterOpen, setFilterOpen }) => {
+  const options = [
+    { value: 'default', label: 'Best Deal', icon: Award },
+    { value: 'cheapest', label: 'Cheapest', icon: DollarSign },
+    { value: 'nearest', label: 'Nearest', icon: Navigation },
+    { value: 'open', label: 'Open Now', icon: Clock, isFilter: true },
+  ];
+
+  return (
+    <div className="space-y-4 mt-10 mb-10">
+      {/* Buttons Grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        {options.map((option) => {
+          const isActive = option.isFilter ? filterOpen : sortOption === option.value;
+          const gradientClass = option.value === 'default'
+            ? "from-[#225F91] to-[#1a4a73]"
+            : option.value === 'cheapest'
+            ? "from-[#1ABA7F] to-[#16a876]"
+            : option.value === 'nearest'
+            ? "from-[#76D1F3] to-[#5bc0de]"
+            : option.value === 'open'
+            ? "from-[#FF6B6B] to-[#ee5a5a]"
+            : "from-gray-300 to-gray-300";
+
+          return (
+            <Button
+              key={option.value}
+              variant="outline"
+              onClick={() =>
+                option.isFilter ? setFilterOpen(!filterOpen) : setSortOption(option.value)
+              }
+              className={cn(
+                "h-12 rounded-2xl font-black transition-all duration-300 hover:scale-105 border-2 shadow-lg flex items-center justify-center",
+                isActive
+                  ? `bg-gradient-to-r ${gradientClass} text-white border-0 hover:shadow-xl`
+                  : "bg-white text-gray-700 border-gray-300 hover:border-current hover:bg-opacity-10"
+              )}
+            >
+              <option.icon className="h-5 w-5 mr-2" strokeWidth={2.5} />
+              {option.label}
+            </Button>
+          );
+        })}
+      </div>
+
+      {/* Sort Explanation */}
+      <div className="p-4 bg-gradient-to-r from-[#1ABA7F]/10 to-[#225F91]/10 rounded-2xl border-2 border-[#1ABA7F]/20">
+        <p className="text-sm font-bold text-gray-700 text-center">
+          {filterOpen && <span className="text-green-600">✓ Showing only open pharmacies · </span>}
+          {sortOption === 'default' && 'Sorted by Most Medications Available'}
+          {sortOption === 'cheapest' && 'Sorted by Cheapest Total Price'}
+          {sortOption === 'nearest' && 'Sorted by Nearest Distance'}
+        </p>
+      </div>
+    </div>
+  );
+};
 
 /* ---------------------------- Pharmacy Card Header --------------------------- */
 const PharmacyCardHeader = ({ avail, isNearest, isCheapest }) => (
@@ -135,28 +136,37 @@ const PharmacyCard = ({
       <div className="p-5 space-y-4">
         {/* Address */}
         {avail.address && (
-          <div className="flex items-start gap-2">
-            <MapPin className="h-4 w-4 text-[#1ABA7F] mt-0.5 flex-shrink-0" />
-            <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">{avail.address}</p>
+          <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-xl border border-blue-200">
+            <MapPin className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" strokeWidth={2.5} />
+            <p className="text-sm text-gray-700 font-semibold line-clamp-2">
+              {avail.address}
+            </p>
           </div>
         )}
 
         {/* Operating Hours */}
-        {avail.operatingHours && (() => {
-          const formattedHours = formatOperatingHours(avail.operatingHours);
-          if (!formattedHours) return null;
-          return (
-            <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-50">
-              <Clock className="h-4 w-4 text-gray-400 flex-shrink-0" />
-              <div className="flex-1">
-                <span className="text-xs text-gray-500 font-medium">Hours: </span>
-                <span className={cn('text-xs font-bold', getOperatingHoursTextColor(avail.operatingHours))}>
-                  {formattedHours.text}
-                </span>
-              </div>
+      {avail.operatingHours && (() => {
+        const formattedHours = formatOperatingHours(avail.operatingHours);
+        if (!formattedHours) return null;
+        return (
+          <div className="flex items-center gap-3 p-3 bg-green-50 rounded-xl border border-green-200">
+            <Clock className="h-5 w-5 text-green-600 flex-shrink-0" strokeWidth={2.5} />
+            <div className="flex-1">
+              <span className="text-xs font-black text-gray-600 uppercase tracking-wide block">
+                Opening Hours
+              </span>
+              <span
+                className={cn(
+                  'text-sm font-bold',
+                  getOperatingHoursTextColor(avail.operatingHours)
+                )}
+              >
+                {formattedHours.text}
+              </span>
             </div>
-          );
-        })()}
+          </div>
+        );
+      })()}
 
         {/* Distance & Price */}
         <div className="flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-gray-50 to-white border border-gray-200">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +10,35 @@ import { Loader2, CheckCircle, AlertCircle, Home, Search, Clock, FileText, Spark
 import { toast } from 'sonner';
 import Link from 'next/link';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
+if (!API_URL) throw new Error('NEXT_PUBLIC_API_URL is not defined');
+
+// Toast helper function
+const showToast = (message, type) => {
+  const baseStyle = {
+    borderRadius: '0.5rem',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+    padding: '1rem',
+    backdropFilter: 'blur(8px)',
+  };
+
+  const style = type === 'info'
+    ? { ...baseStyle, background: 'rgba(255,255,255,0.95)', color: '#225F91', border: '1px solid rgba(26,186,127,0.3)' }
+    : { ...baseStyle, background: 'rgba(255,85,85,0.95)', color: '#ffffff', border: '1px solid rgba(34,95,145,0.3)' };
+
+  // Call toast method dynamically
+  if (type === 'info') {
+    toast(message, { duration: 4000, style });
+  } else if (type === 'error') {
+    toast.error(message, { duration: 4000, style });
+  } else {
+    // fallback to info if type is invalid
+    toast(message, { duration: 4000, style });
+  }
+};
+
+
 export default function StatusCheck() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -17,24 +46,34 @@ export default function StatusCheck() {
   const [status, setStatus] = useState('idle'); // idle, loading, success, error
   const [error, setError] = useState(null);
   const [prescription, setPrescription] = useState(null);
-  const [userIdentifier, setuserIdentifier] = useState(null);
+  const [userIdentifier, setUserIdentifier] = useState(null);
+
+  const abortControllerRef = useRef(null);
 
   useEffect(() => {
-    const id = searchParams.get('userIdentifier');
-    if (id) {
-      setuserIdentifier(id);
-      fetchStatus(id);
-    }
-  }, [searchParams]);
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
+
 
   const handleInputChange = (e) => setForm({ ...form, identifier: e.target.value });
 
-  const fetchStatus = async (userId) => {
+  const fetchStatus = useCallback(async (userId) => {
+
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
+
     setStatus('loading');
     setError(null);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/prescription/${userId}`, {
+      const response = await fetch(`${API_URL}/api/prescription/${userId}`, {
         headers: { 'x-guest-id': userId },
+        signal: abortControllerRef.current.signal
       });
       if (!response.ok) {
         const errorData = await response.json();
@@ -51,101 +90,92 @@ export default function StatusCheck() {
       if (['PENDING', 'PENDING_ADMIN', 'PENDING_ACTION'].includes(prescriptionMetadata.status)) {
         setPrescription(prescriptionMetadata);
         setStatus('success');
-        toast.info('Your prescription is under review. You will be notified when it is ready.', {
-          duration: 4000,
-          style: {
-            background: 'rgba(255,255,255,0.95)',
-            color: '#225F91',
-            border: '1px solid rgba(26,186,127,0.3)',
-            borderRadius: '0.5rem',
-            boxShadow: '0 4px 20px rgba(26,186,127,0.2)',
-            padding: '1rem',
-            backdropFilter: 'blur(8px)',
-          },
-        });
+        showToast('Your prescription is under review. You will be notified when it is ready.', 'info');
         return;
       }
       
       setPrescription(prescriptionMetadata);
       setStatus('success');
-      toast.info('No medications available for this prescription. Please contact support or start a new order.', {
-        duration: 4000,
-        style: {
-          background: 'rgba(255,255,255,0.95)',
-          color: '#225F91',
-          border: '1px solid rgba(26,186,127,0.3)',
-          borderRadius: '0.5rem',
-          boxShadow: '0 4px 20px rgba(26,186,127,0.2)',
-          padding: '1rem',
-          backdropFilter: 'blur(8px)',
-        },
-      });
+      showToast('No medications available for this prescription. Please contact support or start a new order.', 'info');
     } catch (err) {
+      if (err.name === 'AbortError') return;
       setError(err.message);
       setStatus('error');
-      toast.error(err.message, {
-        duration: 4000,
-        style: {
-          background: 'rgba(255,85,85,0.95)',
-          color: '#ffffff',
-          border: '1px solid rgba(34,95,145,0.3)',
-          borderRadius: '0.5rem',
-          boxShadow: '0 4px 20px rgba(34,95,145,0.2)',
-          padding: '1rem',
-          backdropFilter: 'blur(8px)',
-        },
-      });
+      showToast(err.message, 'error');
       setPrescription(null);
     }
-  };
+  }, [router]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setStatus('loading');
-    setError(null);
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/prescription/retrieve`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-guest-id': localStorage.getItem('guestId') || '',
-        },
-        body: JSON.stringify({
-          email: form.identifier.includes('@') ? form.identifier : undefined,
-          phone: !form.identifier.includes('@') ? form.identifier : undefined,
-        }),
-      });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to retrieve session');
-      }
-      const { guestId } = await response.json();
-      localStorage.setItem('guestId', guestId);
-      setuserIdentifier(guestId);
-      await fetchStatus(guestId);
-    } catch (err) {
-      setError(err.message);
-      setStatus('error');
-      toast.error(err.message, {
-        duration: 4000,
-        style: {
-          background: 'rgba(255,85,85,0.95)',
-          color: '#ffffff',
-          border: '1px solid rgba(34,95,145,0.3)',
-          borderRadius: '0.5rem',
-          boxShadow: '0 4px 20px rgba(34,95,145,0.2)',
-          padding: '1rem',
-          backdropFilter: 'blur(8px)',
-        },
+  useEffect(() => {
+    let isMounted = true;
+    const id = searchParams.get('userIdentifier');
+
+    if (id) {
+      setUserIdentifier(id);
+      fetchStatus(id).then(() => {
+        if (!isMounted) return; // Check before state updates
       });
     }
-  };
+
+    return () => { isMounted = false; };
+    }, [searchParams, fetchStatus]);
+
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setStatus('loading');
+  setError(null);
+
+  let guestId = localStorage.getItem('guestId');
+  if (!guestId) {
+    showToast('No guest ID found. Please try again.', 'error');
+    setStatus('idle');
+    return;
+  }
+
+  try {
+    const payload = form.identifier.includes('@')
+      ? { email: form.identifier }
+      : { phone: form.identifier };
+
+    const response = await fetch(`${API_URL}/api/prescription/retrieve`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-guest-id': guestId,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData?.message || `Failed to retrieve session: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    const newGuestId = data.guestId;
+
+    // Update localStorage only if it changed
+    if (guestId !== newGuestId) {
+      localStorage.setItem('guestId', newGuestId);
+      guestId = newGuestId;
+    }
+
+    setUserIdentifier(newGuestId);
+    await fetchStatus(newGuestId);
+
+  } catch (err) {
+    setError(err.message);
+    setStatus('error');
+    showToast(err.message, 'error');
+  }
+};
+
 
   const resetForm = () => {
     setForm({ identifier: '' });
     setError(null);
     setPrescription(null);
-    setuserIdentifier(null);
+    setUserIdentifier(null);
     setStatus('idle');
   };
 

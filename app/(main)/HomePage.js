@@ -553,7 +553,7 @@ const ServiceCard = memo(({ title, icon: Icon, children, isActive = false, gradi
         }`} aria-hidden="true" />
       </CardHeader>
       
-      <CardContent className="px-4 sm:px-10 relative z-10">
+      <CardContent className="px-3 sm:px-10 relative z-10">
         {children}
       </CardContent>
 
