@@ -100,13 +100,12 @@ const NavigationItems = ({ items, onClick, isMobile = false }) => {
 };
 
 function MainLayoutContent({ children }) {
-  const { cartItemCount, fetchCart, isPending } = useCart();
+  const { cartItemCount, fetchCart } = useCart();
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [isNavVisible, setIsNavVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
   const navRef = useRef(null);
 
   const navItems = useMemo(() => [
@@ -116,52 +115,26 @@ function MainLayoutContent({ children }) {
     { label: t('nav.cart'), icon: ShoppingCart, href: '/cart', badge: cartItemCount },
   ], [t, cartItemCount]);
 
+
+
+  const lastScrollY = useRef(0);
+
   const handleScroll = useCallback(() => {
     const currentScrollY = window.scrollY;
     setIsScrolled(currentScrollY > 50);
     setShowScrollTop(currentScrollY > 200);
-    if (currentScrollY > lastScrollY && currentScrollY > 100) {
-      setIsNavVisible(false);
-    } else {
-      setIsNavVisible(true);
-    }
-    setLastScrollY(currentScrollY);
-  }, [lastScrollY]);
+    setIsNavVisible(currentScrollY <= lastScrollY.current || currentScrollY <= 100);
+    lastScrollY.current = currentScrollY;
+  }, []);
+
+
 
   useEffect(() => {
-    let mounted = true;
-    
-    const loadCart = async () => {
-      try {
-        if (mounted) {
-          await fetchCart();
-        }
-      } catch (error) {
-        console.error('Failed to fetch cart:', error);
-      }
-    };
-
-    loadCart();
-
-    return () => {
-      mounted = false;
-    };
-  }, [fetchCart]);
-
-  useEffect(() => {
-    let ticking = false;
-    const throttledScroll = () => {
-      if (!ticking) {
-        requestAnimationFrame(() => {
-          handleScroll();
-          ticking = false;
-        });
-        ticking = true;
-      }
-    };
-    window.addEventListener('scroll', throttledScroll, { passive: true });
-    return () => window.removeEventListener('scroll', throttledScroll);
+    const onScroll = () => requestAnimationFrame(handleScroll);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
   }, [handleScroll]);
+
 
   const scrollToTop = useCallback(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -174,11 +147,13 @@ function MainLayoutContent({ children }) {
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 min-w-[320px] relative overflow-hidden">
       {/* Enhanced Animated Background */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
-        <div className="absolute top-0 left-0 w-[600px] h-[600px] bg-[#1ABA7F]/5 rounded-full mix-blend-multiply filter blur-3xl animate-blob" />
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[#225F91]/5 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000" />
-        <div className="absolute bottom-0 left-1/2 w-[600px] h-[600px] bg-[#76D1F3]/5 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-4000" />
-      </div>
+    <div className="fixed inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+      <div className="absolute top-1/4 left-0 w-[300px] h-[300px] bg-[#1ABA7F]/10 rounded-full mix-blend-multiply filter blur-xl animate-blob" />
+      <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-[#225F91]/10 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-2000" />
+      <div className="absolute bottom-0 left-1/2 w-[300px] h-[300px] bg-[#76D1F3]/10 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-4000" />
+    </div>
+
+
 
       {/* Skip to main content link */}
       <a 
@@ -197,7 +172,7 @@ function MainLayoutContent({ children }) {
         role="navigation"
         aria-label={t('nav.medication_navigation')}
       >
-        <div className="w-full mx-auto px-4 sm:px-6 py-1 sm:py-2 flex justify-between items-center">
+        <div className="w-full mx-auto px-3 sm:px-6 py-1 sm:py-2 flex justify-between items-center">
           <Link
             href="/"
             className="group flex items-center focus:outline-none focus:ring-4 focus:ring-[#1ABA7F]/30 rounded-2xl p-3 transition-all duration-300 hover:scale-105"
@@ -210,7 +185,7 @@ function MainLayoutContent({ children }) {
                 alt="Manzu Logo"
                 width={120}
                 height={48}
-                className="relative h-10 sm:h-12 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+                className="relative h-8 sm:h-12 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
                 priority
               />
             </div>
@@ -228,7 +203,7 @@ function MainLayoutContent({ children }) {
               className="relative p-3 text-[#225F91] hover:text-[#1ABA7F] focus:outline-none focus:ring-4 focus:ring-[#1ABA7F]/30 rounded-2xl hover:bg-gradient-to-r hover:from-[#1ABA7F]/10 hover:to-transparent transition-all duration-300 hover:scale-110"
               aria-label={cartItemCount > 0 ? `${t('nav.cart')} with ${cartItemCount} items` : t('nav.cart')}
             >
-              <ShoppingCart className="h-6 w-6" aria-hidden="true" strokeWidth={2.5} />
+              <ShoppingCart className="h-5 w-5" aria-hidden="true" strokeWidth={2.5} />
               <CartBadge count={cartItemCount} />
             </Link>
             
@@ -299,17 +274,15 @@ function MainLayoutContent({ children }) {
           sizes="100vw"
           priority={false}
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-[#225F91]/95 via-[#1a4a73]/90 to-[#0f2942]/95" aria-hidden="true" />
 
-        {/* Enhanced Animated Gradient Overlay */}
-        <div className="absolute inset-0 opacity-25" aria-hidden="true">
-          <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-[#1ABA7F] rounded-full mix-blend-multiply filter blur-3xl animate-blob" />
-          <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-[#76D1F3] rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000" />
-        </div>
+      <div className="absolute inset-0 bg-gradient-to-br from-[#225F91]/80 via-[#1a4a73]/70 to-[#0f2942]/80" aria-hidden="true" />
+      <div className="absolute top-0 left-1/4 w-[400px] h-[400px] bg-[#1ABA7F]/10 rounded-full mix-blend-multiply filter blur-2xl animate-blob" />
+      <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-[#76D1F3]/10 rounded-full mix-blend-multiply filter blur-2xl animate-blob animation-delay-2000" />
+
 
         <div className="relative z-10 py-14 sm:py-20 px-4">
           <div className="max-w-5xl mx-auto">
-            <div className="inline-flex items-center gap-3 px-4 py-2 sm:px-6 sm:py-3 rounded-2xl bg-white/15 backdrop-blur-xl text-white text-base font-black mb-8 border-2 border-white/30 shadow-2xl">
+            <div className="inline-flex items-center gap-3 px-4 py-2 sm:px-6 sm:py-3 rounded-2xl bg-white/15 text-white text-base font-black mb-8 border-2 border-white/30 shadow-2xl">
               <div className="p-1.5 bg-[#1ABA7F] rounded-lg">
                 <Sparkles className="w-5 h-5 text-white animate-pulse" strokeWidth={3} />
               </div>
@@ -346,10 +319,11 @@ function MainLayoutContent({ children }) {
       {/* Ultra Premium Footer */}
       <footer className="relative bg-gradient-to-br from-[#225F91] via-[#1a4a73] to-[#0f2942] text-white overflow-hidden" role="contentinfo">
         {/* Decorative Background with glow */}
-        <div className="absolute inset-0 opacity-10" aria-hidden="true">
-          <div className="absolute top-0 left-0 w-[600px] h-[600px] bg-[#1ABA7F] rounded-full mix-blend-multiply filter blur-3xl animate-blob" />
-          <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-[#76D1F3] rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000" />
-        </div>
+      <div className="absolute inset-0 opacity-5" aria-hidden="true">
+        <div className="absolute top-0 left-0 w-[300px] h-[300px] bg-[#1ABA7F]/10 rounded-full mix-blend-multiply filter blur-xl animate-blob" />
+        <div className="absolute bottom-0 right-0 w-[300px] h-[300px] bg-[#76D1F3]/10 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-2000" />
+      </div>
+
 
         {/* Top gradient border */}
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#1ABA7F] via-[#225F91] to-[#1ABA7F] animate-gradient bg-300%" aria-hidden="true" />
@@ -451,15 +425,13 @@ function MainLayoutContent({ children }) {
       {/* Ultra Premium Scroll to Top Button */}
       <Button
         onClick={scrollToTop}
-        className={`fixed bottom-8 right-8 z-50 p-2 sm: p-4 bg-gradient-to-br from-[#1ABA7F] to-[#16a876] text-white rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-300 h-12 sm:h-16 w-12 sm:w-16 flex items-center justify-center group border-2 border-white/30 ${
-          showScrollTop ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-8 scale-75 pointer-events-none'
-        }`}
+        className={`fixed bottom-8 right-8 z-50 p-2 sm:p-4 bg-gradient-to-br from-[#1ABA7F] to-[#16a876] text-white rounded-2xl shadow-2xl transition-all duration-300 
+        ${showScrollTop ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8 pointer-events-none'}`}
         aria-label={t('nav.scroll_to_top')}
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-[#1ABA7F] to-[#16a876] rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 animate-pulse" />
-        <ChevronUp className="relative h-7 w-7 transition-transform duration-300 group-hover:-translate-y-1" aria-hidden="true" strokeWidth={3} />
-        <div className="absolute inset-0 rounded-2xl bg-white opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
+        <ChevronUp className="h-7 w-7" strokeWidth={3} />
       </Button>
+
 
       {/* Ultra Premium Toast Notifications */}
       <Toaster
@@ -498,10 +470,14 @@ function MainLayoutContent({ children }) {
 
       <style jsx>{`
         @keyframes blob {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          33% { transform: translate(30px, -50px) scale(1.1); }
-          66% { transform: translate(-20px, 20px) scale(0.9); }
+          0%, 100% { transform: translate(0,0) scale(1); }
+          33% { transform: translate(15px, -25px) scale(1.05); }
+          66% { transform: translate(-10px, 10px) scale(0.95); }
         }
+        .animate-blob { animation: blob 10s infinite; }
+        .animation-delay-2000 { animation-delay: 2s; }
+        .animation-delay-4000 { animation-delay: 4s; }
+
         @keyframes gradient {
           0%, 100% { background-position: 0% 50%; }
           50% { background-position: 100% 50%; }

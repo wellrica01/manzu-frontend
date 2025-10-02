@@ -1,42 +1,107 @@
 'use client';
-import { useQuery } from '@tanstack/react-query';
+
+import { useMemo, useEffect } from 'react';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { getGuestId } from '@/lib/utils';
+
+const fetchCartData = async (guestId) => {
+  if (!process.env.NEXT_PUBLIC_API_URL) {
+    throw new Error('NEXT_PUBLIC_API_URL is not defined');
+  }
+
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart`, {
+    headers: { 'x-guest-id': guestId },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || `Failed to fetch cart: ${response.status}`);
+  }
+
+  return await response.json();
+};
 
 export function useCart() {
   const guestId = getGuestId();
+  const queryClient = useQueryClient();
 
-  const { data: cartData, isPending, isError, error, refetch: fetchCart } = useQuery({
+  const { data: cartData, isLoading, isError, error, refetch: fetchCart } = useQuery({
     queryKey: ['cart', guestId],
-    queryFn: async () => {
-      console.log('Fetching cart for guestId:', guestId);
-      try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart`, {
-          headers: { 'x-guest-id': guestId },
-        });
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          console.error('Cart API error:', response.status, errorData);
-          throw new Error(errorData.message || `Failed to fetch cart: ${response.status}`);
-        }
-        const data = await response.json();
-        console.log('Cart API response:', data);
-        return data;
-      } catch (error) {
-        console.error('Cart fetch error:', error.message);
-        throw error;
-      }
-    },
-    enabled: !!guestId, // Only fetch if guestId exists
-    staleTime: 5 * 1000, // Cache for 5 seconds
+    queryFn: () => fetchCartData(guestId),
+    enabled: !!guestId,
+    staleTime: 5000,
     refetchOnWindowFocus: false,
-    retry: 2, // Retry up to 2 times on failure
-    placeholderData: undefined, // Don't provide placeholder data to avoid premature evaluation
+    retry: 2,
   });
 
-  const cart = cartData || null;
-  const cartItemCount = cart?.pharmacies?.reduce((sum, pharmacy) => sum + (pharmacy.items?.length || 0), 0) || 0;
+  const cartItemCount = useMemo(
+    () =>
+      cartData?.pharmacies?.reduce(
+        (sum, pharmacy) => sum + (pharmacy.items?.length || 0),
+        0
+      ) || 0,
+    [cartData]
+  );
 
-  console.log('useCart state:', { isPending, isError, error, cart });
+  useEffect(() => {
+    if (guestId) fetchCart();
+  }, [guestId, fetchCart]);
 
-  return { cartItemCount, cart, fetchCart, guestId, isPending, isError };
+  // Update cache manually (useful for optimistic updates)
+  const updateCartCache = (newCartData) => {
+    queryClient.setQueryData(['cart', guestId], newCartData);
+  };
+
+  // Add item with optimistic update
+  const addItemMutation = useMutation({
+    mutationFn: async (item) => {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart/add`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-guest-id': guestId,
+        },
+        body: JSON.stringify(item),
+      });
+      if (!res.ok) throw new Error('Failed to add item');
+      return res.json();
+    },
+    onMutate: async (item) => {
+      await queryClient.cancelQueries(['cart', guestId]);
+      const previousCart = queryClient.getQueryData(['cart', guestId]);
+
+      if (previousCart) {
+        const updatedCart = { ...previousCart };
+        const pharmacy = updatedCart.pharmacies.find(p => p.id === item.pharmacyId);
+        if (pharmacy) {
+          pharmacy.items = [...pharmacy.items, item];
+        } else {
+          updatedCart.pharmacies.push({ id: item.pharmacyId, items: [item] });
+        }
+        queryClient.setQueryData(['cart', guestId], updatedCart);
+      }
+
+      return { previousCart };
+    },
+    onError: (_err, _item, context) => {
+      if (context?.previousCart) {
+        queryClient.setQueryData(['cart', guestId], context.previousCart);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries(['cart', guestId]);
+    },
+  });
+
+  return {
+    guestId,
+    cart: cartData || null,
+    cartItemCount,
+    fetchCart,
+    updateCartCache,
+    addItem: addItemMutation.mutate,
+    isLoading,
+    isError,
+    error,
+  };
 }

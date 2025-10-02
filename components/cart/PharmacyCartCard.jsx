@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,10 +7,7 @@ import { formatOperatingHours, getOperatingHoursTextColor } from '@/lib/pharmacy
 import { 
   MapPin, 
   Clock, 
-  Plus, 
-  Minus, 
   Hospital,
-  Store,
   ChevronDown,
   Package
 } from 'lucide-react';
@@ -27,9 +24,43 @@ export const PharmacyCartCard = ({
 }) => {
   const [expanded, setExpanded] = useState(true);
 
-  const calculatePharmacyTotal = () => {
+  // Memoized total calculation
+  const pharmacyTotal = useMemo(() => {
     return pharmacy.items.reduce((total, item) => total + calculateItemPrice(item), 0);
-  };
+  }, [pharmacy.items, calculateItemPrice]);
+
+  // Memoized formatted hours
+  const formattedHours = useMemo(() => {
+    return pharmacy.pharmacy.operatingHours
+      ? formatOperatingHours(pharmacy.pharmacy.operatingHours)
+      : null;
+  }, [pharmacy.pharmacy.operatingHours]);
+
+  // Memoized CartItem list for performance
+  const cartItemsList = useMemo(() => {
+    return pharmacy.items.map((item, index) => (
+      <div key={item.id}>
+        <CartItem
+          item={item}
+          handleQuantityChange={handleQuantityChange}
+          setRemoveItem={setRemoveItem}
+          isUpdating={isUpdating}
+          calculateItemPrice={calculateItemPrice}
+          segment={segment}
+        />
+        {index < pharmacy.items.length - 1 && (
+          <Separator className="my-4 bg-gradient-to-r from-transparent via-gray-300 to-transparent" />
+        )}
+      </div>
+    ));
+  }, [pharmacy.items, handleQuantityChange, setRemoveItem, isUpdating, calculateItemPrice, segment]);
+
+  // Expand/collapse button classes
+  const expandButtonClass = cn(
+    "h-12 w-12 rounded-xl transition-all duration-300 shadow-md flex-shrink-0",
+    expanded ? "bg-[#1ABA7F]/20 text-[#1ABA7F] hover:bg-[#1ABA7F]/30" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+  );
+  const expandIconClass = cn("w-6 h-6 transition-transform duration-300", expanded && "rotate-180");
 
   return (
     <Card className={cn(
@@ -46,11 +77,10 @@ export const PharmacyCartCard = ({
           <img
             src={pharmacy.pharmacy.logoUrl}
             alt={`${pharmacy.pharmacy.name} cover`}
+            loading="lazy"
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-          
-          {/* Pharmacy Name Overlay */}
           <div className="absolute bottom-0 left-0 right-0 p-6">
             <div className="flex items-center gap-3">
               <div className="p-3 rounded-xl bg-white/20 backdrop-blur-md shadow-lg">
@@ -70,7 +100,7 @@ export const PharmacyCartCard = ({
       )}>
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
-            {/* Pharmacy Name (only show if no cover photo) */}
+            {/* Pharmacy Name if no cover photo */}
             {!pharmacy.pharmacy.logoUrl && (
               <div className="flex items-center gap-3 mb-4">
                 <div className="p-3 rounded-xl bg-gradient-to-br from-[#1ABA7F]/20 to-[#225F91]/20 shadow-md">
@@ -81,7 +111,7 @@ export const PharmacyCartCard = ({
                 </CardTitle>
               </div>
             )}
-            
+
             <div className="space-y-3">
               {/* Address */}
               {pharmacy.pharmacy.address && (
@@ -94,26 +124,22 @@ export const PharmacyCartCard = ({
               )}
 
               {/* Operating Hours */}
-              {pharmacy.pharmacy.operatingHours && (() => {
-                const formattedHours = formatOperatingHours(pharmacy.pharmacy.operatingHours);
-                if (!formattedHours) return null;
-                return (
-                  <div className="flex items-center gap-3 p-2 sm:p-3 rounded-xl bg-gradient-to-r from-white to-gray-50 border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200">
-                    <Clock className="h-5 w-5 text-[#225F91] flex-shrink-0" />
-                    <div className="flex-1">
-                      <span className="text-xs text-gray-500 font-bold uppercase tracking-wide">Hours: </span>
-                      <span className={cn('text-sm font-bold', getOperatingHoursTextColor(pharmacy.pharmacy.operatingHours))}>
-                        {formattedHours.text}
-                      </span>
-                    </div>
-                    {formattedHours.status === 'open' && (
-                      <Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white border-0 px-2 py-1 text-xs font-bold shadow-md">
-                        Open
-                      </Badge>
-                    )}
+              {formattedHours && (
+                <div className="flex items-center gap-3 p-2 sm:p-3 rounded-xl bg-gradient-to-r from-white to-gray-50 border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200">
+                  <Clock className="h-5 w-5 text-[#225F91] flex-shrink-0" />
+                  <div className="flex-1">
+                    <span className="text-xs text-gray-500 font-bold uppercase tracking-wide">Hours: </span>
+                    <span className={cn('text-sm font-bold', getOperatingHoursTextColor(pharmacy.pharmacy.operatingHours))}>
+                      {formattedHours.text}
+                    </span>
                   </div>
-                );
-              })()}
+                  {formattedHours.status === 'open' && (
+                    <Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white border-0 px-2 py-1 text-xs font-bold shadow-md">
+                      Open
+                    </Badge>
+                  )}
+                </div>
+              )}
 
               {/* Pharmacy Summary */}
               <div className="flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-[#1ABA7F]/10 to-[#225F91]/10 border border-[#1ABA7F]/20">
@@ -124,7 +150,7 @@ export const PharmacyCartCard = ({
                   </span>
                 </div>
                 <span className="text-lg font-black text-[#225F91]">
-                  ₦{calculatePharmacyTotal().toLocaleString()}
+                  ₦{pharmacyTotal.toLocaleString()}
                 </span>
               </div>
             </div>
@@ -135,41 +161,17 @@ export const PharmacyCartCard = ({
             variant="ghost"
             size="icon"
             onClick={() => setExpanded(!expanded)}
-            className={cn(
-              "h-12 w-12 rounded-xl transition-all duration-300 shadow-md flex-shrink-0",
-              expanded 
-                ? "bg-[#1ABA7F]/20 text-[#1ABA7F] hover:bg-[#1ABA7F]/30" 
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            )}
+            className={expandButtonClass}
             aria-label={expanded ? "Collapse items" : "Expand items"}
           >
-            <ChevronDown className={cn(
-              "w-6 h-6 transition-transform duration-300",
-              expanded && "rotate-180"
-            )} />
+            <ChevronDown className={expandIconClass} />
           </Button>
         </div>
       </CardHeader>
 
       {expanded && (
         <CardContent className="relative z-10 p-2 sm:p-6 animate-in slide-in-from-top-2 duration-300">
-          <div className="space-y-4">
-            {pharmacy.items.map((item, index) => (
-              <div key={item.id}>
-                <CartItem
-                  item={item}
-                  handleQuantityChange={handleQuantityChange}
-                  setRemoveItem={setRemoveItem}
-                  isUpdating={isUpdating}
-                  calculateItemPrice={calculateItemPrice}
-                  segment={segment}
-                />
-                {index < pharmacy.items.length - 1 && (
-                  <Separator className="my-4 bg-gradient-to-r from-transparent via-gray-300 to-transparent" />
-                )}
-              </div>
-            ))}
-          </div>
+          {cartItemsList}
 
           {/* Pharmacy Total */}
           {pharmacy.items.length > 1 && (
@@ -177,7 +179,7 @@ export const PharmacyCartCard = ({
               <div className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-[#225F91]/10 to-[#1ABA7F]/10 border-2 border-[#225F91]/20 shadow-sm">
                 <span className="text-base font-bold text-gray-700">Pharmacy Total:</span>
                 <span className="text-2xl font-black text-[#225F91]">
-                  ₦{calculatePharmacyTotal().toLocaleString()}
+                  ₦{pharmacyTotal.toLocaleString()}
                 </span>
               </div>
             </div>

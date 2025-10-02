@@ -1,11 +1,11 @@
 'use client';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTrigger, DialogTitle } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import { Loader2, Info, X, ShoppingCart, MapPin, Pill, HospitalIcon, Eye } from 'lucide-react';
+import { Loader2, ShoppingCart, MapPin, Pill, HospitalIcon, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import Link from 'next/link';
@@ -45,10 +45,8 @@ const PrescriptionMedicationsPage = React.memo(() => {
   const [pharmacyRecommendations, setPharmacyRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [cartItems, setCartItems] = useState([]);
   const [userLocation, setUserLocation] = useState(null);
   const [openCartDialog, setOpenCartDialog] = useState(false);
-  const [lastAddedItem, setLastAddedItem] = useState(null);
   const [lastAddedItems, setLastAddedItems] = useState([]);
   const [showPreview, setShowPreview] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
@@ -56,6 +54,8 @@ const PrescriptionMedicationsPage = React.memo(() => {
   const [isAddingToCart, setIsAddingToCart] = useState({});
   const { userIdentifier } = useParams();
   const { cart, fetchCart, guestId } = useCart();
+  const cartItems = cart?.pharmacies?.flatMap(p => p.items) || [];
+
 
   // Filtering state for pharmacies
   const [sortBy, setSortBy] = useState('price');
@@ -219,13 +219,9 @@ const fetchPrescriptionOrder = useCallback(async () => {
   useEffect(() => {
     if (userIdentifier) {
       fetchPrescriptionOrder();
-      fetchCart();
     }
-  }, [userIdentifier, userLocation, fetchPrescriptionOrder, fetchCart, filterState, filterLga, filterWard]);
+  }, [userIdentifier, userLocation, fetchPrescriptionOrder, filterState, filterLga, filterWard]);
 
-  useEffect(() => {
-    setCartItems(cart?.pharmacies?.flatMap(p => p.items) || []);
-  }, [cart]);
 
 const handleAddToCart = async (medicationId, pharmacyId, displayName) => {
   setIsAddingToCart(prev => ({ ...prev, [`${medicationId}-${pharmacyId}`]: true }));

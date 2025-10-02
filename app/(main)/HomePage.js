@@ -112,7 +112,7 @@ const LanguageToggle = memo(({ onLanguageChange }) => {
       <div className="relative" ref={dropdownRef}>
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="group flex items-center gap-3 px-3 py-2 sm:px-6 sm:py-3 rounded-2xl border-2 border-white/40 text-white bg-white/15 hover:bg-white/25 backdrop-blur-xl focus:ring-4 focus:ring-white/30 transition-all duration-300 shadow-2xl hover:shadow-3xl hover:scale-105 font-bold"
+          className="group flex items-center gap-3 px-3 py-2 sm:px-6 sm:py-3 rounded-2xl border-2 border-white/40 text-white bg-white/15 hover:bg-white/25  focus:ring-4 focus:ring-white/30 transition-all duration-300 shadow-2xl hover:shadow-3xl hover:scale-105 font-bold"
           aria-label={`Select language. Current language: ${currentLang?.name}`}
           aria-expanded={isOpen}
           aria-haspopup="listbox"
@@ -167,18 +167,12 @@ const StatsSection = memo(() => {
 
   useEffect(() => {
     const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) setIsVisible(true);
-      },
+      ([entry]) => { if(entry.isIntersecting) setIsVisible(true); },
       { threshold: 0.2 }
     );
-
     const currentRef = statsRef.current;
-    if (currentRef) observer.observe(currentRef);
-
-    return () => {
-      if (currentRef) observer.unobserve(currentRef);
-    };
+    if(currentRef) observer.observe(currentRef);
+    return () => currentRef && observer.unobserve(currentRef);
   }, []);
 
   const stats = [
@@ -190,12 +184,6 @@ const StatsSection = memo(() => {
 
   return (
     <div ref={statsRef} className="py-20 px-4 relative">
-      {/* Background decoration */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-[#1ABA7F]/5 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute top-1/2 right-1/4 w-96 h-96 bg-[#225F91]/5 rounded-full blur-3xl animate-pulse animation-delay-2000" />
-      </div>
-
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="text-center mb-16 space-y-4">
           <h2 className="text-4xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#225F91] to-[#1ABA7F]">
@@ -205,40 +193,17 @@ const StatsSection = memo(() => {
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-          {stats.map((stat, index) => (
-            <div
-              key={index}
-              className={`group relative flex flex-col justify-center items-center bg-white/95 backdrop-blur-sm rounded-3xl p-8 shadow-xl hover:shadow-3xl transition-all duration-500 border-2 border-transparent hover:border-[#1ABA7F]/30 overflow-hidden ${
-                isVisible ? 'animate-in zoom-in-50 fade-in opacity-100' : 'opacity-0 scale-90'
-              }`}
-              style={{ animationDelay: `${index * 100}ms` }}
-            >
-              {/* Gradient background on hover */}
-              <div className={`absolute inset-0 bg-gradient-to-br ${stat.color} opacity-0 group-hover:opacity-10 transition-opacity duration-500`} />
-              
-              {/* Decorative corner */}
-              <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-bl from-[#1ABA7F]/10 to-transparent rounded-bl-full" />
-              
-              {/* Icon */}
-              <div className="relative mb-6">
-                <div className={`absolute inset-0 bg-gradient-to-br ${stat.color} rounded-2xl blur-xl opacity-50 animate-pulse`} />
-                <div className={`relative p-4 rounded-2xl bg-gradient-to-br ${stat.color} text-white shadow-lg group-hover:scale-110 transition-transform duration-500`}>
-                  <stat.icon className="h-4 sm:h-8 w-4 sm:w-8" strokeWidth={2.5} />
-                </div>
+          {stats.map((stat, i) => (
+            <div key={i} className={`group flex flex-col justify-center items-center bg-white/95 rounded-3xl p-8 shadow-xl transition-all duration-500 ${
+              isVisible ? 'animate-in zoom-in-50 fade-in opacity-100' : 'opacity-0 scale-90'
+            }`} style={{ animationDelay: `${i*100}ms` }}>
+              <div className={`relative p-4 rounded-2xl bg-gradient-to-br ${stat.color} text-white shadow-lg mb-6`}>
+                <stat.icon className="h-8 w-8" strokeWidth={2.5} />
               </div>
-
-              {/* Value */}
-              <div className={`text-3xl sm:text-5xl font-black bg-gradient-to-br ${stat.color} bg-clip-text text-transparent mb-2 group-hover:scale-110 transition-transform duration-300`}>
+              <div className={`text-3xl font-black bg-gradient-to-br ${stat.color} bg-clip-text text-transparent mb-2`}>
                 {stat.value}
               </div>
-
-              {/* Label */}
-              <div className="text-gray-600 text-sm sm:text-base font-bold text-center px-2">
-                {stat.label}
-              </div>
-
-              {/* Bottom accent line */}
-              <div className={`absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r ${stat.color} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+              <div className="text-gray-600 text-sm font-bold text-center">{stat.label}</div>
             </div>
           ))}
         </div>
@@ -246,6 +211,7 @@ const StatsSection = memo(() => {
     </div>
   );
 });
+
 
 StatsSection.displayName = 'StatsSection';
 
@@ -261,33 +227,14 @@ const HeroSection = memo(({ onSearchClick, onUploadClick }) => {
       },
       { threshold: 0.1, rootMargin: '50px' }
     );
-
     const currentRef = heroRef.current;
     if (currentRef) observer.observe(currentRef);
-
-    return () => {
-      if (currentRef) observer.unobserve(currentRef);
-    };
+    return () => currentRef && observer.unobserve(currentRef);
   }, []);
 
-  const handleWhatsAppClick = useCallback(() => {
-    if (process.env.NODE_ENV === 'production') {
-      // window.analytics?.track('whatsapp_search_clicked');
-    }
-  }, []);
-
-  const handleUSSDClick = useCallback(() => {
-    if (process.env.NODE_ENV === 'production') {
-      // window.analytics?.track('ussd_search_clicked');
-    }
-  }, []);
-  
   return (
-    <header 
-      ref={heroRef} 
-      className="relative text-center mt-1 px-3 sm:px-6 py-12 sm:py-24 lg:py-32 overflow-hidden"
-    >
-      {/* Background Image */}
+    <header ref={heroRef} className="relative text-center mt-1 px-3 sm:px-6 py-12 sm:py-24 lg:py-32 overflow-hidden">
+      {/* Hero background */}
       <Image
         src={CONFIG.images.heroBackground}
         alt=""
@@ -297,170 +244,57 @@ const HeroSection = memo(({ onSearchClick, onUploadClick }) => {
         sizes="100vw"
         quality={90}
       />
-      
-      {/* Enhanced Multi-layer Gradient Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#225F91]/95 via-[#1a4a73]/90 to-[#0f2942]/95" aria-hidden="true" />
-      <div className="absolute inset-0 bg-gradient-to-r from-[#225F91]/50 via-transparent to-[#1ABA7F]/50" aria-hidden="true" />
-      
-      {/* Animated Mesh Gradient with more dramatic effects */}
-      <div className="absolute inset-0 opacity-40" aria-hidden="true">
-        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-[#1ABA7F] rounded-full mix-blend-multiply filter blur-3xl animate-blob" />
-        <div className="absolute top-0 right-1/4 w-[600px] h-[600px] bg-[#225F91] rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000" />
-        <div className="absolute bottom-0 left-1/2 w-[600px] h-[600px] bg-[#76D1F3] rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-4000" />
-      </div>
+      <div className="absolute inset-0 bg-gradient-to-b from-[#225F91]/90 via-[#1a4a73]/85 to-[#0f2942]/90" aria-hidden="true" />
 
-      {/* Decorative Floating Pills with glow */}
-      <FloatingElement delay={0} className="absolute top-20 left-10 opacity-20">
-        <div className="relative">
-          <div className="absolute inset-0 bg-white rounded-full blur-2xl" />
-          <Pill className="relative w-20 h-20 text-white rotate-45" strokeWidth={2} />
-        </div>
-      </FloatingElement>
-      <FloatingElement delay={1} className="absolute bottom-20 right-10 opacity-20">
-        <div className="relative">
-          <div className="absolute inset-0 bg-white rounded-full blur-2xl" />
-          <Pill className="relative w-24 h-24 text-white -rotate-12" strokeWidth={2} />
-        </div>
-      </FloatingElement>
-      <FloatingElement delay={2} className="absolute top-40 right-20 opacity-15">
-        <div className="relative">
-          <div className="absolute inset-0 bg-[#1ABA7F] rounded-full blur-2xl" />
-          <Shield className="relative w-16 h-16 text-white rotate-12" strokeWidth={2} />
-        </div>
-      </FloatingElement>
+      {/* Optimized floating blobs */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-[#1ABA7F]/40 rounded-full blur-2xl animate-float" />
+        <div className="absolute top-1/3 right-1/4 w-72 h-72 bg-[#225F91]/40 rounded-full blur-2xl animate-float animation-delay-2000" />
+      </div>
 
       <div className="relative z-10 max-w-6xl mx-auto">
         <LanguageToggle />
-        
-        {/* Enhanced Trust Badge */}
-        <div
-          className={`inline-flex items-center gap-3 mb-8 px-4 sm:px-8 py-2 sm:py-4 rounded-2xl bg-white/25 backdrop-blur-xl text-white text-sm sm:text-base font-black shadow-2xl border-2 border-white/40 transition-all duration-700 hover:scale-110 hover:bg-white/35 ${
-            isVisible ? 'animate-in zoom-in-50 fade-in opacity-100' : 'opacity-0 scale-95'
-          }`}
-        >
-          <div className="relative">
-            <div className="absolute inset-0 bg-[#1ABA7F] rounded-full blur-lg animate-pulse" />
-            <Shield className="relative w-5 sm:w-6 h-5 sm:h-6 text-[#1ABA7F]" aria-hidden="true" strokeWidth={3} />
-          </div>
-          <span className="bg-gradient-to-r from-white via-gray-50 to-white bg-clip-text text-transparent font-black tracking-wide">
+
+        {/* Trust badge */}
+        <div className={`inline-flex items-center gap-3 mb-8 px-4 py-3 rounded-2xl bg-white/25 text-white font-black shadow-2xl border-2 border-white/40 transition-all duration-700 ${
+          isVisible ? 'animate-in zoom-in-50 fade-in opacity-100' : 'opacity-0 scale-95'
+        }`}>
+          <Shield className="w-5 h-5 text-[#1ABA7F]" />
+          <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-gray-50 to-white font-black">
             {t('hero.trusted_platform')}
           </span>
-          <Sparkles className="w-5 h-5 text-yellow-300 animate-pulse" aria-hidden="true" />
+          <Sparkles className="w-5 h-5 text-yellow-300 animate-pulse" />
         </div>
 
-        {/* Main Title with Ultra Premium Gradient */}
-        <h1
-          className={`text-5xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-white tracking-tight leading-[1.05] transition-all duration-1000 mb-8 ${
-            isVisible ? 'animate-in slide-in-from-top fade-in opacity-100' : 'opacity-0 translate-y-8'
-          }`}
-        >
-          <span className="inline-block hover:scale-105 transition-transform duration-300 drop-shadow-2xl">
-            {t('hero.title')}
-          </span>
-          <br />
-          <span className="relative inline-block mt-4">
-            <span className="bg-gradient-to-r from-[#1ABA7F] via-[#76D1F3] to-[#1ABA7F] bg-clip-text text-transparent animate-gradient bg-300% font-black drop-shadow-2xl">
-              Manzu
-            </span>
-            <div className="absolute -top-4 -right-12 w-10 h-10 bg-yellow-300 rounded-full flex items-center justify-center shadow-xl animate-bounce">
-              <Sparkles className="h-6 w-6 text-[#225F91]" aria-hidden="true" strokeWidth={3} />
-            </div>
-            <div className="absolute -bottom-3 left-0 right-0 h-3 bg-gradient-to-r from-[#1ABA7F] via-[#76D1F3] to-[#1ABA7F] rounded-full blur-md animate-gradient bg-300% shadow-2xl" />
+        {/* Main title */}
+        <h1 className={`text-5xl sm:text-6xl lg:text-7xl font-black text-white leading-[1.05] mb-8 transition-all duration-1000 ${
+          isVisible ? 'animate-in slide-in-from-top fade-in opacity-100' : 'opacity-0 translate-y-8'
+        }`}>
+          {t('hero.title')} <br />
+          <span className="bg-gradient-to-r from-[#1ABA7F] via-[#76D1F3] to-[#1ABA7F] bg-clip-text text-transparent font-black animate-gradient bg-300%">
+            Manzu
           </span>
         </h1>
 
-        {/* Enhanced Subtitle */}
-        <p
-          className={`mt-8 text-base sm:text-2xl md:text-3xl text-gray-50 font-bold max-w-4xl mx-auto leading-relaxed drop-shadow-lg transition-all duration-1000 delay-300 ${
-            isVisible ? 'animate-in slide-in-from-bottom fade-in opacity-100' : 'opacity-0 translate-y-8'
-          }`}
-        >
+        {/* Subtitle */}
+        <p className={`mt-8 text-base sm:text-2xl md:text-3xl text-gray-50 font-bold max-w-4xl mx-auto leading-relaxed transition-all duration-1000 delay-300 ${
+          isVisible ? 'animate-in slide-in-from-bottom fade-in opacity-100' : 'opacity-0 translate-y-8'
+        }`}>
           {t('hero.subtitle')}
         </p>
 
-        {/* Ultra Premium CTA Buttons */}
-        <div
-          className={`mt-10 sm:mt-14 flex flex-col sm:flex-row justify-center items-center gap-5 transition-all duration-1000 delay-500 ${
-            isVisible ? 'animate-in zoom-in-50 fade-in opacity-100' : 'opacity-0 scale-95'
-          }`}
-        >
-          <Button
-            onClick={onSearchClick}
-            className="group relative h-14 sm:h-16 px-10 sm:px-12 text-base sm:text-lg font-black rounded-2xl bg-gradient-to-r from-[#1ABA7F] to-[#16a876] text-white hover:from-[#16a876] hover:to-[#1ABA7F] shadow-2xl hover:shadow-3xl transition-all duration-300 overflow-hidden hover:scale-110 border-2 border-white/30"
-            aria-label={t('hero.find_medications')}
-          >
-            <span className="relative z-10 flex items-center gap-3">
-              <div className="p-1.5 bg-white/20 rounded-lg">
-                <Pill className="w-6 h-6" aria-hidden="true" strokeWidth={3} />
-              </div>
-              {t('hero.find_medications')}
-            </span>
-            <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+        {/* CTA buttons */}
+        <div className={`mt-10 flex flex-col sm:flex-row justify-center items-center gap-5 transition-all duration-1000 delay-500 ${
+          isVisible ? 'animate-in zoom-in-50 fade-in opacity-100' : 'opacity-0 scale-95'
+        }`}>
+          <Button onClick={onSearchClick} className="h-14 sm:h-16 px-10 text-base sm:text-lg font-black rounded-2xl bg-gradient-to-r from-[#1ABA7F] to-[#16a876] text-white shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105">
+            {t('hero.find_medications')}
           </Button>
-          
-          <Button
-            onClick={onUploadClick}
-            className="group relative h-14 sm:h-16 px-10 sm:px-12 text-base sm:text-lg font-black rounded-2xl bg-white/15 backdrop-blur-xl border-2 border-white/60 text-white hover:bg-white/25 shadow-2xl hover:shadow-3xl transition-all duration-300 overflow-hidden hover:scale-110"
-            aria-label={t('hero.upload_prescription')}
-          >
-            <span className="relative z-10 flex items-center gap-3">
-              <div className="p-1.5 bg-yellow-300/80 rounded-lg">
-                <Zap className="w-6 h-6 text-[#225F91]" aria-hidden="true" strokeWidth={3} />
-              </div>
-              {t('hero.upload_prescription')}
-            </span>
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+          <Button onClick={onUploadClick} className="h-14 sm:h-16 px-10 text-base sm:text-lg font-black rounded-2xl bg-white/15 border-2 border-white/60 text-white shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105">
+            {t('hero.upload_prescription')}
           </Button>
         </div>
-
-        {/* Enhanced Alternative Access Methods */}
-        <details
-          className={`mt-12 group transition-all duration-1000 delay-700 ${
-            isVisible ? 'animate-in slide-in-from-bottom fade-in opacity-100' : 'opacity-0 translate-y-8'
-          }`}
-        >
-          <summary className="text-sm sm:text-base text-gray-100 cursor-pointer hover:text-white transition-colors duration-200 flex items-center justify-center gap-3 focus:outline-none focus:ring-4 focus:ring-white/50 rounded-2xl px-6 py-3 backdrop-blur-xl bg-white/10 hover:bg-white/20 w-fit mx-auto font-bold shadow-lg">
-            <Globe className="w-5 h-5" aria-hidden="true" />
-            <span>{t('hero.other_access_methods')}</span>
-            <ChevronDown className="w-5 h-5 transition-transform duration-300 group-open:rotate-180" aria-hidden="true" />
-          </summary>
-
-          <div className="mt-8 flex flex-col sm:flex-row justify-center gap-5 animate-in slide-in-from-top fade-in duration-300">
-            <Button
-              asChild
-              onClick={handleWhatsAppClick}
-              className="group h-12 sm:h-14 px-6 sm:px-8 text-sm sm:text-base font-black rounded-2xl bg-[#25D366] text-white hover:bg-[#20B85A] shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-110 border-2 border-white/30"
-            >
-              <a 
-                href={`https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent('Find medication')}`}
-                target="_blank" 
-                rel="noopener noreferrer"
-                aria-label={t('hero.whatsapp_search')}
-              >
-                <span className="relative z-10 flex items-center gap-3">
-                  <MessageCircle className="h-6 w-6" aria-hidden="true" />
-                  {t('hero.whatsapp_search')}
-                </span>
-              </a>
-            </Button>
-
-            <Button
-              onClick={handleUSSDClick}
-              className="group h-12 sm:h-14 px-6 sm:px-8 text-sm sm:text-base font-black rounded-2xl bg-white/15 backdrop-blur-xl border-2 border-white/60 text-white hover:bg-white/25 shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-110"
-              aria-label={`${t('hero.ussd_search')} ${CONFIG.ussdCode}`}
-            >
-              <span className="relative z-10 flex items-center gap-3">
-                <Phone className="h-6 w-6" aria-hidden="true" />
-                {t('hero.ussd_search')} ({CONFIG.ussdCode})
-              </span>
-            </Button>
-          </div>
-        </details>
       </div>
-
-      {/* Enhanced Bottom Gradient Fade */}
-      <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-white/10 to-transparent" aria-hidden="true" />
     </header>
   );
 });
@@ -474,96 +308,73 @@ const ServiceCard = memo(({ title, icon: Icon, children, isActive = false, gradi
 
   useEffect(() => {
     const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) setIsVisible(true);
-      },
+      ([entry]) => { if (entry.isIntersecting) setIsVisible(true); },
       { threshold: 0.1, rootMargin: '50px' }
     );
-
     const currentRef = cardRef.current;
     if (currentRef) observer.observe(currentRef);
-
-    return () => {
-      if (currentRef) observer.unobserve(currentRef);
-    };
+    return () => currentRef && observer.unobserve(currentRef);
   }, []);
 
   return (
-    <Card 
+    <Card
       ref={cardRef}
-      className={`relative bg-white/98 backdrop-blur-xl border-0 rounded-[2rem] mt-8 sm:mt-20 mb-20 pt-10 pb-28 shadow-2xl overflow-hidden transition-all duration-500 hover:-translate-y-3 hover:shadow-3xl sm:max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto group ${
-        isVisible ? 'animate-in slide-in-from-bottom fade-in opacity-100' : 'opacity-0 translate-y-8'
-      }`}
+      className={`
+        relative bg-white/95 border-0 rounded-[2rem] mt-8 sm:mt-20 mb-20 pt-10 pb-28 shadow-2xl overflow-hidden
+        transition-transform duration-500 ease-in-out hover:-translate-y-2 sm:hover:-translate-y-3 sm:hover:shadow-2xl
+        sm:max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto group
+        ${isVisible ? 'animate-in slide-in-from-bottom fade-in opacity-100' : 'opacity-0 translate-y-8'}
+      `}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       style={{
         boxShadow: isHovered 
-          ? '0 30px 60px -15px rgba(26, 186, 127, 0.3), 0 0 0 3px rgba(26, 186, 127, 0.15)' 
-          : '0 25px 50px -12px rgba(0, 0, 0, 0.2)'
+          ? '0 20px 40px -10px rgba(26, 186, 127, 0.25)' 
+          : '0 15px 30px -8px rgba(0,0,0,0.15)'
       }}
     >
-      {/* Animated Border Gradient with glow */}
-      <div className={`absolute inset-0 rounded-[2rem] bg-gradient-to-br ${gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500 p-[3px]`} aria-hidden="true">
-        <div className="w-full h-full bg-white rounded-[2rem]" />
-      </div>
+      {/* Subtle gradient border on hover */}
+      <div className={`absolute inset-0 rounded-[2rem] bg-gradient-to-br ${gradient} opacity-0 group-hover:opacity-40 transition-opacity duration-500`} />
 
-      {/* Enhanced Gradient Background */}
-      <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-5 transition-opacity duration-300 ${
-        isHovered ? 'opacity-15' : ''
-      }`} aria-hidden="true" />
+      {/* Decorative shapes (simplified for GPU) */}
+      <div className="absolute top-0 left-0 w-36 h-36 bg-gradient-to-br from-[#1ABA7F]/15 to-transparent rounded-br-full pointer-events-none" />
+      <div className="absolute bottom-0 right-0 w-36 h-36 bg-gradient-to-tl from-[#225F91]/15 to-transparent rounded-tl-full pointer-events-none" />
 
-      {/* Premium Decorative Elements */}
-      <div className="absolute top-0 left-0 w-40 h-40 bg-gradient-to-br from-[#1ABA7F]/15 to-transparent rounded-br-full" aria-hidden="true" />
-      <div className="absolute bottom-0 right-0 w-40 h-40 bg-gradient-to-tl from-[#225F91]/15 to-transparent rounded-tl-full" aria-hidden="true" />
-      
-      {/* Animated Dots with glow */}
-      <div className="absolute top-8 right-8 flex gap-3" aria-hidden="true">
-        <div className={`w-3 h-3 rounded-full bg-gradient-to-r ${gradient} animate-pulse shadow-lg`} />
-        <div className={`w-3 h-3 rounded-full bg-gradient-to-r ${gradient} animate-pulse delay-75 shadow-lg`} />
-        <div className={`w-3 h-3 rounded-full bg-gradient-to-r ${gradient} animate-pulse delay-150 shadow-lg`} />
-      </div>
-      
-      <CardHeader className="p-6 sm:p-10 relative z-10">
-        <div className="flex items-center justify-between mb-8">
+      {/* Animated Icon + Badge */}
+      <CardHeader className="p-4 sm:p-10 relative z-10">
+        <div className="flex items-center justify-between mb-6 sm:mb-8">
           {Icon && (
             <div className="relative">
-              <div className={`absolute inset-0 rounded-3xl bg-gradient-to-br ${gradient} blur-2xl opacity-50 animate-pulse`} />
-              <div className={`relative p-3 sm:p-5 rounded-3xl bg-gradient-to-br ${gradient} shadow-2xl transition-all duration-500 ${
-                isHovered ? 'scale-110 rotate-3' : ''
-              }`}>
-                <Icon className="w-8 sm:w-10 h-8 sm:h-10 text-white" aria-hidden="true" strokeWidth={2.5} />
-                <div className={`absolute inset-0 rounded-3xl bg-white opacity-0 group-hover:opacity-25 transition-opacity duration-300 ${
-                  isHovered ? 'animate-pulse' : ''
-                }`} />
+              <div className={`relative p-3 sm:p-5 rounded-3xl bg-gradient-to-br ${gradient} shadow-lg transition-transform duration-500 ${isHovered ? 'scale-105' : ''}`}>
+                <Icon className="w-8 sm:w-10 h-8 sm:h-10 text-white" strokeWidth={2.5} />
               </div>
             </div>
           )}
           {isActive && (
-            <Badge className={`bg-gradient-to-r ${gradient} text-white border-0 px-5 py-2.5 rounded-2xl text-sm font-black shadow-2xl hover:scale-110 transition-transform duration-300`}>
-              <Star className="h-4 w-4 mr-1.5 fill-current" aria-hidden="true" />
-              Popular
+            <Badge className={`bg-gradient-to-r ${gradient} text-white border-0 px-5 py-2.5 rounded-2xl text-sm font-black shadow-lg transition-transform duration-300`}>
+              <Star className="h-4 w-4 mr-1.5 fill-current" /> Popular
             </Badge>
           )}
         </div>
-        <CardTitle className="text-3xl sm:text-6xl font-black text-[#225F91] tracking-tight text-center mb-4">
+
+        <CardTitle className="text-3xl sm:text-5xl font-black text-[#225F91] tracking-tight text-center mb-4">
           {title}
         </CardTitle>
-        <div className={`h-2 w-32 mx-auto rounded-full bg-gradient-to-r ${gradient} transition-all duration-500 shadow-lg ${
-          isHovered ? 'w-40' : ''
-        }`} aria-hidden="true" />
+
+        {/* Minimal gradient underline */}
+        <div className={`h-1.5 w-28 mx-auto rounded-full bg-gradient-to-r ${gradient} transition-all duration-500 shadow-sm ${isHovered ? 'w-36' : ''}`} />
       </CardHeader>
-      
+
       <CardContent className="px-3 sm:px-10 relative z-10">
         {children}
       </CardContent>
 
-      {/* Enhanced Shine Effect */}
-      <div className={`absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 ${
-        isHovered ? 'animate-shine' : ''
-      }`} aria-hidden="true" />
+      {/* Subtle shine effect */}
+      <div className={`absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700`} />
     </Card>
   );
 });
+
 
 ServiceCard.displayName = 'ServiceCard';
 

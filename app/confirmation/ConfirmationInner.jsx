@@ -211,7 +211,7 @@ useEffect(() => {
             <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-[#1ABA7F]/20 to-transparent rounded-bl-full" />
             <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-[#225F91]/20 to-transparent rounded-tr-full" />
 
-            <CardHeader className="relative z-10 bg-gradient-to-r from-[#1ABA7F]/10 via-transparent to-[#225F91]/10 p-8 text-center">
+            <CardHeader className="relative z-10 bg-gradient-to-r from-[#1ABA7F]/10 via-transparent to-[#225F91]/10 p-6 sm:p-8 text-center">
               {/* Success icon */}
               <div className="relative mx-auto w-24 h-24 mb-6">
                 <div className="absolute inset-0 bg-gradient-to-br from-[#1ABA7F]/30 to-green-500/30 rounded-full blur-xl animate-pulse" />
@@ -241,13 +241,13 @@ useEffect(() => {
               </div>
             </CardHeader>
 
-            <CardContent className="p-6 sm:p-8 space-y-6">
+            <CardContent className="p-4 sm:p-8 space-y-6">
               {/* Tracking Code Section */}
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border-2 border-blue-200/50">
                     <h3 className="text-sm font-bold text-gray-600 mb-2 uppercase tracking-wide">Tracking Code</h3>
-                    <p className="text-2xl font-black text-[#225F91] font-mono">{confirmationData.trackingCode}</p>
+                    <p className="text-lg sm:text-2xl font-black text-[#225F91] font-mono">{confirmationData.trackingCode}</p>
                   </div>
 
                   {isDelivery && (
@@ -308,7 +308,7 @@ useEffect(() => {
                 const isPickup = order.deliveryMethod !== 'COURIER';
                 return (
                   <Card key={order.id} className="bg-white/95 backdrop-blur-sm border-2 border-[#1ABA7F]/20 rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition-all duration-300 animate-in fade-in slide-in-from-bottom">
-                    <CardHeader className="bg-gradient-to-r from-[#225F91]/10 to-[#1ABA7F]/10 p-6">
+                    <CardHeader className="bg-gradient-to-r from-[#225F91]/10 to-[#1ABA7F]/10 p-4">
                       <div className="flex items-center justify-between flex-wrap gap-4">
                         <div className="flex items-center gap-3">
                           <div className="p-3 bg-gradient-to-br from-[#1ABA7F]/20 to-[#225F91]/20 rounded-xl">
@@ -331,7 +331,7 @@ useEffect(() => {
                       </div>
                     </CardHeader>
 
-                    <CardContent className="p-6 space-y-6">
+                    <CardContent className="p-4 space-y-6">
                       {/* Pickup Address */}
                       {isPickup && (
                         <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border-2 border-blue-200/50">
