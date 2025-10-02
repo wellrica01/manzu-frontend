@@ -213,18 +213,18 @@ const PrescriptionUploadSection = ({
     }
   };
 
-  const getStatusBadge = (status) => {
-    switch (status) {
-      case 'VERIFIED':
-        return <Badge className="bg-green-100 text-green-800 border-green-200 text-xs font-medium">✓ Verified</Badge>;
-      case 'PENDING':
-        return <Badge className="bg-orange-100 text-orange-800 border-orange-200 text-xs font-medium">⏳ Pending</Badge>;
-      case 'REJECTED':
-        return <Badge className="bg-red-100 text-red-800 border-red-200 text-xs font-medium">✗ Rejected</Badge>;
-      default:
-        return <Badge className="bg-gray-100 text-gray-800 border-gray-200 text-xs font-medium">📋 Required</Badge>;
-    }
-  };
+const getStatusBadge = (status) => {
+  switch (status) {
+    case 'VERIFIED':
+      return <Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white border-0 px-2 py-1 text-xs font-bold shadow-md">✓ Verified</Badge>;
+    case 'PENDING':
+      return <Badge className="bg-gradient-to-r from-orange-500 to-orange-600 text-white border-0 px-2 py-1 text-xs font-bold shadow-md">⏳ Pending</Badge>;
+    case 'REJECTED':
+      return <Badge className="bg-gradient-to-r from-red-500 to-red-600 text-white border-0 px-2 py-1 text-xs font-bold shadow-md">✗ Rejected</Badge>;
+    default:
+      return <Badge className="bg-gradient-to-r from-gray-500 to-gray-600 text-white border-0 px-2 py-1 text-xs font-bold shadow-md">📋 Required</Badge>;
+  }
+};
 
   const getStatusMessage = (status) => {
     switch (status) {
@@ -255,7 +255,7 @@ const PrescriptionUploadSection = ({
   console.log('PrescriptionUploadSection state:', { needsPrescription, showUploadArea, selectedFile, items, prescriptionStatuses });
 
   return (
-    <Card className="relative bg-white/95 backdrop-blur-sm border border-[#1ABA7F]/20 rounded-2xl shadow-xl overflow-hidden">
+    <Card className="relative bg-white/95 backdrop-blur-sm border-2 border-[#1ABA7F]/30 rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition-all duration-300">
       <div className="absolute top-0 left-0 w-16 h-16 bg-[#1ABA7F]/20 rounded-br-3xl" />
       <CardHeader className="bg-gradient-to-r from-[#1ABA7F]/10 to-transparent pb-6">
         <CardTitle className="text-lg font-bold text-[#225F91] flex items-center gap-3">
@@ -266,7 +266,7 @@ const PrescriptionUploadSection = ({
         </CardTitle>
       </CardHeader>
 
-      <CardContent className="space-y-6">
+      <CardContent className="p-4 space-y-6">
         {/* Enhanced Items Status List */}
         <div className="space-y-4">
           {items.map((item) => {
@@ -278,7 +278,9 @@ const PrescriptionUploadSection = ({
               )}>
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-4 flex-1">
-                    {getStatusIcon(status)}
+                    <div className="p-2 rounded-xl bg-gradient-to-br from-[#1ABA7F]/10 to-[#225F91]/10">
+                      {getStatusIcon(status)}
+                    </div>
                     <div className="flex-1 min-w-0">
                       <h4 className="text-base font-bold text-[#225F91] mb-2">{item.medication.displayName}</h4>
                       <p className="text-sm text-gray-600 font-medium">{getStatusMessage(status)}</p>
@@ -301,11 +303,11 @@ const PrescriptionUploadSection = ({
           <div className="space-y-6">
             {/* Enhanced File Upload Area */}
             <div
-              className={cn(
-                "border-2 border-dashed rounded-2xl p-4 sm:p-8 text-center transition-all duration-300",
+               className={cn(
+                "border-2 border-dashed rounded-2xl p-4 sm:p-8 text-center transition-all duration-300 relative overflow-hidden",
                 dragActive 
-                  ? "border-orange-400 bg-orange-50" 
-                  : "border-orange-300 bg-white/80 hover:border-orange-400 hover:bg-orange-50"
+                  ? "border-[#1ABA7F] bg-[#1ABA7F]/10 shadow-[0_0_20px_rgba(26,186,127,0.3)] scale-[1.02]" 
+                  : "border-gray-300 bg-gradient-to-br from-white to-gray-50 hover:border-[#1ABA7F]/50 hover:shadow-lg"
               )}
               onDragEnter={handleDrag}
               onDragLeave={handleDrag}
@@ -314,28 +316,41 @@ const PrescriptionUploadSection = ({
             >
               {!selectedFile ? (
                 <>
-                  <Upload className="h-8 w-8 text-orange-500 mx-auto mb-4" />
+                <div
+                  className={cn(
+                    "p-4 rounded-full transition-all duration-300 mx-auto mb-4 flex items-center justify-center",
+                    dragActive ? "bg-[#1ABA7F]/20 scale-110" : "bg-orange-100"
+                  )}
+                >
+                  <Upload
+                    className={cn(
+                      "h-8 w-8 transition-colors duration-300",
+                      dragActive ? "text-[#1ABA7F]" : "text-orange-500"
+                    )}
+                  />
+                </div>
+
                   <p className="text-sm text-gray-600 mb-6 leading-relaxed">
                     Drag and drop files here, or click to browse
                   </p>
                   <div className="space-y-2 text-xs text-gray-500 mb-6">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      <span>PDF, JPG, PNG files accepted</span>
+                    <div className="flex items-center justify-center gap-2 p-2 rounded-lg bg-green-50">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <span className="font-medium">PDF, JPG, PNG files accepted</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      <span>Maximum 5MB per file</span>
+                    <div className="flex items-center justify-center gap-2 p-2 rounded-lg bg-blue-50">
+                      <CheckCircle className="h-4 w-4 text-blue-600" />
+                      <span className="font-medium">Maximum 5MB per file</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      <span>Clear, readable images preferred</span>
+                    <div className="flex items-center justify-center gap-2 p-2 rounded-lg bg-purple-50">
+                      <CheckCircle className="h-4 w-4 text-purple-600" />
+                      <span className="font-medium">Clear, readable images preferred</span>
                     </div>
                   </div>
                   
-                  <Button
+                 <Button
                     onClick={() => fileInputRef.current?.click()}
-                    className="w-full sm:w-auto h-12 px-4 bg-[#225F91] text-white hover:bg-[#1A4971]"
+                    className="w-full sm:w-auto h-12 px-6 text-sm font-bold bg-gradient-to-r from-[#225F91] to-[#1a4a73] text-white hover:from-[#1a4a73] hover:to-[#225F91] rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
                   >
                     <Upload className="h-5 w-5 mr-3" />
                     Choose File
@@ -351,16 +366,18 @@ const PrescriptionUploadSection = ({
                 </>
               ) : (
                 <div className="space-y-6">
-                  <div className="flex items-center justify-between p-3 bg-green-50 rounded-2xl border border-green-200">
+                  <div className="flex items-center justify-between p-3 bg-gradient-to-r from-green-50 to-green-100 rounded-2xl border-2 border-green-300 shadow-md animate-in slide-in-from-top-2 duration-300">
                     <div className="flex items-center gap-3">
-                      <CheckCircle className="h-5 w-5 text-green-600" />
-                      <span className="text-xs sm:text-base font-semibold text-green-800">{selectedFile.name}</span>
+                      <div className="p-2 rounded-lg bg-green-200">
+                        <CheckCircle className="h-5 w-5 text-green-700" />
+                      </div>
+                      <span className="text-xs sm:text-base font-semibold text-green-900">{selectedFile.name}</span>
                     </div>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={removeSelectedFile}
-                      className="h-6 w-6 p-0 text-red-600 hover:bg-red-50"
+                      className="h-8 w-8 p-0 text-red-600 hover:bg-red-100 border-red-300 rounded-lg transition-all duration-200 hover:scale-110"
                     >
                       <X className="h-4 w-4" />
                     </Button>
@@ -368,18 +385,22 @@ const PrescriptionUploadSection = ({
                   
                   {filePreview && (
                     <div className="space-y-3">
-                      <Button
+                     <Button
                         variant="outline"
                         size="sm"
                         onClick={() => setShowFilePreview(!showFilePreview)}
-                        className="text-xs sm:text-base font-semibold text-[#225F91]"
+                        className="text-xs sm:text-base font-semibold bg-gradient-to-r from-[#225F91]/10 to-[#1ABA7F]/10 border-2 border-[#1ABA7F]/30 text-[#225F91] hover:bg-[#1ABA7F]/20 rounded-xl transition-all duration-200 hover:scale-105"
                       >
                         <Eye className="h-4 w-4 mr-2" />
                         {showFilePreview ? 'Hide Preview' : 'Show Preview'}
                       </Button>
                       {showFilePreview && (
-                        <div className="max-w-sm mx-auto">
-                          <img src={filePreview} alt="File preview" className="rounded-2xl border shadow-sm" />
+                        <div className="max-w-sm mx-auto animate-in fade-in-50 duration-300">
+                          <img 
+                            src={filePreview} 
+                            alt="File preview" 
+                            className="rounded-2xl border-4 border-[#1ABA7F]/30 shadow-2xl hover:scale-105 transition-transform duration-300" 
+                          />
                         </div>
                       )}
                     </div>
@@ -390,7 +411,7 @@ const PrescriptionUploadSection = ({
 
             {/* Enhanced Contact Information Form */}
             {selectedFile && (
-              <div className="p-4 sm:p-6 bg-[#1ABA7F]/10 rounded-2xl border border-[#1ABA7F]/20">
+              <div className="p-4 sm:p-6 bg-gradient-to-r from-[#1ABA7F]/10 to-[#225F91]/5 rounded-2xl border-2 border-[#1ABA7F]/20 shadow-inner">
                 <div className="space-y-6">
                   <div className="flex items-center gap-3">
                     <Mail className="h-5 w-5 text-[#1ABA7F]" />
@@ -452,7 +473,7 @@ const PrescriptionUploadSection = ({
                   <Button
                     onClick={handleFileUpload}
                     disabled={uploading}
-                    className="w-full sm:w-auto h-12 px-4 font-semibold bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+                    className="w-full sm:w-auto h-12 px-6 font-semibold bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                   >
                     {uploading ? (
                       <>
@@ -472,29 +493,34 @@ const PrescriptionUploadSection = ({
 
             {/* Enhanced Uploaded Files Status */}
             {Object.keys(uploadedFiles).length > 0 && (
-              <div className="space-y-3">
-                <h4 className="text-base font-semibold text-gray-900">Uploaded Files:</h4>
-                {Object.entries(uploadedFiles).map(([filename, status]) => (
-                  <div key={filename} className="flex items-center justify-between p-4 bg-green-50 rounded-2xl border border-green-200">
-                    <span className="text-base font-medium text-green-800">{filename}</span>
-                    <Badge className="bg-green-100 text-green-800 border-green-200 text-sm font-medium">
-                      {status === 'uploaded' ? '✓ Uploaded' : 'Processing'}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
+          <div className="space-y-3 animate-in slide-in-from-bottom-2 duration-300">
+          <h4 className="text-base font-bold text-gray-900 flex items-center gap-2">
+            <CheckCircle className="h-5 w-5 text-green-600" />
+            Uploaded Files:
+          </h4>
+          {Object.entries(uploadedFiles).map(([filename, status]) => (
+            <div key={filename} className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-green-100 rounded-2xl border-2 border-green-300 shadow-sm hover:shadow-md transition-shadow duration-200">
+              <span className="text-base font-medium text-green-900">{filename}</span>
+              <Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white border-0 px-3 py-1 text-sm font-bold shadow-md">
+                {status === 'uploaded' ? '✓ Uploaded' : '⏳ Processing'}
+              </Badge>
+            </div>
+          ))}
+        </div>
             )}
           </div>
         )}
 
         {/* Enhanced Upload Success Message */}
         {!showUploadArea && (
-          <div className="p-6 bg-gradient-to-r from-green-50 to-green-100/50 rounded-2xl border border-green-200">
+          <div className="p-6 bg-gradient-to-r from-green-50 via-green-100 to-green-50 rounded-2xl border-2 border-green-300 shadow-xl animate-in zoom-in-50 duration-500">
             <div className="flex items-start gap-4">
-              <CheckCircle className="h-6 w-6 text-green-600 mt-1 flex-shrink-0" />
+              <div className="p-3 rounded-full bg-green-200 animate-pulse">
+                <CheckCircle className="h-8 w-8 text-green-700" />
+              </div>
               <div>
-                <h4 className="text-lg font-bold text-green-800 mb-2">Upload Successful!</h4>
-                <p className="text-base text-green-700 leading-relaxed">
+                <h4 className="text-xl font-black text-green-900 mb-2">Upload Successful! 🎉</h4>
+                <p className="text-base text-green-800 leading-relaxed font-medium">
                   Your prescription has been uploaded and is being reviewed by our pharmacy team.
                 </p>
               </div>
@@ -508,20 +534,20 @@ const PrescriptionUploadSection = ({
             <Shield className="h-6 w-6 text-blue-600 mt-1 flex-shrink-0" />
             <div>
               <h4 className="text-base font-bold text-blue-800 mb-4">Verification Process</h4>
-              <div className="space-y-3 text-xs text-blue-700">
-                <div className="flex items-center gap-3">
-                  <div className="w-3 h-3 bg-blue-400 rounded-full"></div>
-                  <span>Our licensed pharmacists review each prescription</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-3 h-3 bg-blue-400 rounded-full"></div>
-                  <span>Verification typically takes 24-48 hours</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-3 h-3 bg-blue-400 rounded-full"></div>
-                  <span>You'll be notified via email/SMS when verified</span>
-                </div>
+            <div className="space-y-3 text-sm text-blue-800">
+              <div className="flex items-center gap-3 p-2 rounded-lg bg-blue-100 transition-all duration-200 hover:bg-blue-200">
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                <span className="font-medium">Our licensed pharmacists review each prescription</span>
               </div>
+              <div className="flex items-center gap-3 p-2 rounded-lg bg-blue-100 transition-all duration-200 hover:bg-blue-200">
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                <span className="font-medium">Verification typically takes 24-48 hours</span>
+              </div>
+              <div className="flex items-center gap-3 p-2 rounded-lg bg-blue-100 transition-all duration-200 hover:bg-blue-200">
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+                <span className="font-medium">You'll be notified via email/SMS when verified</span>
+              </div>
+            </div>
             </div>
           </div>
         </div>

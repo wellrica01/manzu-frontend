@@ -8,13 +8,12 @@ import {
   CreditCard, 
   Package, 
   CheckCircle, 
-  AlertCircle, 
   Loader2,
   X,
   Shield,
-  Truck,
-  Store,
-  HospitalIcon
+  HospitalIcon,
+  Sparkles,
+  ArrowRight
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -27,10 +26,8 @@ const CheckoutDialog = ({
 }) => {
   if (!show) return null;
 
-  // Count unique medications, not total quantity
   const uniqueMedicationsCount = segments.readyForCheckout.length;
 
-  // Group items by pharmacy for display
   const groupItemsByPharmacy = (items) => {
     const grouped = {};
     items.forEach(item => {
@@ -50,165 +47,185 @@ const CheckoutDialog = ({
 
   return (
     <Dialog open={show} onOpenChange={onClose}>
-      <DialogContent className="w-full max-w-[95vw] sm:max-w-xl lg:max-w-2xl max-h-[90vh] overflow-y-auto p-5 sm:p-5 mx-auto">
-        <DialogHeader>
-          <DialogTitle className="text-lg sm:text-xl font-bold text-[#225F91] flex items-center gap-2">
-            <CreditCard className="h-4 w-4 sm:h-5 w-5 text-[#1ABA7F]" />
-            Confirm Your Order
-          </DialogTitle>
-        </DialogHeader>
+      <DialogContent className="w-full max-w-[95vw] sm:max-w-xl lg:max-w-2xl max-h-[90vh] overflow-y-auto p-0 border-0 rounded-3xl bg-white shadow-2xl mx-auto">
+        {/* Animated gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#1ABA7F]/5 via-white to-[#225F91]/5 rounded-3xl" />
+        
+        {/* Decorative elements */}
+        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-[#1ABA7F]/10 to-transparent rounded-bl-full" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-[#225F91]/10 to-transparent rounded-tr-full" />
 
-        <div className="space-y-4 sm:space-y-6">
-          {/* Order Summary */}
-          <div className="space-y-3 sm:space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-base sm:text-lg font-semibold text-gray-900">Order Summary</h3>
-              <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200 text-xs sm:text-sm">
-                <CheckCircle className="h-3 w-3 mr-1" />
-                Ready for Payment
-              </Badge>
+        <div className="relative z-10 px-5 py-8">
+          {/* Header with icon animation */}
+          <DialogHeader className="mb-6">
+            <div className="flex items-center gap-3 sm:gap-4 mb-4">
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-[#1ABA7F] to-[#225F91] rounded-2xl blur-xl opacity-30 animate-pulse" />
+                <div className="relative w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-[#1ABA7F] to-[#16a876] flex items-center justify-center shadow-lg">
+                  <CreditCard className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+                </div>
+              </div>
+              <div className="flex-1">
+                <DialogTitle className="text-lg sm:text-2xl lg:text-3xl font-black text-[#225F91] tracking-tight mb-2">
+                  Confirm Your Order
+                </DialogTitle>
+                <Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white border-0 shadow-md text-xs sm:text-sm">
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  Ready for Payment
+                </Badge>
+              </div>
             </div>
+          </DialogHeader>
 
+          <div className="space-y-4 sm:space-y-6">
             {/* Medications by Pharmacy */}
             <div className="space-y-3 sm:space-y-4">
               {pharmacyGroups.map((group, index) => (
                 <div 
                   key={group.pharmacy?.id || index} 
-                  className="border border-gray-200 rounded-lg p-2 sm:p-4"
+                  className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-white to-gray-50 border-2 border-gray-100 p-3 sm:p-5 hover:border-[#1ABA7F]/30 transition-all duration-300 hover:shadow-lg"
                   role="region"
                   aria-label={`Medications from ${group.pharmacy?.name || 'Unknown Pharmacy'}`}
                 >
                   {/* Pharmacy Header */}
-                  <div className="flex items-center justify-between mb-2 sm:mb-3">
-                    <div className="flex items-center gap-2">
-                      <HospitalIcon className="h-3 w-3 sm:h-4 w-4 text-[#1ABA7F]" />
-                      <h4 className="font-semibold text-gray-900 text-sm sm:text-base">
-                        {group.pharmacy?.name || 'Unknown Pharmacy'}
-                      </h4>
+                  <div className="flex items-center justify-between mb-3 sm:mb-4">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-[#1ABA7F]/20 to-[#1ABA7F]/10 flex items-center justify-center">
+                        <HospitalIcon className="h-4 w-4 sm:h-5 sm:w-5 text-[#1ABA7F]" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-gray-900 text-sm sm:text-base">
+                          {group.pharmacy?.name || 'Unknown Pharmacy'}
+                        </h4>
+                        <p className="text-xs text-gray-500">{group.items.length} medication{group.items.length !== 1 ? 's' : ''}</p>
+                      </div>
                     </div>
-                    <Badge variant="outline" className="text-xs border-[#1ABA7F]/20 text-[#1ABA7F]">
-                      {group.items.length} medication{group.items.length !== 1 ? 's' : ''}
-                    </Badge>
                   </div>
 
                   {/* Medications List */}
-                  <div className="space-y-2">
+                  <div className="space-y-2 sm:space-y-3">
                     {group.items.map((item) => (
-                  <div 
-                    key={item.id} 
-                    className="flex items-center justify-between py-1 sm:py-2"
-                    role="listitem"
-                    aria-label={`Medication: ${item.medication.displayName}`}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-gray-900 truncate text-xs sm:text-sm">
-                          {item.medication.displayName}
-                        </span>
-                        {item.medication.prescriptionRequired && (
-                          <Badge variant="outline" className="text-xs border-green-200 text-green-700">
-                            <CheckCircle className="h-3 w-3 mr-1" />
-                            Verified
-                          </Badge>
-                        )}
+                      <div 
+                        key={item.id} 
+                        className="flex items-center justify-between p-2 sm:p-3 rounded-xl bg-white border border-gray-100 hover:border-[#1ABA7F]/30 transition-colors duration-200"
+                        role="listitem"
+                        aria-label={`Medication: ${item.medication.displayName}`}
+                      >
+                        <div className="flex-1 min-w-0 pr-3 sm:pr-4">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <span className="font-semibold text-gray-900 text-xs sm:text-sm truncate">
+                              {item.medication.displayName}
+                            </span>
+                            {item.medication.prescriptionRequired && (
+                              <Badge className="bg-green-100 text-green-700 border-0 text-xs">
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                                Verified
+                              </Badge>
+                            )}
+                          </div>
+                          {item.medication.ingredients?.length > 0 && (
+                            <p className="text-xs text-gray-500 truncate">
+                              {item.medication.ingredients
+                                .map(ing => `${ing.activeSubstance} ${ing.strengthValue}${ing.strengthUnit}`)
+                                .join(" + ")}
+                            </p>
+                          )}
+                        </div>
+                        <div className="text-right ml-2 sm:ml-4 flex-shrink-0">
+                          <div className="text-xs text-gray-600">
+                            {item.quantity} × ₦{item.price.toLocaleString()}
+                          </div>
+                          <div className="text-sm font-bold text-[#225F91]">
+                            ₦{(item.quantity * item.price).toLocaleString()}
+                          </div>
+                        </div>
                       </div>
-                      {/* Ingredients description */}
-                      {item.medication.ingredients?.length > 0 && (
-                        <p className="text-xs text-gray-500 truncate">
-                          {item.medication.ingredients
-                            .map(
-                              (ing) =>
-                                `${ing.activeSubstance} ${ing.strengthValue}${ing.strengthUnit}`
-                            )
-                            .join(" + ")}
-                        </p>
-                      )}
-                    </div>
-                    <div className="text-right ml-4">
-                      <div className="text-xs sm:text-sm font-medium text-gray-900">
-                        {item.quantity} × ₦{item.price.toLocaleString()}
-                      </div>
-                      <div className="text-xs sm:text-sm font-bold text-[#225F91]">
-                        ₦{(item.quantity * item.price).toLocaleString()}
-                      </div>
-                    </div>
-                  </div>
-
                     ))}
                   </div>
                 </div>
               ))}
             </div>
-          </div>
 
-          <Separator />
+            <Separator className="bg-gradient-to-r from-transparent via-gray-300 to-transparent" />
 
-          {/* Price Breakdown */}
-          <div className="space-y-2 sm:space-y-3">
-            <h4 className="font-semibold text-gray-900 text-sm sm:text-base">Price Breakdown</h4>
-            
-            <div className="space-y-2 text-xs sm:text-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600">Medications Total:</span>
-                <span className="font-medium text-gray-900">₦{segments.totalPrice.toLocaleString()}</span>
+            {/* Price Breakdown Card */}
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#225F91]/5 to-[#1ABA7F]/5 p-4 sm:p-5 border-2 border-[#1ABA7F]/20">
+              <div className="space-y-2 sm:space-y-3">
+                <h4 className="font-bold text-gray-900 flex items-center gap-2 text-sm sm:text-base">
+                  <Sparkles className="h-4 w-4 text-[#1ABA7F]" />
+                  Price Breakdown
+                </h4>
+                
+                <div className="space-y-2 text-xs sm:text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Medications Total:</span>
+                    <span className="font-semibold text-gray-900">₦{segments.totalPrice.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Delivery Fee:</span>
+                    <span className="font-semibold text-green-600">Free</span>
+                  </div>
+                </div>
+
+                <Separator className="bg-gradient-to-r from-transparent via-gray-300 to-transparent" />
+
+                <div className="flex justify-between items-center py-2">
+                  <span className="text-base sm:text-lg font-bold text-gray-900">Total Amount</span>
+                  <span className="text-xl sm:text-2xl lg:text-3xl font-black bg-gradient-to-r from-[#225F91] to-[#1ABA7F] bg-clip-text text-transparent">
+                    ₦{segments.totalPrice.toLocaleString()}
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600">Delivery Fee:</span>
-                <span className="font-medium text-green-600">Free</span>
+            </div>
+
+            {/* Security Notice */}
+            <div className="p-3 sm:p-4 rounded-2xl bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200">
+              <div className="flex items-start gap-2 sm:gap-3">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0">
+                  <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
+                </div>
+                <div className="text-xs sm:text-sm text-green-800">
+                  <p className="font-bold mb-1">Secure Payment</p>
+                  <p>Your payment will be processed securely through our payment partner.</p>
+                </div>
               </div>
             </div>
 
-            <Separator />
-
-            <div className="flex items-center justify-between py-2">
-              <span className="text-base sm:text-lg font-semibold text-gray-900">Total Amount</span>
-              <span className="text-xl sm:text-2xl font-bold text-[#225F91]">
-                ₦{segments.totalPrice.toLocaleString()}
-              </span>
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              <Button
+                onClick={onConfirm}
+                disabled={loading}
+                className="group w-full sm:flex-1 h-12 px-4 sm:px-6 text-sm sm:text-base font-bold rounded-xl bg-gradient-to-r from-[#225F91] to-[#1a4a73] text-white hover:from-[#1a4a73] hover:to-[#225F91] shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 relative overflow-hidden"
+                aria-label={`Pay ₦${segments.totalPrice.toLocaleString()}`}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <span className="relative z-10 flex items-center justify-center gap-2">
+                      <CreditCard className="h-4 w-4 sm:h-5 sm:w-5" />
+                      Pay ₦{segments.totalPrice.toLocaleString()}
+                      <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 group-hover:translate-x-1 transition-transform duration-300" />
+                    </span>
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                  </>
+                )}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={onClose}
+                className="w-full sm:w-auto h-12 px-4 sm:px-6 text-sm sm:text-base font-bold rounded-xl border-2 border-[#1ABA7F] text-[#225F91] hover:bg-[#1ABA7F]/10 transition-all duration-300 hover:scale-105"
+                disabled={loading}
+                aria-label="Cancel order confirmation"
+              >
+                <X className="h-4 w-4 mr-2" />
+                Cancel
+              </Button>
             </div>
-          </div>
-
-          {/* Security Notice */}
-          <div className="p-2 sm:p-3 bg-green-50 rounded-lg border border-green-200">
-            <div className="flex items-start gap-2 sm:gap-3">
-              <Shield className="h-4 w-4 sm:h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-              <div className="text-xs sm:text-sm text-green-800">
-                <p className="font-medium mb-1">Secure Payment</p>
-                <p>Your payment will be processed securely through our payment partner.</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Button
-              onClick={onConfirm}
-              disabled={loading}
-              className="w-full sm:w-auto h-12 px-4 bg-[#225F91] text-white hover:bg-[#1A4971]"
-              aria-label={`Pay ₦${segments.totalPrice.toLocaleString()}`}
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                <>
-                  <CreditCard className="h-4 w-4 mr-2" />
-                  Pay ₦{segments.totalPrice.toLocaleString()}
-                </>
-              )}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={onClose}
-              className="w-full sm:w-auto h-12 px-4 border-[#1ABA7F]/20 text-[#225F91] hover:bg-[#1ABA7F]/10"
-              disabled={loading}
-              aria-label="Cancel order confirmation"
-            >
-              <X className="h-4 w-4 mr-2" />
-              Cancel
-            </Button>
           </div>
         </div>
       </DialogContent>

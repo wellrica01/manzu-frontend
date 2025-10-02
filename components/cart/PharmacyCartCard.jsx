@@ -4,31 +4,20 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { formatOperatingHours, getOperatingHoursTextColor } from '@/lib/pharmacyUtils';
-
 import { 
   MapPin, 
-  Phone, 
   Clock, 
-  CheckCircle, 
-  AlertCircle, 
-  Package, 
   Plus, 
-  Minus,
-  Trash2,
-  Edit3,
-  Star,
-  Truck,
-  Shield,
-  Building,
-  Award,
-  Calendar,
-  Info,
-  HospitalIcon
+  Minus, 
+  Hospital,
+  Store,
+  ChevronDown,
+  Package
 } from 'lucide-react';
 import CartItem from './CartItem';
 import { cn } from '@/lib/utils';
 
-const PharmacyCartCard = ({ 
+export const PharmacyCartCard = ({ 
   pharmacy, 
   handleQuantityChange, 
   setRemoveItem, 
@@ -38,164 +27,132 @@ const PharmacyCartCard = ({
 }) => {
   const [expanded, setExpanded] = useState(true);
 
-  const getPharmacyStatus = () => {
-    const hasPrescriptionItems = pharmacy.items.some(item => item.medication?.prescriptionRequired);
-    const hasVerifiedItems = pharmacy.items.some(item => 
-      item.medication?.prescriptionRequired && item.prescriptionStatus === 'VERIFIED'
-    );
-    const hasPendingItems = pharmacy.items.some(item => 
-      item.medication?.prescriptionRequired && item.prescriptionStatus === 'PENDING'
-    );
-
-    if (hasVerifiedItems) {
-      return {
-        status: 'verified',
-        icon: CheckCircle,
-        color: 'text-[#1ABA7F]',
-        bgColor: 'bg-[#1ABA7F]/10',
-        borderColor: 'border-[#1ABA7F]/20',
-        text: 'Prescription Verified',
-        description: 'All medications ready for checkout'
-      };
-    } else if (hasPendingItems) {
-      return {
-        status: 'pending',
-        icon: Clock,
-        color: 'text-orange-600',
-        bgColor: 'bg-orange-100',
-        borderColor: 'border-orange-200',
-        text: 'Under Review',
-        description: 'Prescriptions being verified by pharmacy team'
-      };
-    } else if (hasPrescriptionItems) {
-      return {
-        status: 'needs_prescription',
-        icon: AlertCircle,
-        color: 'text-orange-600',
-        bgColor: 'bg-orange-100',
-        borderColor: 'border-orange-200',
-        text: 'Prescription Required',
-        description: 'Upload prescriptions to proceed with checkout'
-      };
-    } else {
-      return {
-        status: 'ready',
-        icon: Package,
-        color: 'text-[#225F91]',
-        bgColor: 'bg-[#225F91]/10',
-        borderColor: 'border-[#225F91]/20',
-        text: 'Ready for Checkout',
-        description: 'All medications available for immediate checkout'
-      };
-    }
-  };
-
-  const pharmacyStatus = getPharmacyStatus();
-  const StatusIcon = pharmacyStatus.icon;
-
   const calculatePharmacyTotal = () => {
     return pharmacy.items.reduce((total, item) => total + calculateItemPrice(item), 0);
   };
 
-  const getPharmacyType = () => {
-    const hasOTC = pharmacy.items.some(item => !item.medication?.prescriptionRequired);
-    const hasPrescription = pharmacy.items.some(item => item.medication?.prescriptionRequired);
-    
-    if (hasOTC && hasPrescription) return 'mixed';
-    if (hasOTC && !hasPrescription) return 'otc_only';
-    if (hasPrescription && !hasOTC) return 'prescription_only';
-    return 'unknown';
-  };
-
-  const pharmacyType = getPharmacyType();
-
   return (
     <Card className={cn(
-      "overflow-hidden bg-white/95 border border-[#1ABA7F]/20 rounded-xl p-0 shadow-lg sm:p-6",
-      pharmacyStatus.borderColor
+      "relative overflow-hidden bg-white border-2 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 group",
+      segment === 'ready' ? "border-[#1ABA7F]/30" : "border-orange-300"
     )}>
-    {/* 🔹 Cover Photo */}
-    {pharmacy.pharmacy.logoUrl && (
-      <div className="relative w-full h-32 sm:h-56 overflow-hidden rounded-t-xl">
-        <img
-          src={pharmacy.pharmacy.logoUrl}
-          alt={`${pharmacy.pharmacy.name} cover`}
-          className="w-full h-full object-cover"
-        />
-        {/* Optional: gradient overlay for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-      </div>
-    )}
-      <div className="absolute inset-0 bg-[url('/svg/pattern-dots.svg')] opacity-10 pointer-events-none hidden sm:block" aria-hidden="true" />
-      <CardHeader className="bg-gradient-to-r from-[#1ABA7F]/10 to-transparent pb-4">
-        <div className="flex flex-wrap items-start justify-between">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-3 mb-3">
-              <div className={cn(
-                "p-2 rounded-xl shadow-sm",
-                pharmacyStatus.bgColor
-              )}>
-                <HospitalIcon className={cn("h-5 w-5", pharmacyStatus.color)} />
+      {/* Decorative Elements */}
+      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-[#1ABA7F]/10 to-transparent rounded-bl-full" />
+      <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-[#225F91]/10 to-transparent rounded-tr-full" />
+
+      {/* Cover Photo */}
+      {pharmacy.pharmacy.logoUrl && (
+        <div className="relative w-full h-48 overflow-hidden">
+          <img
+            src={pharmacy.pharmacy.logoUrl}
+            alt={`${pharmacy.pharmacy.name} cover`}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+          
+          {/* Pharmacy Name Overlay */}
+          <div className="absolute bottom-0 left-0 right-0 p-6">
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-xl bg-white/20 backdrop-blur-md shadow-lg">
+                <Hospital className="h-6 w-6 text-white" />
               </div>
-              <div className="flex-1 min-w-0">
-                <CardTitle
-                  className="text-lg font-bold text-[#225F91] break-words whitespace-normal max-w-[220px] sm:max-w-[320px] truncate"
-                  title={pharmacy.pharmacy.name}
-                >
+              <h3 className="text-2xl font-black text-white drop-shadow-lg">
+                {pharmacy.pharmacy.name}
+              </h3>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <CardHeader className={cn(
+        "relative z-10 bg-gradient-to-r from-[#1ABA7F]/10 via-[#225F91]/5 to-transparent p-3 sm:p-6",
+        !pharmacy.pharmacy.logoUrl && "pt-8"
+      )}>
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            {/* Pharmacy Name (only show if no cover photo) */}
+            {!pharmacy.pharmacy.logoUrl && (
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 rounded-xl bg-gradient-to-br from-[#1ABA7F]/20 to-[#225F91]/20 shadow-md">
+                  <Hospital className="h-6 w-6 text-[#225F91]" />
+                </div>
+                <CardTitle className="text-2xl font-black text-[#225F91] tracking-tight">
                   {pharmacy.pharmacy.name}
                 </CardTitle>
               </div>
-            </div>
+            )}
             
-            {/* Enhanced Pharmacy Information */}
-            <div className="space-y-2">
-              {/* Basic Contact Info */}
-              <div className="flex items-center gap-1 text-sm text-gray-600">
-                  <MapPin className="h-4 w-4 text-[#1ABA7F]" />
-                  <span className="truncate">{pharmacy.pharmacy.address}</span>
-              </div>
+            <div className="space-y-3">
+              {/* Address */}
+              {pharmacy.pharmacy.address && (
+                <div className="flex items-start gap-3 p-2 sm:p-3 rounded-xl bg-white/80 border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200">
+                  <MapPin className="h-5 w-5 text-[#1ABA7F] mt-0.5 flex-shrink-0" />
+                  <span className="text-sm text-gray-700 font-medium line-clamp-2">
+                    {pharmacy.pharmacy.address}
+                  </span>
+                </div>
+              )}
 
-              {/* Enhanced Pharmacy Details */}
-              <div className="flex flex-wrap items-center gap-3 text-xs text-gray-600">
-                  {pharmacy.pharmacy.operatingHours && (() => {
-                  const formattedHours = formatOperatingHours(pharmacy.pharmacy.operatingHours);
-                  if (!formattedHours) return null;
-                  return (
-                    <div className="flex items-center mb-2 gap-1">
-                      <span className="text-gray-500 text-xs font-semibold min-w-[60px]">Opening Hours:</span>
-                      <span className={cn('text-xs font-medium', getOperatingHoursTextColor(pharmacy.pharmacy.operatingHours))}>
+              {/* Operating Hours */}
+              {pharmacy.pharmacy.operatingHours && (() => {
+                const formattedHours = formatOperatingHours(pharmacy.pharmacy.operatingHours);
+                if (!formattedHours) return null;
+                return (
+                  <div className="flex items-center gap-3 p-2 sm:p-3 rounded-xl bg-gradient-to-r from-white to-gray-50 border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200">
+                    <Clock className="h-5 w-5 text-[#225F91] flex-shrink-0" />
+                    <div className="flex-1">
+                      <span className="text-xs text-gray-500 font-bold uppercase tracking-wide">Hours: </span>
+                      <span className={cn('text-sm font-bold', getOperatingHoursTextColor(pharmacy.pharmacy.operatingHours))}>
                         {formattedHours.text}
                       </span>
                     </div>
-                  );
-                })()}
+                    {formattedHours.status === 'open' && (
+                      <Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white border-0 px-2 py-1 text-xs font-bold shadow-md">
+                        Open
+                      </Badge>
+                    )}
+                  </div>
+                );
+              })()}
 
+              {/* Pharmacy Summary */}
+              <div className="flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-[#1ABA7F]/10 to-[#225F91]/10 border border-[#1ABA7F]/20">
+                <div className="flex items-center gap-2">
+                  <Package className="h-5 w-5 text-[#225F91]" />
+                  <span className="text-sm font-bold text-gray-700">
+                    {pharmacy.items.length} {pharmacy.items.length === 1 ? 'item' : 'items'}
+                  </span>
+                </div>
+                <span className="text-lg font-black text-[#225F91]">
+                  ₦{calculatePharmacyTotal().toLocaleString()}
+                </span>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 ml-4">
-            <div className="rounded-lg border border-[#1ABA7F]/30 bg-white shadow-sm">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setExpanded(!expanded)}
-                className="p-2 hover:bg-[#1ABA7F]/10 text-[#225F91]"
-                aria-label={expanded ? "Collapse" : "Expand"}
-              >
-                {expanded ? (
-                  <Minus className="w-5 h-5" />
-                ) : (
-                  <Plus className="w-5 h-5" />
-                )}
-              </Button>
-            </div>
-          </div>
+          {/* Expand/Collapse Button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setExpanded(!expanded)}
+            className={cn(
+              "h-12 w-12 rounded-xl transition-all duration-300 shadow-md flex-shrink-0",
+              expanded 
+                ? "bg-[#1ABA7F]/20 text-[#1ABA7F] hover:bg-[#1ABA7F]/30" 
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            )}
+            aria-label={expanded ? "Collapse items" : "Expand items"}
+          >
+            <ChevronDown className={cn(
+              "w-6 h-6 transition-transform duration-300",
+              expanded && "rotate-180"
+            )} />
+          </Button>
         </div>
       </CardHeader>
 
       {expanded && (
-        <CardContent className="pb-6 px-3">
+        <CardContent className="relative z-10 p-2 sm:p-6 animate-in slide-in-from-top-2 duration-300">
           <div className="space-y-4">
             {pharmacy.items.map((item, index) => (
               <div key={item.id}>
@@ -208,12 +165,23 @@ const PharmacyCartCard = ({
                   segment={segment}
                 />
                 {index < pharmacy.items.length - 1 && (
-                  <Separator className="my-4 bg-gray-100" />
+                  <Separator className="my-4 bg-gradient-to-r from-transparent via-gray-300 to-transparent" />
                 )}
               </div>
             ))}
           </div>
 
+          {/* Pharmacy Total */}
+          {pharmacy.items.length > 1 && (
+            <div className="mt-6 pt-4 border-t-2 border-gray-200">
+              <div className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-[#225F91]/10 to-[#1ABA7F]/10 border-2 border-[#225F91]/20 shadow-sm">
+                <span className="text-base font-bold text-gray-700">Pharmacy Total:</span>
+                <span className="text-2xl font-black text-[#225F91]">
+                  ₦{calculatePharmacyTotal().toLocaleString()}
+                </span>
+              </div>
+            </div>
+          )}
         </CardContent>
       )}
     </Card>

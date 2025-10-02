@@ -6,7 +6,7 @@ function getAuthHeaders() {
   };
 }
 
-const BACKEND_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const BACKEND_BASE = process.env.NEXT_PUBLIC_API_URL || "http://192.168.36.67:5000";
 
 // Ensure API_BASE always has a valid base URL
 const API_BASE = `${BACKEND_BASE}/api/admin/medications`;

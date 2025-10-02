@@ -11,13 +11,19 @@ import { fetchMedicationIngredients } from "../medication-ingredients/api";
 import { createMedication, updateMedication, searchManufacturers, searchActiveSubstances, searchMedicationIngredients } from "./api";
 import { AutocompleteInput } from "../../components/AutocompleteInput";
 
-
 // Constants
 const DOSAGE_FORMS = [
-  "TABLET", "CAPSULE", "CAPLET", "SYRUP", "INJECTION", "CREAM", "OINTMENT", 
-  "GEL", "SUSPENSION", "POWDER", "SUPPOSITORY", "EYE_DROP", "EAR_DROP", 
-  "DROPS", "NASAL_SPRAY", "INHALER", "PATCH", "LOZENGE", "EFFERVESCENT"
+  "TABLET",   "CAPSULE",   "CAPLET",   "SYRUP", 
+  "INJECTION",   "CREAM",   "OINTMENT",   "GEL", 
+  "SUSPENSION",   "POWDER",   "SUPPOSITORY",   "EYE_DROP", 
+  "EAR_DROP",   "DROPS",   "NASAL_SPRAY",   "INHALER", 
+  "PATCH",   "LOZENGE",   "EFFERVESCENT",   "GRANULES", 
+  "SOLUTION",   "ORODISPERSIBLE_FILM",   "INFUSION", 
+  "LYOPHILIZED_POWDER",   "NEBULIZER_SOLUTION",   "EYE_OINTMENT", 
+  "EAR_SPRAY",   "LOTION",   "PASTE",  "FOAM", 
+  "MOUTHWASH",   "IMPLANT",   "MICROSPHERES"
 ];
+
 
 const STRENGTH_UNITS = ["MG", "ML", "G", "MCG", "IU", "NG", "MMOL", "PERCENT"];
 

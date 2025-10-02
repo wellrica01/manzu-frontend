@@ -12,7 +12,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { Upload, CheckCircle, File as FileIcon, Mail, X, Eye, Camera, AlertCircle, Info } from 'lucide-react';
+import { Upload, CheckCircle, FileText, Mail, X, Eye, Camera, AlertCircle, Info, Sparkles, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 import { getGuestId } from '@/lib/utils';
 import Link from 'next/link';
@@ -32,6 +32,7 @@ export default function PrescriptionUploadForm() {
   const [filePreview, setFilePreview] = useState(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [showFilePreview, setShowFilePreview] = useState(false);
+  const [contactFocused, setContactFocused] = useState(false);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -130,17 +131,17 @@ export default function PrescriptionUploadForm() {
   };
 
   const getFileIcon = (type) => {
-    if (type.startsWith('image/')) return <Camera className="h-5 w-5 sm:h-6 sm:w-6 text-[#225F91]" />;
-    return <FileIcon className="h-5 w-5 sm:h-6 sm:w-6 text-[#225F91]" />;
+    if (type.startsWith('image/')) return <Camera className="h-5 w-5 sm:h-6 sm:w-6 text-[#1ABA7F]" />;
+    return <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-[#225F91]" />;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsUploading(true); // Set loading state immediately
+    setIsUploading(true);
 
     if (!validateForm()) {
       toast.error(t('upload.errors.fix_errors'));
-      setIsUploading(false); // Reset loading state if validation fails
+      setIsUploading(false);
       return;
     }
     setUploadProgress(0);
@@ -178,13 +179,13 @@ export default function PrescriptionUploadForm() {
           }
           toast.error(errorData.message || t('upload.errors.upload_failed'));
         }
-        setIsUploading(false); // Reset loading state after upload
+        setIsUploading(false);
         setUploadProgress(0);
       });
 
       xhr.addEventListener('error', () => {
         toast.error(t('upload.errors.upload_failed'));
-        setIsUploading(false); // Reset loading state on error
+        setIsUploading(false);
         setUploadProgress(0);
       });
 
@@ -193,7 +194,7 @@ export default function PrescriptionUploadForm() {
       xhr.send(formData);
     } catch (err) {
       toast.error(err.message || t('upload.errors.upload_failed'));
-      setIsUploading(false); // Reset loading state on error
+      setIsUploading(false);
       setUploadProgress(0);
     }
   };
@@ -209,86 +210,99 @@ export default function PrescriptionUploadForm() {
   return (
     <div className="w-full">
       <Dialog open={openSuccessDialog} onOpenChange={setOpenSuccessDialog}>
-        <DialogContent
-          className="w-[95vw] sm:max-w-md p-4 sm:p-8 border border-[#1ABA7F]/20 rounded-2xl bg-white/95 backdrop-blur-sm shadow-lg sm:shadow-xl animate-in slide-in-from-top-10 fade-in-20 duration-300"
-        >
-          <div className="absolute top-0 left-0 w-8 sm:w-12 h-8 sm:h-12 bg-[#1ABA7F]/20 rounded-br-full" />
-          <DialogHeader className="mt-6 flex flex-col items-center gap-2 sm:gap-3">
-            <DialogTitle className="text-base sm:text-2xl font-bold text-[#225F91] text-center tracking-tight">
-              {t('upload.success_title')}
-            </DialogTitle>
-          </DialogHeader>
-          <p className="mt-2 sm:mt-4 text-sm sm:text-base font-medium text-center text-gray-600">
-            {t('upload.success_message')} {' '}
-            <span className="font-semibold text-gray-900" aria-label={t('upload.contact_label')}>
-              {submittedContact}
-            </span>{' '}
-            {t('upload.success_message_end')}
-          </p>
+        <DialogContent className="sm:max-w-md p-0 border-0 rounded-3xl bg-white overflow-hidden shadow-2xl">
+          <div className="absolute inset-0 bg-gradient-to-br from-[#1ABA7F]/5 via-white to-[#225F91]/5" />
+          <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-[#1ABA7F]/20 to-transparent rounded-br-full" />
+          <div className="absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-tl from-[#225F91]/20 to-transparent rounded-tl-full" />
+          
+          <div className="relative z-10 p-8">
+            <div className="flex justify-center mb-6">
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-[#1ABA7F] to-[#16a876] rounded-full blur-xl opacity-50 animate-pulse" />
+                <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-[#1ABA7F] to-[#16a876] flex items-center justify-center shadow-xl">
+                  <CheckCircle className="w-10 h-10 text-white animate-in zoom-in-50 duration-500" />
+                </div>
+              </div>
+            </div>
 
-          <DialogFooter className="p-2 sm:mt-8 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
-            <Button
-              asChild
-              className="h-12 sm:h-12 px-4 sm:px-6 text-sm sm:text-base font-semibold rounded-lg bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_15px_rgba(34,95,145,0.5)] transition-all duration-300"
-              aria-label={t('upload.track_order')}
-            >
-              <Link href="/check-prescription-status">Check Status</Link>
-            </Button>
-               <Button
-              variant="outline"
-              onClick={handleUploadAnother}
-              className="h-12 sm:h-12 px-4 sm:px-6 text-sm sm:text-base font-semibold rounded-lg border-[#1ABA7F] text-[#1ABA7F] hover:bg-[#1ABA7F]/10 hover:shadow-[0_0_10px_rgba(26,186,127,0.3)] transition-all duration-300"
-              aria-label={t('upload.upload_another')}
-            >
-              Close
-            </Button>
-          </DialogFooter>
+            <DialogHeader className="flex flex-col items-center gap-3 mb-6">
+              <DialogTitle className="text-2xl sm:text-3xl font-black text-[#225F91] tracking-tight text-center">
+                {t('upload.success_title')}
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="text-center mb-8 p-4 rounded-2xl bg-gradient-to-r from-gray-50 to-white border border-gray-100">
+              <p className="text-base text-gray-600">
+                {t('upload.success_message')}{' '}
+                <span className="font-bold text-[#225F91] text-lg block mt-1">{submittedContact}</span>
+                <span className="text-sm block mt-2">{t('upload.success_message_end')}</span>
+              </p>
+            </div>
+
+            <DialogFooter className="flex-col sm:flex-row gap-3">
+              <Button
+                asChild
+                className="group flex-1 h-12 px-6 text-sm font-bold rounded-xl bg-gradient-to-r from-[#225F91] to-[#1a4a73] text-white hover:from-[#1a4a73] hover:to-[#225F91] shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 relative overflow-hidden"
+              >
+                <Link href="/check-prescription-status">
+                  <span className="relative z-10">Check Status</span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                </Link>
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleUploadAnother}
+                className="group flex-1 h-12 px-6 text-sm font-bold rounded-xl border-2 border-[#1ABA7F] text-[#225F91] hover:bg-[#1ABA7F]/10 transition-all duration-300 hover:scale-105"
+              >
+                Close
+              </Button>
+            </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 
-      <div className="space-y-4 sm:space-y-6">
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-4 sm:space-y-6"
-          role="form"
-          aria-labelledby="form-title"
-        >
-       
-          {/* File Upload */}
-          <div>
-            <Label
-              htmlFor="fileInput"
-              className="text-xs sm:text-sm font-semibold text-[#225F91] uppercase tracking-wider"
-            >
-              {t('upload.file_label')}
-            </Label>
+      <div className="space-y-6">
+        <div onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="fileInput" className="text-sm font-black text-[#225F91] uppercase tracking-wider flex items-center gap-2">
+                <Shield className="h-4 w-4 text-[#1ABA7F]" />
+                {t('upload.file_label')}
+              </Label>
+              {file && (
+                <Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white border-0 px-2 py-1 text-xs font-bold shadow-sm">
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  Ready
+                </Badge>
+              )}
+            </div>
             
-            {/* File Preview */}
             {file && (
-              <div className="mt-2 sm:mt-3 p-3 sm:p-4 border border-[#1ABA7F]/20 rounded-lg sm:rounded-xl bg-[#1ABA7F]/5 animate-in slide-in-from-top-2 duration-300">
+              <div className="p-4 border-2 border-[#1ABA7F]/30 rounded-2xl bg-gradient-to-br from-[#1ABA7F]/5 to-white animate-in slide-in-from-top-2 duration-300 shadow-lg">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 sm:gap-3">
-                    {getFileIcon(file.type)}
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="p-2 rounded-xl bg-white shadow-sm">
+                      {getFileIcon(file.type)}
+                    </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm sm:text-base font-medium text-gray-900 truncate">
+                      <p className="text-sm sm:text-base font-bold text-gray-900 truncate">
                         {file.name}
                       </p>
-                      <p className="text-xs sm:text-sm text-gray-500">
-                        {getFileSize(file.size)} • {file.type}
+                      <p className="text-xs sm:text-sm text-gray-500 font-medium">
+                        {getFileSize(file.size)} • {file.type.split('/')[1].toUpperCase()}
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1 sm:gap-2">
+                  <div className="flex items-center gap-2 flex-shrink-0">
                     {filePreview && (
                       <Button
                         type="button"
                         variant="ghost"
                         size="sm"
                         onClick={() => setShowFilePreview(!showFilePreview)}
-                        className="h-7 sm:h-8 w-7 sm:w-8 p-0 text-[#225F91] hover:bg-[#225F91]/10"
-                        aria-label="Preview file"
+                        className="h-8 w-8 p-0 rounded-lg text-[#225F91] hover:bg-[#225F91]/10 transition-all duration-200"
                       >
-                        <Eye className="h-3 sm:h-4 w-3 sm:w-4" />
+                        <Eye className="h-4 w-4" />
                       </Button>
                     )}
                     <Button
@@ -296,41 +310,45 @@ export default function PrescriptionUploadForm() {
                       variant="ghost"
                       size="sm"
                       onClick={removeFile}
-                      className="h-7 sm:h-8 w-7 sm:w-8 p-0 text-red-500 hover:bg-red-100"
-                      aria-label="Remove file"
+                      className="h-8 w-8 p-0 rounded-lg text-red-500 hover:bg-red-50 transition-all duration-200"
                     >
-                      <X className="h-3 sm:h-4 w-3 sm:w-4" />
+                      <X className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
                 
                 {showFilePreview && filePreview && (
-                  <div className="mt-2 sm:mt-3 p-2 sm:p-3 border border-[#1ABA7F]/20 rounded-lg bg-white">
+                  <div className="mt-3 p-3 border-2 border-[#1ABA7F]/20 rounded-xl bg-white shadow-inner">
                     <img 
                       src={filePreview} 
                       alt="File preview" 
-                      className="w-full h-auto max-h-40 sm:max-h-48 object-contain rounded"
+                      className="w-full h-auto max-h-48 object-contain rounded-lg"
                     />
                   </div>
                 )}
               </div>
             )}
 
-            {/* Upload Area */}
             {!file && (
               <div
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 className={cn(
-                  "mt-2 sm:mt-3 p-6 sm:p-8 border-2 border-dashed rounded-lg sm:rounded-xl text-center bg-white/95 transition-all duration-300",
+                  "relative p-6 sm:p-10 border-2 border-dashed rounded-2xl text-center transition-all duration-300 overflow-hidden",
                   isDragOver
-                    ? "border-[#1ABA7F] bg-[#1ABA7F]/5 shadow-[0_0_20px_rgba(26,186,127,0.3)]"
-                    : "border-[#1ABA7F]/20 hover:border-[#1ABA7F]/50 hover:shadow-[0_0_15px_rgba(26,186,127,0.2)]"
+                    ? "border-[#1ABA7F] bg-gradient-to-br from-[#1ABA7F]/10 to-[#225F91]/5 shadow-[0_0_30px_rgba(26,186,127,0.3)] scale-[1.02]"
+                    : "border-[#1ABA7F]/30 bg-gradient-to-br from-white to-gray-50 hover:border-[#1ABA7F]/60 hover:shadow-xl"
                 )}
-                role="region"
-                aria-label={t('upload.drag_drop_label')}
               >
+                {isDragOver && (
+                  <div className="absolute inset-0 pointer-events-none">
+                    <Sparkles className="absolute top-4 right-4 h-6 w-6 text-[#1ABA7F] animate-pulse" />
+                    <Sparkles className="absolute bottom-4 left-4 h-4 w-4 text-[#225F91] animate-pulse" style={{ animationDelay: '0.2s' }} />
+                    <Sparkles className="absolute top-1/2 left-1/4 h-5 w-5 text-[#76D1F3] animate-pulse" style={{ animationDelay: '0.4s' }} />
+                  </div>
+                )}
+                
                 <Input
                   id="fileInput"
                   ref={fileInputRef}
@@ -339,143 +357,160 @@ export default function PrescriptionUploadForm() {
                   onChange={handleFileChange}
                   className="hidden"
                 />
-                <div className="flex flex-col items-center gap-3 sm:gap-4">
+                
+                <div className="flex flex-col items-center gap-4">
                   <div className={cn(
-                    "p-3 sm:p-4 rounded-full transition-all duration-300",
-                    isDragOver ? "bg-[#1ABA7F]/20" : "bg-[#1ABA7F]/10"
+                    "relative p-4 rounded-2xl transition-all duration-300",
+                    isDragOver ? "bg-[#1ABA7F]/20 scale-110" : "bg-[#1ABA7F]/10"
                   )}>
+                    <div className={cn(
+                      "absolute inset-0 rounded-2xl blur-xl opacity-0 transition-opacity duration-300",
+                      isDragOver && "opacity-50 bg-gradient-to-r from-[#1ABA7F] to-[#225F91]"
+                    )} />
                     <Upload className={cn(
-                      "h-6 sm:h-8 w-6 sm:w-8 transition-colors duration-300",
-                      isDragOver ? "text-[#1ABA7F]" : "text-[#225F91]/70"
-                    )} aria-hidden="true" />
+                      "relative h-8 w-8 transition-all duration-300",
+                      isDragOver ? "text-[#1ABA7F] animate-bounce" : "text-[#225F91]"
+                    )} />
                   </div>
-                  <div className="space-y-1 sm:space-y-2">
-                    <p className="text-sm sm:base font-medium text-gray-900">
-                      {isDragOver ? "Drop your file here" : "Drag & drop your prescription"}
+                  
+                  <div className="space-y-2">
+                    <p className="text-base sm:text-lg font-bold text-gray-900">
+                      {isDragOver ? "Drop your prescription here!" : "Drag & drop your prescription"}
                     </p>
                     <p className="text-sm sm:text-base text-gray-600">
                       or{' '}
                       <button
                         type="button"
                         onClick={() => fileInputRef.current.click()}
-                        className="text-[#225F91] hover:text-[#1A4971] font-semibold underline transition-colors duration-200"
+                        className="text-[#225F91] hover:text-[#1ABA7F] font-bold underline underline-offset-2 transition-colors duration-200"
                       >
                         browse files
                       </button>
                     </p>
-
                   </div>
-                  <div className="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm text-gray-500">
-                    <Badge variant="outline" className="border-[#1ABA7F]/20 text-[#225F91]">
+                  
+                  <div className="flex flex-wrap items-center justify-center gap-3 text-xs sm:text-sm">
+                    <Badge className="bg-gradient-to-r from-[#1ABA7F]/10 to-[#225F91]/10 text-[#225F91] border border-[#1ABA7F]/30 px-3 py-1 font-semibold">
                       PDF, JPG, PNG
                     </Badge>
-                    <Badge variant="outline" className="border-[#1ABA7F]/20 text-[#225F91]">
+                    <Badge className="bg-gradient-to-r from-[#1ABA7F]/10 to-[#225F91]/10 text-[#225F91] border border-[#1ABA7F]/30 px-3 py-1 font-semibold">
                       Max 10MB
                     </Badge>
                   </div>
-                     <p className="text-xs sm:sm font-light text-gray-600">
-                    Ensure your prescription is clearly visible and readable.
+                  
+                  <div className="flex items-start gap-2 p-3 rounded-xl bg-blue-50 border border-blue-200 max-w-md">
+                    <Info className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                    <p className="text-xs text-blue-900 text-left font-medium">
+                      Ensure your prescription is clearly visible and readable
                     </p>
+                  </div>
                 </div>
               </div>
             )}
             
             {errors.file && (
-              <p id="file-error" className="mt-1 sm:mt-2 text-xs sm:text-sm text-red-600 font-medium flex items-center gap-1">
-                <AlertCircle className="h-3 sm:h-4 w-3 sm:w-4" />
+              <p className="text-sm text-red-600 font-semibold flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-200">
+                <AlertCircle className="h-4 w-4 flex-shrink-0" />
                 {errors.file}
               </p>
             )}
           </div>
 
-          {/* Upload Progress */}
           {isUploading && (
-            <div className="space-y-1 sm:space-y-2">
-              <div className="flex items-center justify-between text-xs sm:text-sm">
-                <span className="text-gray-600">Uploading...</span>
-                <span className="text-[#225F91] font-medium">{Math.round(uploadProgress)}%</span>
+            <div className="space-y-2 p-4 rounded-2xl bg-gradient-to-r from-[#1ABA7F]/5 to-[#225F91]/5 border-2 border-[#1ABA7F]/20">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-700 font-semibold flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#1ABA7F] border-t-transparent"></div>
+                  Uploading your prescription...
+                </span>
+                <span className="text-[#225F91] font-black text-lg">{Math.round(uploadProgress)}%</span>
               </div>
-              <Progress value={uploadProgress} className="h-1.5 sm:h-2" />
+              <Progress value={uploadProgress} className="h-2 bg-gray-200" />
             </div>
           )}
 
-             {/* Contact Information */}
-          <div>
-            <Label
-              htmlFor="contact"
-              className="text-xs sm:text-sm font-semibold text-[#225F91] uppercase tracking-wider"
-            >
-              {t('upload.contact_label')}
-            </Label>
-            <div className="relative mt-1 sm:mt-2">
-              <Mail
-                className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 h-4 sm:h-5 w-4 sm:w-5 text-[#225F91]/70"
-                aria-hidden="true"
-              />
-              <Input
-                id="contact"
-                type="text"
-                value={contact}
-                onChange={(e) => {
-                  setContact(e.target.value);
-                  setErrors((prev) => ({ ...prev, contact: null }));
-                }}
-                placeholder={t('upload.contact_placeholder')}
-                className={cn(
-                  "h-12 sm:h-12 pl-10 sm:pl-12 text-sm sm:text-base font-medium rounded-lg sm:rounded-xl border bg-white/95 text-gray-900 placeholder:text-gray-400 focus:ring-0 focus:shadow-[0_0_15px_rgba(26,186,127,0.3)] transition-all duration-300",
-                  errors.contact 
-                    ? "border-red-300 focus:border-red-500" 
-                    : "border-[#1ABA7F]/20 focus:border-[#1ABA7F]/50"
-                )}
-                aria-invalid={!!errors.contact}
-                aria-describedby={errors.contact ? 'contact-error' : undefined}
-              />
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="contact" className="text-sm font-black text-[#225F91] uppercase tracking-wider flex items-center gap-2">
+                <Mail className="h-4 w-4 text-[#1ABA7F]" />
+                {t('upload.contact_label')}
+              </Label>
+              {contact && validateContact(contact) && (
+                <Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white border-0 px-2 py-1 text-xs font-bold shadow-sm">
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  Valid
+                </Badge>
+              )}
             </div>
+            
+            <div className="relative group">
+              <div className={cn(
+                "absolute inset-0 rounded-2xl bg-gradient-to-r from-[#1ABA7F] via-[#225F91] to-[#1ABA7F] opacity-0 transition-opacity duration-500 blur-sm",
+                contactFocused && "opacity-20"
+              )} />
+              
+              <div className="relative">
+                <Mail
+                  className={cn(
+                    "absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 transition-all duration-300",
+                    contactFocused ? "text-[#1ABA7F] scale-110" : "text-[#225F91]/70"
+                  )}
+                />
+                <Input
+                  id="contact"
+                  type="text"
+                  value={contact}
+                  onChange={(e) => {
+                    setContact(e.target.value);
+                    setErrors((prev) => ({ ...prev, contact: null }));
+                  }}
+                  onFocus={() => setContactFocused(true)}
+                  onBlur={() => setContactFocused(false)}
+                  placeholder={t('upload.contact_placeholder')}
+                  className={cn(
+                    "h-14 pl-12 pr-4 text-base font-medium rounded-2xl border-2 bg-white text-gray-900 placeholder:text-gray-400 transition-all duration-300 shadow-lg",
+                    errors.contact
+                      ? "border-red-300 focus:border-red-500"
+                      : contactFocused
+                      ? "border-[#1ABA7F] shadow-[0_0_20px_rgba(26,186,127,0.2)]"
+                      : "border-gray-200 hover:border-[#1ABA7F]/50"
+                  )}
+                />
+              </div>
+            </div>
+            
             {errors.contact && (
-              <p id="contact-error" className="mt-1 sm:mt-2 text-xs sm:text-sm text-red-600 font-medium flex items-center gap-1">
-                <AlertCircle className="h-3 sm:h-4 w-3 sm:w-4" />
+              <p className="text-sm text-red-600 font-semibold flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-200">
+                <AlertCircle className="h-4 w-4 flex-shrink-0" />
                 {errors.contact}
               </p>
             )}
           </div>
 
-
-          {/* Submit Button */}
           <Button
             type="submit"
+            onClick={handleSubmit}
             disabled={isUploading || !file || !contact}
-            className="w-full h-12 sm:h-12 px-4 sm:px-6 text-sm sm:text-base font-semibold rounded-lg sm:rounded-xl bg-[#225F91] text-white hover:bg-[#1A4971] hover:shadow-[0_0_20px_rgba(34,95,145,0.6)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+            className="group relative w-full h-14 px-6 text-base font-black rounded-2xl bg-gradient-to-r from-[#225F91] to-[#1a4a73] text-white hover:from-[#1a4a73] hover:to-[#225F91] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] overflow-hidden"
           >
-            {isUploading ? (
-              <span className="flex items-center justify-center gap-1 sm:gap-2">
-                <svg
-                  className="animate-spin h-5 sm:h-6 w-5 sm:w-6"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <circle
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                    fill="none"
-                  />
-                  <path
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                  />
-                </svg>
-                {t('upload.uploading')}
-              </span>
-            ) : (
-              <span className="flex items-center justify-center gap-1 sm:gap-2">
-                <Upload className="h-5 sm:h-6 w-5 sm:w-6" aria-hidden="true" />
-                {t('upload.upload_button')}
-              </span>
+            <span className="relative z-10 flex items-center justify-center gap-2">
+              {isUploading ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                  {t('upload.uploading')}
+                </>
+              ) : (
+                <>
+                  <Upload className="h-5 w-5" />
+                  {t('upload.upload_button')}
+                </>
+              )}
+            </span>
+            {!isUploading && (
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
             )}
           </Button>
-        </form>
+        </div>
       </div>
     </div>
   );

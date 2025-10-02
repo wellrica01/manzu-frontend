@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, ShoppingCart, Package, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const CartSummary = ({ segments, handleCheckout, activeTab }) => {
@@ -10,34 +10,66 @@ const CartSummary = ({ segments, handleCheckout, activeTab }) => {
   if (!isReadyTab) return null;
 
   return (
-    <Card className="relative bg-white/95 backdrop-blur-sm border border-[#1ABA7F]/20 rounded-2xl shadow-xl overflow-hidden">
-      <div className="absolute top-0 left-0 w-16 h-16 bg-[#1ABA7F]/20 rounded-br-3xl" />
+    <Card className="relative bg-white/95 backdrop-blur-sm border-2 border-[#1ABA7F]/30 rounded-2xl shadow-xl overflow-hidden">
+      {/* Decorative elements */}
+      <div className="absolute top-0 left-0 w-20 h-20 bg-gradient-to-br from-[#1ABA7F]/20 to-transparent rounded-br-3xl" />
+      <div className="absolute bottom-0 right-0 w-20 h-20 bg-gradient-to-tl from-[#225F91]/20 to-transparent rounded-tl-3xl" />
 
-      <CardContent className="space-y-6">
-        {hasReadyItems && (
-          <div className="bg-green-50 rounded-2xl border border-green-200 shadow-sm">
-            <div className="flex justify-between items-center py-3 bg-green-100 rounded-lg px-4">
-              <span className="text-xl font-semibold text-[#225F91]">Total Amount: </span>
-              <span className="text-xl font-bold text-[#225F91]">
-                ₦{segments.totalPrice?.toLocaleString() || '0'}
-              </span>
+      <CardContent className="relative z-10 p-4 sm:p-6 space-y-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-3 bg-gradient-to-br from-[#1ABA7F]/20 to-[#225F91]/20 rounded-xl">
+            <ShoppingCart className="h-6 w-6 text-[#225F91]" />
+          </div>
+          <h3 className="text-xl font-black text-[#225F91]">Order Summary</h3>
+        </div>
+
+        {hasReadyItems ? (
+          <>
+            {/* Summary Details */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50">
+                <span className="text-sm font-semibold text-gray-600 flex items-center gap-2">
+                  <Package className="h-4 w-4" />
+                  Items Ready
+                </span>
+                <span className="text-base font-bold text-[#225F91]">
+                  {segments.readyItemsCount}
+                </span>
+              </div>
+
+              <div className="p-4 rounded-xl bg-gradient-to-r from-green-50 to-green-100/50 border-2 border-green-200">
+                <div className="flex justify-between items-center">
+                  <span className="text-lg font-bold text-green-800">Total Amount</span>
+                  <span className="text-2xl font-black text-green-900">
+                    ₦{segments.totalPrice?.toLocaleString() || '0'}
+                  </span>
+                </div>
+              </div>
             </div>
+
+            {/* Checkout Button */}
+            <Button
+              onClick={handleCheckout}
+              className="w-full h-14 text-base font-bold bg-gradient-to-r from-[#225F91] to-[#1a4a73] text-white hover:from-[#1a4a73] hover:to-[#225F91] rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 group relative overflow-hidden"
+            >
+              <span className="relative z-10 flex items-center gap-2">
+                Proceed to Checkout
+                <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform duration-300" />
+              </span>
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+            </Button>
+          </>
+        ) : (
+          <div className="text-center py-6">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertCircle className="h-8 w-8 text-gray-400" />
+            </div>
+            <p className="text-gray-600 font-semibold mb-2">No Ready Medications</p>
+            <p className="text-sm text-gray-500">
+              Complete prescription requirements to proceed
+            </p>
           </div>
         )}
-
-        <div className="space-y-3">
-          <Button
-            onClick={handleCheckout}
-            disabled={!hasReadyItems}
-            className={cn(
-              "w-full sm:w-auto h-12 px-4 bg-[#225F91] text-white hover:bg-[#1A4971]",
-              !hasReadyItems && "border-gray-300 text-gray-500 bg-gray-50 cursor-not-allowed"
-            )}
-          >
-            <ArrowRight className="h-5 w-5 mr-2" />
-            {hasReadyItems ? 'Proceed to Checkout' : 'No Ready Medications'}
-          </Button>
-        </div>
       </CardContent>
     </Card>
   );

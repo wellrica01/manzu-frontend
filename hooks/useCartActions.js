@@ -8,7 +8,12 @@ export function useCartActions({ cart, fetchCart, guestId, t }) {
   const [lastAddedItem, setLastAddedItem] = useState(null);
   const [openCartDialog, setOpenCartDialog] = useState(false);
 
-  const handleAddToCart = async (medicationId, pharmacyId, medicationName) => {
+  const handleAddToCart = async (
+    medicationId,
+    pharmacyId,
+    medicationName,
+    quantity = 1
+  ) => {
     const key = `${medicationId}-${pharmacyId}`;
     try {
       if (!medicationId || !pharmacyId) {
@@ -23,7 +28,7 @@ export function useCartActions({ cart, fetchCart, guestId, t }) {
           "Content-Type": "application/json",
           "x-guest-id": guestId,
         },
-        body: JSON.stringify({ medicationId, pharmacyId, quantity: 1 }),
+        body: JSON.stringify({ medicationId, pharmacyId, quantity }),
       });
 
       setLastAddedItem(medicationName);
