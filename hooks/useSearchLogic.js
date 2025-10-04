@@ -11,7 +11,7 @@ const debounce = (fn, delay) => {
   };
 };
 
-export const useSearchLogic = (state, dispatch, t, apiUrl, fetchCart, guestId) => {
+export const useSearchLogic = (state, dispatch, t, apiUrl, fetchCart, guestId, cart) => {
   const abortControllerRef = useRef(null);
   const suggestionAbortRef = useRef(null);
 
@@ -165,22 +165,85 @@ const handleSearch = useCallback(
 );
 
 
-
-
 const handleAddToCart = async (medicationId, pharmacyId, medicationName, pharmacyName, quantity = 1) => {
+  console.log('=== ADD TO CART DEBUG ===');
+  console.log('Looking for medicationId:', medicationId);
+  console.log('Different from pharmacyId:', pharmacyId);
+  console.log('Current cartItems:', state.cartItems);
+  
+  // Check if medication exists in cart from a DIFFERENT pharmacy
+  const existingCartItem = state.cartItems?.find(
+    item => item.medication.id === medicationId && item.pharmacyId !== pharmacyId
+  );
+
+  console.log('Found existing item:', existingCartItem);
+
+  if (existingCartItem) {
+    console.log('Existing item details:');
+    console.log('- ID:', existingCartItem.id);
+    console.log('- Medication ID:', existingCartItem.medication.id);
+    console.log('- Pharmacy ID:', existingCartItem.pharmacyId);
+    console.log('- Pharmacy Name:', existingCartItem.pharmacyName);
+    console.log('- Price:', existingCartItem.price);
+    
+    const newItemPrice = state.results
+      .find(r => r.id === medicationId)
+      ?.availability
+      ?.find(a => a.pharmacyId === pharmacyId)
+      ?.price || 0;
+
+    const dialogData = {
+      isOpen: true,
+      existingItem: {
+        medicationName: medicationName,
+        pharmacyName: existingCartItem.pharmacyName || 'Unknown Pharmacy',
+        price: existingCartItem.price,
+        quantity: existingCartItem.quantity,
+        cartItemId: existingCartItem.id,
+        pharmacyId: existingCartItem.pharmacyId
+      },
+      newItem: {
+        medicationName: medicationName,
+        pharmacyName: pharmacyName,
+        price: newItemPrice,
+        quantity: quantity,
+        medicationId,
+        pharmacyId
+      }
+    };
+
+    console.log('Dialog data being dispatched:', dialogData);
+
+    dispatch({
+      type: api.ACTIONS.SET_DUPLICATE_DIALOG,
+      payload: dialogData
+    });
+
+    dispatch({
+      type: api.ACTIONS.SET_PENDING_ADD,
+      payload: { medicationId, pharmacyId, medicationName, pharmacyName, quantity }
+    });
+
+    return;
+  }
+
+  await executeAddToCart(medicationId, pharmacyId, medicationName, pharmacyName, quantity);
+};
+
+// Separate function to execute the actual add (used by both normal and duplicate flows)
+const executeAddToCart = async (medicationId, pharmacyId, medicationName, pharmacyName, quantity = 1) => {
   const key = `${medicationId}-${pharmacyId}`;
   dispatch({ type: api.ACTIONS.SET_ADDING_TO_CART, payload: { [key]: true } });
 
   try {
     const result = await api.addToCart({ medicationId, pharmacyId, quantity, guestId }, t, apiUrl);
     
-   // Construct last added item as object
-   const lastAddedItem = {
-     id: result.orderItem.id,
-     name: quantity > 1 ? `${medicationName} x${quantity}` : medicationName,
-     pharmacy: pharmacyName || "Unknown Pharmacy",
-     quantity: result.orderItem.quantity
-   };
+    const lastAddedItem = {
+      id: result.orderItem.id,
+      name: quantity > 1 ? `${medicationName} x${quantity}` : medicationName,
+      pharmacy: pharmacyName || "Unknown Pharmacy",
+      quantity: result.orderItem.quantity
+    };
 
     dispatch({ type: api.ACTIONS.SET_LAST_ADDED_ITEMS, payload: [lastAddedItem] });
     dispatch({ type: api.ACTIONS.SET_OPEN_CART_DIALOG, payload: true });
@@ -198,12 +261,13 @@ const handleAddToCart = async (medicationId, pharmacyId, medicationName, pharmac
   }
 };
 
-
+// Return both functions
 return {
   fetchSuggestions,
   handleSearch,
   handleAddToCart,
-  };
+  executeAddToCart, // Export this for duplicate dialog handlers
+};
 };
 
 export const useGeoLocation = (dispatch, t) => {

@@ -1,14 +1,16 @@
 'use client';
-import { useEffect, useState, useRef, forwardRef, useReducer, useCallback } from 'react';
+import { useEffect, useState, useRef, useReducer, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { Button } from '../ui/button';
 import { History, TrendingUp, X } from 'lucide-react';
 import SearchInput from './SearchInput';
 import FilterControls from './FilterControls';
 import CartDialog from '../cart/CartDialog';
+import DuplicateMedicationDialog from '@/components/cart/DuplicateMedicationDialog';
 import ErrorMessage from '@/components/ErrorMessage';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 import { useCart } from '@/hooks/useCart';
 import { bulkRemoveCartItems } from '@/components/cart/cartApi';
 import SearchSkeleton from './SearchSkeleton';
@@ -33,9 +35,6 @@ const SearchBar = () => {
 
   const [isBulkRemoving, setIsBulkRemoving] = useState(false);
   
-
-
-
   const dropdownRef = useRef(null);
   const inputRef = useRef(null);
   const suggestionRefs = useRef([]);
@@ -50,14 +49,15 @@ const SearchBar = () => {
   useGeoLocation(dispatch, t);
   useAutoPopulateLocation(state.userLocation, state.geoData, dispatch);
 
-  const { fetchSuggestions, handleSearch, handleAddToCart } = useSearchLogic(
-    state,
-    dispatch,
-    t,
-    apiUrl,
-    fetchCart,
-    guestId
-  );
+const { fetchSuggestions, handleSearch, handleAddToCart, executeAddToCart } = useSearchLogic(
+  state,
+  dispatch,
+  t,
+  apiUrl,
+  fetchCart,
+  guestId,
+  cart
+);
 
   // Cleanup suggestion refs on unmount
   useEffect(() => {
@@ -66,15 +66,104 @@ const SearchBar = () => {
     };
   }, []);
 
-  // Update cart items when cart changes
-  useEffect(() => {
+// Update cart items when cart changes
+useEffect(() => {
+  if (!cart?.pharmacies) {
     dispatch({
       type: api.ACTIONS.SET_CART_ITEMS,
-      payload: cart?.pharmacies?.flatMap((p) => p.items) || [],
+      payload: [],
     });
-  }, [cart]);
+    return;
+  }
 
-  // Debounced suggestions fetch
+  const flattenedItems = cart.pharmacies.flatMap((pharmacyGroup) => 
+    pharmacyGroup.items.map(item => ({
+      ...item,
+      pharmacyId: pharmacyGroup.pharmacy.id,   
+      pharmacyName: pharmacyGroup.pharmacy.name   
+    }))
+  );
+  
+  console.log('🛒 Flattened cart items with pharmacy info:', flattenedItems);
+  
+  dispatch({
+    type: api.ACTIONS.SET_CART_ITEMS,
+    payload: flattenedItems,
+  });
+}, [cart]);
+
+
+
+  const handleKeepExisting = () => {
+    toast.info('Keeping your current selection');
+    dispatch({
+      type: api.ACTIONS.SET_DUPLICATE_DIALOG,
+      payload: { isOpen: false, existingItem: null, newItem: null }
+    });
+    dispatch({ type: api.ACTIONS.SET_PENDING_ADD, payload: null });
+  };
+
+  const handleReplaceWithNew = async () => {
+    const { existingItem, newItem } = state.duplicateDialog;
+    const pending = state.pendingAdd;
+
+    try {
+      // Remove the existing item
+      await fetch(`${apiUrl}/api/cart/remove/${existingItem.cartItemId}`, {
+        method: 'DELETE',
+        headers: { 'x-guest-id': guestId },
+      });
+      await fetchCart();
+
+      // Add new item
+      await executeAddToCart(
+        pending.medicationId,
+        pending.pharmacyId,
+        pending.medicationName,
+        pending.pharmacyName,
+        pending.quantity
+      );
+
+      toast.success(`Switched to ${newItem.pharmacyName}`);
+    } catch (error) {
+      console.error(error);
+      toast.error(error.message || 'Failed to replace item');
+    } finally {
+      dispatch({
+        type: api.ACTIONS.SET_DUPLICATE_DIALOG,
+        payload: { isOpen: false, existingItem: null, newItem: null }
+      });
+      dispatch({ type: api.ACTIONS.SET_PENDING_ADD, payload: null });
+    }
+  };
+
+  const handleAddBoth = async () => {
+    const pending = state.pendingAdd;
+
+    try {
+      await executeAddToCart(
+        pending.medicationId,
+        pending.pharmacyId,
+        pending.medicationName,
+        pending.pharmacyName,
+        pending.quantity
+      );
+
+      toast.info('Added from both pharmacies');
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to add both items');
+    } finally {
+      dispatch({
+        type: api.ACTIONS.SET_DUPLICATE_DIALOG,
+        payload: { isOpen: false, existingItem: null, newItem: null }
+      });
+      dispatch({ type: api.ACTIONS.SET_PENDING_ADD, payload: null });
+    }
+  };
+
+
+// Debounced suggestions fetch
   useEffect(() => {
     const debounce = setTimeout(() => {
       fetchSuggestions(state.searchTerm);
@@ -82,7 +171,7 @@ const SearchBar = () => {
     return () => clearTimeout(debounce);
   }, [state.searchTerm, fetchSuggestions]);
 
-  // Reset to default results when all filters are cleared
+// Reset to default results when all filters are cleared
   useEffect(() => {
     const noFilters =
       !state.filters.state && !state.filters.lga && !state.filters.ward;
@@ -134,6 +223,7 @@ const SearchBar = () => {
     },
     [state.geoData]
   );
+
 // Clear all filters
 const clearFilters = useCallback(() => {
   dispatch({
@@ -152,8 +242,8 @@ const clearFilters = useCallback(() => {
 }, [state.defaultResults]);
 
 
-  // Keyboard event handlers
-  const handleKeyDown = useCallback((e) => {
+// Keyboard event handlers
+const handleKeyDown = useCallback((e) => {
     if (e.key === 'Escape') {
       dispatch({ type: api.ACTIONS.SET_SHOW_DROPDOWN, payload: false });
       dispatch({ type: api.ACTIONS.SET_SHOW_HISTORY, payload: false });
@@ -165,6 +255,7 @@ const clearFilters = useCallback(() => {
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
+
 
   // Click outside to close dropdown
   useEffect(() => {
@@ -207,6 +298,32 @@ const clearFilters = useCallback(() => {
           }}
           isRemoving={isBulkRemoving}
       /> 
+
+
+{(() => {
+  console.log('=== DIALOG RENDER DEBUG ===');
+  console.log('Dialog isOpen:', state.duplicateDialog.isOpen);
+  console.log('Existing item:', state.duplicateDialog.existingItem);
+  console.log('New item:', state.duplicateDialog.newItem);
+  return null;
+})()}
+
+
+   <DuplicateMedicationDialog
+      isOpen={state.duplicateDialog.isOpen}
+      onClose={() => {
+        dispatch({
+          type: api.ACTIONS.SET_DUPLICATE_DIALOG,
+          payload: { isOpen: false, existingItem: null, newItem: null }
+        });
+        dispatch({ type: api.ACTIONS.SET_PENDING_ADD, payload: null });
+      }}
+      existingItem={state.duplicateDialog.existingItem}
+      newItem={state.duplicateDialog.newItem}
+      onKeepExisting={handleKeepExisting}
+      onReplaceWithNew={handleReplaceWithNew}
+      onAddBoth={handleAddBoth}
+    />
 
       {/* Search Input */}
       <div className="relative w-full">
@@ -436,6 +553,7 @@ const clearFilters = useCallback(() => {
           <MedicationCard
             key={med.id}
             med={med}
+            cart={cart}
             handleAddToCart={handleAddToCart}
             isInCart={isInCart}
             isAddingToCart={state.isAddingToCart}
@@ -443,6 +561,8 @@ const clearFilters = useCallback(() => {
             state={state.filters.state}
             lga={state.filters.lga}
             ward={state.filters.ward}
+            guestId={guestId}
+            fetchCart={fetchCart}
           />
         ))}
     </div>

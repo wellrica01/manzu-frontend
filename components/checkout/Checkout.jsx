@@ -159,6 +159,12 @@ const uniquePharmacies = useMemo(() => {
     }
   }, []);
 
+  // Track that user is on checkout page
+    useEffect(() => {
+      // Mark that we're now on checkout (so Cart knows we came from here)
+      sessionStorage.setItem('cart_referrer', '/checkout');
+    }, []);
+
   // Save form to storage with debouncing
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -229,9 +235,13 @@ const uniquePharmacies = useMemo(() => {
     }
   }, [segments.readyForCheckout]);
 
+
   const handleBackToCart = useCallback(() => {
-    router.push('/cart');
+    // Clear the checkout referrer before going back to cart
+    sessionStorage.removeItem('cart_referrer');
+    router.replace('/cart');
   }, [router]);
+  
 
   const mapErrorMessage = useCallback((error) => {
     return ERROR_MESSAGES[error] || error || 'An error occurred. Please try again.';
@@ -328,6 +338,8 @@ const uniquePharmacies = useMemo(() => {
       } else {
         // Fallback to confirmation page
         clearFormStorage();
+          sessionStorage.removeItem('cart_entry_point');
+          sessionStorage.removeItem('cart_referrer');
         setPaymentStatus(PAYMENT_STATUS.SUCCESS);
         await fetchCart();
         const orderId = result.orders?.[0]?.orderId || result.checkoutSessionId;

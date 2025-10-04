@@ -143,14 +143,12 @@ const BulkRemoveActionBar = ({
   if (selectedCount === 0) return null;
 
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-4 duration-300">
-      <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border-2 border-[#1ABA7F]/30 p-4 flex items-center gap-4">
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-4 duration-300 w-[90%] sm:w-auto">
+      <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border-2 border-[#1ABA7F]/30 p-4 flex flex-wrap items-center gap-3 justify-center sm:justify-start">
         {/* Selection Count */}
-        <div className="flex items-center gap-3 px-4 py-2 bg-gradient-to-r from-[#1ABA7F]/10 to-[#225F91]/10 rounded-xl">
+        <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-[#1ABA7F]/10 to-[#225F91]/10 rounded-xl text-sm">
           <CheckCircle className="h-5 w-5 text-[#1ABA7F]" />
-          <span className="font-bold text-[#225F91]">
-            {selectedCount} selected
-          </span>
+          <span className="font-bold text-[#225F91]">{selectedCount} selected</span>
         </div>
 
         {/* Select All */}
@@ -159,7 +157,7 @@ const BulkRemoveActionBar = ({
             variant="outline"
             size="sm"
             onClick={onSelectAll}
-            className="h-10 border-2 border-[#1ABA7F]/30 text-[#1ABA7F] hover:bg-[#1ABA7F]/10 font-semibold"
+            className="h-10 border-2 border-[#1ABA7F]/30 text-[#1ABA7F] hover:bg-[#1ABA7F]/10 font-semibold text-sm"
           >
             Select All ({totalItems})
           </Button>
@@ -170,7 +168,7 @@ const BulkRemoveActionBar = ({
           variant="ghost"
           size="sm"
           onClick={onClear}
-          className="h-10 text-gray-600 hover:bg-gray-100 font-semibold"
+          className="h-10 text-gray-600 hover:bg-gray-100 font-semibold text-sm"
         >
           Clear
         </Button>
@@ -179,7 +177,7 @@ const BulkRemoveActionBar = ({
         <Button
           onClick={onRemove}
           disabled={isRemoving}
-          className="h-12 px-6 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl shadow-lg hover:shadow-xl font-bold transition-all duration-300 group relative overflow-hidden"
+          className="h-12 px-4 sm:px-6 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl shadow-lg hover:shadow-xl font-bold transition-all duration-300 group relative overflow-hidden text-sm sm:text-base"
         >
           <span className="relative z-10 flex items-center gap-2">
             {isRemoving ? (
@@ -199,6 +197,7 @@ const BulkRemoveActionBar = ({
     </div>
   );
 };
+
 
 function CartComponent() {
   // State
@@ -226,6 +225,38 @@ function CartComponent() {
 
   const router = useRouter();
   const { cart, fetchCart, guestId } = useCart();
+
+
+// Track entry point when component mounts
+  useEffect(() => {
+    const currentReferrer = sessionStorage.getItem('cart_referrer');
+    
+    // Only set entry point if:
+    // 1. It doesn't exist yet, AND
+    // 2. We're not coming from checkout
+    if (!sessionStorage.getItem('cart_entry_point') && currentReferrer !== '/checkout') {
+      try {
+        const referrerUrl = document.referrer;
+        if (referrerUrl) {
+          const url = new URL(referrerUrl);
+          const path = url.pathname;
+          // Don't set cart or checkout as entry points
+          if (path !== '/cart' && path !== '/checkout') {
+            sessionStorage.setItem('cart_entry_point', path);
+          } else {
+            sessionStorage.setItem('cart_entry_point', '/');
+          }
+        } else {
+          sessionStorage.setItem('cart_entry_point', '/');
+        }
+      } catch (e) {
+        sessionStorage.setItem('cart_entry_point', '/');
+      }
+    }
+    
+    // Clear the cart_referrer flag now that we've used it
+    sessionStorage.removeItem('cart_referrer');
+  }, []);
 
   // Keep ref in sync with state
   useEffect(() => {
@@ -626,9 +657,12 @@ const handleBulkRemoveConfirm = async () => {
       toast.error('No internet connection. Please check your connection and try again.', { duration: 4000 });
       return;
     }
+
+   // Mark that we're going to checkout
+    sessionStorage.setItem('cart_referrer', '/cart');
     
     trackEvent('checkout_initiated', { totalItems: segments.readyItemsCount });
-    router.push('/checkout');
+    router.replace('/checkout');
   };
 
   // Prescription upload success handler
@@ -643,14 +677,25 @@ const handleBulkRemoveConfirm = async () => {
     }
   };
 
-  // Back navigation handler
-  const handleGoBack = () => {
-    if (window.history.length > 1) {
-      router.back();
+
+// Back navigation handler
+const handleGoBack = () => {
+  const referrer = document.referrer;
+  const isFromCheckout = referrer.includes('/checkout');
+  
+  if (isFromCheckout) {
+    const entryPoint = sessionStorage.getItem('cart_entry_point');
+    if (entryPoint && entryPoint !== '/cart' && entryPoint !== '/checkout') {
+      router.replace(entryPoint);
     } else {
-      router.push('/');
+      router.replace('/');
     }
-  };
+  } else if (window.history.length > 1) {
+    router.back();
+  } else {
+    router.push('/');
+  }
+};
 
 
   // Memoize pharmacy groups

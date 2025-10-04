@@ -1,9 +1,12 @@
 import PrescriptionMedicationsPage from '../components/PrescriptionMedicationsPage';
+import ErrorBoundary, { NetworkErrorBoundary } from '@/components/ErrorBoundary';
 
 export default function PrescriptionMedPage() {
   return (
-    <div>
+    <NetworkErrorBoundary>
+      <ErrorBoundary>
         <PrescriptionMedicationsPage />
-    </div>
+      </ErrorBoundary>
+    </NetworkErrorBoundary>
   );
 }

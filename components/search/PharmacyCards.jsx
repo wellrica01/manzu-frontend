@@ -1,9 +1,12 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, HospitalIcon, Clock, Shield, ChevronDown, TrendingDown, Navigation, Store, Plus, Minus, Award, DollarSign } from 'lucide-react';
+import { MapPin, HospitalIcon, Clock, Shield, ChevronDown, TrendingDown, Navigation, Store, Trash2, Plus, Minus, Award, DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatOperatingHours, getOperatingHoursTextColor, isPharmacyOpenNow } from '@/lib/pharmacyUtils';
+import UnifiedRemoveDialog from '@/components/cart/UnifiedRemoveDialog';
+import { toast } from 'sonner';
+
 
 /* ----------------------------- Premium Sort & Filter Controls ----------------------------- */
 const SortFilterBar = ({ sortOption, setSortOption, filterOpen, setFilterOpen }) => {
@@ -99,7 +102,7 @@ const PharmacyCardHeader = ({ avail, isNearest, isCheapest }) => (
     <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
       <div className="flex items-center gap-2">
         <div className="p-2 rounded-lg bg-white/20 backdrop-blur-sm">
-          <HospitalIcon className="h-4 w-4 text-white" />
+          <Store className="h-4 w-4 text-white" />
         </div>
         <h3 className="text-white font-bold text-lg line-clamp-1">{avail.pharmacyName}</h3>
       </div>
@@ -118,8 +121,10 @@ const PharmacyCard = ({
   medId,
   displayName,
   handleAddToCart,
+  cart,
   isInCart,
   isAddingToCart,
+  onRemoveFromCart,
 }) => {
   const isExpanded = expandedCard === index;
   const currentQty = quantities[avail.pharmacyId] || 1;
@@ -241,36 +246,68 @@ const PharmacyCard = ({
         </div>
 
 
-        {/* Add to Cart Button */}
-        <Button
-          onClick={() => handleAddToCart(
-            medId, 
-            avail.pharmacyId, 
-            displayName,  
-            avail.pharmacyName,
-            quantities[avail.pharmacyId] || 1 
-          )}
-          disabled={isInCart(medId, avail.pharmacyId) || isAddingToCart(avail.pharmacyId)}
-          className={cn(
-            "w-full h-12 rounded-xl font-bold text-sm transition-all duration-300 shadow-lg hover:shadow-xl relative overflow-hidden",
-            isInCart(medId, avail.pharmacyId)
-              ? "bg-gray-400 text-white cursor-not-allowed"
-              : "bg-gradient-to-r from-[#225F91] to-[#1a4a73] text-white hover:from-[#1a4a73] hover:to-[#225F91] active:scale-95"
-          )}
-        >
-          <span className="relative z-10 flex items-center gap-2">
-            {isAddingToCart(avail.pharmacyId) ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                Adding...
-              </>
-            ) : (
-              isInCart(medId, avail.pharmacyId)
-                ? 'Already in Cart'
-                : 'Add to Cart'
+      {/* Add to Cart / Remove Buttons */}
+      <div className="flex gap-2">
+        {isInCart(medId, avail.pharmacyId) ? (
+          <>
+            {/* Already in Cart Badge */}
+            <Button
+              disabled
+              className="flex-1 h-12 rounded-xl font-bold text-sm bg-gray-100 text-gray-600 border-2 border-gray-300 cursor-not-allowed"
+            >
+              Already in Cart
+            </Button>
+            
+            {/* Remove Button */}
+            <Button
+              onClick={() => {
+                // Find the cart item for this medication from this pharmacy
+                const cartItem = cart?.pharmacies
+                  ?.find(p => p.pharmacy.id === avail.pharmacyId)
+                  ?.items?.find(item => item.medication.id === medId);
+                
+                if (cartItem) {
+                  onRemoveFromCart({
+                    id: cartItem.id,
+                    name: displayName,
+                    quantity: cartItem.quantity
+                  });
+                }
+              }}
+              variant="outline"
+              className="h-12 px-4 rounded-xl font-bold text-sm border-2 border-red-300 text-red-600 hover:bg-red-50 transition-all duration-300 group"
+            >
+              <Trash2 className="h-4 w-4 group-hover:scale-110 transition-transform duration-300" />
+            </Button>
+          </>
+        ) : (
+          <Button
+            onClick={() => handleAddToCart(
+              medId, 
+              avail.pharmacyId, 
+              displayName,  
+              avail.pharmacyName,
+              quantities[avail.pharmacyId] || 1 
             )}
-          </span>
-        </Button>
+            disabled={isAddingToCart(avail.pharmacyId)}
+            className={cn(
+              "w-full h-12 rounded-xl font-bold text-sm transition-all duration-300 shadow-lg hover:shadow-xl relative overflow-hidden",
+              "bg-gradient-to-r from-[#225F91] to-[#1a4a73] text-white hover:from-[#1a4a73] hover:to-[#225F91] active:scale-95"
+            )}
+          >
+            <span className="relative z-10 flex items-center gap-2">
+              {isAddingToCart(avail.pharmacyId) ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                  Adding...
+                </>
+              ) : (
+                'Add to Cart'
+              )}
+            </span>
+          </Button>
+        )}
+      </div>
 
 
         {/* More Details Toggle */}
@@ -342,11 +379,16 @@ const PharmacyCards = ({
   ward,
   showSeeMore = false,
   quantity = 1,
+  cart, 
+  onRemoveFromCart,
+  guestId, 
+  fetchCart, 
 }) => {
   const [sortOption, setSortOption] = useState('default');
   const [filterOpen, setFilterOpen] = useState(false);
   const [expandedCard, setExpandedCard] = useState(null);
   const [quantities, setQuantities] = useState({});
+  const [removeItemDialog, setRemoveItemDialog] = useState(null);
 
   // Initialize quantities when component mounts or availability changes
   useEffect(() => {
@@ -418,6 +460,8 @@ const PharmacyCards = ({
             medId={medId}
             displayName={displayName}
             handleAddToCart={handleAddToCart}
+            onRemoveFromCart={(item) => setRemoveItemDialog(item)}
+            cart={cart}
             isInCart={isInCart}
             isAddingToCart={(pharmacyId) => isAddingToCart[pharmacyId]}
           />
@@ -433,6 +477,29 @@ const PharmacyCards = ({
           <ChevronDown className="h-4 w-4 ml-2" />
         </Button>
       )}
+
+     <UnifiedRemoveDialog
+        removeItem={removeItemDialog}
+        bulkRemoveItems={null}
+        onClose={() => setRemoveItemDialog(null)}
+        onConfirm={async () => {
+          if (!removeItemDialog?.id) return;
+          
+          try {
+            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart/remove/${removeItemDialog.id}`, {
+              method: 'DELETE',
+              headers: { 'x-guest-id': guestId },
+            });
+            await fetchCart();
+            setRemoveItemDialog(null);
+            toast.success('Item removed from cart');
+          } catch (error) {
+            console.error('Remove error:', error);
+            toast.error('Failed to remove item');
+          }
+        }}
+        isRemoving={false}
+      />
     </div>
   );
 };

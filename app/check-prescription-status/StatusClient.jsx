@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, CheckCircle, AlertCircle, Home, Search, Clock, FileText, Sparkles } from 'lucide-react';
+import { Loader2, AlertCircle, Home, Search, Clock, FileText, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
 
@@ -40,7 +40,6 @@ const showToast = (message, type) => {
 
 
 export default function StatusCheck() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [form, setForm] = useState({ identifier: '' });
   const [status, setStatus] = useState('idle'); // idle, loading, success, error
@@ -62,7 +61,6 @@ export default function StatusCheck() {
   const handleInputChange = (e) => setForm({ ...form, identifier: e.target.value });
 
   const fetchStatus = useCallback(async (userId) => {
-
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
@@ -82,10 +80,12 @@ export default function StatusCheck() {
       const data = await response.json();
       const { prescriptionMetadata, medications } = data;
       
-      if (prescriptionMetadata.status === 'VERIFIED' && medications && medications.length > 0) {
-        router.push(`/prescriptions/${userId}`);
-        return;
-      }
+    if (prescriptionMetadata.status === 'VERIFIED' && medications && medications.length > 0) {
+      localStorage.setItem('guestId', userId);
+      // Hard navigation - forces page reload
+      window.location.href = `/prescriptions/${userId}?guestId=${userId}`;
+      return;
+    }
       
       if (['PENDING', 'PENDING_ADMIN', 'PENDING_ACTION'].includes(prescriptionMetadata.status)) {
         setPrescription(prescriptionMetadata);
@@ -152,9 +152,15 @@ const handleSubmit = async (e) => {
     }
 
     const data = await response.json();
-    const newGuestId = data.guestId;
+    const newGuestId = data.guestId; // null
 
-    // Update localStorage only if it changed
+    // This check happens BEFORE any localStorage updates
+    if (!newGuestId) {
+      throw new Error('Unable to retrieve presicription with that contact information. Please try again or contact support.');
+      // Execution stops here - nothing below runs
+    }
+
+    // This code never executes when newGuestId is null
     if (guestId !== newGuestId) {
       localStorage.setItem('guestId', newGuestId);
       guestId = newGuestId;

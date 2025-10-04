@@ -142,7 +142,7 @@ const CartDialog = ({
           <div className="relative z-10 flex flex-col sm:flex-row gap-3 pt-4">
             <Button
               asChild
-              className="flex-1 h-12 bg-gradient-to-r from-[#1ABA7F] to-[#16a876] hover:from-[#16a876] hover:to-[#1ABA7F] text-white rounded-xl shadow-lg hover:shadow-xl font-bold transition-all duration-300 group relative overflow-hidden"
+              className="flex-1 h-14 p-3 bg-gradient-to-r from-[#1ABA7F] to-[#16a876] hover:from-[#16a876] hover:to-[#1ABA7F] text-white rounded-xl shadow-lg hover:shadow-xl font-bold transition-all duration-300 group relative overflow-hidden"
             >
               <Link href="/cart">
                 <span className="relative z-10 flex items-center justify-center gap-2">
@@ -157,7 +157,7 @@ const CartDialog = ({
             <Button
               variant="outline"
               onClick={() => setOpenCartDialog(false)}
-              className="flex-1 h-12 border-2 border-[#225F91]/30 text-[#225F91] hover:bg-[#225F91]/10 rounded-xl font-bold transition-all duration-300 group"
+              className="flex-1 h-12 p-3 border-2 border-[#225F91]/30 text-[#225F91] hover:bg-[#225F91]/10 rounded-xl font-bold transition-all duration-300 group"
             >
               <ShoppingBag className="h-5 w-5 mr-2 group-hover:scale-110 transition-transform duration-300" />
               Continue Shopping

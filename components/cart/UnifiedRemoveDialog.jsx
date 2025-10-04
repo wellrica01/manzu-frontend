@@ -25,7 +25,7 @@ export default function UnifiedRemoveDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg bg-white/95 backdrop-blur-xl border-2 border-red-200/50 rounded-3xl shadow-2xl overflow-hidden">
+      <DialogContent className="sm:max-w-lg bg-white/95 backdrop-blur-xl border-2 border-[#1ABA7F]/30 rounded-3xl px-4 shadow-2xl overflow-hidden">
         <VisuallyHidden>
           <DialogTitle>
             {isBulkRemove ? 'Bulk Remove Confirmation' : 'Remove Item Confirmation'}
@@ -61,7 +61,7 @@ export default function UnifiedRemoveDialog({
           </div>
 
           {/* Warning Details Card */}
-          <div className="relative p-5 bg-gradient-to-br from-red-50 via-white to-orange-50/50 rounded-2xl border-2 border-red-200/60 shadow-lg overflow-hidden">
+          <div className="relative p-4 bg-gradient-to-br from-red-50 via-white to-orange-50/50 rounded-2xl border-2 border-red-200/60 shadow-lg overflow-hidden">
             <div className="absolute inset-0 opacity-30">
               <div className="absolute top-0 right-0 w-20 h-20 bg-red-500/10 rounded-full blur-2xl" />
               <div className="absolute bottom-0 left-0 w-16 h-16 bg-orange-500/10 rounded-full blur-2xl" />

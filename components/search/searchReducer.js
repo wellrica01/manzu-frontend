@@ -11,6 +11,12 @@ export const initialState = {
   userLocation: null,
   isLoadingSuggestions: false,
   isAddingToCart: {},
+  duplicateDialog: {
+    isOpen: false,
+    existingItem: null,
+    newItem: null
+  },
+  pendingAdd: null, 
   focusedSuggestionIndex: -1,
   openCartDialog: false,
   lastAddedItems: [],
@@ -60,6 +66,12 @@ export function searchReducer(state, action) {
         ...state,
         isAddingToCart: { ...state.isAddingToCart, ...action.payload },
       };
+
+    case ACTIONS.SET_DUPLICATE_DIALOG:
+      return { ...state, duplicateDialog: action.payload };
+
+    case ACTIONS.SET_PENDING_ADD:
+      return { ...state, pendingAdd: action.payload };
     
     case ACTIONS.SET_FOCUSED_INDEX:
       return { ...state, focusedSuggestionIndex: action.payload };

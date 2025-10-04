@@ -1,15 +1,21 @@
+'use client';
+
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogTrigger, DialogTitle } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import { Info, MapPin, Clock, Pill, Package, Building2, Globe2, FileCheck } from 'lucide-react';
+import { Info, MapPin, Clock, Pill, Building2, Globe2, FileCheck } from 'lucide-react';
 import PharmacyTable from './PharmacyTable';
 import PharmacyCards from './PharmacyCards';
 import { cn } from '@/lib/utils';
 
 const MedicationCard = ({ 
+  guestId,
+  fetchCart,
   med, 
   handleAddToCart, 
+  cart,
   isInCart, 
   isAddingToCart, 
   searchTerm, 
@@ -19,6 +25,7 @@ const MedicationCard = ({
   isMultiMed = false 
 }) => {
   const getAvailabilityCount = () => med.availability?.length || 0;
+  const [removeItemDialog, setRemoveItemDialog] = useState(null);
 
   const getAveragePrice = () => {
     if (!med.availability?.length) return null;
@@ -304,6 +311,8 @@ const MedicationCard = ({
             <PharmacyCards
               availability={isMultiMed ? med.availability.slice(0, 3) : med.availability}
               medId={med.id}
+              cart={cart}
+              onRemoveFromCart={(item) => setRemoveItemDialog(item)}
               handleAddToCart={handleAddToCart}
               isInCart={isInCart}
               displayName={med.displayName}
@@ -314,11 +323,15 @@ const MedicationCard = ({
               ward={ward}
               showSeeMore={isMultiMed && med.availability.length > 3}
               quantity={isMultiMed ? (med.quantity || 1) : 1}
+              guestId={guestId} 
+              fetchCart={fetchCart}
             />
             {!isMultiMed && (
               <PharmacyTable
                 availability={med.availability}
                 medId={med.id}
+                cart={cart}
+                onRemoveFromCart={(item) => setRemoveItemDialog(item)}
                 handleAddToCart={handleAddToCart}
                 isInCart={isInCart}
                 displayName={med.displayName}
@@ -327,6 +340,8 @@ const MedicationCard = ({
                 state={state}
                 lga={lga}
                 ward={ward}
+                guestId={guestId} 
+                fetchCart={fetchCart}
               />
             )}
           </>
