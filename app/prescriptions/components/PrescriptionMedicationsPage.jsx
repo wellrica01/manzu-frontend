@@ -80,7 +80,6 @@ const fetchWithRetry = async (url, options = {}, maxRetries = MAX_RETRY_ATTEMPTS
       return response;
     } catch (error) {
       lastError = error;
-      console.warn(`Attempt ${attempt + 1} failed:`, error.message);
       
       if (attempt < maxRetries - 1) {
         await delay(RETRY_DELAY * (attempt + 1));
@@ -160,6 +159,7 @@ const PrescriptionMedicationsPage = React.memo(() => {
   const [prescriptionMetadata, setPrescriptionMetadata] = useState(null);
   const [pharmacyRecommendations, setPharmacyRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isBulkDialogProcessing, setIsBulkDialogProcessing] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [error, setError] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
@@ -182,7 +182,8 @@ const PrescriptionMedicationsPage = React.memo(() => {
     pharmacyName: '',
     duplicates: [],
     safeItems: [],
-    pharmacyId: null
+    pharmacyId: null,
+    allMeds: []
   });
 
   const [geoData, setGeoData] = useState([]);
@@ -268,7 +269,6 @@ const PrescriptionMedicationsPage = React.memo(() => {
         });
       },
       (err) => {
-        console.warn('Geolocation error:', err);
         if (isMountedRef.current) {
           toast.info('Unable to fetch location. Showing all pharmacies.', { duration: 4000 });
           setUserLocation(null);
@@ -542,57 +542,212 @@ const PrescriptionMedicationsPage = React.memo(() => {
     }
   }, [duplicateDialog, addToCartInternal]);
 
-  const handleBulkAddWithDuplicateCheck = useCallback(async (pharmacyId, meds) => {
-    if (!meds?.length) return null;
 
-    const duplicates = [];
-    const safeToAdd = [];
+const handleBulkAddWithDuplicateCheck = useCallback(async (pharmacyId, meds) => {
+  if (!meds?.length) return null;
 
-    meds.forEach(med => {
-      if (!med?.id) return;
+  const duplicates = [];
+  const safeToAdd = [];
 
-      if (isInCart(med.id, pharmacyId)) {
-        return;
-      }
+  meds.forEach(med => {
+    if (!med?.id) return;
 
-      const existingInCart = cart?.pharmacies?.find(pharmacy => 
-        pharmacy?.items?.some(item => 
-          item?.medication?.id === med.id && pharmacy?.pharmacy?.id !== pharmacyId
-        )
-      );
-
-      if (existingInCart) {
-        const existingItem = existingInCart.items.find(item => item?.medication?.id === med.id);
-        duplicates.push({
-          medicationId: med.id,
-          medicationName: med.displayName || 'Unknown Medication',
-          currentPharmacy: existingInCart.pharmacy?.name || 'Unknown Pharmacy',
-          currentPrice: existingItem?.price || 0,
-          newPrice: med.price || 0,
-          quantity: existingItem?.quantity || 1,
-          cartItemId: existingItem?.id,
-          currentPharmacyId: existingInCart.pharmacy?.id
-        });
-      } else {
-        safeToAdd.push(med);
-      }
-    });
-
-    if (duplicates.length > 0) {
-      const currentPharmacy = pharmacyRecommendations?.find(p => p.pharmacyId === pharmacyId);
-      
-      setBulkDuplicateDialog({
-        isOpen: true,
-        pharmacyName: currentPharmacy?.pharmacyName || 'this pharmacy',
-        duplicates,
-        safeItems: safeToAdd,
-        pharmacyId
-      });
-      return null;
+    if (isInCart(med.id, pharmacyId)) {
+      return;
     }
 
-    return { pharmacyId, meds: safeToAdd };
-  }, [cart, isInCart, pharmacyRecommendations]);
+    const existingInCart = cart?.pharmacies?.find(pharmacy => 
+      pharmacy?.items?.some(item => 
+        item?.medication?.id === med.id && pharmacy?.pharmacy?.id !== pharmacyId
+      )
+    );
+
+    if (existingInCart) {
+      const existingItem = existingInCart.items.find(item => item?.medication?.id === med.id);
+      duplicates.push({
+        medicationId: med.id,
+        medicationName: med.displayName || 'Unknown Medication',
+        currentPharmacy: existingInCart.pharmacy?.name || 'Unknown Pharmacy',
+        currentPrice: existingItem?.price || 0,
+        newPrice: med.price || 0,
+        quantity: existingItem?.quantity || 1,
+        cartItemId: existingItem?.id,
+        currentPharmacyId: existingInCart.pharmacy?.id
+      });
+    } else {
+      safeToAdd.push(med);
+    }
+  });
+
+  if (duplicates.length > 0) {
+    const currentPharmacy = pharmacyRecommendations?.find(p => p.pharmacyId === pharmacyId);
+    
+    setBulkDuplicateDialog({
+      isOpen: true,
+      pharmacyName: currentPharmacy?.pharmacyName || 'this pharmacy',
+      duplicates,
+      safeItems: safeToAdd,
+      pharmacyId,
+      allMeds: meds  // STORE ALL MEDS HERE
+    });
+    return null;
+  }
+
+  return { pharmacyId, meds: safeToAdd };
+}, [cart, isInCart, pharmacyRecommendations]);
+
+
+const handleBulkAddRef = useRef(null);
+
+const handleBulkKeepExisting = useCallback(async () => {
+  const { safeItems, pharmacyId } = bulkDuplicateDialog;
+  
+  if (!handleBulkAddRef.current) {
+    toast.error('Unable to add items. Please try again.');
+    console.error('handleBulkAdd function not ready');
+    setBulkDuplicateDialog({ 
+      isOpen: false, 
+      pharmacyName: '', 
+      duplicates: [], 
+      safeItems: [], 
+      pharmacyId: null, 
+      allMeds: [] 
+    });
+    return;
+  }
+  
+  if (safeItems.length === 0) {
+    toast.info('No new items to add');
+    setBulkDuplicateDialog({ 
+      isOpen: false, 
+      pharmacyName: '', 
+      duplicates: [], 
+      safeItems: [], 
+      pharmacyId: null, 
+      allMeds: [] 
+    });
+    return;
+  }
+
+  setIsBulkDialogProcessing(true);
+  
+  try {
+    setBulkDuplicateDialog({ 
+      isOpen: false, 
+      pharmacyName: '', 
+      duplicates: [], 
+      safeItems: [], 
+      pharmacyId: null, 
+      allMeds: [] 
+    });
+    
+    await handleBulkAddRef.current(pharmacyId, safeItems, true);
+  } catch (error) {
+    console.error('Failed to add safe items:', error);
+    toast.error('Failed to add items');
+  } finally {
+    setIsBulkDialogProcessing(false);
+  }
+}, [bulkDuplicateDialog]);
+
+const handleBulkReplaceAll = useCallback(async () => {
+  const { duplicates, pharmacyId, allMeds } = bulkDuplicateDialog;
+  
+  if (!duplicates?.length || !pharmacyId) return;
+  
+  if (!handleBulkAddRef.current) {
+    toast.error('Unable to add items. Please try again.');
+    console.error('handleBulkAdd function not ready');
+    setBulkDuplicateDialog({ 
+      isOpen: false, 
+      pharmacyName: '', 
+      duplicates: [], 
+      safeItems: [], 
+      pharmacyId: null, 
+      allMeds: [] 
+    });
+    return;
+  }
+
+  setIsBulkDialogProcessing(true);
+
+  try {
+    // Remove all existing duplicate items
+    for (const dup of duplicates) {
+      if (dup.cartItemId) {
+        await fetchWithTimeout(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/cart/remove/${dup.cartItemId}`,
+          { method: 'DELETE', headers: { 'x-guest-id': guestId || '' } }
+        );
+      }
+    }
+    
+    // Wait for cart refresh to complete
+    await fetchCart();
+    
+    // Small delay to ensure cart state is fully updated
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    setBulkDuplicateDialog({ 
+      isOpen: false, 
+      pharmacyName: '', 
+      duplicates: [], 
+      safeItems: [], 
+      pharmacyId: null, 
+      allMeds: [] 
+    });
+    
+    await handleBulkAddRef.current(pharmacyId, allMeds, true);
+    
+    toast.success(`Replaced ${duplicates.length} duplicate${duplicates.length > 1 ? 's' : ''}`);
+  } catch (error) {
+    console.error('Bulk replace error:', error);
+    toast.error('Failed to replace items');
+  } finally {
+    setIsBulkDialogProcessing(false);
+  }
+}, [bulkDuplicateDialog, guestId, fetchCart]);
+
+const handleBulkAddAll = useCallback(async () => {
+  const { allMeds, pharmacyId } = bulkDuplicateDialog;
+  
+  if (!handleBulkAddRef.current) {
+    toast.error('Unable to add items. Please try again.');
+    console.error('handleBulkAdd function not ready');
+    setBulkDuplicateDialog({ 
+      isOpen: false, 
+      pharmacyName: '', 
+      duplicates: [], 
+      safeItems: [], 
+      pharmacyId: null, 
+      allMeds: [] 
+    });
+    return;
+  }
+
+  setIsBulkDialogProcessing(true);
+  
+  try {
+    setBulkDuplicateDialog({ 
+      isOpen: false, 
+      pharmacyName: '', 
+      duplicates: [], 
+      safeItems: [], 
+      pharmacyId: null, 
+      allMeds: [] 
+    });
+    
+    await handleBulkAddRef.current(pharmacyId, allMeds, true);
+    
+    toast.success('Added items from both pharmacies');
+  } catch (error) {
+    console.error('Failed to add all items:', error);
+    toast.error('Failed to add items');
+  } finally {
+    setIsBulkDialogProcessing(false);
+  }
+}, [bulkDuplicateDialog]);
+
 
   const clearFilters = useCallback(() => {
     setFilterState('');
@@ -767,6 +922,7 @@ const PrescriptionMedicationsPage = React.memo(() => {
                   lga={filterLga}
                   ward={filterWard}
                   onRemoveItem={(item) => setRemoveItemDialog(item)}
+                  onBulkAddReady={(bulkAddFn) => { handleBulkAddRef.current = bulkAddFn; }}
                 />
 
                 <UnifiedRemoveDialog
@@ -863,45 +1019,27 @@ const PrescriptionMedicationsPage = React.memo(() => {
               onAddBoth={handleAddBoth}
             />
 
-            <BulkDuplicateDialog
-              isOpen={bulkDuplicateDialog.isOpen}
-              onClose={() => setBulkDuplicateDialog({ isOpen: false, pharmacyName: '', duplicates: [], safeItems: [], pharmacyId: null })}
-              pharmacyName={bulkDuplicateDialog.pharmacyName}
-              duplicates={bulkDuplicateDialog.duplicates}
-              safeItemsCount={bulkDuplicateDialog.safeItems.length}
-              onKeepExisting={() => {
-                const { safeItems } = bulkDuplicateDialog;
-                setBulkDuplicateDialog({ isOpen: false, pharmacyName: '', duplicates: [], safeItems: [], pharmacyId: null });
-                if (safeItems.length === 0) {
-                  toast.info('No new items to add');
-                }
-              }}
-              onReplaceAll={async () => {
-                const { duplicates, pharmacyId } = bulkDuplicateDialog;
-                if (!duplicates?.length || !pharmacyId) return;
-
-                try {
-                  for (const dup of duplicates) {
-                    if (dup.cartItemId) {
-                      await fetchWithTimeout(
-                        `${process.env.NEXT_PUBLIC_API_URL}/api/cart/remove/${dup.cartItemId}`,
-                        { method: 'DELETE', headers: { 'x-guest-id': guestId || '' } }
-                      );
-                    }
-                  }
-                  await fetchCart();
-                  setBulkDuplicateDialog({ isOpen: false, pharmacyName: '', duplicates: [], safeItems: [], pharmacyId: null });
-                  toast.success(`Replaced ${duplicates.length} duplicate${duplicates.length > 1 ? 's' : ''}`);
-                } catch (error) {
-                  console.error('Bulk replace error:', error);
-                  toast.error('Failed to replace items');
-                }
-              }}
-              onAddAll={() => {
-                setBulkDuplicateDialog({ isOpen: false, pharmacyName: '', duplicates: [], safeItems: [], pharmacyId: null });
-                toast.info('Adding from both pharmacies');
-              }}
-            />
+              <BulkDuplicateDialog
+                isOpen={bulkDuplicateDialog.isOpen}
+                onClose={() => {
+                  if (isBulkDialogProcessing) return; // Prevent closing while processing
+                  setBulkDuplicateDialog({ 
+                    isOpen: false, 
+                    pharmacyName: '', 
+                    duplicates: [], 
+                    safeItems: [], 
+                    pharmacyId: null, 
+                    allMeds: [] 
+                  });
+                }}
+                pharmacyName={bulkDuplicateDialog.pharmacyName}
+                duplicates={bulkDuplicateDialog.duplicates}
+                safeItemsCount={bulkDuplicateDialog.safeItems.length}
+                onKeepExisting={handleBulkKeepExisting}
+                onReplaceAll={handleBulkReplaceAll}
+                onAddAll={handleBulkAddAll}
+                isProcessing={isBulkDialogProcessing} 
+              />
 
             <Dialog open={showPreview} onOpenChange={setShowPreview}>
               <DialogContent className="sm:max-w-lg p-6 rounded-2xl bg-white/95 border border-[#1ABA7F]/20">

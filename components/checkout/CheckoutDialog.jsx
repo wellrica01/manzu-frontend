@@ -119,7 +119,7 @@ const CheckoutDialog = ({
                             {item.medication.prescriptionRequired && (
                               <Badge className="bg-green-100 text-green-700 border-0 text-xs">
                                 <CheckCircle className="h-3 w-3 mr-1" />
-                                Verified
+                                Rx
                               </Badge>
                             )}
                           </div>

@@ -2,7 +2,7 @@ import React from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, ShoppingCart, X } from 'lucide-react';
+import { AlertTriangle, ShoppingCart, X, Loader2  } from 'lucide-react';
 
 const BulkDuplicateDialog = ({ 
   isOpen, 
@@ -12,12 +12,13 @@ const BulkDuplicateDialog = ({
   safeItemsCount = 0,
   onKeepExisting,
   onReplaceAll,
-  onAddAll
+  onAddAll,
+  isProcessing = false
 }) => {
   const totalDuplicates = duplicates.length;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={isProcessing ? undefined : onClose}>
       <DialogContent className="w-[95vw] sm:w-full max-w-md sm:max-w-2xl max-h-[90vh] mx-auto p-0 overflow-y-auto rounded-2xl sm:rounded-3xl border-2 border-orange-200">
         {/* Header */}
         <div className="bg-gradient-to-r from-orange-500 to-amber-500 p-4 sm:p-6 text-white relative overflow-hidden">
@@ -120,44 +121,69 @@ const BulkDuplicateDialog = ({
 
           {/* Action Buttons */}
           <div className="space-y-2 sm:space-y-3 pt-2">
-            {/* Add Only New Items */}
             {safeItemsCount > 0 && (
               <Button
                 onClick={onKeepExisting}
-                className="w-full h-12 sm:h-14 rounded-xl font-black text-sm sm:text-base bg-gradient-to-r from-green-500 to-green-600 text-white hover:scale-105 transition-all duration-300 shadow-lg"
+                disabled={isProcessing}
+                className="w-full h-12 sm:h-14 rounded-xl font-black text-sm sm:text-base bg-gradient-to-r from-green-500 to-green-600 text-white hover:scale-105 transition-all duration-300 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5 mr-2 flex-shrink-0" strokeWidth={3} />
-                <span className="truncate">
-                  Add Only {safeItemsCount} New Item{safeItemsCount > 1 ? 's' : ''} (Keep Current)
-                </span>
+                {isProcessing ? (
+                  <>
+                    <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5 mr-2 flex-shrink-0" strokeWidth={3} />
+                    <span className="truncate">
+                      Add Only {safeItemsCount} New Item{safeItemsCount > 1 ? 's' : ''} (Keep Current)
+                    </span>
+                  </>
+                )}
               </Button>
             )}
 
-            {/* Replace All */}
             <Button
               onClick={onReplaceAll}
-              className="w-full h-12 sm:h-14 rounded-xl font-black text-sm sm:text-base bg-gradient-to-r from-[#1ABA7F] to-[#225F91] text-white hover:scale-105 transition-all duration-300 shadow-lg"
+              disabled={isProcessing}
+              className="w-full h-12 sm:h-14 rounded-xl font-black text-sm sm:text-base bg-gradient-to-r from-[#1ABA7F] to-[#225F91] text-white hover:scale-105 transition-all duration-300 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5 mr-2 flex-shrink-0" strokeWidth={3} />
-              <span className="truncate">
-                Switch to {pharmacyName} (Replace {totalDuplicates})
-              </span>
+              {isProcessing ? (
+                <>
+                  <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 mr-2 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5 mr-2 flex-shrink-0" strokeWidth={3} />
+                  <span className="truncate">
+                    Switch to {pharmacyName} (Replace {duplicates.length})
+                  </span>
+                </>
+              )}
             </Button>
 
-            {/* Add From Both */}
             <Button
               onClick={onAddAll}
+              disabled={isProcessing}
               variant="outline"
-              className="w-full h-10 sm:h-12 rounded-xl font-bold text-xs sm:text-sm border-2 border-gray-300 hover:border-purple-400 hover:bg-purple-50 transition-all duration-300 text-gray-600"
+              className="w-full h-10 sm:h-12 rounded-xl font-bold text-xs sm:text-sm border-2 border-gray-300 hover:border-purple-400 hover:bg-purple-50 transition-all duration-300 text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Add All (Buy from Different Pharmacies)
+              {isProcessing ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                'Add All (Buy from Different Pharmacies)'
+              )}
             </Button>
 
-            {/* Cancel */}
             <Button
               onClick={onClose}
+              disabled={isProcessing}
               variant="ghost"
-              className="w-full h-9 sm:h-10 rounded-xl font-semibold text-xs sm:text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+              className="w-full h-9 sm:h-10 rounded-xl font-semibold text-xs sm:text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-50"
             >
               <X className="h-4 w-4 mr-2" strokeWidth={2.5} />
               Cancel

@@ -1,9 +1,11 @@
 "use client";
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { MapPin, HospitalIcon, DollarSign, Navigation, Clock, Check, Loader2, Award, ShoppingCart, TrendingDown, Trash2 } from 'lucide-react';
+import { formatOperatingHours, getOperatingHoursTextColor, isPharmacyOpenNow } from '@/lib/pharmacyUtils';
+
 
 // Constants
 const SORT_OPTIONS = {
@@ -65,6 +67,7 @@ const PharmacyRecommendations = ({
   lga,
   ward,
   onRemoveItem,
+  onBulkAddReady,
 }) => {
   const [sortOption, setSortOption] = useState(SORT_OPTIONS.DEFAULT);
   const [isBulkAdding, setIsBulkAdding] = useState({});
@@ -115,34 +118,6 @@ const PharmacyRecommendations = ({
     });
   }, [pharmacyRecommendations, getQty]);
 
-  // Check if pharmacy is open now
-  const isPharmacyOpenNow = useCallback((operatingHours) => {
-    if (!operatingHours?.length) return false;
-    
-    try {
-      const now = new Date();
-      const currentDay = now.getDay();
-      const currentTime = now.getHours() * 60 + now.getMinutes();
-      
-      const todayHours = operatingHours.find(h => h.dayOfWeek === currentDay);
-      if (!todayHours?.openTime || !todayHours?.closeTime) return false;
-      
-      const [openHour, openMin] = todayHours.openTime.split(':').map(Number);
-      const [closeHour, closeMin] = todayHours.closeTime.split(':').map(Number);
-      
-      if (isNaN(openHour) || isNaN(openMin) || isNaN(closeHour) || isNaN(closeMin)) {
-        return false;
-      }
-      
-      const openTime = openHour * 60 + openMin;
-      const closeTime = closeHour * 60 + closeMin;
-      
-      return currentTime >= openTime && currentTime <= closeTime;
-    } catch (error) {
-      console.error('Error checking pharmacy hours:', error);
-      return false;
-    }
-  }, []);
 
   // Sort and filter pharmacies
   const sortedPharmacyMap = useMemo(() => {
@@ -193,131 +168,126 @@ const PharmacyRecommendations = ({
   }, [enrichedPharmacies]);
 
   // Handle bulk add with proper error handling
-  const handleBulkAdd = useCallback(async (pharmacyId, meds) => {
-    if (!prescriptionId) {
-      console.error(ERROR_MESSAGES.NO_PRESCRIPTION);
-      setApiErrors(prev => ({ ...prev, [pharmacyId]: ERROR_MESSAGES.NO_PRESCRIPTION }));
-      return;
-    }
+const handleBulkAdd = useCallback(async (pharmacyId, meds, skipDuplicateCheck = false) => {
+  if (!prescriptionId) {
+    console.error(ERROR_MESSAGES.NO_PRESCRIPTION);
+    setApiErrors(prev => ({ ...prev, [pharmacyId]: ERROR_MESSAGES.NO_PRESCRIPTION }));
+    return;
+  }
 
-    if (!meds?.length) {
-      console.warn('No medications to add');
-      return;
-    }
+  if (!meds?.length) {
+    return;
+  }
 
-    setIsBulkAdding(prev => ({ ...prev, [pharmacyId]: true }));
-    setApiErrors(prev => ({ ...prev, [pharmacyId]: null }));
+  setIsBulkAdding(prev => ({ ...prev, [pharmacyId]: true }));
+  setApiErrors(prev => ({ ...prev, [pharmacyId]: null }));
+  
+  try {
+    let medsToAdd = meds;
     
-    try {
-      // Check for duplicates if handler provided
-      let medsToAdd = meds;
-      
-      if (handleBulkAddWithDuplicateCheck) {
-        const result = await handleBulkAddWithDuplicateCheck(pharmacyId, meds);
-        if (!result) {
-          // Duplicates found - dialog shown to user
-          return;
-        }
-        medsToAdd = result.meds;
-      }
-
-      // Filter out items already in cart from THIS pharmacy
-      const itemsToAdd = medsToAdd.filter(med => 
-        med?.id && !isInCart(med.id, pharmacyId)
-      );
-      
-      if (itemsToAdd.length === 0) {
-        console.info('All items already in cart');
+    if (!skipDuplicateCheck && handleBulkAddWithDuplicateCheck) {
+      const result = await handleBulkAddWithDuplicateCheck(pharmacyId, meds);
+      if (!result) {
         return;
       }
-
-      const items = itemsToAdd.map(med => ({
-        medicationId: med.id,
-        pharmacyId,
-        quantity: getQty(med.id)
-      }));
-
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/cart/addbulk`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-guest-id': guestId || '',
-          },
-          body: JSON.stringify({
-            userIdentifier: userIdentifier || '',
-            guestId: guestId || '',
-            items,
-            prescriptionId,
-          }),
-          signal: controller.signal
-        }
-      );
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || ERROR_MESSAGES.ADD_FAILED);
-      }
-
-      const result = await response.json();
-      
-      // Refresh cart
-      if (fetchCart) {
-        await fetchCart();
-      }
-
-      const pharmacy = pharmacyRecommendations?.find(p => p.pharmacyId === pharmacyId);
-
-      // Set last added items for dialog
-      if (setLastAddedItems && result?.orderItems?.length && result?.addedItems?.length) {
-        setLastAddedItems(
-          result.orderItems.map((orderItem, index) => ({
-            id: orderItem.id,
-            name: result.addedItems[index].quantity > 1 
-              ? `${result.addedItems[index].displayName} x${result.addedItems[index].quantity}` 
-              : result.addedItems[index].displayName,
-            pharmacy: pharmacy?.pharmacyName || "Unknown Pharmacy",
-            quantity: orderItem.quantity
-          }))
-        );
-      }
-
-      if (setOpenCartDialog) {
-        setOpenCartDialog(true);
-      }
-
-    } catch (error) {
-      console.error('Bulk add error:', error);
-      
-      let errorMessage = ERROR_MESSAGES.ADD_FAILED;
-      if (error.name === 'AbortError') {
-        errorMessage = 'Request timed out. Please try again.';
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
-      setApiErrors(prev => ({ ...prev, [pharmacyId]: errorMessage }));
-    } finally {
-      setIsBulkAdding(prev => ({ ...prev, [pharmacyId]: false }));
+      medsToAdd = result.meds;
     }
-  }, [
-    prescriptionId,
-    handleBulkAddWithDuplicateCheck,
-    isInCart,
-    getQty,
-    guestId,
-    userIdentifier,
-    pharmacyRecommendations,
-    fetchCart,
-    setLastAddedItems,
-    setOpenCartDialog
-  ]);
+
+    const itemsToAdd = medsToAdd.filter(med => 
+      med?.id && !isInCart(med.id, pharmacyId)
+    );
+    
+    if (itemsToAdd.length === 0) {
+      return; // Early return is fine now - finally block will clean up
+    }
+
+    const items = itemsToAdd.map(med => ({
+      medicationId: med.id,
+      pharmacyId,
+      quantity: getQty(med.id)
+    }));
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/cart/addbulk`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-guest-id': guestId || '',
+        },
+        body: JSON.stringify({
+          userIdentifier: userIdentifier || '',
+          guestId: guestId || '',
+          items,
+          prescriptionId,
+        }),
+        signal: controller.signal
+      }
+    );
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || ERROR_MESSAGES.ADD_FAILED);
+    }
+
+    const result = await response.json();
+    
+    if (fetchCart) {
+      await fetchCart();
+    }
+
+    const pharmacy = pharmacyRecommendations?.find(p => p.pharmacyId === pharmacyId);
+
+    if (setLastAddedItems && result?.orderItems?.length && result?.addedItems?.length) {
+      setLastAddedItems(
+        result.orderItems.map((orderItem, index) => ({
+          id: orderItem.id,
+          name: result.addedItems[index].quantity > 1 
+            ? `${result.addedItems[index].displayName} x${result.addedItems[index].quantity}` 
+            : result.addedItems[index].displayName,
+          pharmacy: pharmacy?.pharmacyName || "Unknown Pharmacy",
+          quantity: orderItem.quantity
+        }))
+      );
+    }
+
+    if (setOpenCartDialog) {
+      setOpenCartDialog(true);
+    }
+
+  } catch (error) {
+    console.error('Bulk add error:', error);
+    
+    let errorMessage = ERROR_MESSAGES.ADD_FAILED;
+    if (error.name === 'AbortError') {
+      errorMessage = 'Request timed out. Please try again.';
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+    
+    setApiErrors(prev => ({ ...prev, [pharmacyId]: errorMessage }));
+  } finally {
+    // ALWAYS clean up loading state
+    setIsBulkAdding(prev => ({ ...prev, [pharmacyId]: false }));
+  }
+}, [
+  prescriptionId,
+  handleBulkAddWithDuplicateCheck,
+  isInCart,
+  getQty,
+  guestId,
+  userIdentifier,
+  pharmacyRecommendations,
+  fetchCart,
+  setLastAddedItems,
+  setOpenCartDialog
+]);
+
 
   // Debounced bulk add to prevent rapid clicks
   const debouncedBulkAdd = useMemo(
@@ -325,28 +295,11 @@ const PharmacyRecommendations = ({
     [handleBulkAdd]
   );
 
-  const formatOperatingHours = useCallback((operatingHours) => {
-    if (!operatingHours?.length) return null;
-    
-    try {
-      const now = new Date();
-      const currentDay = now.getDay();
-      const todayHours = operatingHours.find(h => h.dayOfWeek === currentDay);
-      
-      if (!todayHours?.openTime || !todayHours?.closeTime) return null;
-      
-      return {
-        text: `${todayHours.openTime} - ${todayHours.closeTime}`
-      };
-    } catch (error) {
-      console.error('Error formatting hours:', error);
-      return null;
+    useEffect(() => {
+    if (onBulkAddReady) {
+      onBulkAddReady(handleBulkAdd);
     }
-  }, []);
-
-  const getOperatingHoursTextColor = useCallback((operatingHours) => {
-    return isPharmacyOpenNow(operatingHours) ? 'text-green-700' : 'text-orange-600';
-  }, [isPharmacyOpenNow]);
+  }, [handleBulkAdd, onBulkAddReady]);
 
   // Handle remove with proper error handling
   const handleRemove = useCallback((med, pharm) => {

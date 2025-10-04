@@ -20,21 +20,18 @@ const DuplicateMedicationDialog = ({
     setIsProcessing(true);
     await onReplaceWithNew();
     setIsProcessing(false);
-    onClose();
   };
 
   const handleKeep = async () => {
     setIsProcessing(true);
     await onKeepExisting();
     setIsProcessing(false);
-    onClose();
   };
 
   const handleAddBoth = async () => {
     setIsProcessing(true);
     await onAddBoth();
     setIsProcessing(false);
-    onClose();
   };
 
   const priceDiff = (newItem?.price || 0) - (existingItem?.price || 0);
