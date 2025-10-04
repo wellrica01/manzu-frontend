@@ -333,7 +333,7 @@ function MainLayoutContent({ children }) {
             {/* Brand Section */}
             <div className="flex flex-col items-center md:items-start text-center md:text-left">
               <div className="relative mb-6">
-                <div className="absolute inset-0 bg-gradient-to-r from-[#1ABA7F] to-[#225F91] rounded-2xl blur-xl opacity-50" />
+                <div className="absolute inset-0 bg-[#1ABA7F] rounded-full blur-md opacity-50" />
                 <Image
                   src={CONFIG.images.logo}
                   alt="Manzu Logo"

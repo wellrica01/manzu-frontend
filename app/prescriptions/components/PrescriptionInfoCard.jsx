@@ -1,3 +1,4 @@
+"use client";
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,7 +22,7 @@ const PrescriptionInfoCard = ({ prescriptionMetadata, medications }) => {
           <Pill className="h-4 w-4 text-[#225F91]" strokeWidth={2.5} />
         </div>
         <h4 className="text-base sm:text-xl font-black text-[#225F91]">
-          Prescribed Medications
+          Prescribed Medications ({medications.length}) 
         </h4>
       </div>
 
@@ -40,10 +41,10 @@ const PrescriptionInfoCard = ({ prescriptionMetadata, medications }) => {
             {medications.map((med, index) => (
               <li 
                 key={med.id} 
-                className="group relative border-2 border-gray-100 hover:border-[#1ABA7F]/30 rounded-xl p-2 sm:p-3 transition-all duration-300 hover:shadow-lg bg-white"
+                className="group relative border-2 border-gray-100 hover:border-[#1ABA7F]/30 rounded-xl px-2 sm:px-3 py-2 transition-all duration-300 hover:shadow-lg bg-white"
                 style={{ animationDelay: `${index * 50}ms` }}
               >
-                <div className="flex items-start gap-4">
+                <div className="flex items-center gap-4">
                   {/* Thumbnail */}
                   {med.imageUrl ? (
                     <div className="relative flex-shrink-0">
@@ -68,13 +69,13 @@ const PrescriptionInfoCard = ({ prescriptionMetadata, medications }) => {
 
                     <div className="space-y-1.5">
                       <div className="flex items-center gap-2">
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-gradient-to-r from-[#1ABA7F]/10 to-[#225F91]/10 text-xs font-bold text-[#225F91]">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-gradient-to-r from-[#1ABA7F]/10 to-[#225F91]/10 text-xs sm:text-sm font-bold text-[#225F91]">
                           Qty: {med.quantity} {med.packSizeUnit}
                         </span>
                       </div>
 
                       {med.dosageInstructions && (
-                        <p className="text-sm text-gray-600 font-medium">
+                        <p className="text-xs sm:text-sm text-gray-600 font-medium">
                           <span className="font-bold text-gray-700">Dosage:</span> {med.dosageInstructions}
                         </p>
                       )}
@@ -117,7 +118,7 @@ const PrescriptionInfoCard = ({ prescriptionMetadata, medications }) => {
   );
 
   return (
-    <Card className="relative shadow-2xl border-2 border-[#1ABA7F]/30 rounded-3xl bg-white/98 backdrop-blur-xl px-6 py-8 sm:px-8 mb-8 overflow-hidden animate-in fade-in slide-in-from-bottom duration-700">
+    <Card className="relative shadow-2xl border-2 border-[#1ABA7F]/30 rounded-3xl bg-white/98 backdrop-blur-xl px-4 py-8 sm:px-8 mb-8 overflow-hidden animate-in fade-in slide-in-from-bottom duration-700">
       {/* Decorative Elements */}
       <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-[#1ABA7F]/15 to-transparent rounded-br-full" />
       <div className="absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-tl from-[#225F91]/15 to-transparent rounded-tl-full" />
@@ -125,7 +126,7 @@ const PrescriptionInfoCard = ({ prescriptionMetadata, medications }) => {
 
       <div className="relative z-10 space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
           <div className="flex items-center gap-3">
             <div className="p-3 rounded-2xl bg-gradient-to-br from-[#1ABA7F] to-[#225F91] shadow-xl">
               <FileText className="h-4 sm:h-6 w-4 sm:w-6 text-white" strokeWidth={2.5} />
@@ -150,7 +151,7 @@ const PrescriptionInfoCard = ({ prescriptionMetadata, medications }) => {
           {prescriptionMetadata.fileUrl && (
             <Button
               onClick={() => setShowPreview(true)}
-              className="group h-12 px-4 sm:px-6 rounded-2xl border-2 border-[#225F91] text-[#225F91] bg-white hover:bg-[#225F91] hover:text-white font-black transition-all duration-300 hover:scale-105 shadow-lg"
+              className="group h-12 sm:h-12 px-3 sm:px-6 rounded-2xl border-2 border-[#225F91] text-[#225F91] bg-white hover:bg-[#225F91] hover:text-white font-black transition-all duration-300 hover:scale-105 shadow-lg"
             >
               <Eye className="h-5 w-5 mr-2 group-hover:scale-110 transition-transform duration-300" strokeWidth={2.5} />
               View Prescription

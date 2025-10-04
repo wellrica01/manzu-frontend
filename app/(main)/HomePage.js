@@ -9,7 +9,6 @@ import ConsentModal from '@/components/ConsentModal';
 import SearchBar from '@/components/search/MedSearchBar';
 import PrescriptionUploadForm from '@/components/PrescriptionUploadForm';
 import { Pill, MessageCircle, Phone, ChevronDown, Sparkles, Zap, Shield, Globe, Star, Clock, TrendingUp, Users, Award, Box, Loader2 } from 'lucide-react';
-import Link from 'next/link';
 import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
 import { ErrorBoundary } from 'react-error-boundary';
@@ -333,14 +332,14 @@ const ServiceCard = memo(({ title, icon: Icon, children, isActive = false, gradi
           : '0 15px 30px -8px rgba(0,0,0,0.15)'
       }}
     >
-      {/* Subtle gradient border on hover */}
-      <div className={`absolute inset-0 rounded-[2rem] bg-gradient-to-br ${gradient} opacity-0 group-hover:opacity-40 transition-opacity duration-500`} />
+      {/* Gradient overlay is ALWAYS visible now */}
+      <div className={`absolute inset-0 rounded-[2rem] bg-gradient-to-br ${gradient} opacity-40`} />
 
-      {/* Decorative shapes (simplified for GPU) */}
+      {/* Decorative shapes */}
       <div className="absolute top-0 left-0 w-36 h-36 bg-gradient-to-br from-[#1ABA7F]/15 to-transparent rounded-br-full pointer-events-none" />
       <div className="absolute bottom-0 right-0 w-36 h-36 bg-gradient-to-tl from-[#225F91]/15 to-transparent rounded-tl-full pointer-events-none" />
 
-      {/* Animated Icon + Badge */}
+      {/* Content */}
       <CardHeader className="p-4 sm:p-10 relative z-10">
         <div className="flex items-center justify-between mb-6 sm:mb-8">
           {Icon && (
@@ -361,7 +360,7 @@ const ServiceCard = memo(({ title, icon: Icon, children, isActive = false, gradi
           {title}
         </CardTitle>
 
-        {/* Minimal gradient underline */}
+        {/* Gradient underline */}
         <div className={`h-1.5 w-28 mx-auto rounded-full bg-gradient-to-r ${gradient} transition-all duration-500 shadow-sm ${isHovered ? 'w-36' : ''}`} />
       </CardHeader>
 
@@ -369,7 +368,7 @@ const ServiceCard = memo(({ title, icon: Icon, children, isActive = false, gradi
         {children}
       </CardContent>
 
-      {/* Subtle shine effect */}
+      {/* Shine effect stays on hover */}
       <div className={`absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700`} />
     </Card>
   );
@@ -411,9 +410,12 @@ function HomePageContent() {
     }
     
     setTimeout(() => {
-      searchRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      searchRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      // Don't auto-focus on mobile to prevent keyboard from blocking view
       const searchInput = searchRef.current?.querySelector('input');
-      searchInput?.focus();
+      if (searchInput && window.innerWidth >= 768) {
+        searchInput.focus();
+      }
     }, 100);
   }, []);
 
@@ -425,7 +427,7 @@ function HomePageContent() {
     }
     
     setTimeout(() => {
-      uploadRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      uploadRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
       const uploadButton = uploadRef.current?.querySelector('button');
       uploadButton?.focus();
     }, 100);
@@ -456,25 +458,27 @@ function HomePageContent() {
           {visibleSection === "search" && (
             <ErrorBoundary FallbackComponent={SectionErrorFallback}>
               <Suspense fallback={<LoadingSkeleton />}>
-                <ServiceCard
-                  title={t("services.search_medications")}
-                  icon={Pill}
-                  isActive={true}
-                  gradient="from-[#1ABA7F] to-[#16a876]"
-                >
-                  <div className="text-center mb-10">
-                    <div className="inline-flex items-center gap-3 px-4 sm:px-6 py-2 sm:py-3 rounded-2xl bg-gradient-to-r from-[#1ABA7F]/15 to-[#16a876]/15 text-[#1ABA7F] text-sm sm:text-base font-black mb-6 border-2 border-[#1ABA7F]/30 shadow-lg">
-                      <Sparkles className="h-6 w-6 animate-pulse" aria-hidden="true" />
-                      {t('services.most_popular', 'Most Popular')}
+                <div ref={searchRef}>
+                  <ServiceCard
+                    title={t("services.search_medications")}
+                    icon={Pill}
+                    isActive={true}
+                    gradient="from-[#1ABA7F] to-[#16a876]"
+                  >
+                    <div className="text-center mb-10">
+                      <div className="inline-flex items-center gap-3 px-4 sm:px-6 py-2 sm:py-3 rounded-2xl bg-gradient-to-r from-[#1ABA7F]/15 to-[#16a876]/15 text-[#1ABA7F] text-sm sm:text-base font-black mb-6 border-2 border-[#1ABA7F]/30 shadow-lg">
+                        <Sparkles className="h-6 w-6 animate-pulse" aria-hidden="true" />
+                        {t('services.most_popular', 'Most Popular')}
+                      </div>
+                      <p className="text-gray-600 text-base sm:text-xl leading-relaxed max-w-3xl mx-auto font-bold">
+                        {t('services.search_description', 'Find medications instantly and compare prices from verified pharmacies')}
+                      </p>
                     </div>
-                    <p className="text-gray-600 text-base sm:text-xl leading-relaxed max-w-3xl mx-auto font-bold">
-                      {t('services.search_description', 'Find medications instantly and compare prices from verified pharmacies')}
-                    </p>
-                  </div>
-                  <div className='mt-12' ref={searchRef}>
-                    <SearchBar />
-                  </div>
-                </ServiceCard>
+                    <div className='mt-12'>
+                      <SearchBar />
+                    </div>
+                  </ServiceCard>
+                </div>
               </Suspense>
             </ErrorBoundary>
           )}
@@ -482,24 +486,26 @@ function HomePageContent() {
           {visibleSection === "upload" && (
             <ErrorBoundary FallbackComponent={SectionErrorFallback}>
               <Suspense fallback={<LoadingSkeleton />}>
-                <ServiceCard
-                  title={t("services.upload_prescription")}
-                  icon={Zap}
-                  gradient="from-[#225F91] to-[#1a4a73]"
-                >
-                  <div className="text-center mb-10">
-                    <div className="inline-flex items-center gap-3 px-4 sm:px-6 py-2 sm:py-3 rounded-2xl bg-gradient-to-r from-[#225F91]/15 to-[#1a4a73]/15 text-[#225F91] text-sm sm:text-base font-black mb-6 border-2 border-[#225F91]/30 shadow-lg">
-                      <Clock className="h-6 w-6 animate-pulse" aria-hidden="true" />
-                      {t('services.processing_time', '24-Hour Processing')}
+                <div ref={uploadRef}>
+                  <ServiceCard
+                    title={t("services.upload_prescription")}
+                    icon={Zap}
+                    gradient="from-[#225F91] to-[#1a4a73]"
+                  >
+                    <div className="text-center mb-10">
+                      <div className="inline-flex items-center gap-3 px-4 sm:px-6 py-2 sm:py-3 rounded-2xl bg-gradient-to-r from-[#225F91]/15 to-[#1a4a73]/15 text-[#225F91] text-sm sm:text-base font-black mb-6 border-2 border-[#225F91]/30 shadow-lg">
+                        <Clock className="h-6 w-6 animate-pulse" aria-hidden="true" />
+                        {t('services.processing_time', 'Fast Processing')}
+                      </div>
+                      <p className="text-gray-600 text-base sm:text-xl leading-relaxed max-w-3xl mx-auto font-bold">
+                        {t('services.upload_description', 'Upload your prescription and get your medications ready instantly')}
+                      </p>
                     </div>
-                    <p className="text-gray-600 text-base sm:text-xl leading-relaxed max-w-3xl mx-auto font-bold">
-                      {t('services.upload_description', 'Upload your prescription and get your medications ready within 24 hours')}
-                    </p>
-                  </div>
-                  <div className='mt-12' ref={uploadRef}>
-                    <PrescriptionUploadForm />
-                  </div>
-                </ServiceCard>
+                    <div className='mt-12'>
+                      <PrescriptionUploadForm />
+                    </div>
+                  </ServiceCard>
+                </div>
               </Suspense>
             </ErrorBoundary>
           )}
@@ -530,6 +536,8 @@ function HomePageContent() {
           0% { transform: translateX(-100%) skewX(-15deg); }
           100% { transform: translateX(200%) skewX(-15deg); }
         }
+        .animate-blob {
+          animation: blob 7s infinite;
         .animate-blob {
           animation: blob 7s infinite;
         }

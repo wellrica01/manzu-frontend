@@ -167,15 +167,22 @@ const handleSearch = useCallback(
 
 
 
-const handleAddToCart = async (medicationId, pharmacyId, medicationName, quantity = 1) => {
+const handleAddToCart = async (medicationId, pharmacyId, medicationName, pharmacyName, quantity = 1) => {
   const key = `${medicationId}-${pharmacyId}`;
   dispatch({ type: api.ACTIONS.SET_ADDING_TO_CART, payload: { [key]: true } });
 
   try {
-    await api.addToCart({ medicationId, pharmacyId, quantity, guestId }, t, apiUrl);
+    const result = await api.addToCart({ medicationId, pharmacyId, quantity, guestId }, t, apiUrl);
+    
+   // Construct last added item as object
+   const lastAddedItem = {
+     id: result.orderItem.id,
+     name: quantity > 1 ? `${medicationName} x${quantity}` : medicationName,
+     pharmacy: pharmacyName || "Unknown Pharmacy",
+     quantity: result.orderItem.quantity
+   };
 
-    const displayName = quantity > 1 ? `${medicationName} x${quantity}` : medicationName;
-    dispatch({ type: api.ACTIONS.SET_LAST_ADDED_ITEMS, payload: displayName });
+    dispatch({ type: api.ACTIONS.SET_LAST_ADDED_ITEMS, payload: [lastAddedItem] });
     dispatch({ type: api.ACTIONS.SET_OPEN_CART_DIALOG, payload: true });
 
     if (typeof window !== 'undefined' && window.gtag) {
@@ -183,6 +190,7 @@ const handleAddToCart = async (medicationId, pharmacyId, medicationName, quantit
     }
 
     await fetchCart();
+
   } catch (err) {
     toast.error(err.message);
   } finally {
@@ -191,10 +199,10 @@ const handleAddToCart = async (medicationId, pharmacyId, medicationName, quantit
 };
 
 
-  return {
-    fetchSuggestions,
-    handleSearch,
-    handleAddToCart,
+return {
+  fetchSuggestions,
+  handleSearch,
+  handleAddToCart,
   };
 };
 

@@ -7,7 +7,17 @@ import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Plus, Minus, Trash2, Clock, CheckCircle, AlertCircle, FileText, Package, AlertTriangle, Pill, Shield, Building, Info, ChevronDown, BoxIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const CartItem = ({ item, handleQuantityChange, setRemoveItem, isUpdating, calculateItemPrice, segment = 'ready' }) => {
+const CartItem = ({ 
+  item, 
+  handleQuantityChange, 
+  setRemoveItem, 
+  isUpdating, 
+  calculateItemPrice, 
+  segment = 'ready',
+  selectionMode = false,
+  isSelected = false,
+  onToggleSelect
+ }) => {
   const [showMeta, setShowMeta] = useState(false);
   const metaRef = useRef(null);
   const [metaHeight, setMetaHeight] = useState('0px');
@@ -48,7 +58,30 @@ const CartItem = ({ item, handleQuantityChange, setRemoveItem, isUpdating, calcu
   };
 
   return (
-    <Card className={cn("relative bg-white/95 backdrop-blur-sm border-2 rounded-2xl shadow-lg transition-all duration-300 hover:shadow-xl group overflow-hidden", itemStatus.borderColor)}>
+   <Card className={cn(
+      "relative bg-white/95 backdrop-blur-sm border-2 rounded-2xl shadow-lg transition-all duration-300 hover:shadow-xl group overflow-hidden",
+      itemStatus.borderColor,
+      selectionMode && "cursor-pointer hover:scale-[1.02]",
+      isSelected && "ring-4 ring-[#1ABA7F]/50 border-[#1ABA7F]"
+    )}
+    onClick={selectionMode ? () => onToggleSelect(item.id) : undefined}
+    >
+   {/* Selection Checkbox */}
+      {selectionMode && (
+        <div className="absolute top-4 left-4 z-20">
+          <div className={cn(
+            "w-7 h-7 rounded-lg border-2 flex items-center justify-center transition-all duration-200",
+            isSelected 
+              ? "bg-[#1ABA7F] border-[#1ABA7F] shadow-lg scale-110" 
+              : "bg-white border-gray-300 hover:border-[#1ABA7F]"
+          )}>
+            {isSelected && (
+              <CheckCircle className="h-5 w-5 text-white" strokeWidth={3} />
+            )}
+          </div>
+        </div>
+      )}
+
       <div className={cn("absolute top-0 left-0 right-0 h-1", itemStatus.bgColor)} />
       <div className="p-3 sm:p-4 space-y-4">
 

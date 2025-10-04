@@ -13,7 +13,7 @@ export const initialState = {
   isAddingToCart: {},
   focusedSuggestionIndex: -1,
   openCartDialog: false,
-  lastAddedItems: null,
+  lastAddedItems: [],
   filters: { state: '', lga: '', ward: '' },
   sortBy: 'cheapest',
   states: [],

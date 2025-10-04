@@ -215,7 +215,7 @@ export default function PrescriptionUploadForm() {
           <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-[#1ABA7F]/20 to-transparent rounded-br-full" />
           <div className="absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-tl from-[#225F91]/20 to-transparent rounded-tl-full" />
           
-          <div className="relative z-10 p-8">
+          <div className="relative z-10 p-6">
             <div className="flex justify-center mb-6">
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-[#1ABA7F] to-[#16a876] rounded-full blur-xl opacity-50 animate-pulse" />
@@ -235,14 +235,14 @@ export default function PrescriptionUploadForm() {
               <p className="text-base text-gray-600">
                 {t('upload.success_message')}{' '}
                 <span className="font-bold text-[#225F91] text-lg block mt-1">{submittedContact}</span>
-                <span className="text-sm block mt-2">{t('upload.success_message_end')}</span>
+                <span className="text-base block mt-2">{t('upload.success_message_end')}</span>
               </p>
             </div>
 
             <DialogFooter className="flex-col sm:flex-row gap-3">
               <Button
                 asChild
-                className="group flex-1 h-12 px-6 text-sm font-bold rounded-xl bg-gradient-to-r from-[#225F91] to-[#1a4a73] text-white hover:from-[#1a4a73] hover:to-[#225F91] shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 relative overflow-hidden"
+                className="group flex-1 h-12 p-3 text-sm font-bold rounded-xl bg-gradient-to-r from-[#225F91] to-[#1a4a73] text-white hover:from-[#1a4a73] hover:to-[#225F91] shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 relative overflow-hidden"
               >
                 <Link href="/check-prescription-status">
                   <span className="relative z-10">Check Status</span>
@@ -252,7 +252,7 @@ export default function PrescriptionUploadForm() {
               <Button
                 variant="outline"
                 onClick={handleUploadAnother}
-                className="group flex-1 h-12 px-6 text-sm font-bold rounded-xl border-2 border-[#1ABA7F] text-[#225F91] hover:bg-[#1ABA7F]/10 transition-all duration-300 hover:scale-105"
+                className="group flex-1 h-12 p-3 text-sm font-bold rounded-xl border-2 border-[#1ABA7F] text-[#225F91] hover:bg-[#1ABA7F]/10 transition-all duration-300 hover:scale-105"
               >
                 Close
               </Button>

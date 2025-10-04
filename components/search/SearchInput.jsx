@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -26,6 +27,39 @@ const SearchInput = ({
 }) => {
   const [isListening, setIsListening] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+
+  // Detect when mobile keyboard appears
+  useEffect(() => {
+    const handleResize = () => {
+      // On mobile, when keyboard appears, visualViewport height decreases
+      if (window.visualViewport) {
+        const viewportHeight = window.visualViewport.height;
+        const windowHeight = window.innerHeight;
+        const keyboardVisible = viewportHeight < windowHeight * 0.75;
+        setIsKeyboardVisible(keyboardVisible);
+      }
+    };
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleResize);
+      return () => window.visualViewport.removeEventListener('resize', handleResize);
+    }
+  }, []);
+
+
+  // Scroll input into view when keyboard appears and dropdown is showing
+  useEffect(() => {
+    if (isKeyboardVisible && (showDropdown || showHistory) && inputRef.current) {
+      setTimeout(() => {
+        inputRef.current?.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start',
+          inline: 'nearest'
+        });
+      }, 100);
+    }
+  }, [isKeyboardVisible, showDropdown, showHistory, inputRef]);
 
   // --- Voice Search ---
   const startVoiceSearch = () => {

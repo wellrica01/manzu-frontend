@@ -1,5 +1,5 @@
 'use client';
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { toast } from "sonner";
 import { apiFetch } from "./useApi";
 
@@ -42,12 +42,18 @@ export function useCartActions({ cart, fetchCart, guestId, t }) {
     }
   };
 
-  const isInCart = (medicationId, pharmacyId) =>
-    cart?.pharmacies?.some(
-      (p) =>
-        p.pharmacy.id === pharmacyId &&
-        p.items?.some((i) => i.medication.id === medicationId)
-    ) || false;
+    const isInCart = useCallback(
+      (medicationId, pharmacyId) => {
+        return (
+          cart?.pharmacies?.some(
+            (ph) =>
+              ph.pharmacy.id === pharmacyId &&
+              ph.items?.some((item) => item.medication.id === medicationId)
+          ) || false
+        );
+      },
+      [cart]
+    );
 
   return {
     handleAddToCart,

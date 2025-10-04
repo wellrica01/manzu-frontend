@@ -195,81 +195,82 @@ const PharmacyCard = ({
           </div>
         </div>
 
-{/* Quantity Controls */}
-<div className="flex items-center gap-3 p-3 rounded-xl border-2 border-gray-200 hover:border-[#1ABA7F]/50 transition-colors duration-200">
-  <label htmlFor={`qty-${avail.pharmacyId}`} className="text-sm font-semibold text-gray-700">
-    Quantity:
-  </label>
+        {/* Quantity Controls */}
+        <div className="flex items-center gap-3 p-3 rounded-xl border-2 border-gray-200 hover:border-[#1ABA7F]/50 transition-colors duration-200">
+          <label htmlFor={`qty-${avail.pharmacyId}`} className="text-sm font-semibold text-gray-700">
+            Quantity:
+          </label>
 
-  <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1 shadow-sm">
-    {/* Decrease button */}
-    <button
-      type="button"
-      aria-label="Decrease quantity"
-      onClick={() =>
-        setQuantities(prev => ({
-          ...prev,
-          [avail.pharmacyId]: Math.max(1, (prev[avail.pharmacyId] || 1) - 1),
-        }))
-      }
-      disabled={(quantities[avail.pharmacyId] || 1) <= 1}
-      className="h-8 w-8 p-0 flex items-center justify-center hover:bg-[#1ABA7F]/20 text-[#225F91] disabled:opacity-50 disabled:cursor-not-allowed rounded transition-all duration-200"
-    >
-      <Minus className="h-4 w-4" />
-    </button>
+          <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1 shadow-sm">
+            {/* Decrease button */}
+            <button
+              type="button"
+              aria-label="Decrease quantity"
+              onClick={() =>
+                setQuantities(prev => ({
+                  ...prev,
+                  [avail.pharmacyId]: Math.max(1, (prev[avail.pharmacyId] || 1) - 1),
+                }))
+              }
+              disabled={(quantities[avail.pharmacyId] || 1) <= 1}
+              className="h-8 w-8 p-0 flex items-center justify-center hover:bg-[#1ABA7F]/20 text-[#225F91] disabled:opacity-50 disabled:cursor-not-allowed rounded transition-all duration-200"
+            >
+              <Minus className="h-4 w-4" />
+            </button>
 
-    {/* Quantity display */}
-    <span className="px-3 py-1 text-sm font-bold text-[#225F91] min-w-[2rem] text-center">
-      {quantities[avail.pharmacyId] || 1}
-    </span>
+            {/* Quantity display */}
+            <span className="px-3 py-1 text-sm font-bold text-[#225F91] min-w-[2rem] text-center">
+              {quantities[avail.pharmacyId] || 1}
+            </span>
 
-    {/* Increase button */}
-    <button
-      type="button"
-      aria-label="Increase quantity"
-      onClick={() =>
-        setQuantities(prev => ({
-          ...prev,
-          [avail.pharmacyId]: (prev[avail.pharmacyId] || 1) + 1,
-        }))
-      }
-      className="h-8 w-8 p-0 flex items-center justify-center hover:bg-[#1ABA7F]/20 text-[#225F91] rounded transition-all duration-200"
-    >
-      <Plus className="h-4 w-4" />
-    </button>
-  </div>
-</div>
+            {/* Increase button */}
+            <button
+              type="button"
+              aria-label="Increase quantity"
+              onClick={() =>
+                setQuantities(prev => ({
+                  ...prev,
+                  [avail.pharmacyId]: (prev[avail.pharmacyId] || 1) + 1,
+                }))
+              }
+              className="h-8 w-8 p-0 flex items-center justify-center hover:bg-[#1ABA7F]/20 text-[#225F91] rounded transition-all duration-200"
+            >
+              <Plus className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
 
 
- {/* Add to Cart Button */}
-<Button
-  onClick={() => handleAddToCart(
-    medId, 
-    avail.pharmacyId, 
-    displayName,  // Add the medication name here
-    quantities[avail.pharmacyId] || 1  // This is the quantity
-  )}
-  disabled={isInCart(medId, avail.pharmacyId) || isAddingToCart(avail.pharmacyId)}
-  className={cn(
-    "w-full h-12 rounded-xl font-bold text-sm transition-all duration-300 shadow-lg hover:shadow-xl relative overflow-hidden",
-    isInCart(medId, avail.pharmacyId)
-      ? "bg-gray-400 text-white cursor-not-allowed"
-      : "bg-gradient-to-r from-[#225F91] to-[#1a4a73] text-white hover:from-[#1a4a73] hover:to-[#225F91] active:scale-95"
-  )}
->
-  <span className="relative z-10 flex items-center gap-2">
-    {isAddingToCart(avail.pharmacyId) ? (
-      <>
-        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-        Adding...
-      </>
-    ) : (
-      isInCart(medId, avail.pharmacyId)
-        ? 'Already in Cart'
-        : 'Add to Cart'
-    )}
-  </span>
-</Button>
+        {/* Add to Cart Button */}
+        <Button
+          onClick={() => handleAddToCart(
+            medId, 
+            avail.pharmacyId, 
+            displayName,  
+            avail.pharmacyName,
+            quantities[avail.pharmacyId] || 1 
+          )}
+          disabled={isInCart(medId, avail.pharmacyId) || isAddingToCart(avail.pharmacyId)}
+          className={cn(
+            "w-full h-12 rounded-xl font-bold text-sm transition-all duration-300 shadow-lg hover:shadow-xl relative overflow-hidden",
+            isInCart(medId, avail.pharmacyId)
+              ? "bg-gray-400 text-white cursor-not-allowed"
+              : "bg-gradient-to-r from-[#225F91] to-[#1a4a73] text-white hover:from-[#1a4a73] hover:to-[#225F91] active:scale-95"
+          )}
+        >
+          <span className="relative z-10 flex items-center gap-2">
+            {isAddingToCart(avail.pharmacyId) ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                Adding...
+              </>
+            ) : (
+              isInCart(medId, avail.pharmacyId)
+                ? 'Already in Cart'
+                : 'Add to Cart'
+            )}
+          </span>
+        </Button>
 
 
         {/* More Details Toggle */}

@@ -227,14 +227,16 @@ const handleSubmit = async (e) => {
 
       <div className="relative z-10 flex-1 py-12 px-4">
         {/* Header */}
-        <div className="text-center mb-12 space-y-4 animate-in fade-in slide-in-from-top duration-700">
-          <h1 className="text-4xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#225F91] to-[#1ABA7F]">
-            Check Prescription Status
-          </h1>
-          <p className="text-base text-gray-600 font-medium max-w-2xl mx-auto">
-            Enter your email or phone number to view your prescription status and order details
-          </p>
-        </div>
+          {status === 'idle' && (
+            <div className="text-center mb-12 space-y-4 animate-in fade-in slide-in-from-top duration-700">
+              <h1 className="text-4xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#225F91] to-[#1ABA7F]">
+                Check Prescription Status
+              </h1>
+              <p className="text-base text-gray-600 font-medium max-w-2xl mx-auto">
+                Enter your email or phone number to view your prescription status and order details
+              </p>
+            </div>
+          )}
 
         <div className="max-w-2xl mx-auto space-y-8">
           {/* Status Check Form */}
@@ -243,7 +245,7 @@ const handleSubmit = async (e) => {
               <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-[#1ABA7F]/20 to-transparent rounded-bl-full" />
               <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-[#225F91]/20 to-transparent rounded-tr-full" />
 
-              <CardHeader className="relative z-10 bg-gradient-to-r from-[#225F91]/10 to-[#1ABA7F]/10 p-8">
+              <CardHeader className="relative z-10 bg-gradient-to-r from-[#225F91]/10 to-[#1ABA7F]/10 p-4 sm:p-8">
                 <div className="flex items-center gap-3 justify-center mb-2">
                   <div className="p-3 bg-gradient-to-br from-[#1ABA7F]/20 to-[#225F91]/20 rounded-xl">
                     <Search className="h-6 w-6 text-[#225F91]" />
@@ -257,7 +259,7 @@ const handleSubmit = async (e) => {
                 </p>
               </CardHeader>
 
-              <CardContent className="relative z-10 p-8 space-y-6">
+              <CardContent className="relative z-10 p-6 sm:p-8 space-y-6">
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="space-y-3">
                     <Label htmlFor="identifier" className="text-sm font-bold text-gray-700 uppercase tracking-wide">
@@ -322,19 +324,20 @@ const handleSubmit = async (e) => {
                   <h2 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-yellow-600">
                     Under Review
                   </h2>
-                  <p className="text-lg text-gray-600 font-semibold">Your prescription is being verified</p>
+                  <p className="text-lg text-gray-600 font-semibold">Almost there! We’re verifying your prescription now</p>
                 </CardTitle>
               </CardHeader>
 
-              <CardContent className="p-8 space-y-6">
-                <div className="p-6 bg-gradient-to-br from-orange-50 to-yellow-50 rounded-xl border-2 border-orange-200/50">
+              <CardContent className="p-4 sm:p-6 space-y-6">
+                <div className="p-4 bg-gradient-to-br from-orange-50 to-yellow-50 rounded-xl border-2 border-orange-200/50">
                   <div className="flex items-start gap-3">
                     <FileText className="h-6 w-6 text-orange-600 flex-shrink-0 mt-1" />
                     <div className="space-y-2">
-                      <h3 className="font-bold text-gray-900 text-lg">What's Happening?</h3>
+                      <h3 className="font-bold text-gray-900 text-lg">What’s happening?</h3>
                       <p className="text-sm text-gray-700 leading-relaxed">
-                        Our pharmacy team is carefully reviewing your prescription to ensure accuracy and safety. 
-                        This process typically takes a few hours, but may vary depending on the complexity of your prescription.
+                        Our pharmacy team is reviewing your prescription to make sure 
+                        everything is accurate and safe. This usually takes just a few minutes, 
+                        and you’ll be notified as soon as it’s complete.
                       </p>
                     </div>
                   </div>
@@ -357,14 +360,14 @@ const handleSubmit = async (e) => {
                   <Button
                     onClick={resetForm}
                     variant="outline"
-                    className="flex-1 h-12 border-2 border-[#225F91] text-[#225F91] hover:bg-[#225F91]/10 font-bold rounded-xl transition-all duration-300"
+                    className="flex-1 h-12 p-3 border-2 border-[#225F91] text-[#225F91] hover:bg-[#225F91]/10 font-bold rounded-xl transition-all duration-300"
                   >
                     Check Another
                   </Button>
                   <Button
                     onClick={handleBackToHome}
                     variant="outline"
-                    className="flex-1 h-12 border-2 border-[#1ABA7F] text-[#1ABA7F] hover:bg-[#1ABA7F]/10 font-bold rounded-xl transition-all duration-300"
+                    className="flex-1 h-12 p-3 border-2 border-[#1ABA7F] text-[#1ABA7F] hover:bg-[#1ABA7F]/10 font-bold rounded-xl transition-all duration-300"
                   >
                     <Home className="h-5 w-5 mr-2" />
                     Back to Home

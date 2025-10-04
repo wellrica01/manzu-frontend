@@ -3,21 +3,21 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogTrigger, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import { Loader2, ShoppingCart, MapPin, Pill, HospitalIcon, AlertCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Loader2, ShoppingCart, Pill, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
-import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
-import MedicationCard from '@/components/search/MedicationCard';
 import PharmacyRecommendations from './PharmacyRecommendations';
 import HeroSection from './HeroSection';
 import PrescriptionInfoCard from './PrescriptionInfoCard';
-import CartDialog from '@/components/search/CartDialog';
+import CartDialog from '@/components/cart/CartDialog';
+import DuplicateMedicationDialog from '@/components/cart/DuplicateMedicationDialog';
+import BulkDuplicateDialog from '@/components/cart/BulkDuplicateDialog';
+import UnifiedRemoveDialog from '@/components/cart/UnifiedRemoveDialog';
+import { bulkRemoveCartItems } from '@/components/cart/cartApi';
 import { useCart } from '@/hooks/useCart';
 import FilterControls from '@/components/search/FilterControls';
-import { Badge } from '@/components/ui/badge';
 
 
 
@@ -50,11 +50,26 @@ const PrescriptionMedicationsPage = React.memo(() => {
   const [lastAddedItems, setLastAddedItems] = useState([]);
   const [showPreview, setShowPreview] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
-  const [viewMode, setViewMode] = useState('med'); // 'med' or 'pharmacy'
   const [isAddingToCart, setIsAddingToCart] = useState({});
   const { userIdentifier } = useParams();
-  const { cart, fetchCart, guestId } = useCart();
+  const { cart, fetchCart, isInCart, guestId } = useCart();
   const cartItems = cart?.pharmacies?.flatMap(p => p.items) || [];
+  const [isBulkRemoving, setIsBulkRemoving] = useState(false);
+  const [removeItemDialog, setRemoveItemDialog] = useState(null);
+
+  const [duplicateDialog, setDuplicateDialog] = useState({
+  isOpen: false,
+  existingItem: null,
+  newItem: null
+    });
+
+  const [bulkDuplicateDialog, setBulkDuplicateDialog] = useState({
+    isOpen: false,
+    pharmacyName: '',
+    duplicates: [],
+    safeItems: [],
+    pharmacyId: null
+  });
 
 
   // Filtering state for pharmacies
@@ -223,7 +238,7 @@ const fetchPrescriptionOrder = useCallback(async () => {
   }, [userIdentifier, userLocation, fetchPrescriptionOrder, filterState, filterLga, filterWard]);
 
 
-const handleAddToCart = async (medicationId, pharmacyId, displayName) => {
+const addToCartInternal = async (medicationId, pharmacyId, displayName, quantity = 1) => {
   setIsAddingToCart(prev => ({ ...prev, [`${medicationId}-${pharmacyId}`]: true }));
   try {
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart/add`, {
@@ -236,16 +251,28 @@ const handleAddToCart = async (medicationId, pharmacyId, displayName) => {
         userIdentifier,
         medicationId,
         pharmacyId,
-        quantity: medications.find(med => med.id === medicationId)?.quantity || 1,
+        quantity,
         prescriptionId: prescriptionMetadata?.id,
       }),
     });
+
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.message || 'Failed to add to cart');
     }
+
+    const result = await response.json();
     await fetchCart();
-    setLastAddedItems([displayName]); // Update to array
+
+
+   const pharmacy = pharmacyRecommendations.find(p => p.pharmacyId === pharmacyId);
+   setLastAddedItems([{
+     id: result.orderItem.id,
+     name: quantity > 1 ? `${displayName} x${quantity}` : displayName,
+     pharmacy: pharmacy?.pharmacyName || "Unknown Pharmacy",
+     quantity: result.orderItem.quantity
+   }]);
+
     setOpenCartDialog(true);
     toast.success(`${displayName} added to cart`);
   } catch (error) {
@@ -256,46 +283,233 @@ const handleAddToCart = async (medicationId, pharmacyId, displayName) => {
   }
 };
 
-const handleBulkAdd = async () => {
-  setIsAddingToCart(prev => ({ ...prev, bulk: true }));
+
+const handleAddToCart = async (medicationId, pharmacyId, displayName) => {
+  // Check if medication exists in another pharmacy
+  const existingInCart = cart?.pharmacies?.find(pharmacy => 
+    pharmacy.items?.some(item => item.medication.id === medicationId && pharmacy.pharmacy.id !== pharmacyId)
+  );
+
+  if (existingInCart) {
+    const existingItem = existingInCart.items.find(item => item.medication.id === medicationId);
+    const newPharmacy = pharmacyRecommendations.find(p => p.pharmacyId === pharmacyId);
+    const newMed = newPharmacy?.meds.find(m => m.id === medicationId);
+
+    setDuplicateDialog({
+      isOpen: true,
+      existingItem: {
+        medicationName: displayName,
+        pharmacyName: existingInCart.pharmacy.name,
+        price: existingItem.price,
+        quantity: existingItem.quantity,
+        cartItemId: existingItem.id,
+        pharmacyId: existingInCart.pharmacy.id
+      },
+      newItem: {
+        medicationName: displayName,
+        pharmacyName: newPharmacy.pharmacyName,
+        price: newMed.price,
+        quantity: medications.find(m => m.id === medicationId)?.quantity || 1,
+        medicationId,
+        pharmacyId
+      }
+    });
+    return; // Stop here
+  }
+
+  // If no duplicates, just add normally
+  await addToCartInternal(medicationId, pharmacyId, displayName, medications.find(m => m.id === medicationId)?.quantity || 1);
+};
+
+
+const handleKeepExisting = () => {
+  toast.info('Keeping your current selection');
+  setDuplicateDialog({ isOpen: false, existingItem: null, newItem: null });
+};
+
+
+const handleReplaceWithNew = async () => {
+  const { existingItem, newItem } = duplicateDialog;
   try {
-    const prescriptionId = prescriptionMetadata?.id;
-    if (!prescriptionId) {
-      throw new Error('Prescription ID not found');
+    // Remove the existing item
+    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart/remove/${existingItem.cartItemId}`, {
+      method: 'DELETE',
+      headers: { 'x-guest-id': guestId },
+    });
+    await fetchCart(); // make sure cart is updated
+
+    // Directly add new item without duplicate check
+    await addToCartInternal(newItem.medicationId, newItem.pharmacyId, newItem.medicationName, newItem.quantity);
+
+    toast.success(`Switched to ${newItem.pharmacyName}`);
+    setDuplicateDialog({ isOpen: false, existingItem: null, newItem: null });
+  } catch (error) {
+    console.error(error);
+    toast.error(error.message || 'Failed to replace item');
+  }
+};
+
+const handleAddBoth = async () => {
+  const { newItem } = duplicateDialog;
+  try {
+    // Directly add the new item without duplicate check
+    await addToCartInternal(newItem.medicationId, newItem.pharmacyId, newItem.medicationName, newItem.quantity);
+
+    toast.info('Added from both pharmacies');
+    setDuplicateDialog({ isOpen: false, existingItem: null, newItem: null });
+  } catch (error) {
+    console.error(error);
+    toast.error('Failed to add both items');
+  }
+};
+
+
+// Handle bulk add with duplicate detection
+const handleBulkAddWithDuplicateCheck = async (pharmacyId, meds) => {
+  // Check each medication for duplicates in OTHER pharmacies
+  const duplicates = [];
+  const safeToAdd = [];
+
+  meds.forEach(med => {
+    // Skip if already in cart from THIS pharmacy
+    if (isInCart(med.id, pharmacyId)) {
+      return;
     }
 
-    // Select the "best" pharmacy for each medication (e.g., cheapest)
-    const items = medications.map(med => {
-      const bestAvailability = med.availability?.reduce((best, current) => {
-        if (!best || current.price < best.price) return current;
-        return best;
-      }, null);
+    // Check if exists in a DIFFERENT pharmacy
+    const existingInCart = cart?.pharmacies?.find(pharmacy => 
+      pharmacy.items?.some(item => item.medication.id === med.id && pharmacy.pharmacy.id !== pharmacyId)
+    );
 
-      if (!bestAvailability) {
-        throw new Error(`No available pharmacy for ${med.displayName}`);
-      }
-
-      return {
+    if (existingInCart) {
+      const existingItem = existingInCart.items.find(item => item.medication.id === med.id);
+      duplicates.push({
         medicationId: med.id,
-        pharmacyId: bestAvailability.pharmacyId,
-        quantity: med.quantity || 1,
-        displayName: med.displayName,
-      };
-    });
+        medicationName: med.displayName,
+        currentPharmacy: existingInCart.pharmacy.name,
+        currentPrice: existingItem.price,
+        newPrice: med.price,
+        quantity: existingItem.quantity,
+        cartItemId: existingItem.id,
+        currentPharmacyId: existingInCart.pharmacy.id
+      });
+    } else {
+      safeToAdd.push(med);
+    }
+  });
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart/addbulk`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-guest-id': guestId,
-      },
-      body: JSON.stringify({
-        userIdentifier,
-        guestId,
-        items,
-        prescriptionId,
-      }),
+  // If there are duplicates, show dialog with options
+  if (duplicates.length > 0) {
+    const currentPharmacy = pharmacyRecommendations.find(p => p.pharmacyId === pharmacyId);
+    
+    setBulkDuplicateDialog({
+      isOpen: true,
+      pharmacyName: currentPharmacy?.pharmacyName || 'this pharmacy',
+      duplicates,
+      safeItems: safeToAdd,
+      pharmacyId
     });
+    return null; // Signal duplicates found
+  }
+
+  // If no duplicates, proceed
+  return { pharmacyId, meds: safeToAdd };
+};
+
+
+// Handle bulk duplicate dialog actions
+const handleBulkKeepExisting = () => {
+  // Just add the safe items (skip duplicates)
+  const { safeItems, pharmacyId } = bulkDuplicateDialog;
+  setBulkDuplicateDialog({ isOpen: false, pharmacyName: '', duplicates: [], safeItems: [], pharmacyId: null });
+  
+  if (safeItems.length > 0) {
+    toast.info(`Adding ${safeItems.length} non-duplicate item${safeItems.length > 1 ? 's' : ''}`);
+    // Trigger the actual bulk add for safe items only
+    return { pharmacyId, meds: safeItems };
+  } else {
+    toast.info('No items to add');
+  }
+};
+
+const handleBulkReplaceAll = async () => {
+  const { duplicates, safeItems, pharmacyId } = bulkDuplicateDialog;
+  
+  try {
+    // Remove all duplicate items from cart
+    for (const dup of duplicates) {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart/remove/${dup.cartItemId}`, {
+        method: 'DELETE',
+        headers: { 'x-guest-id': guestId },
+      });
+    }
+    
+    await fetchCart();
+    
+    // Now add all items (both previously duplicates and safe items)
+    const allMeds = [
+      ...duplicates.map(d => pharmacyRecommendations
+        .find(p => p.pharmacyId === pharmacyId)?.meds
+        .find(m => m.id === d.medicationId)
+      ),
+      ...safeItems
+    ].filter(Boolean);
+    
+    setBulkDuplicateDialog({ isOpen: false, pharmacyName: '', duplicates: [], safeItems: [], pharmacyId: null });
+    toast.success(`Replacing ${duplicates.length} duplicate${duplicates.length > 1 ? 's' : ''}`);
+    
+    return { pharmacyId, meds: allMeds };
+  } catch (error) {
+    console.error(error);
+    toast.error('Failed to replace items');
+  }
+};
+
+const handleBulkAddAll = () => {
+  // Add everything (keep existing + add new from this pharmacy)
+  const { duplicates, safeItems, pharmacyId } = bulkDuplicateDialog;
+  
+  const allMeds = [
+    ...duplicates.map(d => pharmacyRecommendations
+      .find(p => p.pharmacyId === pharmacyId)?.meds
+      .find(m => m.id === d.medicationId)
+    ),
+    ...safeItems
+  ].filter(Boolean);
+  
+  setBulkDuplicateDialog({ isOpen: false, pharmacyName: '', duplicates: [], safeItems: [], pharmacyId: null });
+  toast.info('Adding from both pharmacies');
+  
+  return { pharmacyId, meds: allMeds };
+};
+
+
+const executeBulkAdd = useCallback(async (pharmacyId, medsToAdd) => {
+  if (!medsToAdd || medsToAdd.length === 0) return;
+  
+  try {
+    const items = medsToAdd.map(med => ({
+      medicationId: med.id,
+      pharmacyId,
+      quantity: medications.find(m => m.id === med.id)?.quantity || 1
+    }));
+
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/cart/addbulk`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-guest-id': guestId,
+        },
+        body: JSON.stringify({
+          userIdentifier,
+          guestId,
+          items,
+          prescriptionId: prescriptionMetadata?.id,
+        }),
+      }
+    );
 
     if (!response.ok) {
       const errorData = await response.json();
@@ -304,44 +518,68 @@ const handleBulkAdd = async () => {
 
     const result = await response.json();
     await fetchCart();
-    setLastAddedItems(result.addedItems.map(item => item.displayName));
+
+    const pharmacy = pharmacyRecommendations.find(p => p.pharmacyId === pharmacyId);
+
+ // Map using orderItems from the API response
+    setLastAddedItems(
+      result.orderItems.map((orderItem, index) => ({
+        id: orderItem.id, // ✅ Use orderItem.id (375, 376, 377)
+        name: result.addedItems[index].quantity > 1 
+          ? `${result.addedItems[index].displayName} x${result.addedItems[index].quantity}` 
+          : result.addedItems[index].displayName,
+        pharmacy: pharmacy?.pharmacyName || "Unknown Pharmacy",
+        quantity: orderItem.quantity
+      }))
+    );
+
     setOpenCartDialog(true);
-    toast.success(`Added ${result.addedItems.length} medications to cart`);
+    toast.success(`Added ${result.addedItems.length} item${result.addedItems.length > 1 ? 's' : ''} to cart`);
   } catch (error) {
     console.error('Bulk add error:', error);
-    toast.error(error.message || 'Failed to add medications to cart');
-  } finally {
-    setIsAddingToCart(prev => ({ ...prev, bulk: false }));
+    toast.error(error.message || 'Failed to add items');
   }
-};
+}, [medications, pharmacyRecommendations, prescriptionMetadata, guestId, userIdentifier, fetchCart, setLastAddedItems, setOpenCartDialog]);
 
-  const isInCart = (medicationId, pharmacyId) => {
-    return cart?.pharmacies?.some(pharmacy =>
-      pharmacy.pharmacy.id === pharmacyId &&
-      pharmacy.items?.some(item => item.medication.id === medicationId)
-    ) || false;
-  };
+
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4">
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-gray-50">
-          <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-[#1ABA7F] to-[#225F91] rounded-full blur-2xl opacity-50 animate-pulse" />
-            <Loader2 className="relative w-20 h-20 text-[#1ABA7F] animate-spin" strokeWidth={2.5} />
+   <div className="min-h-screen bg-gradient-to-br from-[#1ABA7F]/5 via-white to-[#225F91]/5 relative overflow-hidden flex items-center justify-center">
+      {/* Animated background orbs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#1ABA7F]/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-[#225F91]/10 rounded-full blur-3xl animate-pulse delay-700" />
+      </div>
+
+      <div className="relative z-10 flex flex-col items-center gap-8">
+        {/* Premium loading spinner */}
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-[#1ABA7F] to-[#225F91] rounded-full blur-xl opacity-50 animate-pulse" />
+          <div className="relative animate-spin rounded-full h-20 w-20 border-4 border-transparent bg-gradient-to-r from-[#1ABA7F] to-[#225F91] bg-clip-padding" style={{
+            WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+            WebkitMaskComposite: 'xor',
+            maskComposite: 'exclude',
+            padding: '4px'
+          }}>
+            <div className="absolute inset-0 rounded-full border-t-4 border-[#1ABA7F] animate-pulse" />
           </div>
-          <div className="text-center mt-8">
-            <h2 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#225F91] to-[#1ABA7F] animate-pulse">
-              Loading Prescription
-            </h2>
-            <div className="flex justify-center gap-2 mt-4">
-              <div className="w-2 h-2 bg-[#1ABA7F] rounded-full animate-bounce" />
-              <div className="w-2 h-2 bg-[#225F91] rounded-full animate-bounce delay-75" />
-              <div className="w-2 h-2 bg-[#1ABA7F] rounded-full animate-bounce delay-150" />
-            </div>
+          <Loader2 className="absolute inset-0 m-auto h-8 w-8 text-[#225F91]" />
+        </div>
+
+        {/* Loading text with shimmer effect */}
+        <div className="text-center space-y-3">
+          <h2 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#225F91] to-[#1ABA7F] animate-pulse">
+            Loading Prescription
+          </h2>
+          <div className="flex items-center justify-center gap-2 mt-4">
+            <div className="w-2 h-2 bg-[#1ABA7F] rounded-full animate-bounce" />
+            <div className="w-2 h-2 bg-[#225F91] rounded-full animate-bounce delay-100" />
+            <div className="w-2 h-2 bg-[#1ABA7F] rounded-full animate-bounce delay-200" />
           </div>
         </div>
       </div>
+    </div>
     );
   }
 
@@ -412,47 +650,19 @@ const handleBulkAdd = async () => {
           prescriptionMetadata={prescriptionMetadata}
           medications={medications}
         />
+        <div className='px-2'>
         <PrescriptionInfoCard
           prescriptionMetadata={prescriptionMetadata}
           medications={medications}
+          setShowHelp={setShowHelp}
         />
+        </div>
         <hr className="border-t border-gray-300 my-4 sm:my-6" />
+
         {medications.length > 0 && (
-          <>
+      <>
 
-    {/* Simple side-by-side toggle buttons */}
-    <div className="bg-gradient-to-r from-gray-50 to-white rounded-2xl p-3 shadow-lg border-2 border-gray-200/50" role="tab">
-    <div className="grid grid-cols-2 sm:flex gap-2">
-      <button
-        onClick={() => setViewMode('med')}
-        className={cn(
-          "group relative flex flex-col sm:flex-row items-center justify-center gap-2 py-2 sm:py-4 px-2 sm:p-4 rounded-xl font-bold transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#1ABA7F] focus:ring-offset-2",
-          viewMode === 'med'
-            ? "bg-gradient-to-r from-[#225F91] to-[#1a4a73] text-white shadow-xl scale-105"
-            : "bg-transparent text-gray-600 hover:bg-white hover:shadow-md"
-        )}
-      >
-        <Pill className="h-5 w-5 mr-2" strokeWidth={2.5} />
-        By Medications
-      </button>
-      <button
-            onClick={() => setViewMode('pharmacy')}
-            className={cn(
-              "group relative flex flex-col sm:flex-row items-center justify-center gap-2 py-2 sm:py-4 px-2 sm:p-4 rounded-xl font-bold transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#1ABA7F] focus:ring-offset-2",
-              viewMode === 'pharmacy'
-            ? "bg-gradient-to-r from-[#225F91] to-[#1a4a73] text-white shadow-xl scale-105"
-            : "bg-transparent text-gray-600 hover:bg-white hover:shadow-md"
-            )}
-          >
-            <HospitalIcon className='h-5 w-5' strokeWidth={2.5} />
-            {viewMode === 'pharmacy' ? "Grouped by Pharmacies" : "Group by Pharmacies"}
-      </button>
-      </div>
-      </div>
-
-    <hr className="border-t border-gray-300 mb-8" />
-
-       <div className="my-6">
+       <div className="my-6 px-2">
           {/* Filter Controls */}
               <FilterControls
                 sortBy={sortBy}
@@ -492,134 +702,12 @@ const handleBulkAdd = async () => {
         </div>
         <hr className="border-t border-gray-300 mb-8" />
 
-            {viewMode === 'med' ? (
-              <Accordion type="single" collapsible className="mb-24 space-y-4">
-                {medications.map((med, index) => (
-                  <AccordionItem key={med.id} value={med.id} className="relative bg-white/98 backdrop-blur-xl 
-                  border-2 border-[#1ABA7F]/30 rounded-3xl shadow-xl hover:shadow-3xl 
-                  transition-all duration-500 hover:-translate-y-1 overflow-hidden group">
-                  
-                  {/* Add decorative corner */}
-                  <div className="absolute top-0 left-0 w-24 h-24 bg-gradient-to-br from-[#1ABA7F]/10 to-transparent rounded-br-full" />
-                  <AccordionTrigger className="p-4 sm:p-6 hover:bg-gradient-to-r hover:from-[#1ABA7F]/5 hover:to-transparent transition-all duration-300 group">
-                    <div className="flex flex-col gap-6 w-full">
-                      {/* Row 1: Title (left) + Image (right) */}
-                      <div className="flex gap-4 w-full items-center">
-                        {/* Title */}
-                        <h4 className="text-2xl sm:text-3xl font-black text-[#225F91] group-hover:text-[#1ABA7F] transition-colors duration-300 flex-1 min-w-0">
-                          {med.displayName}
-                        </h4>
-
-                        {/* Image */}
-                            <div className="relative group flex-shrink-0 w-24 h-24">
-                              <div className="absolute inset-0 bg-gradient-to-br from-[#1ABA7F] to-[#225F91] rounded-2xl blur-lg opacity-0 group-hover:opacity-30 transition-opacity duration-300" />
-                              <div className="relative w-full h-full rounded-2xl overflow-hidden border-4 border-white shadow-xl group-hover:scale-105 transition-transform duration-300">
-                                {med.imageUrl ? (
-                                  <Dialog>
-                                    <DialogTrigger asChild>
-                                      <img
-                                        src={med.imageUrl}
-                                        alt={med.displayName}
-                                        className="w-full h-full object-cover cursor-pointer transition-transform duration-300 hover:scale-110"
-                                      />
-                                    </DialogTrigger>
-                                    <DialogContent className="max-w-3xl p-0 border-0 rounded-3xl overflow-hidden">
-                                      <VisuallyHidden>
-                                        <DialogTitle>{med.displayName}</DialogTitle>
-                                      </VisuallyHidden>
-                                      <img src={med.imageUrl} alt={med.displayName} className="w-full h-auto" />
-                                    </DialogContent>
-                                  </Dialog>
-                                ) : (
-                                  <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-                                    <Pill className="w-16 h-16 text-gray-400" aria-label="Medication" />
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                      </div>
-
-
-                      {/* Row 2: Info grid + Availability */}
-                      <div className="flex flex-col gap-4 w-full">
-                        {/* Info grid */}
-                        <div className="grid grid-cols-2 sm:grid-cols-2 gap-3 w-full">
-
-                          {/* Composition */}
-                         {med.ingredients?.length > 0 && (
-                            <div className="p-3 rounded-xl bg-white border border-gray-200 hover:border-[#1ABA7F]/50 transition-colors duration-200">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Composition</span>
-                              </div>
-                              <p className="text-sm font-bold text-gray-900">
-                                {med.ingredients.map(i => `${i.activeSubstance} ${i.strengthValue}${i.strengthUnit}`).join(", ")}
-                              </p>
-                            </div>
-                          )}
-
-                          {/* NAFDAC Code */}
-                          <div className="p-3 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-200">
-                            <span className="text-xs font-black text-gray-600 uppercase tracking-wide block mb-1">
-                              NAFDAC Code
-                            </span>
-                            <span className="text-sm text-gray-800 font-bold">{med.nafdacCode || 'N/A'}</span>
-                          </div>
-
-                          {/* Manufacturer */}
-                          {med.manufacturerName && (
-                            <div className="p-3 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border border-purple-200 sm:col-span-2">
-                              <span className="text-xs font-black text-gray-600 uppercase tracking-wide block mb-1">
-                                Manufacturer
-                              </span>
-                              <span className="text-sm text-gray-800 font-bold">
-                                {med.manufacturerName} {med.manufacturerCountry && `• ${med.manufacturerCountry}`}
-                              </span>
-                            </div>
-                          )}
-
-                          {/* Pack Size */}
-
-                           {med.packSizeExpression && (
-                              <div className="p-3 rounded-xl bg-white border border-gray-200 hover:border-[#1ABA7F]/50 transition-colors duration-200">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Pack Size</span>
-                                </div>
-                                <p className="text-sm font-bold text-gray-900 font-mono">{med.packSizeExpression} {med.packSizeUnit}</p>
-                              </div>
-                            )}
-                        </div>
-
-                        {/* Availability Badge */}
-                        <Badge className="bg-gradient-to-r from-[#1ABA7F]/20 to-[#225F91]/20 text-[#225F91] border-2 border-[#1ABA7F]/30 font-black px-4 py-2 text-sm">
-                          <MapPin className="h-4 w-4 mr-1.5" strokeWidth={2.5} />
-                          Available at {med.availability?.length || 0} Pharmacies
-                        </Badge>
-                      </div>
-                    </div>
-
-                  </AccordionTrigger>
-                    <AccordionContent className="p-3 sm:p-4">
-                       <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-[#1ABA7F] to-[#225F91] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                      <MedicationCard
-                        med={med}
-                        handleAddToCart={handleAddToCart}
-                        isInCart={isInCart}
-                        isAddingToCart={isAddingToCart}
-                        isMultiMed={true}
-                        searchTerm=""
-                        state={filterState}
-                        lga={filterLga}
-                        ward={filterWard}
-                      />
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
-            ) : (
               <PharmacyRecommendations
                 pharmacyRecommendations={pharmacyRecommendations}
                 medications={medications}
                 handleAddToCart={handleAddToCart}
+                handleBulkAddWithDuplicateCheck={handleBulkAddWithDuplicateCheck}
+                cart={cart}
                 isInCart={isInCart}
                 isAddingToCart={isAddingToCart}
                 fetchCart={fetchCart}
@@ -631,20 +719,35 @@ const handleBulkAdd = async () => {
                 state={filterState}
                 lga={filterLga}
                 ward={filterWard}
+                onRemoveItem={(item) => setRemoveItemDialog(item)}
               />
-            )}
+
+          <UnifiedRemoveDialog
+            removeItem={removeItemDialog}
+            bulkRemoveItems={null}
+            onClose={() => setRemoveItemDialog(null)}
+            onConfirm={async () => {
+              if (!removeItemDialog?.id) return;
+              
+              try {
+                await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart/remove/${removeItemDialog.id}`, {
+                  method: 'DELETE',
+                  headers: { 'x-guest-id': guestId },
+                });
+                await fetchCart();
+                setRemoveItemDialog(null);
+                toast.success('Item removed from cart');
+              } catch (error) {
+                console.error('Remove error:', error);
+                toast.error('Failed to remove item');
+              }
+            }}
+            isRemoving={false}
+          />
+
           </>
         )}
 
-   {/* Bulk add button 
-    <Button className="group relative h-16 px-6 w-fit rounded-2xl bg-gradient-to-r from-[#1ABA7F] to-[#16a876] hover:from-[#16a876] hover:to-[#1ABA7F] text-white font-black shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105 overflow-hidden">
-      <span className="relative z-10 text-base flex items-center gap-3">
-        <ShoppingCart className="h-6 w-6" strokeWidth={2.5} />
-        Add Best Options ({medications.length} meds)
-      </span>
-      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-    </Button> 
-    */}
 
         {prescriptionMetadata?.status === 'VERIFIED' && medications.length === 0 && (
         <Card className="relative bg-white/98 backdrop-blur-xl border-2 border-gray-200 rounded-3xl shadow-2xl overflow-hidden p-12">
@@ -676,11 +779,101 @@ const handleBulkAdd = async () => {
           cartItemsCount={cartItems.length}
           onViewCart={() => window.location.href = '/cart'}
         />
-        <CartDialog
-          openCartDialog={openCartDialog}
-          setOpenCartDialog={setOpenCartDialog}
-          lastAddedItems={lastAddedItems}
+      <CartDialog
+        openCartDialog={openCartDialog}
+        setOpenCartDialog={setOpenCartDialog}
+        lastAddedItems={lastAddedItems}
+        onRemoveItems={async (itemIds) => {
+          setIsBulkRemoving(true);
+          try {
+            await bulkRemoveCartItems(guestId, itemIds);
+            await fetchCart();
+          } catch (error) {
+            console.error('Failed to remove items:', error);
+            toast.error('Failed to remove items', { duration: 3000 });
+          } finally {
+            setIsBulkRemoving(false);
+          }
+        }}
+        isRemoving={isBulkRemoving}
+      />
+
+        <DuplicateMedicationDialog
+          isOpen={duplicateDialog.isOpen}
+          onClose={() => setDuplicateDialog({ isOpen: false, existingItem: null, newItem: null })}
+          existingItem={duplicateDialog.existingItem}
+          newItem={duplicateDialog.newItem}
+          onKeepExisting={handleKeepExisting}
+          onReplaceWithNew={handleReplaceWithNew}
+          onAddBoth={handleAddBoth}
         />
+
+        <BulkDuplicateDialog
+          isOpen={bulkDuplicateDialog.isOpen}
+          onClose={() => setBulkDuplicateDialog({ isOpen: false, pharmacyName: '', duplicates: [], safeItems: [], pharmacyId: null })}
+          pharmacyName={bulkDuplicateDialog.pharmacyName}
+          duplicates={bulkDuplicateDialog.duplicates}
+          safeItemsCount={bulkDuplicateDialog.safeItems.length}
+          onKeepExisting={async () => {
+            const { safeItems, pharmacyId } = bulkDuplicateDialog;
+            setBulkDuplicateDialog({ isOpen: false, pharmacyName: '', duplicates: [], safeItems: [], pharmacyId: null });
+            
+            if (safeItems.length === 0) {
+              toast.info('No new items to add');
+              return;
+            }
+            
+            await executeBulkAdd(pharmacyId, safeItems);
+          }}
+          onReplaceAll={async () => {
+            const { duplicates, safeItems, pharmacyId } = bulkDuplicateDialog;
+            
+            try {
+              // Remove all duplicate items from cart
+              for (const dup of duplicates) {
+                await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart/remove/${dup.cartItemId}`, {
+                  method: 'DELETE',
+                  headers: { 'x-guest-id': guestId },
+                });
+              }
+              
+              await fetchCart();
+              
+              // Get all meds to add (previously duplicates + safe items)
+              const allMeds = [
+                ...duplicates.map(d => pharmacyRecommendations
+                  .find(p => p.pharmacyId === pharmacyId)?.meds
+                  .find(m => m.id === d.medicationId)
+                ),
+                ...safeItems
+              ].filter(Boolean);
+              
+              setBulkDuplicateDialog({ isOpen: false, pharmacyName: '', duplicates: [], safeItems: [], pharmacyId: null });
+              
+              await executeBulkAdd(pharmacyId, allMeds);
+            } catch (error) {
+              console.error(error);
+              toast.error('Failed to replace items');
+            }
+          }}
+          onAddAll={async () => {
+            const { duplicates, safeItems, pharmacyId } = bulkDuplicateDialog;
+            
+            // Get all meds to add (keep existing, add new ones too)
+            const allMeds = [
+              ...duplicates.map(d => pharmacyRecommendations
+                .find(p => p.pharmacyId === pharmacyId)?.meds
+                .find(m => m.id === d.medicationId)
+              ),
+              ...safeItems
+            ].filter(Boolean);
+            
+            setBulkDuplicateDialog({ isOpen: false, pharmacyName: '', duplicates: [], safeItems: [], pharmacyId: null });
+            
+            await executeBulkAdd(pharmacyId, allMeds);
+          }}
+        />
+
         <Dialog open={showPreview} onOpenChange={setShowPreview}>
           <DialogContent className="sm:max-w-lg p-6 rounded-2xl bg-white/95 border border-[#1ABA7F]/20">
             <DialogTitle>
@@ -708,6 +901,24 @@ const handleBulkAdd = async () => {
           </DialogContent>
         </Dialog>
       </div>
+
+     <div className="flex justify-center mt-4">
+        <Button 
+          variant="outline" 
+          onClick={() => setShowHelp(true)} 
+          className="border-[#1ABA7F] text-[#1ABA7F] hover:bg-[#1ABA7F]/10"
+        >
+          Need Help?
+        </Button>
+      </div>
+  
+  
+    {/* Footer */}
+      <footer className="relative z-10 bg-gradient-to-r from-[#225F91] to-[#1a4a73] text-white py-6 px-4 mt-6">
+        <div className="text-center">
+          <p className="text-sm opacity-90">&copy; {new Date().getFullYear()} Manzu. Powered by WellRica.</p>
+        </div>
+      </footer>
 
       <style jsx>{`
       @keyframes blob {

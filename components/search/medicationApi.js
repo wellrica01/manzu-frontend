@@ -96,8 +96,10 @@ export const addToCart = async (
     const errorData = await res.json();
     throw new Error(errorData.message || t('errors.add_to_cart_failed'));
   }
-  return res.json();
+  const result = await res.json();
+  return result;
 };
+ 
 
 // Geolocation utilities
 export const haversineDistance = (lat1, lon1, lat2, lon2) => {

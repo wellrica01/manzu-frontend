@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { formatOperatingHours, getOperatingHoursTextColor } from '@/lib/pharmacyUtils';
+import { formatOperatingHours, getOperatingHoursTextColor, isPharmacyOpenNow } from '@/lib/pharmacyUtils';
 import { 
   MapPin, 
   Clock, 
@@ -20,7 +20,10 @@ export const PharmacyCartCard = ({
   setRemoveItem, 
   isUpdating, 
   calculateItemPrice,
-  segment = 'ready'
+  segment = 'ready',
+  selectionMode = false,     
+  isSelected = () => false, 
+  onToggleSelect = () => {} 
 }) => {
   const [expanded, setExpanded] = useState(true);
 
@@ -40,14 +43,17 @@ export const PharmacyCartCard = ({
   const cartItemsList = useMemo(() => {
     return pharmacy.items.map((item, index) => (
       <div key={item.id}>
-        <CartItem
-          item={item}
-          handleQuantityChange={handleQuantityChange}
-          setRemoveItem={setRemoveItem}
-          isUpdating={isUpdating}
-          calculateItemPrice={calculateItemPrice}
-          segment={segment}
-        />
+      <CartItem
+        item={item}
+        handleQuantityChange={handleQuantityChange}
+        setRemoveItem={setRemoveItem}
+        isUpdating={isUpdating}
+        calculateItemPrice={calculateItemPrice}
+        segment={segment}
+        selectionMode={selectionMode}
+        isSelected={isSelected(item.id)}
+        onToggleSelect={onToggleSelect}
+      />
         {index < pharmacy.items.length - 1 && (
           <Separator className="my-4 bg-gradient-to-r from-transparent via-gray-300 to-transparent" />
         )}
@@ -98,7 +104,7 @@ export const PharmacyCartCard = ({
         "relative z-10 bg-gradient-to-r from-[#1ABA7F]/10 via-[#225F91]/5 to-transparent p-3 sm:p-6",
         !pharmacy.pharmacy.logoUrl && "pt-8"
       )}>
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex items-end justify-between gap-4">
           <div className="flex-1 min-w-0">
             {/* Pharmacy Name if no cover photo */}
             {!pharmacy.pharmacy.logoUrl && (
@@ -137,7 +143,7 @@ export const PharmacyCartCard = ({
                     <Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white border-0 px-2 py-1 text-xs font-bold shadow-md">
                       Open
                     </Badge>
-                  )}
+                  )}      
                 </div>
               )}
 

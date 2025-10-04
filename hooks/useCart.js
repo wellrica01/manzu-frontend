@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useEffect } from 'react';
+import { useMemo, useEffect, useCallback } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { getGuestId } from '@/lib/utils';
 
@@ -43,6 +43,19 @@ export function useCart() {
     [cartData]
   );
 
+  const isInCart = useCallback(
+    (medicationId, pharmacyId) => {
+      return (
+        cartData?.pharmacies?.some(
+          (ph) =>
+            ph.pharmacy.id === pharmacyId &&
+            ph.items?.some((item) => item.medication.id === medicationId)
+        ) || false
+      );
+    },
+    [cartData]
+  );
+
   useEffect(() => {
     if (guestId) fetchCart();
   }, [guestId, fetchCart]);
@@ -52,7 +65,7 @@ export function useCart() {
     queryClient.setQueryData(['cart', guestId], newCartData);
   };
 
-  // Add item with optimistic update
+  // ✅ Add item with optimistic update
   const addItemMutation = useMutation({
     mutationFn: async (item) => {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart/add`, {
@@ -72,11 +85,54 @@ export function useCart() {
 
       if (previousCart) {
         const updatedCart = { ...previousCart };
-        const pharmacy = updatedCart.pharmacies.find(p => p.id === item.pharmacyId);
+        const pharmacy = updatedCart.pharmacies.find(p => p.pharmacy.id === item.pharmacyId);
         if (pharmacy) {
           pharmacy.items = [...pharmacy.items, item];
         } else {
-          updatedCart.pharmacies.push({ id: item.pharmacyId, items: [item] });
+          updatedCart.pharmacies.push({ pharmacy: { id: item.pharmacyId }, items: [item] });
+        }
+        queryClient.setQueryData(['cart', guestId], updatedCart);
+      }
+
+      return { previousCart };
+    },
+    onError: (_err, _item, context) => {
+      if (context?.previousCart) {
+        queryClient.setQueryData(['cart', guestId], context.previousCart);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries(['cart', guestId]);
+    },
+  });
+
+  // ❌ Remove item with optimistic update
+  const removeItemMutation = useMutation({
+    mutationFn: async ({ medicationId, pharmacyId }) => {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart/remove`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-guest-id': guestId,
+        },
+        body: JSON.stringify({ medicationId, pharmacyId }),
+      });
+      if (!res.ok) throw new Error('Failed to remove item');
+      return res.json();
+    },
+    onMutate: async ({ medicationId, pharmacyId }) => {
+      await queryClient.cancelQueries(['cart', guestId]);
+      const previousCart = queryClient.getQueryData(['cart', guestId]);
+
+      if (previousCart) {
+        const updatedCart = { ...previousCart };
+        const pharmacy = updatedCart.pharmacies.find(p => p.pharmacy.id === pharmacyId);
+        if (pharmacy) {
+          pharmacy.items = pharmacy.items.filter(item => item.medication.id !== medicationId);
+          // If pharmacy is now empty, optionally remove it
+          if (pharmacy.items.length === 0) {
+            updatedCart.pharmacies = updatedCart.pharmacies.filter(p => p.pharmacy.id !== pharmacyId);
+          }
         }
         queryClient.setQueryData(['cart', guestId], updatedCart);
       }
@@ -97,9 +153,13 @@ export function useCart() {
     guestId,
     cart: cartData || null,
     cartItemCount,
+    isInCart,
     fetchCart,
     updateCartCache,
     addItem: addItemMutation.mutate,
+    addItemAsync: addItemMutation.mutateAsync, // optional for awaiting
+    removeItem: removeItemMutation.mutate,
+    removeItemAsync: removeItemMutation.mutateAsync, // optional for awaiting
     isLoading,
     isError,
     error,

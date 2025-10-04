@@ -243,7 +243,7 @@ export default function Track() {
               <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-[#1ABA7F]/20 to-transparent rounded-bl-full" />
               <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-[#225F91]/20 to-transparent rounded-tr-full" />
 
-              <CardHeader className="relative z-10 bg-gradient-to-r from-[#225F91]/10 to-[#1ABA7F]/10 p-8">
+              <CardHeader className="relative z-10 bg-gradient-to-r from-[#225F91]/10 to-[#1ABA7F]/10 p-4 sm:p-8">
                 <div className="flex items-center gap-3 justify-center mb-2">
                   <div className="p-3 bg-gradient-to-br from-[#1ABA7F]/20 to-[#225F91]/20 rounded-xl">
                     <Search className="h-6 w-6 text-[#225F91]" />
@@ -257,7 +257,7 @@ export default function Track() {
                 </p>
               </CardHeader>
 
-              <CardContent className="relative z-10 p-8 space-y-6">
+              <CardContent className="relative z-10 p-6 sm:p-8 space-y-6">
                 <form onSubmit={handleTrack} ref={formRef} className="space-y-6">
                   <div className="space-y-3">
                     <Label htmlFor="trackingCode" className="text-sm font-bold text-gray-700 uppercase tracking-wide">
@@ -587,7 +587,8 @@ export default function Track() {
               <div className="flex flex-col sm:flex-row gap-4 pt-8">
                 <Button
                   onClick={handleTrackAnother}
-                  className="flex-1 h-14 bg-gradient-to-r from-[#225F91] to-[#1a4a73] hover:from-[#1a4a73] hover:to-[#225F91] text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 group relative overflow-hidden"
+                  variant="default"
+                  className="flex-1 h-14 p-4 bg-gradient-to-r from-[#225F91] to-[#1a4a73] hover:from-[#1a4a73] hover:to-[#225F91] text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 group relative overflow-hidden"
                 >
                   <span className="relative z-10 flex items-center justify-center gap-2">
                     <Search className="h-5 w-5 group-hover:scale-110 transition-transform duration-300" />
@@ -599,7 +600,7 @@ export default function Track() {
                 <Button
                   onClick={handleBackToHome}
                   variant="outline"
-                  className="flex-1 h-14 border-2 border-[#1ABA7F] text-[#1ABA7F] hover:bg-[#1ABA7F]/10 font-bold rounded-xl transition-all duration-300"
+                  className="flex-1 h-14 p-3 border-2 border-[#1ABA7F] text-[#1ABA7F] hover:bg-[#1ABA7F]/10 font-bold rounded-xl transition-all duration-300"
                 >
                   <Home className="h-5 w-5 mr-2" />
                   Back to Home

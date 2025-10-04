@@ -5,11 +5,12 @@ import { Button } from '../ui/button';
 import { History, TrendingUp, X } from 'lucide-react';
 import SearchInput from './SearchInput';
 import FilterControls from './FilterControls';
-import CartDialog from './CartDialog';
+import CartDialog from '../cart/CartDialog';
 import ErrorMessage from '@/components/ErrorMessage';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { useCart } from '@/hooks/useCart';
+import { bulkRemoveCartItems } from '@/components/cart/cartApi';
 import SearchSkeleton from './SearchSkeleton';
 import { searchReducer, initialState } from './searchReducer';
 import {
@@ -25,10 +26,15 @@ const MedicationCard = dynamic(() => import('./MedicationCard'), {
 });
 
 // --- SearchBar Component ---
-const SearchBar = forwardRef((props, ref) => {
+const SearchBar = () => {
   const { t } = useTranslation();
   const [state, dispatch] = useReducer(searchReducer, initialState);
-  const { cart, fetchCart, guestId } = useCart();
+  const { cart, fetchCart, isInCart, guestId } = useCart();
+
+  const [isBulkRemoving, setIsBulkRemoving] = useState(false);
+  
+
+
 
   const dropdownRef = useRef(null);
   const inputRef = useRef(null);
@@ -94,19 +100,6 @@ const SearchBar = forwardRef((props, ref) => {
     state.defaultResults,
   ]);
 
-  // Check if medication is in cart
-  const isInCart = useCallback(
-    (medicationId, pharmacyId) => {
-      return (
-        cart?.pharmacies?.some(
-          (ph) =>
-            ph.pharmacy.id === pharmacyId &&
-            ph.items?.some((item) => item.medication.id === medicationId)
-        ) || false
-      );
-    },
-    [cart]
-  );
 
   // Update LGAs based on selected state
   const updateLgas = useCallback(
@@ -200,10 +193,23 @@ const clearFilters = useCallback(() => {
           dispatch({ type: api.ACTIONS.SET_OPEN_CART_DIALOG, payload: val })
         }
         lastAddedItems={state.lastAddedItems}
-      />
+         onRemoveItems={async (itemIds) => {
+            setIsBulkRemoving(true);
+            try {
+              await bulkRemoveCartItems(guestId, itemIds);
+              await fetchCart();
+            } catch (error) {
+              console.error('Failed to remove items:', error);
+              toast.error('Failed to remove items', { duration: 3000 });
+            } finally {
+              setIsBulkRemoving(false);
+            }
+          }}
+          isRemoving={isBulkRemoving}
+      /> 
 
       {/* Search Input */}
-      <div ref={ref} className="relative w-full">
+      <div className="relative w-full">
         <SearchInput
           searchTerm={state.searchTerm}
           setSearchTerm={(val) =>
@@ -441,7 +447,7 @@ const clearFilters = useCallback(() => {
         ))}
     </div>
   );
-});
+};
 
 SearchBar.displayName = 'SearchBar';
 

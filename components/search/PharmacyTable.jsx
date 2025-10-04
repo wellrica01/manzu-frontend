@@ -340,6 +340,7 @@ const PharmacyTable = ({
                         medId,
                         avail.pharmacyId,
                         displayName,
+                        avail.pharmacyName,
                         quantities[avail.pharmacyId] || 1  // Use current quantity state
                       )}
                       disabled={isInCart(medId, avail.pharmacyId) || adding} // disable if already in cart or adding
