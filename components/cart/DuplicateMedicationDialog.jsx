@@ -88,29 +88,18 @@ const DuplicateMedicationDialog = ({
                 <div className="space-y-2 sm:space-y-3">
                   <div>
                     <p className="text-xs font-black text-gray-600 uppercase tracking-wide mb-1">
-                      From Pharmacy
+                      FROM 
                     </p>
                     <p className="text-sm font-bold text-gray-900 truncate pr-8">
                       {existingItem.pharmacyName}
                     </p>
                   </div>
-                  {existingItem.quantity === 1 ? (
-                    <div>
-                      <p className="text-xs font-black text-gray-600 uppercase tracking-wide mb-1">
-                        Price
-                      </p>
-                      <p className="text-xl sm:text-2xl font-black text-blue-600">
-                        ₦{existingItem.price.toLocaleString()}
-                      </p>
-                    </div>
-                  ) : (
-                    <>
                       <div>
                         <p className="text-xs font-black text-gray-600 uppercase tracking-wide mb-1">
                           Price per Unit
                         </p>
                         <p className="text-xl sm:text-2xl font-black text-blue-600">
-                          ₦{existingItem.price.toLocaleString()}
+                          ₦{existingItem.price.toLocaleString()} x{existingItem.quantity}
                         </p>
                       </div>
                       <div>
@@ -121,8 +110,6 @@ const DuplicateMedicationDialog = ({
                           ₦{(existingItem.price * existingItem.quantity).toLocaleString()}
                         </p>
                       </div>
-                    </>
-                  )}
                 </div>
               </div>
             </div>
@@ -142,25 +129,12 @@ const DuplicateMedicationDialog = ({
                 <div className="space-y-2 sm:space-y-3">
                   <div>
                     <p className="text-xs font-black text-gray-600 uppercase tracking-wide mb-1">
-                      From Pharmacy
+                      FROM
                     </p>
                     <p className="text-sm font-bold text-gray-900 truncate pr-8">
                       {newItem.pharmacyName}
                     </p>
                   </div>
-                  {newItem.quantity === 1 ? (
-                    <div>
-                      <p className="text-xs font-black text-gray-600 uppercase tracking-wide mb-1">
-                        Price
-                      </p>
-                      <p className={`text-xl sm:text-2xl font-black ${
-                        newIsCheaper ? 'text-green-600' : 'text-gray-600'
-                      }`}>
-                        ₦{newItem.price.toLocaleString()}
-                      </p>
-                    </div>
-                  ) : (
-                    <>
                       <div>
                         <p className="text-xs font-black text-gray-600 uppercase tracking-wide mb-1">
                           Price per Unit
@@ -168,7 +142,7 @@ const DuplicateMedicationDialog = ({
                         <p className={`text-xl sm:text-2xl font-black ${
                           newIsCheaper ? 'text-green-600' : 'text-gray-600'
                         }`}>
-                          ₦{newItem.price.toLocaleString()}
+                          ₦{newItem.price.toLocaleString()} x{newItem.quantity}
                         </p>
                       </div>
                       <div>
@@ -179,8 +153,6 @@ const DuplicateMedicationDialog = ({
                           ₦{(newItem.price * newItem.quantity).toLocaleString()}
                         </p>
                       </div>
-                    </>
-                  )}
                 </div>
               </div>
             </div>

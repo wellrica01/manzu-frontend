@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -40,6 +40,7 @@ const showToast = (message, type) => {
 
 
 export default function StatusCheck() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [form, setForm] = useState({ identifier: '' });
   const [status, setStatus] = useState('idle'); // idle, loading, success, error
@@ -104,7 +105,7 @@ export default function StatusCheck() {
       showToast(err.message, 'error');
       setPrescription(null);
     }
-  }, [router]);
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
