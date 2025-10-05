@@ -680,20 +680,31 @@ const handleBulkRemoveConfirm = async () => {
 const handleGoBack = () => {
   const referrer = document.referrer;
   const isFromCheckout = referrer.includes('/checkout');
-  
+  const isFromPrescriptions = referrer.includes('/prescriptions');
+
   if (isFromCheckout) {
     const entryPoint = sessionStorage.getItem('cart_entry_point');
+
     if (entryPoint && entryPoint !== '/cart' && entryPoint !== '/checkout') {
-      router.replace(entryPoint);
+      if (entryPoint.includes('/prescriptions')) {
+        // Use window.location for /prescriptions
+        window.location.href = entryPoint;
+      } else {
+        router.replace(entryPoint);
+      }
     } else {
       router.replace('/');
     }
+  } else if (isFromPrescriptions) {
+    // Directly came from /prescriptions → use full reload
+    window.location.href = referrer;
   } else if (window.history.length > 1) {
     router.back();
   } else {
     router.push('/');
   }
 };
+
 
 
   // Memoize pharmacy groups

@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -314,33 +315,35 @@ const HeroSection = memo(({ onSearchClick, onUploadClick }) => {
             <ChevronDown className="w-5 h-5 transition-transform duration-300 group-open:rotate-180" aria-hidden="true" />
           </summary>
 
-          <div className="mt-8 flex flex-col sm:flex-row justify-center gap-5 animate-in slide-in-from-top fade-in duration-300">
+          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-5 animate-in slide-in-from-top fade-in duration-300">
+
             <Button
+              className="w-fit group h-12 sm:h-16 px-6 text-base sm:text-lg font-black rounded-2xl bg-white/15 border-2 border-white/60 text-white shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105"
+            >
+              <Link href="/track-order">
+                <span className="relative z-10 flex text-white items-center gap-3">
+                  <div className="p-1.5 bg-yellow-300/80 rounded-lg">
+                  <MapIcon className="h-6 w-6 text-[#225F91]" aria-hidden="true" strokeWidth={3}/>
+                  </div>
+                  Track Order
+                </span>
+              </Link>
+            </Button>
+          <Button
               asChild
-              className="group h-12 sm:h-14 px-6 sm:px-8 text-sm sm:text-base font-black rounded-2xl bg-[#25D366] text-white hover:bg-[#20B85A] shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-110 border-2 border-white/30"
+              className="w-fit group h-12 sm:h-16 px-6 text-base sm:text-lg font-black rounded-2xl bg-gradient-to-r from-[#1ABA7F] to-[#16a876] text-white shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105"
             >
               <Link href="/check-prescription-status">
                 <span className="relative z-10 flex items-center gap-3">
-                  <FileText className="h-6 w-6" aria-hidden="true" />
+                  <div className="p-1.5 bg-white/20 rounded-lg">
+                  <FileText className="h-6 w-6" aria-hidden="true" strokeWidth={3}/>
+                  </div>
                   Check Prescription Status
                 </span>
-                </Link>
-            </Button>
-
-            <Button
-              className="group h-12 sm:h-14 px-6 sm:px-8 text-sm sm:text-base font-black rounded-2xl bg-white/15 backdrop-blur-xl border-2 border-white/60 text-white hover:bg-white/25 shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-110"
-              aria-label={`${t('hero.ussd_search')} ${CONFIG.ussdCode}`}
-            >
-              <Link href="/track-order">
-                <span className="relative z-10 flex items-center gap-3">
-                  <MapIcon className="h-6 w-6" aria-hidden="true" />
-                  Track Order
-                </span>
-                </Link>
+              </Link>
             </Button>
           </div>
         </details>
-
       </div>
     </header>
   );
@@ -435,6 +438,9 @@ function HomePageContent() {
   const searchRef = useRef(null);
   const uploadRef = useRef(null);
 
+  const pathname = usePathname();
+
+
   useEffect(() => {
     const hasConsent = localStorage.getItem('manzu_consent');
     if (!hasConsent) {
@@ -444,6 +450,26 @@ function HomePageContent() {
     const timer = setTimeout(() => setIsPageLoaded(true), 100);
     return () => clearTimeout(timer);
   }, []);
+
+
+  useEffect(() => {
+    // Scroll to top when this page first loads (refresh or direct visit)
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+
+    // Prevent browser restoring scroll position (Safari/Chrome behavior)
+    const handleBeforeUnload = () => window.scrollTo(0, 0);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, []);
+
+  // When navigating back to this page via router (client-side navigation)
+  useEffect(() => {
+    if (pathname === "/") {
+      window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+    }
+  }, [pathname]);
+
 
   const handleConsentClose = useCallback(() => {
     setIsConsentOpen(false);
@@ -538,10 +564,10 @@ function HomePageContent() {
                   <ServiceCard
                     title={t("services.upload_prescription")}
                     icon={Zap}
-                    gradient="from-[#225F91] to-[#1a4a73]"
+                    gradient="from-[#1ABA7F] to-[#16a876]"
                   >
                     <div className="text-center mb-10">
-                      <div className="inline-flex items-center gap-3 px-4 sm:px-6 py-2 sm:py-3 rounded-2xl bg-gradient-to-r from-[#225F91]/15 to-[#1a4a73]/15 text-[#225F91] text-sm sm:text-base font-black mb-6 border-2 border-[#225F91]/30 shadow-lg">
+                      <div className="inline-flex items-center gap-3 px-4 sm:px-6 py-2 sm:py-3 rounded-2xl bg-gradient-to-r from-[#1ABA7F]/15 to-[#16a876]/15 text-[#1ABA7F] text-sm sm:text-base font-black mb-6 border-2 border-[#1ABA7F]/30 shadow-lg">
                         <Clock className="h-6 w-6 animate-pulse" aria-hidden="true" />
                         {t('services.processing_time', 'Fast Processing')}
                       </div>

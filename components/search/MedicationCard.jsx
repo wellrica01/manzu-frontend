@@ -1,14 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogTrigger, DialogTitle } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Info, MapPin, Clock, Pill, Building2, Globe2, FileCheck } from 'lucide-react';
 import PharmacyTable from './PharmacyTable';
 import PharmacyCards from './PharmacyCards';
-import { cn } from '@/lib/utils';
+import LocationPrompt from './LocationPrompt';
+import FilterControls from './FilterControls';
 
 const MedicationCard = ({ 
   guestId,
@@ -22,7 +22,22 @@ const MedicationCard = ({
   state, 
   lga, 
   ward, 
-  isMultiMed = false 
+  locationStatus, 
+  onSelectLocation,
+  onEnableLocation,
+  isMultiMed = false,
+  states,
+  lgas,
+  wards,
+  geoData,
+  updateLgas,
+  updateWards,
+  clearFilters,
+  setFilterState,
+  setFilterLga,
+  setFilterWard,
+  showFilters,
+  setShowFilters, 
 }) => {
   const getAvailabilityCount = () => med.availability?.length || 0;
   const [removeItemDialog, setRemoveItemDialog] = useState(null);
@@ -270,7 +285,29 @@ const MedicationCard = ({
 
       {/* Pharmacy Comparison Section */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between px-2">
+
+      {/* ✅ Add FilterControls here */}
+        {!isMultiMed && (
+          <FilterControls
+            filterState={state}
+            setFilterState={setFilterState}
+            filterLga={lga}
+            setFilterLga={setFilterLga}
+            filterWard={ward}
+            setFilterWard={setFilterWard}
+            states={states}
+            lgas={lgas}
+            wards={wards}
+            geoData={geoData}
+            updateLgas={updateLgas}
+            updateWards={updateWards}
+            clearFilters={clearFilters}
+            showFilters={showFilters}
+            setShowFilters={setShowFilters}
+          />
+        )}
+
+        <div className="flex items-center justify-between px-2" data-pharmacy-comparison>
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-gradient-to-br from-[#1ABA7F]/10 to-[#225F91]/10">
               <MapPin className="h-5 w-5 text-[#225F91]" />
@@ -284,7 +321,14 @@ const MedicationCard = ({
           )}
         </div>
 
-        {availabilityCount === 0 ? (
+        {/* Check if location is needed */}
+        {!state && !lga && !ward && locationStatus === 'denied' ? (
+          <LocationPrompt
+            onSelectLocation={onSelectLocation}
+            onEnableLocation={onEnableLocation}
+            locationStatus={locationStatus}
+          />
+        ) : availabilityCount === 0 ? (
           <div className="block sm:hidden text-center py-12 px-6 rounded-2xl bg-gradient-to-br from-gray-50 to-white border-2 border-dashed border-gray-300">
             <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <MapPin className="h-10 w-10 text-gray-400" />

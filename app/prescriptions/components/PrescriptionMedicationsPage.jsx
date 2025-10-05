@@ -564,10 +564,16 @@ const handleBulkAddWithDuplicateCheck = useCallback(async (pharmacyId, meds) => 
 
     if (existingInCart) {
       const existingItem = existingInCart.items.find(item => item?.medication?.id === med.id);
+      
+      // FIX: Get pharmacy name from existingInCart, not undefined pharmacyName variable
+      const currentPharmacyName = existingInCart.pharmacy?.pharmacyName 
+        || existingInCart.pharmacy?.name 
+        || 'Unknown Pharmacy';
+      
       duplicates.push({
         medicationId: med.id,
         medicationName: med.displayName || 'Unknown Medication',
-        currentPharmacy: existingInCart.pharmacy?.name || 'Unknown Pharmacy',
+        currentPharmacy: currentPharmacyName,  // ✅ Use the variable we just defined
         currentPrice: existingItem?.price || 0,
         newPrice: med.price || 0,
         quantity: existingItem?.quantity || 1,
@@ -588,7 +594,7 @@ const handleBulkAddWithDuplicateCheck = useCallback(async (pharmacyId, meds) => 
       duplicates,
       safeItems: safeToAdd,
       pharmacyId,
-      allMeds: meds  // STORE ALL MEDS HERE
+      allMeds: meds
     });
     return null;
   }
@@ -597,26 +603,10 @@ const handleBulkAddWithDuplicateCheck = useCallback(async (pharmacyId, meds) => 
 }, [cart, isInCart, pharmacyRecommendations]);
 
 
-const handleBulkAddRef = useRef(null);
-
 const handleBulkKeepExisting = useCallback(async () => {
   const { safeItems, pharmacyId } = bulkDuplicateDialog;
   
-  if (!handleBulkAddRef.current) {
-    toast.error('Unable to add items. Please try again.');
-    console.error('handleBulkAdd function not ready');
-    setBulkDuplicateDialog({ 
-      isOpen: false, 
-      pharmacyName: '', 
-      duplicates: [], 
-      safeItems: [], 
-      pharmacyId: null, 
-      allMeds: [] 
-    });
-    return;
-  }
-  
-  if (safeItems.length === 0) {
+  if (!safeItems?.length || !pharmacyId) {
     toast.info('No new items to add');
     setBulkDuplicateDialog({ 
       isOpen: false, 
@@ -632,6 +622,71 @@ const handleBulkKeepExisting = useCallback(async () => {
   setIsBulkDialogProcessing(true);
   
   try {
+    // Filter out items already in cart from this pharmacy
+    const itemsToAdd = safeItems.filter(med => 
+      med?.id && !isInCart(med.id, pharmacyId)
+    );
+    
+    if (itemsToAdd.length === 0) {
+      toast.info('All items already in cart');
+      setBulkDuplicateDialog({ 
+        isOpen: false, 
+        pharmacyName: '', 
+        duplicates: [], 
+        safeItems: [], 
+        pharmacyId: null, 
+        allMeds: [] 
+      });
+      return;
+    }
+
+    const items = itemsToAdd.map(med => ({
+      medicationId: med.id,
+      pharmacyId,
+      quantity: medications?.find(m => m.id === med.id)?.quantity || 1
+    }));
+
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/cart/addbulk`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-guest-id': guestId || '',
+        },
+        body: JSON.stringify({
+          userIdentifier: userIdentifier || '',
+          guestId: guestId || '',
+          items,
+          prescriptionId: prescriptionMetadata?.id,
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Failed to add medications');
+    }
+
+    const result = await response.json();
+    await fetchCart();
+
+    const pharmacy = pharmacyRecommendations?.find(p => p.pharmacyId === pharmacyId);
+
+    if (result?.orderItems?.length && result?.addedItems?.length) {
+      setLastAddedItems(
+        result.orderItems.map((orderItem, index) => ({
+          id: orderItem.id,
+          name: result.addedItems[index].displayName,
+          pharmacy: pharmacy?.pharmacyName || "Unknown Pharmacy",
+          quantity: orderItem.quantity
+        }))
+      );
+    }
+
+    setOpenCartDialog(true);
+    
+    // Close dialog AFTER successful addition
     setBulkDuplicateDialog({ 
       isOpen: false, 
       pharmacyName: '', 
@@ -641,45 +696,31 @@ const handleBulkKeepExisting = useCallback(async () => {
       allMeds: [] 
     });
     
-    await handleBulkAddRef.current(pharmacyId, safeItems, true);
+    toast.success(`Added ${itemsToAdd.length} new item${itemsToAdd.length > 1 ? 's' : ''}`);
   } catch (error) {
     console.error('Failed to add safe items:', error);
-    toast.error('Failed to add items');
+    toast.error(error.message || 'Failed to add items');
+    // Keep dialog open on error
   } finally {
     setIsBulkDialogProcessing(false);
   }
-}, [bulkDuplicateDialog]);
-
+}, [bulkDuplicateDialog, isInCart, medications, guestId, userIdentifier, prescriptionMetadata, pharmacyRecommendations, fetchCart, setLastAddedItems, setOpenCartDialog]);
 const handleBulkReplaceAll = useCallback(async () => {
   const { duplicates, pharmacyId, allMeds } = bulkDuplicateDialog;
   
   if (!duplicates?.length || !pharmacyId) return;
-  
-  if (!handleBulkAddRef.current) {
-    toast.error('Unable to add items. Please try again.');
-    console.error('handleBulkAdd function not ready');
-    setBulkDuplicateDialog({ 
-      isOpen: false, 
-      pharmacyName: '', 
-      duplicates: [], 
-      safeItems: [], 
-      pharmacyId: null, 
-      allMeds: [] 
-    });
-    return;
-  }
 
   setIsBulkDialogProcessing(true);
 
   try {
-    // Remove all existing duplicate items
-    for (const dup of duplicates) {
-      if (dup.cartItemId) {
-        await fetchWithTimeout(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/cart/remove/${dup.cartItemId}`,
-          { method: 'DELETE', headers: { 'x-guest-id': guestId || '' } }
-        );
-      }
+    // Collect all cart item IDs to remove
+    const itemIdsToRemove = duplicates
+      .map(dup => dup.cartItemId)
+      .filter(Boolean);
+    
+    if (itemIdsToRemove.length > 0) {
+      // Use bulk remove API - single request instead of loop
+      await bulkRemoveCartItems(guestId, itemIdsToRemove);
     }
     
     // Wait for cart refresh to complete
@@ -688,6 +729,60 @@ const handleBulkReplaceAll = useCallback(async () => {
     // Small delay to ensure cart state is fully updated
     await new Promise(resolve => setTimeout(resolve, 300));
     
+    // Now add all the new items
+    const itemsToAdd = allMeds.filter(med => 
+      med?.id && !isInCart(med.id, pharmacyId)
+    );
+
+    if (itemsToAdd.length > 0) {
+      const items = itemsToAdd.map(med => ({
+        medicationId: med.id,
+        pharmacyId,
+        quantity: medications?.find(m => m.id === med.id)?.quantity || 1
+      }));
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/cart/addbulk`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-guest-id': guestId || '',
+          },
+          body: JSON.stringify({
+            userIdentifier: userIdentifier || '',
+            guestId: guestId || '',
+            items,
+            prescriptionId: prescriptionMetadata?.id,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to add medications');
+      }
+
+      const result = await response.json();
+      await fetchCart();
+
+      const pharmacy = pharmacyRecommendations?.find(p => p.pharmacyId === pharmacyId);
+
+      if (result?.orderItems?.length && result?.addedItems?.length) {
+        setLastAddedItems(
+          result.orderItems.map((orderItem, index) => ({
+            id: orderItem.id,
+            name: result.addedItems[index].displayName,
+            pharmacy: pharmacy?.pharmacyName || "Unknown Pharmacy",
+            quantity: orderItem.quantity
+          }))
+        );
+      }
+
+      setOpenCartDialog(true);
+    }
+    
+    // Close dialog after successful operation
     setBulkDuplicateDialog({ 
       isOpen: false, 
       pharmacyName: '', 
@@ -697,23 +792,21 @@ const handleBulkReplaceAll = useCallback(async () => {
       allMeds: [] 
     });
     
-    await handleBulkAddRef.current(pharmacyId, allMeds, true);
-    
-    toast.success(`Replaced ${duplicates.length} duplicate${duplicates.length > 1 ? 's' : ''}`);
+    toast.success(`Replaced ${duplicates.length} item${duplicates.length > 1 ? 's' : ''} successfully`);
   } catch (error) {
     console.error('Bulk replace error:', error);
-    toast.error('Failed to replace items');
+    toast.error(error.message || 'Failed to replace items');
+    // Keep dialog open on error so user can retry
   } finally {
     setIsBulkDialogProcessing(false);
   }
-}, [bulkDuplicateDialog, guestId, fetchCart]);
+}, [bulkDuplicateDialog, guestId, fetchCart, isInCart, medications, userIdentifier, prescriptionMetadata, pharmacyRecommendations, setLastAddedItems, setOpenCartDialog]);
 
 const handleBulkAddAll = useCallback(async () => {
   const { allMeds, pharmacyId } = bulkDuplicateDialog;
   
-  if (!handleBulkAddRef.current) {
-    toast.error('Unable to add items. Please try again.');
-    console.error('handleBulkAdd function not ready');
+  if (!allMeds?.length || !pharmacyId) {
+    toast.error('No items to add');
     setBulkDuplicateDialog({ 
       isOpen: false, 
       pharmacyName: '', 
@@ -728,6 +821,72 @@ const handleBulkAddAll = useCallback(async () => {
   setIsBulkDialogProcessing(true);
   
   try {
+    // Filter out items already in cart from this pharmacy
+    const itemsToAdd = allMeds.filter(med => 
+      med?.id && !isInCart(med.id, pharmacyId)
+    );
+    
+    if (itemsToAdd.length === 0) {
+      toast.info('All items already in cart');
+      setBulkDuplicateDialog({ 
+        isOpen: false, 
+        pharmacyName: '', 
+        duplicates: [], 
+        safeItems: [], 
+        pharmacyId: null, 
+        allMeds: [] 
+      });
+      return;
+    }
+
+    const items = itemsToAdd.map(med => ({
+      medicationId: med.id,
+      pharmacyId,
+      quantity: medications?.find(m => m.id === med.id)?.quantity || 1
+    }));
+
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/cart/addbulk`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-guest-id': guestId || '',
+        },
+        body: JSON.stringify({
+          userIdentifier: userIdentifier || '',
+          guestId: guestId || '',
+          items,
+          prescriptionId: prescriptionMetadata?.id,
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Failed to add medications');
+    }
+
+    const result = await response.json();
+    
+    await fetchCart();
+
+    const pharmacy = pharmacyRecommendations?.find(p => p.pharmacyId === pharmacyId);
+
+    if (result?.orderItems?.length && result?.addedItems?.length) {
+      setLastAddedItems(
+        result.orderItems.map((orderItem, index) => ({
+          id: orderItem.id,
+          name: result.addedItems[index].displayName,
+          pharmacy: pharmacy?.pharmacyName || "Unknown Pharmacy",
+          quantity: orderItem.quantity
+        }))
+      );
+    }
+
+    setOpenCartDialog(true);
+    
+    // Close dialog after successful addition
     setBulkDuplicateDialog({ 
       isOpen: false, 
       pharmacyName: '', 
@@ -737,16 +896,15 @@ const handleBulkAddAll = useCallback(async () => {
       allMeds: [] 
     });
     
-    await handleBulkAddRef.current(pharmacyId, allMeds, true);
-    
     toast.success('Added items from both pharmacies');
   } catch (error) {
     console.error('Failed to add all items:', error);
-    toast.error('Failed to add items');
+    toast.error(error.message || 'Failed to add items');
+    // Keep dialog open on error so user can retry
   } finally {
     setIsBulkDialogProcessing(false);
   }
-}, [bulkDuplicateDialog]);
+}, [bulkDuplicateDialog, isInCart, medications, guestId, userIdentifier, prescriptionMetadata, pharmacyRecommendations, fetchCart, setLastAddedItems, setOpenCartDialog]);
 
 
   const clearFilters = useCallback(() => {
@@ -922,7 +1080,6 @@ const handleBulkAddAll = useCallback(async () => {
                   lga={filterLga}
                   ward={filterWard}
                   onRemoveItem={(item) => setRemoveItemDialog(item)}
-                  onBulkAddReady={(bulkAddFn) => { handleBulkAddRef.current = bulkAddFn; }}
                 />
 
                 <UnifiedRemoveDialog
@@ -1034,7 +1191,9 @@ const handleBulkAddAll = useCallback(async () => {
                 }}
                 pharmacyName={bulkDuplicateDialog.pharmacyName}
                 duplicates={bulkDuplicateDialog.duplicates}
+                safeItems={bulkDuplicateDialog.safeItems}
                 safeItemsCount={bulkDuplicateDialog.safeItems.length}
+                medications={medications}
                 onKeepExisting={handleBulkKeepExisting}
                 onReplaceAll={handleBulkReplaceAll}
                 onAddAll={handleBulkAddAll}

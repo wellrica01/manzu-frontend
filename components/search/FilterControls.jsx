@@ -83,13 +83,11 @@ const FilterControls = ({
   updateLgas,
   updateWards,
   clearFilters,
-  handleSearch,
-  selectedMedicationId,
-  searchTerm,
+  showFilters,     
+  setShowFilters,
 }) => {
   const [savedFilters, setSavedFilters] = useState([]);
   const [activeFilters, setActiveFilters] = useState(0);
-  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("savedFilters");
@@ -134,9 +132,7 @@ const FilterControls = ({
       setFilterLga(filter.filterLga);
       await updateWards(filter.filterState, filter.filterLga);
       setFilterWard(filter.filterWard);
-      if (searchTerm !== undefined) {
-        handleSearch(searchTerm);
-      }
+
     } catch (error) {
       console.error("Failed to apply saved filter:", error);
     }
@@ -150,14 +146,14 @@ const FilterControls = ({
 
   const locationText = (() => {
     if (!filterState && !filterLga && !filterWard) return null;
-    let text = `Filtered by Pharmacies near: ${filterState || ''}`;
+    let text = `Showing Pharmacies in: ${filterState || ''}`;
     if (filterLga) text += `, ${filterLga}`;
     if (filterWard) text += ` (Ward: ${filterWard})`;
     return text;
   })();
 
   return (
-    <div className="space-y-4">
+    <div data-filters className="space-y-4">
       {/* Toggle Filter Button */}
       <div className="flex items-center justify-between">
         <Button
@@ -281,37 +277,38 @@ const FilterControls = ({
             </div>
           </div>
 
-          {/* Action Buttons */}
-          {activeFilters > 0 && (
-            <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-gray-200">
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={clearFilters}
-                  className="h-10 px-4 text-sm font-semibold border-2 border-gray-300 text-gray-700 hover:bg-gray-100 rounded-xl transition-all duration-200 hover:scale-105"
-                >
-                  Clear All
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={saveCurrentFilter}
-                  className="h-10 px-4 text-sm font-semibold border-2 border-[#1ABA7F] text-[#1ABA7F] hover:bg-[#1ABA7F]/10 rounded-xl transition-all duration-200 hover:scale-105"
-                >
-                  <Save className="h-4 w-4 mr-2" />
-                  Save Filter
-                </Button>
-              </div>
+        {/* Action Buttons */}
+        {activeFilters > 0 && (
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-gray-200">
+            <div className="flex gap-2">
               <Button
-                disabled={!selectedMedicationId}      
-                onClick={() => handleSearch(selectedMedicationId)}
+                variant="outline"
+                size="sm"
+                onClick={clearFilters}
+                className="h-10 px-4 text-sm font-semibold border-2 border-gray-300 text-gray-700 hover:bg-gray-100 rounded-xl transition-all duration-200 hover:scale-105"
               >
-                Apply Filters
+                Clear All
               </Button>
-
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={saveCurrentFilter}
+                className="h-10 px-4 text-sm font-semibold border-2 border-[#1ABA7F] text-[#1ABA7F] hover:bg-[#1ABA7F]/10 rounded-xl transition-all duration-200 hover:scale-105"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                Save Filter
+              </Button>
             </div>
-          )}
+            
+            {/* Optional: Show a subtle indicator that filters are applied */}
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-green-50 border border-green-200">
+              <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+              <span className="text-xs font-semibold text-green-700">
+                Filters Active
+              </span>
+            </div>
+          </div>
+        )}
         </div>
       )}
 

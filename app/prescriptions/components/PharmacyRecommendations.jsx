@@ -1,24 +1,16 @@
-"use client";
+'use client';
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, HospitalIcon, DollarSign, Navigation, Clock, Check, Loader2, Award, ShoppingCart, TrendingDown, Trash2 } from 'lucide-react';
+import { MapPin, Store, DollarSign, Navigation, Clock, Check, Loader2, Award, ShoppingCart, TrendingDown, Trash2, Package } from 'lucide-react';
 import { formatOperatingHours, getOperatingHoursTextColor, isPharmacyOpenNow } from '@/lib/pharmacyUtils';
-
 
 // Constants
 const SORT_OPTIONS = {
   DEFAULT: 'default',
   CHEAPEST: 'cheapest',
   NEAREST: 'nearest'
-};
-
-const ERROR_MESSAGES = {
-  ADD_FAILED: 'Failed to add medications to cart',
-  REMOVE_FAILED: 'Failed to remove item from cart',
-  NO_PRESCRIPTION: 'Prescription information not found',
-  NETWORK_ERROR: 'Network error. Please check your connection.'
 };
 
 // Utility functions
@@ -36,7 +28,6 @@ const isValidDistance = (distance) => {
   return typeof distance === 'number' && !isNaN(distance) && distance >= 0;
 };
 
-// Debounce utility
 const debounce = (func, wait) => {
   let timeout;
   return function executedFunction(...args) {
@@ -63,24 +54,18 @@ const PharmacyRecommendations = ({
   setOpenCartDialog,
   userIdentifier,
   guestId,
-  state,
-  lga,
-  ward,
   onRemoveItem,
-  onBulkAddReady,
 }) => {
   const [sortOption, setSortOption] = useState(SORT_OPTIONS.DEFAULT);
   const [isBulkAdding, setIsBulkAdding] = useState({});
   const [filterOpen, setFilterOpen] = useState(false);
   const [apiErrors, setApiErrors] = useState({});
 
-  // Memoized getQty with validation
   const getQty = useCallback((medId) => {
     const medication = medications?.find(m => m?.id === medId);
     return medication?.quantity || 1;
   }, [medications]);
 
-  // Calculate lowest prices across pharmacies
   const lowestPrices = useMemo(() => {
     if (!pharmacyRecommendations?.length) return {};
     
@@ -99,7 +84,6 @@ const PharmacyRecommendations = ({
     return prices;
   }, [pharmacyRecommendations]);
 
-  // Enrich pharmacies with calculated totals
   const enrichedPharmacies = useMemo(() => {
     if (!pharmacyRecommendations?.length) return [];
     
@@ -118,21 +102,17 @@ const PharmacyRecommendations = ({
     });
   }, [pharmacyRecommendations, getQty]);
 
-
-  // Sort and filter pharmacies
   const sortedPharmacyMap = useMemo(() => {
     if (!enrichedPharmacies?.length) return [];
 
     let filtered = enrichedPharmacies;
     
-    // Apply open filter
     if (filterOpen) {
       filtered = enrichedPharmacies.filter(pharm => 
         isPharmacyOpenNow(pharm?.operatingHours)
       );
     }
 
-    // Apply sorting
     const sorted = [...filtered];
     
     switch (sortOption) {
@@ -146,12 +126,11 @@ const PharmacyRecommendations = ({
           return a.distance_km - b.distance_km;
         });
       
-      default: // SORT_OPTIONS.DEFAULT - by med count
+      default:
         return sorted.sort((a, b) => (b?.medCount || 0) - (a?.medCount || 0));
     }
-  }, [enrichedPharmacies, sortOption, filterOpen, isPharmacyOpenNow]);
+  }, [enrichedPharmacies, sortOption, filterOpen]);
 
-  // Calculate min values for badges
   const { minDistance, minTotalPrice } = useMemo(() => {
     const validDistances = enrichedPharmacies
       .filter(p => p.validDistance)
@@ -167,141 +146,90 @@ const PharmacyRecommendations = ({
     };
   }, [enrichedPharmacies]);
 
-  // Handle bulk add with proper error handling
-const handleBulkAdd = useCallback(async (pharmacyId, meds, skipDuplicateCheck = false) => {
-  if (!prescriptionId) {
-    console.error(ERROR_MESSAGES.NO_PRESCRIPTION);
-    setApiErrors(prev => ({ ...prev, [pharmacyId]: ERROR_MESSAGES.NO_PRESCRIPTION }));
-    return;
-  }
+  const handleBulkAdd = useCallback(async (pharmacyId, meds) => {
+    if (!prescriptionId || !meds?.length) return;
 
-  if (!meds?.length) {
-    return;
-  }
-
-  setIsBulkAdding(prev => ({ ...prev, [pharmacyId]: true }));
-  setApiErrors(prev => ({ ...prev, [pharmacyId]: null }));
-  
-  try {
-    let medsToAdd = meds;
+    setIsBulkAdding(prev => ({ ...prev, [pharmacyId]: true }));
+    setApiErrors(prev => ({ ...prev, [pharmacyId]: null }));
     
-    if (!skipDuplicateCheck && handleBulkAddWithDuplicateCheck) {
-      const result = await handleBulkAddWithDuplicateCheck(pharmacyId, meds);
-      if (!result) {
-        return;
+    try {
+      let medsToAdd = meds;
+      
+      if (handleBulkAddWithDuplicateCheck) {
+        const result = await handleBulkAddWithDuplicateCheck(pharmacyId, meds);
+        if (!result) return;
+        medsToAdd = result.meds;
       }
-      medsToAdd = result.meds;
-    }
 
-    const itemsToAdd = medsToAdd.filter(med => 
-      med?.id && !isInCart(med.id, pharmacyId)
-    );
-    
-    if (itemsToAdd.length === 0) {
-      return; // Early return is fine now - finally block will clean up
-    }
-
-    const items = itemsToAdd.map(med => ({
-      medicationId: med.id,
-      pharmacyId,
-      quantity: getQty(med.id)
-    }));
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
-
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/cart/addbulk`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-guest-id': guestId || '',
-        },
-        body: JSON.stringify({
-          userIdentifier: userIdentifier || '',
-          guestId: guestId || '',
-          items,
-          prescriptionId,
-        }),
-        signal: controller.signal
-      }
-    );
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || ERROR_MESSAGES.ADD_FAILED);
-    }
-
-    const result = await response.json();
-    
-    if (fetchCart) {
-      await fetchCart();
-    }
-
-    const pharmacy = pharmacyRecommendations?.find(p => p.pharmacyId === pharmacyId);
-
-    if (setLastAddedItems && result?.orderItems?.length && result?.addedItems?.length) {
-      setLastAddedItems(
-        result.orderItems.map((orderItem, index) => ({
-          id: orderItem.id,
-          name: result.addedItems[index].quantity > 1 
-            ? `${result.addedItems[index].displayName} x${result.addedItems[index].quantity}` 
-            : result.addedItems[index].displayName,
-          pharmacy: pharmacy?.pharmacyName || "Unknown Pharmacy",
-          quantity: orderItem.quantity
-        }))
+      const itemsToAdd = medsToAdd.filter(med => 
+        med?.id && !isInCart(med.id, pharmacyId)
       );
+      
+      if (itemsToAdd.length === 0) return;
+
+      const items = itemsToAdd.map(med => ({
+        medicationId: med.id,
+        pharmacyId,
+        quantity: getQty(med.id)
+      }));
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/cart/addbulk`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-guest-id': guestId || '',
+          },
+          body: JSON.stringify({
+            userIdentifier: userIdentifier || '',
+            guestId: guestId || '',
+            items,
+            prescriptionId,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to add medications');
+      }
+
+      const result = await response.json();
+      
+      if (fetchCart) await fetchCart();
+
+      const pharmacy = pharmacyRecommendations?.find(p => p.pharmacyId === pharmacyId);
+
+      if (setLastAddedItems && result?.orderItems?.length && result?.addedItems?.length) {
+        setLastAddedItems(
+          result.orderItems.map((orderItem, index) => ({
+            id: orderItem.id,
+            name: result.addedItems[index].displayName,
+            pharmacy: pharmacy?.pharmacyName || "Unknown Pharmacy",
+            quantity: orderItem.quantity
+          }))
+        );
+      }
+
+      if (setOpenCartDialog) setOpenCartDialog(true);
+
+    } catch (error) {
+      setApiErrors(prev => ({ 
+        ...prev, 
+        [pharmacyId]: error.message || 'Failed to add medications'
+      }));
+    } finally {
+      setIsBulkAdding(prev => ({ ...prev, [pharmacyId]: false }));
     }
+  }, [prescriptionId, handleBulkAddWithDuplicateCheck, isInCart, getQty, guestId, userIdentifier, pharmacyRecommendations, fetchCart, setLastAddedItems, setOpenCartDialog]);
 
-    if (setOpenCartDialog) {
-      setOpenCartDialog(true);
-    }
-
-  } catch (error) {
-    console.error('Bulk add error:', error);
-    
-    let errorMessage = ERROR_MESSAGES.ADD_FAILED;
-    if (error.name === 'AbortError') {
-      errorMessage = 'Request timed out. Please try again.';
-    } else if (error.message) {
-      errorMessage = error.message;
-    }
-    
-    setApiErrors(prev => ({ ...prev, [pharmacyId]: errorMessage }));
-  } finally {
-    // ALWAYS clean up loading state
-    setIsBulkAdding(prev => ({ ...prev, [pharmacyId]: false }));
-  }
-}, [
-  prescriptionId,
-  handleBulkAddWithDuplicateCheck,
-  isInCart,
-  getQty,
-  guestId,
-  userIdentifier,
-  pharmacyRecommendations,
-  fetchCart,
-  setLastAddedItems,
-  setOpenCartDialog
-]);
-
-
-  // Debounced bulk add to prevent rapid clicks
   const debouncedBulkAdd = useMemo(
     () => debounce(handleBulkAdd, 300),
     [handleBulkAdd]
   );
 
-    useEffect(() => {
-    if (onBulkAddReady) {
-      onBulkAddReady(handleBulkAdd);
-    }
-  }, [handleBulkAdd, onBulkAddReady]);
 
-  // Handle remove with proper error handling
   const handleRemove = useCallback((med, pharm) => {
     if (!cart?.pharmacies || !onRemoveItem) return;
 
@@ -325,55 +253,51 @@ const handleBulkAdd = useCallback(async (pharmacyId, meds, skipDuplicateCheck = 
     { value: 'open', label: 'Open Now', icon: Clock, isFilter: true },
   ];
 
-  if (!pharmacyRecommendations) {
-    return null;
-  }
+  if (!pharmacyRecommendations) return null;
 
   return (
-    <div className="mb-24 space-y-8">
+    <div className="space-y-6 pb-24">
       {/* Sort & Filter Controls */}
-      <div className="space-y-4 px-2">
+      <div className="space-y-3">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {sortFilterOptions.map((option) => (
             <Button
               key={option.value}
               variant="outline"
               onClick={() => option.isFilter ? setFilterOpen(!filterOpen) : setSortOption(option.value)}
-              aria-pressed={option.isFilter ? filterOpen : sortOption === option.value}
-              aria-label={option.isFilter ? `${option.label} filter` : `Sort by ${option.label}`}
-              className={`h-12 rounded-2xl font-black transition-all duration-300 hover:scale-105 border-2 shadow-lg ${
+              className={`h-11 rounded-xl font-bold text-sm transition-all duration-300 border-2 ${
                 (option.isFilter ? filterOpen : sortOption === option.value)
                   ? "bg-gradient-to-r from-[#225F91] to-[#1a4a73] text-white border-[#225F91]"
                   : "bg-white text-[#225F91] border-gray-300 hover:border-[#1ABA7F]"
               }`}
             >
-              <option.icon className="h-5 w-5 mr-2" strokeWidth={2.5} aria-hidden="true" />
+              <option.icon className="h-4 w-4 mr-2" strokeWidth={2.5} />
               {option.label}
             </Button>
           ))}
         </div>
 
-        <div className="p-4 bg-gradient-to-r from-[#1ABA7F]/10 to-[#225F91]/10 rounded-2xl border-2 border-[#1ABA7F]/20">
-          <p className="text-sm font-bold text-gray-700 text-center">
-            {filterOpen && <span className="text-green-600">✓ Showing only open pharmacies · </span>}
-            {sortOption === SORT_OPTIONS.DEFAULT && 'Sorted by Most Medications Available'}
-            {sortOption === SORT_OPTIONS.CHEAPEST && 'Sorted by Cheapest Total Price'}
-            {sortOption === SORT_OPTIONS.NEAREST && 'Sorted by Nearest Distance'}
+        <div className="p-3 bg-gradient-to-r from-[#1ABA7F]/10 to-[#225F91]/10 rounded-xl border border-[#1ABA7F]/20">
+          <p className="text-sm font-semibold text-gray-700 text-center">
+            {filterOpen && <span className="text-green-600">✓ Open pharmacies only · </span>}
+            {sortOption === SORT_OPTIONS.DEFAULT && 'Sorted by most medications available'}
+            {sortOption === SORT_OPTIONS.CHEAPEST && 'Sorted by cheapest total price'}
+            {sortOption === SORT_OPTIONS.NEAREST && 'Sorted by nearest distance'}
           </p>
         </div>
       </div>
 
       {/* Pharmacy cards */}
       {sortedPharmacyMap.length === 0 ? (
-        <Card className="relative bg-white/98 backdrop-blur-xl border-2 border-gray-200 rounded-3xl shadow-2xl overflow-hidden p-12">
+        <Card className="bg-white border-2 border-gray-200 rounded-2xl shadow-lg p-12">
           <div className="text-center">
-            <MapPin className="h-10 w-10 text-gray-400 mx-auto mb-4" strokeWidth={2} aria-hidden="true" />
-            <h3 className="text-2xl font-black text-gray-700 mb-3">No pharmacies found</h3>
-            <p className="text-gray-600 font-medium">Try adjusting your location filters or clearing all filters</p>
+            <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" strokeWidth={2} />
+            <h3 className="text-2xl font-black text-gray-700 mb-2">No pharmacies found</h3>
+            <p className="text-gray-600 font-medium">Try adjusting your filters</p>
           </div>
         </Card>
       ) : (
-        <div className="grid gap-6 px-2">
+        <div className="space-y-6">
           {sortedPharmacyMap.map((pharm) => {
             if (!pharm?.pharmacyId) return null;
 
@@ -386,238 +310,241 @@ const handleBulkAdd = useCallback(async (pharmacyId, meds, skipDuplicateCheck = 
             return (
               <Card
                 key={pharm.pharmacyId}
-                className="relative overflow-hidden bg-white/98 pt-0 backdrop-blur-xl border-2 border-[#1ABA7F]/30 rounded-3xl shadow-2xl hover:shadow-3xl transition-all duration-500 hover:-translate-y-1 group"
+                className="overflow-hidden bg-white pt-0 border-2 border-[#1ABA7F]/30 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300"
               >
-                {/* Image with badges */}
+                {/* Cover Image */}
                 {pharm.logoUrl && (
-                  <div className="relative w-full h-48 sm:h-64 overflow-hidden">
+                  <div className="relative w-full h-40 sm:h-48 overflow-hidden">
                     <img
                       src={pharm.logoUrl}
                       alt={`${pharm.pharmacyName || 'Pharmacy'} logo`}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      className="w-full h-full object-cover"
                       loading="lazy"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
 
-                    <div className="absolute top-4 left-4 right-4 flex justify-between gap-2">
+                    {/* Badges on Image */}
+                    <div className="absolute top-3 left-3 right-3 flex flex-wrap gap-2">
                       {isNearest && (
-                        <Badge className="px-4 py-2 rounded-2xl font-black text-sm bg-gradient-to-r from-[#225F91] to-[#1a4a73] text-white border-2 border-white shadow-2xl">
-                          <Navigation className="h-4 w-4 mr-1.5" strokeWidth={3} aria-hidden="true" />
+                        <Badge className="px-3 py-1.5 rounded-lg font-bold text-sm bg-[#225F91] text-white border-2 border-white shadow-lg">
+                          <Navigation className="h-3 w-3 mr-1" strokeWidth={3} />
                           Nearest
                         </Badge>
                       )}
-
                       {isCheapest && (
-                        <Badge className="px-4 py-2 rounded-2xl font-black text-sm bg-gradient-to-r from-[#1ABA7F] to-[#16a876] text-white border-2 border-white shadow-2xl ml-auto">
-                          <DollarSign className="h-4 w-4 mr-1.5" strokeWidth={3} aria-hidden="true" />
+                        <Badge className="px-3 py-1.5 rounded-lg font-bold text-sm bg-[#1ABA7F] text-white border-2 border-white shadow-lg">
+                          <DollarSign className="h-3 w-3 mr-1" strokeWidth={3} />
                           Cheapest
                         </Badge>
                       )}
                     </div>
+
+                    {/* Pharmacy Name on Image */}
+                    <div className="absolute bottom-0 left-0 right-0 p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-white/20 backdrop-blur-md border border-white/30">
+                          <Store className="h-5 w-5 text-white" />
+                        </div>
+                        <h3 className="text-xl font-black text-white drop-shadow-lg flex-1">
+                          {pharm.pharmacyName || 'Unknown Pharmacy'}
+                        </h3>
+                      </div>
+                    </div>
                   </div>
                 )}
 
-                <CardContent className="px-3 sm:px-6 pb-6 pt-1 sm:py-8 relative z-10">
-                  {/* Header */}
-                  <div className="flex items-start gap-3 mb-3">
-                    <div className="relative flex-shrink-0">
-                      <div className="relative p-2 sm:p-3 rounded-2xl bg-gradient-to-br from-[#1ABA7F] to-[#225F91] shadow-xl">
-                        <HospitalIcon className="h-5 w-5 text-white" strokeWidth={2.5} aria-hidden="true" />
+                <CardContent className="pt-0 px-4 sm:p-6 space-y-4">
+                  {/* Header (without cover) */}
+                  {!pharm.logoUrl && (
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="p-3 rounded-xl bg-gradient-to-br from-[#1ABA7F]/20 to-[#225F91]/20">
+                        <Store className="h-6 w-6 text-[#225F91]" />
                       </div>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-xl sm:text-2xl font-black text-[#225F91] line-clamp-2 mb-2 group-hover:text-[#1ABA7F] transition-colors duration-300">
+                      <h3 className="text-xl sm:text-2xl font-black text-[#225F91] flex-1">
                         {pharm.pharmacyName || 'Unknown Pharmacy'}
                       </h3>
-                      {pharm.address && (
-                        <div className="flex items-start gap-3 p-2 sm:p-3 bg-blue-50 rounded-xl border border-blue-200">
-                          <MapPin className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" strokeWidth={2.5} aria-hidden="true" />
-                          <p className="text-sm text-gray-700 font-semibold line-clamp-2">
-                            {pharm.address}
-                          </p>
-                        </div>
-                      )}
                     </div>
-                  </div>
+                  )}
 
-                  {/* Pharmacy Info */}
-                  <div className="space-y-3 mb-6">
+                  {/* Info Cards */}
+                  <div className="space-y-2">
+                    {pharm.address && (
+                      <div className="flex items-start gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <MapPin className="h-4 w-4 text-[#1ABA7F] mt-0.5 flex-shrink-0" strokeWidth={2.5} />
+                        <span className="text-sm text-gray-700 font-medium line-clamp-2 flex-1">
+                          {pharm.address}
+                        </span>
+                      </div>
+                    )}
+
                     {pharm.operatingHours && (() => {
                       const formattedHours = formatOperatingHours(pharm.operatingHours);
                       if (!formattedHours) return null;
                       return (
-                        <div className="flex items-center gap-3 p-2 sm:p-3 bg-green-50 rounded-xl border border-green-200">
-                          <Clock className="h-5 w-5 text-green-600 flex-shrink-0" strokeWidth={2.5} aria-hidden="true" />
-                          <div className="flex-1">
-                            <span className="text-xs font-black text-gray-600 uppercase tracking-wide block">
-                              Opening Hours
-                            </span>
-                            <span className={`text-xs font-bold ${getOperatingHoursTextColor(pharm.operatingHours)}`}>
-                              {formattedHours.text}
-                            </span>
-                          </div>
+                        <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                          <Clock className="h-4 w-4 text-[#225F91] flex-shrink-0" strokeWidth={2.5} />
+                          <span className={`text-sm font-semibold flex-1 ${getOperatingHoursTextColor(pharm.operatingHours)}`}>
+                            {formattedHours.text}
+                          </span>
+                          {formattedHours.status === 'open' && (
+                            <Badge className="bg-green-500 text-white border-0 px-2 py-0.5 text-xs font-bold">
+                              Open
+                            </Badge>
+                          )}
                         </div>
                       );
                     })()}
 
-                    <div className="flex items-center gap-3 p-2 sm:p-3 bg-gradient-to-r from-gray-50 to-white border border-gray-200 rounded-xl">
-                      <Navigation className="h-5 w-5 text-[#76D1F3] flex-shrink-0" strokeWidth={2.5} aria-hidden="true" />
-                      <span className="text-sm font-bold text-gray-700">
+                    <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <Navigation className="h-4 w-4 text-[#76D1F3] flex-shrink-0" strokeWidth={2.5} />
+                      <span className="text-sm font-semibold text-gray-700">
                         {formatDistance(pharm.distance_km)}
                       </span>
                     </div>
-                  </div>
 
-                  {/* Medications list */}
-                  <div className="space-y-3 mb-6">
-                    <div className="flex items-center justify-between">
-                      <h4 className="text-sm sm:text-base font-black text-gray-700 uppercase tracking-wide flex items-center gap-2">
-                        <div className="w-1 h-6 bg-gradient-to-b from-[#1ABA7F] to-[#225F91] rounded-full" aria-hidden="true" />
-                        Medications
-                      </h4>
-                      <Badge className={`${(pharm.medCount || 0) === (medications?.length || 0) ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-800"} font-black px-3 py-1.5`}>
-                        {pharm.medCount || 0}/{medications?.length || 0} available
-                      </Badge>
-                    </div>
-
-                    <ul className="space-y-2">
-                      {(pharm.meds || []).map(med => {
-                        if (!med?.id) return null;
-
-                        const qty = getQty(med.id);
-                        const lineTotal = (med.price || 0) * qty;
-                        const inCart = isInCart(med.id, pharm.pharmacyId);
-                        const isLowestPrice = lowestPrices[med.id] === med.price;
-                        const isAddingSingle = isAddingToCart?.[`${med.id}-${pharm.pharmacyId}`];
-
-                        return (
-                          <li
-                            key={med.id}
-                            className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3 bg-gray-50 rounded-xl border-2 border-gray-200 hover:border-[#1ABA7F]/30 transition-all duration-300"
-                          >
-                            <div className="flex-1 min-w-0 w-full">
-                              <div className="flex items-start justify-between gap-2 mb-2">
-                                <p className="text-sm font-bold text-gray-900 flex-1">
-                                  {med.displayName || 'Unknown Medication'}
-                                </p>
-                                {isLowestPrice && (
-                                  <Badge className="bg-green-100 text-green-700 border border-green-300 font-black text-xs flex-shrink-0">
-                                    <TrendingDown className="h-3 w-3 mr-1" strokeWidth={3} aria-hidden="true" />
-                                    Best Price
-                                  </Badge>
-                                )}
-                              </div>
-                              <div className="flex items-center justify-between gap-2">
-                                <div className="flex items-center gap-2 text-xs text-gray-600 font-semibold">
-                                  <span className="px-2 py-1 bg-white rounded-lg border border-gray-300">
-                                    Qty: {qty}
-                                  </span>
-                                  <span>{formatCurrency(med.price)} each</span>
-                                </div>
-                                <span className="text-sm font-black text-[#225F91]">
-                                  {formatCurrency(lineTotal)}
-                                </span>
-                              </div>
-                            </div>
-                            
-                            {/* Action buttons */}
-                            <div className="flex gap-2 w-full sm:w-auto">
-                              {inCart ? (
-                                <>
-                                  <Button
-                                    variant="ghost"
-                                    disabled
-                                    aria-label="Item added to cart"
-                                    className="flex-1 sm:flex-none h-10 px-4 rounded-xl font-bold text-sm bg-green-100 text-green-700 border-2 border-green-300 cursor-not-allowed"
-                                  >
-                                    <Check className="h-4 w-4 mr-2" strokeWidth={3} aria-hidden="true" />
-                                    Added
-                                  </Button>
-                                  <Button
-                                    onClick={() => handleRemove(med, pharm)}
-                                    variant="outline"
-                                    aria-label={`Remove ${med.displayName} from cart`}
-                                    className="flex-1 sm:flex-none h-10 px-4 rounded-xl font-bold text-sm border-2 border-red-300 text-red-600 hover:bg-red-50 transition-all duration-300 group"
-                                  >
-                                    <Trash2 className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform duration-300" strokeWidth={3} aria-hidden="true" />
-                                    Remove
-                                  </Button>
-                                </>
-                              ) : (
-                                <Button
-                                  onClick={() => handleAddToCart(med.id, pharm.pharmacyId, med.displayName)}
-                                  disabled={isAddingSingle}
-                                  aria-label={`Add ${med.displayName} to cart`}
-                                  className="w-full h-10 px-4 rounded-xl font-bold text-sm bg-gradient-to-r from-[#1ABA7F] to-[#225F91] text-white hover:scale-105 shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                  {isAddingSingle ? (
-                                    <>
-                                      <Loader2 className="h-4 w-4 animate-spin mr-2" strokeWidth={3} aria-hidden="true" />
-                                      Adding...
-                                    </>
-                                  ) : (
-                                    <>
-                                      <ShoppingCart className="h-4 w-4 mr-2" strokeWidth={3} aria-hidden="true" />
-                                      Add to Cart
-                                    </>
-                                  )}
-                                </Button>
-                              )}
-                            </div>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </div>
-
-                  {/* Total Price */}
-                  <div className="flex items-center justify-between p-3 sm:p-5 bg-gradient-to-r from-[#225F91]/10 to-[#1ABA7F]/10 rounded-2xl border-2 border-[#1ABA7F]/30 mb-6">
-                    <span className="text-lg font-black text-gray-700">Total Price</span>
-                    <span className="text-xl sm:text-3xl font-black text-[#225F91]">
-                      {formatCurrency(pharm.trueTotalPrice)}
-                    </span>
-                  </div>
-
-                  {/* Error message */}
-                  {hasError && (
-                    <div className="mb-4 p-3 bg-red-50 border-2 border-red-200 rounded-xl" role="alert">
-                      <p className="text-sm font-bold text-red-700">{hasError}</p>
-                    </div>
-                  )}
-
-                  {/* Bulk Add Button */}
-                  {itemsNotInCart > 0 && (
-                    <Button
-                      onClick={() => debouncedBulkAdd(pharm.pharmacyId, pharm.meds)}
-                      disabled={isBulkAdding[pharm.pharmacyId]}
-                      aria-label={`Add remaining ${itemsNotInCart} items to cart from ${pharm.pharmacyName}`}
-                      className="w-full h-14 rounded-2xl font-black text-base shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 group relative overflow-hidden bg-gradient-to-r from-[#1ABA7F] to-[#225F91] text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isBulkAdding[pharm.pharmacyId] ? (
-                        <span className="relative z-10 flex items-center gap-2">
-                          <Loader2 className="h-5 w-5 animate-spin" strokeWidth={3} aria-hidden="true" />
-                          Adding...
+                    {/* Summary */}
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-[#1ABA7F]/10 to-[#225F91]/10 border border-[#1ABA7F]/30">
+                      <div className="flex items-center gap-2">
+                        <Package className="h-4 w-4 text-[#225F91]" />
+                        <span className="text-sm font-bold text-gray-700">
+                          {pharm.medCount || 0}/{medications?.length || 0} available
                         </span>
-                      ) : (
-                        <>
-                          <span className="relative z-10 flex items-center justify-center gap-2">
-                            <ShoppingCart className="h-5 w-5" strokeWidth={3} aria-hidden="true" />
-                            Add Remaining {itemsNotInCart} Item{itemsNotInCart > 1 ? 's' : ''} to Cart
-                          </span>
-                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                        </>
-                      )}
-                    </Button>
-                  )}
-
-                  {itemsInCart > 0 && itemsNotInCart === 0 && (
-                    <div className="flex items-center justify-center gap-2 p-4 bg-green-100 rounded-2xl border-2 border-green-300">
-                      <Check className="h-5 w-5 text-green-700" strokeWidth={3} aria-hidden="true" />
-                      <span className="text-sm font-black text-green-700">
-                        All items from this pharmacy are in your cart
+                      </div>
+                      <span className="text-base sm:text-lg font-black text-[#225F91]">
+                        {formatCurrency(pharm.trueTotalPrice)}
                       </span>
                     </div>
+                  </div>
+
+                  {/* Medications List */}
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-black text-gray-700 uppercase tracking-wide">
+                      Medications
+                    </h4>
+
+                    {(pharm.meds || []).map(med => {
+                      if (!med?.id) return null;
+
+                      const qty = getQty(med.id);
+                      const lineTotal = (med.price || 0) * qty;
+                      const inCart = isInCart(med.id, pharm.pharmacyId);
+                      const isLowestPrice = lowestPrices[med.id] === med.price;
+                      const isAddingSingle = isAddingToCart?.[`${med.id}-${pharm.pharmacyId}`];
+
+                      return (
+                        <div
+                          key={med.id}
+                          className="p-3 bg-gray-50 rounded-lg border border-gray-200 space-y-3"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-bold text-gray-900 mb-1">
+                                {med.displayName || 'Unknown Medication'}
+                              </p>
+                              <div className="flex items-center gap-2 text-xs text-gray-600 font-semibold">
+                                <span className="px-2 py-1 bg-white rounded border border-gray-300">
+                                  Qty: {qty}
+                                </span>
+                                <span>{formatCurrency(med.price)} each</span>
+                              </div>
+                            </div>
+                            <div className="text-right flex-shrink-0">
+                              {isLowestPrice && (
+                                <Badge className="bg-green-100 text-green-700 border-green-300 font-bold text-xs mb-1">
+                                  <TrendingDown className="h-3 w-3 mr-1" strokeWidth={3} />
+                                  Best
+                                </Badge>
+                              )}
+                              <p className="text-sm font-black text-[#225F91]">
+                                {formatCurrency(lineTotal)}
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <div className="flex gap-2">
+                            {inCart ? (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  disabled
+                                  className="flex-1 h-10 rounded-lg font-bold text-sm bg-green-100 text-green-700 border border-green-300"
+                                >
+                                  <Check className="h-4 w-4 mr-2" strokeWidth={3} />
+                                  Added
+                                </Button>
+                                <Button
+                                  onClick={() => handleRemove(med, pharm)}
+                                  variant="outline"
+                                  className="flex-1 h-10 rounded-lg font-bold text-sm border border-red-300 text-red-600 hover:bg-red-50"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" strokeWidth={3} />
+                                  Remove
+                                </Button>
+                              </>
+                            ) : (
+                              <Button
+                                onClick={() => handleAddToCart(med.id, pharm.pharmacyId, med.displayName)}
+                                disabled={isAddingSingle}
+                                className="w-full h-10 rounded-lg font-bold text-sm bg-gradient-to-r from-[#1ABA7F] to-[#225F91] text-white hover:scale-[1.02] transition-all disabled:opacity-50"
+                              >
+                                {isAddingSingle ? (
+                                  <>
+                                    <Loader2 className="h-4 w-4 animate-spin mr-2" strokeWidth={3} />
+                                    Adding...
+                                  </>
+                                ) : (
+                                  <>
+                                    <ShoppingCart className="h-4 w-4 mr-2" strokeWidth={3} />
+                                    Add to Cart
+                                  </>
+                                )}
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Error */}
+                  {hasError && (
+                    <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <p className="text-sm font-semibold text-red-700">{hasError}</p>
+                    </div>
                   )}
+
+                  {/* Bulk Actions */}
+                  {medications?.length > 1 && (
+                    itemsNotInCart > 0 ? (
+                      <Button
+                        onClick={() => debouncedBulkAdd(pharm.pharmacyId, pharm.meds)}
+                        disabled={isBulkAdding[pharm.pharmacyId]}
+                        className="w-full h-12 rounded-xl font-black text-base bg-gradient-to-r from-[#1ABA7F] to-[#225F91] text-white hover:scale-[1.02] transition-all disabled:opacity-50"
+                      >
+                        {isBulkAdding[pharm.pharmacyId] ? (
+                          <>
+                            <Loader2 className="h-5 w-5 animate-spin mr-2" strokeWidth={3} />
+                            Adding...
+                          </>
+                        ) : (
+                          <>
+                            <ShoppingCart className="h-5 w-5 mr-2" strokeWidth={3} />
+                            Add All {itemsNotInCart} to Cart
+                          </>
+                        )}
+                      </Button>
+                    ) : (
+                      itemsInCart > 0 && (
+                        <div className="flex items-center justify-center gap-2 p-3 bg-green-100 rounded-xl border border-green-300">
+                          <Check className="h-5 w-5 text-green-700" strokeWidth={3} />
+                          <span className="text-sm font-bold text-green-700">
+                            All items in cart
+                          </span>
+                        </div>
+                      )
+                    )
+                  )}
+                  
                 </CardContent>
               </Card>
             );

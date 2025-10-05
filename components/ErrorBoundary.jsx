@@ -59,6 +59,13 @@ class ErrorBoundary extends React.Component {
   }
 
   handleReset = () => {
+    // Check if custom reset behavior is provided
+    if (this.props.resetBehavior === 'reload') {
+      window.location.reload();
+      return;
+    }
+
+    // Default behavior - just reset state
     this.setState({
       hasError: false,
       error: null,
@@ -113,15 +120,16 @@ class ErrorBoundary extends React.Component {
                   </details>
                 )}
 
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Button
-                    onClick={this.handleReset}
-                    className="h-12 px-8 rounded-xl font-bold bg-gradient-to-r from-[#1ABA7F] to-[#225F91] text-white hover:scale-105 shadow-lg transition-all duration-300"
-                  >
-                    <RefreshCw className="h-5 w-5 mr-2" strokeWidth={2.5} />
-                    Try Again
-                  </Button>
-                  
+           <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button
+                  onClick={this.handleReset}
+                  className="h-12 px-8 rounded-xl font-bold bg-gradient-to-r from-[#1ABA7F] to-[#225F91] text-white hover:scale-105 shadow-lg transition-all duration-300"
+                >
+                  <RefreshCw className="h-5 w-5 mr-2" strokeWidth={2.5} />
+                  {this.props.resetBehavior === 'reload' ? 'Reload Page' : 'Try Again'}
+                </Button>
+                
+                {this.props.resetBehavior !== 'reload' && (
                   <Button
                     onClick={this.handleReload}
                     variant="outline"
@@ -129,7 +137,8 @@ class ErrorBoundary extends React.Component {
                   >
                     Reload Page
                   </Button>
-                </div>
+                )}
+              </div>
 
                 {this.state.errorCount > 2 && (
                   <div className="mt-6 p-4 bg-yellow-50 border-2 border-yellow-200 rounded-xl">

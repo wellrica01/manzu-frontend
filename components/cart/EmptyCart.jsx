@@ -110,20 +110,6 @@ export default function EmptyCart() {
                   </p>
                 </CardContent>
               </Card>
-
-            {/* Premium CTA with Advanced Styling */}
-            <div className="mb-6">
-              <Link href="/">
-                <Button className="relative h-14 px-8 bg-gradient-to-r from-[#1ABA7F] via-[#1ABA7F] to-[#225F91] hover:from-[#225F91] hover:to-[#1ABA7F] text-white text-lg font-bold rounded-2xl shadow-2xl hover:shadow-[#1ABA7F]/50 transition-all duration-500 transform hover:scale-105 group overflow-hidden">
-                  <span className="relative z-10 flex items-center gap-3">
-                    <Search className="h-6 w-6 group-hover:rotate-12 transition-transform duration-300" />
-                    Start Shopping Now
-                    <ArrowRight className="h-6 w-6 group-hover:translate-x-2 transition-transform duration-300" />
-                  </span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                </Button>
-              </Link>
-            </div>
             </div>
 
           </div>

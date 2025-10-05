@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef, useReducer, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { Button } from '../ui/button';
-import { History, TrendingUp, X } from 'lucide-react';
+import { History, TrendingUp, X, MapPin } from 'lucide-react';
 import SearchInput from './SearchInput';
 import FilterControls from './FilterControls';
 import CartDialog from '../cart/CartDialog';
@@ -41,13 +41,24 @@ const SearchBar = () => {
 
   const [selectedMedicationId, setSelectedMedicationId] = useState(null);
 
+  const [currentMedicationId, setCurrentMedicationId] = useState(null);
+  
+  const [locationStatus, setLocationStatus] = useState('pending');
+
+  useEffect(() => {
+    if (state.userLocation) {
+      setLocationStatus('granted');
+    }
+  }, [state.userLocation]);
+
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
   // Custom hooks for separation of concerns
   useGeoData(dispatch, t);
-  useGeoLocation(dispatch, t);
+  useGeoLocation(dispatch, t, setLocationStatus);
   useAutoPopulateLocation(state.userLocation, state.geoData, dispatch);
+
 
 const { fetchSuggestions, handleSearch, handleAddToCart, executeAddToCart } = useSearchLogic(
   state,
@@ -171,23 +182,6 @@ useEffect(() => {
     return () => clearTimeout(debounce);
   }, [state.searchTerm, fetchSuggestions]);
 
-// Reset to default results when all filters are cleared
-  useEffect(() => {
-    const noFilters =
-      !state.filters.state && !state.filters.lga && !state.filters.ward;
-
-    if (noFilters && state.defaultResults.length > 0) {
-      dispatch({
-        type: api.ACTIONS.SET_RESULTS,
-        payload: state.defaultResults,
-      });
-    }
-  }, [
-    state.filters.state,
-    state.filters.lga,
-    state.filters.ward,
-    state.defaultResults,
-  ]);
 
 
   // Update LGAs based on selected state
@@ -287,6 +281,55 @@ const handleKeyDown = useCallback((e) => {
   }
 }, [state.searchTerm, state.results]);
 
+
+
+
+const currentMedicationIdRef = useRef(null);
+
+const handleSearchWrapper = useCallback((medicationId) => {
+  setSelectedMedicationId(medicationId);
+  currentMedicationIdRef.current = medicationId; // Store in ref
+  handleSearch(medicationId);
+}, [handleSearch]);
+
+// Auto-apply filters when they change
+useEffect(() => {
+  if (!currentMedicationIdRef.current || state.defaultResults.length === 0) {
+    return;
+  }
+
+  const hasFilters = state.filters.state || state.filters.lga || state.filters.ward;
+  
+  if (hasFilters) {
+    handleSearch(currentMedicationIdRef.current, {
+      onComplete: () => {
+        // Scroll to pharmacy comparison after search completes and results are rendered
+        const comparisonSection = document.querySelector('[data-pharmacy-comparison]');
+        if (comparisonSection) {
+          comparisonSection.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start',
+            inline: 'nearest'
+          });
+        }
+      }
+    });
+  } else {
+    dispatch({
+      type: api.ACTIONS.SET_RESULTS,
+      payload: state.defaultResults,
+    });
+  }
+}, [state.filters.state, state.filters.lga, state.filters.ward, state.defaultResults, handleSearch, dispatch]);
+
+const handleSelectMedication = useCallback((suggestion) => {
+  setSelectedMedicationId(suggestion.id);
+  setCurrentMedicationId(suggestion.id);
+  handleSearchWrapper(suggestion.id);
+}, [handleSearchWrapper]);
+
+
+
   // --- Render ---
   return (
     <div className="w-full space-y-4 sm:space-y-6">
@@ -352,10 +395,10 @@ const handleKeyDown = useCallback((e) => {
           setFocusedSuggestionIndex={(val) =>
             dispatch({ type: api.ACTIONS.SET_FOCUSED_INDEX, payload: val })
           }
-          handleSearch={handleSearch}
+          handleSearch={handleSearchWrapper}
           handleSelectMedication={(suggestion) => {
             setSelectedMedicationId(suggestion.id);  
-            handleSearch(suggestion.id);           
+            handleSearchWrapper(suggestion.id);           
           }}
           dropdownRef={dropdownRef}
           inputRef={inputRef}
@@ -444,7 +487,7 @@ const handleKeyDown = useCallback((e) => {
                     <button
                       key={suggestion.id}
                       ref={(el) => (suggestionRefs.current[index] = el)}
-                      onClick={() => handleSearch(suggestion.id)} // ← pass ID here
+                      onClick={() => handleSelectMedication(suggestion)}
                       className={cn(
                         'w-full px-3 sm:px-4 py-2 sm:py-3 text-left transition-colors duration-200 flex items-center gap-2 sm:gap-3 text-sm sm:text-base',
                         state.focusedSuggestionIndex === index
@@ -521,40 +564,6 @@ const handleKeyDown = useCallback((e) => {
           )}
       </div>
 
-      {/* Filter Controls */}
-      <FilterControls
-        filterState={state.filters.state}
-        setFilterState={(val) =>
-          dispatch({ type: api.ACTIONS.SET_FILTERS, payload: { state: val } })
-        }
-        filterLga={state.filters.lga}
-        setFilterLga={(val) =>
-          dispatch({ type: api.ACTIONS.SET_FILTERS, payload: { lga: val } })
-        }
-        filterWard={state.filters.ward}
-        setFilterWard={(val) =>
-          dispatch({ type: api.ACTIONS.SET_FILTERS, payload: { ward: val } })
-        }
-        sortBy={state.sortBy}
-        setSortBy={(val) =>
-          dispatch({ type: api.ACTIONS.SET_SORT_BY, payload: val })
-        }
-        states={state.states}
-        lgas={state.lgas}
-        wards={state.wards}
-        geoData={state.geoData}
-        updateLgas={updateLgas}
-        updateWards={updateWards}
-        clearFilters={clearFilters}
-        handleSearch={handleSearch}
-        searchTerm={state.searchTerm}
-        selectedMedicationId={selectedMedicationId}
-        showFilters={state.showFilters}
-        setShowFilters={(val) =>
-          dispatch({ type: api.ACTIONS.SET_SHOW_FILTERS, payload: val })
-        }
-      />
-
       <hr className="border-t border-gray-300 mb-6" />
 
       {/* Error */}
@@ -562,6 +571,17 @@ const handleKeyDown = useCallback((e) => {
 
       {/* Loading skeleton */}
       {state.isSearching && <SearchSkeleton />}
+
+ 
+   {/* Filter application feedback */}
+      {state.isSearching && state.results.length > 0 && (
+        <div className="flex items-center justify-center gap-3 p-4 rounded-xl bg-gradient-to-r from-[#1ABA7F]/10 to-[#225F91]/10 border border-[#1ABA7F]/20">
+          <div className="animate-spin rounded-full h-5 w-5 border-2 border-[#1ABA7F] border-t-transparent"></div>
+          <span className="text-sm font-semibold text-[#225F91]">
+            Updating results with your location filters...
+          </span>
+        </div>
+      )}
 
       {/* No results message */}
       {!state.isSearching &&
@@ -579,24 +599,79 @@ const handleKeyDown = useCallback((e) => {
           </div>
         )}
 
-      {/* Medication Cards */}
-      {!state.isSearching &&
-        state.results.map((med) => (
-          <MedicationCard
-            key={med.id}
-            med={med}
-            cart={cart}
-            handleAddToCart={handleAddToCart}
-            isInCart={isInCart}
-            isAddingToCart={state.isAddingToCart}
-            searchTerm={state.searchTerm}
-            state={state.filters.state}
-            lga={state.filters.lga}
-            ward={state.filters.ward}
-            guestId={guestId}
-            fetchCart={fetchCart}
-          />
-        ))}
+
+    {/* Medication Cards */}
+    {!state.isSearching &&
+      state.results.map((med) => (
+        <MedicationCard
+        key={med.id}
+        med={med}
+        cart={cart}
+        handleAddToCart={handleAddToCart}
+        isInCart={isInCart}
+        isAddingToCart={state.isAddingToCart}
+        searchTerm={state.searchTerm}
+        state={state.filters.state}
+        lga={state.filters.lga}
+        ward={state.filters.ward}
+        guestId={guestId}
+        fetchCart={fetchCart}
+        locationStatus={locationStatus}
+        states={state.states}
+        lgas={state.lgas}
+        wards={state.wards}
+        geoData={state.geoData}
+        updateLgas={updateLgas}
+        updateWards={updateWards}
+        clearFilters={clearFilters}
+        setFilterState={(val) =>
+          dispatch({ type: api.ACTIONS.SET_FILTERS, payload: { state: val } })
+        }
+        setFilterLga={(val) =>
+          dispatch({ type: api.ACTIONS.SET_FILTERS, payload: { lga: val } })
+        }
+        setFilterWard={(val) =>
+          dispatch({ type: api.ACTIONS.SET_FILTERS, payload: { ward: val } })
+        }
+        showFilters={state.showFilters}
+        setShowFilters={(val) =>
+          dispatch({ type: api.ACTIONS.SET_SHOW_FILTERS, payload: val })
+        }
+        onSelectLocation={() => {
+          dispatch({ type: api.ACTIONS.SET_SHOW_FILTERS, payload: true });
+          setTimeout(() => {
+            const filterElement = document.querySelector('[data-filters]');
+            if (filterElement) {
+              filterElement.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'start' 
+              });
+            }
+          }, 100);
+        }}
+          onEnableLocation={() => {
+            if (navigator.geolocation) {
+              navigator.geolocation.getCurrentPosition(
+                (position) => {
+                  dispatch({
+                    type: api.ACTIONS.SET_USER_LOCATION,
+                    payload: {
+                      lat: position.coords.latitude,
+                      lng: position.coords.longitude,
+                    },
+                  });
+                  setLocationStatus('granted');
+                  toast.success('Location enabled successfully');
+                },
+                (error) => {
+                  setLocationStatus('denied');
+                  toast.error('Location access denied. Please select manually.');
+                }
+              );
+            }
+          }}
+        />
+      ))}
     </div>
   );
 };

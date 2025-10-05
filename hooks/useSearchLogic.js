@@ -14,6 +14,12 @@ const debounce = (fn, delay) => {
 export const useSearchLogic = (state, dispatch, t, apiUrl, fetchCart, guestId, cart) => {
   const abortControllerRef = useRef(null);
   const suggestionAbortRef = useRef(null);
+  
+  // Store current state in refs to avoid recreating handleSearch
+  const stateRef = useRef(state);
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
 
   // Debounced history save
   const saveHistoryDebounced = useMemo(
@@ -39,7 +45,6 @@ export const useSearchLogic = (state, dispatch, t, apiUrl, fetchCart, guestId, c
   // Fetch suggestions with abort support
   const fetchSuggestions = useCallback(
     async (query) => {
-      // Cancel previous suggestion request
       if (suggestionAbortRef.current) {
         suggestionAbortRef.current.abort();
       }
@@ -86,13 +91,13 @@ const handleSearch = useCallback(
   async (medicationId, options = {}) => {
     if (!medicationId) return;
 
-    // Find medication in suggestions to update input display
-    const med = state.suggestions.find((m) => m.id === medicationId);
+    const currentState = stateRef.current;
+
+    const med = currentState.suggestions.find((m) => m.id === medicationId);
     if (med) {
       dispatch({ type: api.ACTIONS.SET_SEARCH_TERM, payload: med.displayName });
     }
 
-    // Cancel previous request
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
@@ -103,13 +108,12 @@ const handleSearch = useCallback(
     dispatch({ type: api.ACTIONS.SET_ERROR, payload: null });
 
     try {
-      // ALWAYS send only medicationId
       const data = await api.searchMedications(
         {
           medicationId,
-          filters: state.filters,
-          sortBy: state.sortBy,
-          userLocation: state.userLocation,
+          filters: currentState.filters,
+          sortBy: currentState.sortBy,
+          userLocation: currentState.userLocation,
           ignoreFilters: options.ignoreFilters,
         },
         t,
@@ -117,34 +121,37 @@ const handleSearch = useCallback(
         abortControllerRef.current.signal
       );
 
-      // ✅ Ensure minimum 300ms loading time for smooth UX
       const elapsed = Date.now() - startTime;
       const minLoadTime = 300;
       if (elapsed < minLoadTime) {
         await new Promise(resolve => setTimeout(resolve, minLoadTime - elapsed));
       }
+      
       dispatch({ type: api.ACTIONS.SET_RESULTS, payload: data });
       dispatch({ type: api.ACTIONS.SET_SHOW_DROPDOWN, payload: false });
       dispatch({ type: api.ACTIONS.SET_FOCUSED_INDEX, payload: -1 });
 
       await fetchCart();
 
-      // Save default results only if ignoreFilters is true or no filters
       if (
         options.ignoreFilters ||
-        (!state.filters.state && !state.filters.lga && !state.filters.ward)
+        (!currentState.filters.state && !currentState.filters.lga && !currentState.filters.ward)
       ) {
         dispatch({ type: api.ACTIONS.SET_DEFAULT_RESULTS, payload: data });
       }
 
-      // Update search history with ID + displayName
       const newHistoryItem = { id: medicationId, displayName: med?.displayName || '' };
       const newHistory = [
         newHistoryItem,
-        ...state.searchHistory.filter((h) => h.id !== medicationId),
+        ...currentState.searchHistory.filter((h) => h.id !== medicationId),
       ];
       dispatch({ type: api.ACTIONS.SET_SEARCH_HISTORY, payload: newHistory });
       saveHistoryDebounced(newHistory);
+
+      // ✅ Call onComplete callback after everything is done
+      if (options.onComplete) {
+        setTimeout(() => options.onComplete(), 100);
+      }
 
     } catch (err) {
       if (err.name !== 'AbortError') {
@@ -157,18 +164,7 @@ const handleSearch = useCallback(
       }
     }
   },
-  [
-    dispatch,
-    state.filters,
-    state.sortBy,
-    state.userLocation,
-    state.searchHistory,
-    state.suggestions,
-    t,
-    apiUrl,
-    fetchCart,
-    saveHistoryDebounced,
-  ]
+  [dispatch, t, apiUrl, fetchCart, saveHistoryDebounced]
 );
 
 
@@ -277,9 +273,12 @@ return {
 };
 };
 
-export const useGeoLocation = (dispatch, t) => {
+export const useGeoLocation = (dispatch, t, setLocationStatus) => {
   useEffect(() => {
-    if (!navigator.geolocation) return;
+    if (!navigator.geolocation) {
+      setLocationStatus?.('denied');
+      return; 
+    }
 
     const successHandler = (position) => {
       dispatch({
@@ -289,15 +288,26 @@ export const useGeoLocation = (dispatch, t) => {
           lng: position.coords.longitude,
         },
       });
+      setLocationStatus?.('granted');
     };
 
-    const errorHandler = () => {
-      toast.error(t('errors.location_fetch'));
+    const errorHandler = (error) => {
+      setLocationStatus?.('denied');
+
+      if (error.code === error.PERMISSION_DENIED) {
+        toast.info(
+          'Location access denied. Please select your location manually.',
+          { duration: 5000 }
+        );
+      } else {
+        toast.error(t('errors.location_fetch'));
+      }
     };
 
     navigator.geolocation.getCurrentPosition(successHandler, errorHandler);
-  }, [dispatch, t]);
+  }, [dispatch, t, setLocationStatus]);
 };
+
 
 export const useGeoData = (dispatch, t) => {
   useEffect(() => {

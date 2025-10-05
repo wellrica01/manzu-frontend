@@ -1,8 +1,8 @@
 'use client';
 
-import { useMemo, useEffect, useCallback } from 'react';
+import { useMemo, useEffect, useCallback, useState } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
-import { getGuestId } from '@/lib/utils';
+import { getGuestId, GUEST_ID_CHANGED_EVENT } from '@/lib/utils';
 
 const fetchCartData = async (guestId) => {
   if (!process.env.NEXT_PUBLIC_API_URL) {
@@ -22,8 +22,19 @@ const fetchCartData = async (guestId) => {
 };
 
 export function useCart() {
-  const guestId = getGuestId();
+  // Make guestId reactive with state
+  const [guestId, setGuestIdState] = useState(() => getGuestId());
   const queryClient = useQueryClient();
+
+  // Listen for guestId changes via custom event
+  useEffect(() => {
+    const handleGuestIdChange = (event) => {
+      setGuestIdState(event.detail);
+    };
+
+    window.addEventListener(GUEST_ID_CHANGED_EVENT, handleGuestIdChange);
+    return () => window.removeEventListener(GUEST_ID_CHANGED_EVENT, handleGuestIdChange);
+  }, []);
 
   const { data: cartData, isLoading, isError, error, refetch: fetchCart } = useQuery({
     queryKey: ['cart', guestId],
@@ -157,9 +168,9 @@ export function useCart() {
     fetchCart,
     updateCartCache,
     addItem: addItemMutation.mutate,
-    addItemAsync: addItemMutation.mutateAsync, // optional for awaiting
+    addItemAsync: addItemMutation.mutateAsync,
     removeItem: removeItemMutation.mutate,
-    removeItemAsync: removeItemMutation.mutateAsync, // optional for awaiting
+    removeItemAsync: removeItemMutation.mutateAsync,
     isLoading,
     isError,
     error,
