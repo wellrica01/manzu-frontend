@@ -64,7 +64,7 @@ export const useSearchLogic = (state, dispatch, t, apiUrl, fetchCart, guestId, c
         dispatch({ type: api.ACTIONS.SET_SUGGESTIONS, payload: suggestions });
         dispatch({
           type: api.ACTIONS.SET_SHOW_DROPDOWN,
-          payload: suggestions.length > 0,
+          payload: true,
         });
         dispatch({ type: api.ACTIONS.SET_FOCUSED_INDEX, payload: -1 });
       } catch (err) {
@@ -98,6 +98,7 @@ const handleSearch = useCallback(
     }
     abortControllerRef.current = new AbortController();
 
+    const startTime = Date.now();
     dispatch({ type: api.ACTIONS.SET_IS_SEARCHING, payload: true });
     dispatch({ type: api.ACTIONS.SET_ERROR, payload: null });
 
@@ -116,6 +117,12 @@ const handleSearch = useCallback(
         abortControllerRef.current.signal
       );
 
+      // ✅ Ensure minimum 300ms loading time for smooth UX
+      const elapsed = Date.now() - startTime;
+      const minLoadTime = 300;
+      if (elapsed < minLoadTime) {
+        await new Promise(resolve => setTimeout(resolve, minLoadTime - elapsed));
+      }
       dispatch({ type: api.ACTIONS.SET_RESULTS, payload: data });
       dispatch({ type: api.ACTIONS.SET_SHOW_DROPDOWN, payload: false });
       dispatch({ type: api.ACTIONS.SET_FOCUSED_INDEX, payload: -1 });

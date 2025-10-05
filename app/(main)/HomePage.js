@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,10 +9,11 @@ import { Suspense, useState, useEffect, useRef, useCallback, useMemo, memo } fro
 import ConsentModal from '@/components/ConsentModal';
 import SearchBar from '@/components/search/MedSearchBar';
 import PrescriptionUploadForm from '@/components/PrescriptionUploadForm';
-import { Pill, MessageCircle, Phone, ChevronDown, Sparkles, Zap, Shield, Globe, Star, Clock, TrendingUp, Users, Award, Box, Loader2 } from 'lucide-react';
+import { Pill, MessageCircle, Phone, ChevronDown, Sparkles, Zap, Shield, Globe, Star, Clock, TrendingUp, Users, Award, Box, Loader2, MapIcon, File, FileText } from 'lucide-react';
 import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
 import { ErrorBoundary } from 'react-error-boundary';
+import { IconDirection } from '@tabler/icons-react';
 
 const CONFIG = {
   whatsappNumber: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '+2348012345678',
@@ -107,11 +109,11 @@ const LanguageToggle = memo(({ onLanguageChange }) => {
   );
 
   return (
-    <div className="flex justify-center mt-4 mb-8 px-2" role="region" aria-label="Language selection">
+    <div className="flex justify-center mt-1 mb-8 px-2" role="region" aria-label="Language selection">
       <div className="relative" ref={dropdownRef}>
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="group flex items-center gap-3 px-3 py-2 sm:px-6 sm:py-3 rounded-2xl border-2 border-white/40 text-white bg-white/15 hover:bg-white/25  focus:ring-4 focus:ring-white/30 transition-all duration-300 shadow-2xl hover:shadow-3xl hover:scale-105 font-bold"
+          className="group flex items-center gap-3 px-2 py-1 sm:px-4 sm:py-2 rounded-2xl border-2 border-white/40 text-white bg-white/15 hover:bg-white/25  focus:ring-4 focus:ring-white/30 transition-all duration-300 shadow-2xl hover:shadow-3xl hover:scale-105 font-bold"
           aria-label={`Select language. Current language: ${currentLang?.name}`}
           aria-expanded={isOpen}
           aria-haspopup="listbox"
@@ -132,7 +134,7 @@ const LanguageToggle = memo(({ onLanguageChange }) => {
               <li key={lang.code} role="option" aria-selected={selectedLang === lang.code}>
                 <button
                   onClick={() => changeLanguage(lang.code)}
-                  className={`w-full px-4 py-2 sm:px-6 sm:py-4 text-left hover:bg-gradient-to-r hover:from-[#1ABA7F]/15 hover:to-[#225F91]/10 transition-all duration-300 flex items-center gap-4 group relative overflow-hidden ${
+                  className={`w-full px-3 py-1 sm:px-6 sm:py-4 text-left hover:bg-gradient-to-r hover:from-[#1ABA7F]/15 hover:to-[#225F91]/10 transition-all duration-300 flex items-center gap-4 group relative overflow-hidden ${
                     selectedLang === lang.code 
                       ? 'bg-gradient-to-r from-[#1ABA7F]/20 to-[#225F91]/20 text-[#225F91] font-black' 
                       : 'text-gray-700 font-semibold'
@@ -143,7 +145,7 @@ const LanguageToggle = memo(({ onLanguageChange }) => {
                     <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-[#1ABA7F] to-[#225F91]" />
                   )}
                   <span className="text-2xl group-hover:scale-125 transition-transform duration-300" aria-hidden="true">{lang.flag}</span>
-                  <span className="text-base">{lang.name}</span>
+                  <span className="text-sm sm:text-base">{lang.name}</span>
                   {selectedLang === lang.code && (
                     <span className="ml-auto w-2.5 h-2.5 rounded-full bg-gradient-to-br from-[#1ABA7F] to-[#225F91] animate-pulse shadow-lg" />
                   )}
@@ -255,7 +257,7 @@ const HeroSection = memo(({ onSearchClick, onUploadClick }) => {
         <LanguageToggle />
 
         {/* Trust badge */}
-        <div className={`inline-flex items-center gap-3 mb-8 px-4 py-3 rounded-2xl bg-white/25 text-white font-black shadow-2xl border-2 border-white/40 transition-all duration-700 ${
+        <div className={`inline-flex items-center gap-3 mb-6 px-3 py-2 rounded-2xl bg-white/25 text-white font-black shadow-2xl border-2 border-white/40 transition-all duration-700 ${
           isVisible ? 'animate-in zoom-in-50 fade-in opacity-100' : 'opacity-0 scale-95'
         }`}>
           <Shield className="w-5 h-5 text-[#1ABA7F]" />
@@ -266,7 +268,7 @@ const HeroSection = memo(({ onSearchClick, onUploadClick }) => {
         </div>
 
         {/* Main title */}
-        <h1 className={`text-5xl sm:text-6xl lg:text-7xl font-black text-white leading-[1.05] mb-8 transition-all duration-1000 ${
+        <h1 className={`text-5xl sm:text-6xl lg:text-7xl font-black text-white leading-[1.05] mb-6 transition-all duration-1000 ${
           isVisible ? 'animate-in slide-in-from-top fade-in opacity-100' : 'opacity-0 translate-y-8'
         }`}>
           {t('hero.title')} <br />
@@ -276,23 +278,69 @@ const HeroSection = memo(({ onSearchClick, onUploadClick }) => {
         </h1>
 
         {/* Subtitle */}
-        <p className={`mt-8 text-base sm:text-2xl md:text-3xl text-gray-50 font-bold max-w-4xl mx-auto leading-relaxed transition-all duration-1000 delay-300 ${
+        <p className={`mt-6 text-base sm:text-2xl md:text-3xl text-gray-50 font-bold max-w-4xl mx-auto leading-relaxed transition-all duration-1000 delay-300 ${
           isVisible ? 'animate-in slide-in-from-bottom fade-in opacity-100' : 'opacity-0 translate-y-8'
         }`}>
           {t('hero.subtitle')}
         </p>
 
         {/* CTA buttons */}
-        <div className={`mt-10 flex flex-col sm:flex-row justify-center items-center gap-5 transition-all duration-1000 delay-500 ${
+        <div className={`mt-8 flex flex-col sm:flex-row justify-center items-center gap-5 transition-all duration-1000 delay-500 ${
           isVisible ? 'animate-in zoom-in-50 fade-in opacity-100' : 'opacity-0 scale-95'
         }`}>
           <Button onClick={onSearchClick} className="h-14 sm:h-16 px-10 text-base sm:text-lg font-black rounded-2xl bg-gradient-to-r from-[#1ABA7F] to-[#16a876] text-white shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105">
+             <div className="p-1.5 bg-white/20 rounded-lg">
+                <Pill className="w-6 h-6" aria-hidden="true" strokeWidth={3} />
+              </div>
             {t('hero.find_medications')}
           </Button>
           <Button onClick={onUploadClick} className="h-14 sm:h-16 px-10 text-base sm:text-lg font-black rounded-2xl bg-white/15 border-2 border-white/60 text-white shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105">
+             <div className="p-1.5 bg-yellow-300/80 rounded-lg">
+                <Zap className="w-6 h-6 text-[#225F91]" aria-hidden="true" strokeWidth={3} />
+              </div>
             {t('hero.upload_prescription')}
           </Button>
         </div>
+
+      {/* Enhanced Alternative Access Methods */}
+        <details
+          className={`mt-8 group transition-all duration-1000 delay-700 ${
+            isVisible ? 'animate-in slide-in-from-bottom fade-in opacity-100' : 'opacity-0 translate-y-8'
+          }`}
+        >
+          <summary className="text-sm sm:text-base text-gray-100 cursor-pointer hover:text-white transition-colors duration-200 flex items-center justify-center gap-3 focus:outline-none focus:ring-4 focus:ring-white/50 rounded-2xl px-4 py-2 backdrop-blur-xl bg-white/10 hover:bg-white/20 w-fit mx-auto font-bold shadow-lg">
+            <IconDirection className="w-5 h-5" aria-hidden="true" />
+            <span>Other Links</span>
+            <ChevronDown className="w-5 h-5 transition-transform duration-300 group-open:rotate-180" aria-hidden="true" />
+          </summary>
+
+          <div className="mt-8 flex flex-col sm:flex-row justify-center gap-5 animate-in slide-in-from-top fade-in duration-300">
+            <Button
+              asChild
+              className="group h-12 sm:h-14 px-6 sm:px-8 text-sm sm:text-base font-black rounded-2xl bg-[#25D366] text-white hover:bg-[#20B85A] shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-110 border-2 border-white/30"
+            >
+              <Link href="/check-prescription-status">
+                <span className="relative z-10 flex items-center gap-3">
+                  <FileText className="h-6 w-6" aria-hidden="true" />
+                  Check Prescription Status
+                </span>
+                </Link>
+            </Button>
+
+            <Button
+              className="group h-12 sm:h-14 px-6 sm:px-8 text-sm sm:text-base font-black rounded-2xl bg-white/15 backdrop-blur-xl border-2 border-white/60 text-white hover:bg-white/25 shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-110"
+              aria-label={`${t('hero.ussd_search')} ${CONFIG.ussdCode}`}
+            >
+              <Link href="/track-order">
+                <span className="relative z-10 flex items-center gap-3">
+                  <MapIcon className="h-6 w-6" aria-hidden="true" />
+                  Track Order
+                </span>
+                </Link>
+            </Button>
+          </div>
+        </details>
+
       </div>
     </header>
   );
@@ -319,7 +367,7 @@ const ServiceCard = memo(({ title, icon: Icon, children, isActive = false, gradi
     <Card
       ref={cardRef}
       className={`
-        relative bg-white/95 border-0 rounded-[2rem] mt-8 sm:mt-20 mb-20 pt-10 pb-28 shadow-2xl overflow-hidden
+        relative bg-white/95 border-0 rounded-[2rem] mt-8 sm:mt-20 mb-20 pt-10 pb-28 shadow-2xl
         transition-transform duration-500 ease-in-out hover:-translate-y-2 sm:hover:-translate-y-3 sm:hover:shadow-2xl
         sm:max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto group
         ${isVisible ? 'animate-in slide-in-from-bottom fade-in opacity-100' : 'opacity-0 translate-y-8'}
@@ -435,7 +483,7 @@ function HomePageContent() {
 
   return (
     <div
-      className={`min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 pt-12 pb-24 sm:py-8 relative overflow-hidden transition-all duration-1000 ${
+      className={`min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 pt-12 pb-24 sm:py-8 relative transition-all duration-1000 ${
         isPageLoaded ? "opacity-100" : "opacity-0"
       }`}
     >
@@ -579,7 +627,7 @@ export default function HomePage() {
     <ErrorBoundary
       FallbackComponent={({ error, resetErrorBoundary }) => (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-gray-50 px-4" role="alert">
-          <div className="text-center max-w-md bg-white rounded-3xl p-10 shadow-3xl border-2 border-gray-100 relative overflow-hidden">
+          <div className="text-center max-w-md bg-white rounded-3xl p-10 shadow-3xl border-2 border-gray-100 relative">
             <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-red-500/10 to-transparent rounded-br-full" />
             <div className="relative inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-red-500 to-pink-600 mb-6 shadow-2xl">
               <span className="text-4xl">⚠️</span>

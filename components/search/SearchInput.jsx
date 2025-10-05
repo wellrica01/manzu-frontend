@@ -88,34 +88,46 @@ const SearchInput = ({
   };
 
   // --- Handle Key Down ---
-  const handleKeyDown = (e) => {
-    if (!showDropdown || suggestions.length === 0) return;
+const handleKeyDown = (e) => {
+  if (!showDropdown || suggestions.length === 0) {
+    // If Enter is pressed but no dropdown, just blur to dismiss keyboard
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      inputRef.current?.blur();
+    }
+    return;
+  }
 
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setFocusedSuggestionIndex((prev) => {
-        const next = Math.min(prev + 1, suggestions.length - 1);
-        suggestionRefs.current[next]?.scrollIntoView({ block: 'nearest' });
-        return next;
-      });
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setFocusedSuggestionIndex((prev) => {
-        const next = Math.max(prev - 1, -1);
-        if (next === -1) inputRef.current?.focus();
-        else suggestionRefs.current[next]?.scrollIntoView({ block: 'nearest' });
-        return next;
-      });
-    } else if (e.key === 'Enter' && focusedSuggestionIndex >= 0) {
-      e.preventDefault();
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    setFocusedSuggestionIndex((prev) => {
+      const next = Math.min(prev + 1, suggestions.length - 1);
+      suggestionRefs.current[next]?.scrollIntoView({ block: 'nearest' });
+      return next;
+    });
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    setFocusedSuggestionIndex((prev) => {
+      const next = Math.max(prev - 1, -1);
+      if (next === -1) inputRef.current?.focus();
+      else suggestionRefs.current[next]?.scrollIntoView({ block: 'nearest' });
+      return next;
+    });
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    if (focusedSuggestionIndex >= 0) {
       const suggestion = suggestions[focusedSuggestionIndex];
       addToHistoryAndSelect(suggestion);
-    } else if (e.key === 'Escape') {
-      setShowDropdown(false);
-      setShowHistory(false);
-      setFocusedSuggestionIndex(-1);
     }
-  };
+    // Dismiss keyboard after Enter
+    inputRef.current?.blur();
+  } else if (e.key === 'Escape') {
+    setShowDropdown(false);
+    setShowHistory(false);
+    setFocusedSuggestionIndex(-1);
+    inputRef.current?.blur(); // Also dismiss keyboard on Escape
+  }
+};
 
   // --- Add to history and select ---
   const addToHistoryAndSelect = (suggestion) => {

@@ -6,8 +6,6 @@ import { toast } from 'sonner';
 import { useCart } from '@/hooks/useCart';
 import ErrorMessage from '@/components/ErrorMessage';
 import EmptyCart from './EmptyCart';
-import RemoveItemDialog from './RemoveItemDialog';
-import BulkRemoveDialog from './BulkRemoveDialog';
 import UnifiedRemoveDialog from './UnifiedRemoveDialog';
 import QuantityUpdateDialog from './QuantityUpdateDialog';
 import PharmacyCartCard from './PharmacyCartCard';

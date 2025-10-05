@@ -25,7 +25,7 @@ export default function EmptyCart() {
         <div className="max-w-4xl mx-auto w-full">
           <div className="text-center">
             {/* Premium Empty State Icon with Animation */}
-            <div className="relative mx-auto w-32 h-32 mb-8">
+            <div className="relative mx-auto w-24 h-24 mb-8">
               <div className="absolute inset-0 bg-gradient-to-br from-[#1ABA7F]/30 to-[#225F91]/30 rounded-3xl blur-xl animate-pulse" />
               <div className="relative w-full h-full bg-gradient-to-br from-[#1ABA7F]/20 to-[#225F91]/20 rounded-3xl flex items-center justify-center shadow-2xl border-2 border-white/50 backdrop-blur-sm">
                 <ShoppingCart className="h-16 w-16 text-[#225F91]" />
@@ -36,10 +36,10 @@ export default function EmptyCart() {
             </div>
 
             {/* Enhanced Typography */}
-            <h1 className="text-4xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#225F91] to-[#1ABA7F] mb-4 tracking-tight">
+            <h2 className="text-3xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#225F91] to-[#1ABA7F] mb-4 tracking-tight">
               Your Cart Awaits
-            </h1>
-            <p className="text-lg sm:text-xl text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed">
+            </h2>
+            <p className="text-base sm:text-xl text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed">
               Begin your wellness journey today. Discover premium medications and health products from 
               <span className="font-semibold text-[#1ABA7F]"> Nigeria's most trusted pharmacies</span>.
             </p>
@@ -47,7 +47,7 @@ export default function EmptyCart() {
             {/* Premium CTA with Advanced Styling */}
             <div className="mb-12">
               <Link href="/">
-                <Button className="relative h-16 px-10 bg-gradient-to-r from-[#1ABA7F] via-[#1ABA7F] to-[#225F91] hover:from-[#225F91] hover:to-[#1ABA7F] text-white text-lg font-bold rounded-2xl shadow-2xl hover:shadow-[#1ABA7F]/50 transition-all duration-500 transform hover:scale-105 group overflow-hidden">
+                <Button className="relative h-14 px-8 bg-gradient-to-r from-[#1ABA7F] via-[#1ABA7F] to-[#225F91] hover:from-[#225F91] hover:to-[#1ABA7F] text-white text-lg font-bold rounded-2xl shadow-2xl hover:shadow-[#1ABA7F]/50 transition-all duration-500 transform hover:scale-105 group overflow-hidden">
                   <span className="relative z-10 flex items-center gap-3">
                     <Search className="h-6 w-6 group-hover:rotate-12 transition-transform duration-300" />
                     Start Shopping Now
@@ -110,31 +110,22 @@ export default function EmptyCart() {
                   </p>
                 </CardContent>
               </Card>
+
+            {/* Premium CTA with Advanced Styling */}
+            <div className="mb-6">
+              <Link href="/">
+                <Button className="relative h-14 px-8 bg-gradient-to-r from-[#1ABA7F] via-[#1ABA7F] to-[#225F91] hover:from-[#225F91] hover:to-[#1ABA7F] text-white text-lg font-bold rounded-2xl shadow-2xl hover:shadow-[#1ABA7F]/50 transition-all duration-500 transform hover:scale-105 group overflow-hidden">
+                  <span className="relative z-10 flex items-center gap-3">
+                    <Search className="h-6 w-6 group-hover:rotate-12 transition-transform duration-300" />
+                    Start Shopping Now
+                    <ArrowRight className="h-6 w-6 group-hover:translate-x-2 transition-transform duration-300" />
+                  </span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                </Button>
+              </Link>
+            </div>
             </div>
 
-            {/* Premium Trust Indicators with Enhanced Design */}
-            <div className="flex flex-wrap items-center justify-center gap-8 p-6 rounded-2xl bg-gradient-to-r from-white/80 to-gray-50/80 backdrop-blur-sm border border-gray-200/50 shadow-lg">
-              <div className="flex items-center gap-3 group cursor-pointer">
-                <div className="p-2 bg-gradient-to-br from-[#1ABA7F]/20 to-[#1ABA7F]/10 rounded-xl group-hover:scale-110 transition-transform duration-300">
-                  <Shield className="h-5 w-5 text-[#1ABA7F]" />
-                </div>
-                <span className="text-sm font-bold text-gray-700">Secure Payments</span>
-              </div>
-              <div className="hidden sm:block w-px h-8 bg-gradient-to-b from-transparent via-gray-300 to-transparent" />
-              <div className="flex items-center gap-3 group cursor-pointer">
-                <div className="p-2 bg-gradient-to-br from-[#225F91]/20 to-[#225F91]/10 rounded-xl group-hover:scale-110 transition-transform duration-300">
-                  <Truck className="h-5 w-5 text-[#225F91]" />
-                </div>
-                <span className="text-sm font-bold text-gray-700">Free Delivery</span>
-              </div>
-              <div className="hidden sm:block w-px h-8 bg-gradient-to-b from-transparent via-gray-300 to-transparent" />
-              <div className="flex items-center gap-3 group cursor-pointer">
-                <div className="p-2 bg-gradient-to-br from-yellow-500/20 to-yellow-500/10 rounded-xl group-hover:scale-110 transition-transform duration-300">
-                  <Star className="h-5 w-5 text-yellow-600" />
-                </div>
-                <span className="text-sm font-bold text-gray-700">24/7 Support</span>
-              </div>
-            </div>
           </div>
         </div>
       </div>

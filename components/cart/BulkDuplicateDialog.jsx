@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, ShoppingCart, X, Loader2  } from 'lucide-react';
+import { AlertTriangle, ShoppingCart, X, Loader2, AlertCircle, CheckCircle, Package } from 'lucide-react';
 
 const BulkDuplicateDialog = ({ 
   isOpen, 
@@ -16,12 +16,34 @@ const BulkDuplicateDialog = ({
   isProcessing = false
 }) => {
   const totalDuplicates = duplicates.length;
+  
+  // Calculate total savings if user switches
+  const totalSavings = useMemo(() => {
+    return duplicates.reduce((sum, dup) => {
+      const diff = dup.currentPrice - dup.newPrice;
+      return sum + diff;
+    }, 0);
+  }, [duplicates]);
+
+  // Smart default: recommend replace if new pharmacy is cheaper overall
+  const recommendedAction = totalSavings > 0 ? 'replace' : 'skip';
+  const [selectedAction, setSelectedAction] = useState(recommendedAction);
+
+  const handleContinue = () => {
+    if (selectedAction === 'skip') {
+      onKeepExisting();
+    } else if (selectedAction === 'replace') {
+      onReplaceAll();
+    } else if (selectedAction === 'both') {
+      onAddAll();
+    }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={isProcessing ? undefined : onClose}>
       <DialogContent className="w-[95vw] sm:w-full max-w-md sm:max-w-2xl max-h-[90vh] mx-auto p-0 overflow-y-auto rounded-2xl sm:rounded-3xl border-2 border-orange-200">
         {/* Header */}
-        <div className="bg-gradient-to-r from-orange-500 to-amber-500 p-4 sm:p-6 text-white relative overflow-hidden">
+        <div className="bg-gradient-to-r from-orange-500 to-amber-500 p-6 sm:p-8 text-white relative overflow-hidden">
           <div className="absolute top-0 right-0 w-24 h-24 sm:w-32 sm:h-32 bg-white/10 rounded-full blur-2xl" />
           <div className="relative z-10 flex items-start gap-3 sm:gap-4">
             <div className="p-2 sm:p-3 bg-white/20 rounded-xl sm:rounded-2xl backdrop-blur-sm flex-shrink-0">
@@ -29,153 +51,196 @@ const BulkDuplicateDialog = ({
             </div>
             <div className="flex-1 min-w-0">
               <DialogTitle className="text-lg sm:text-2xl font-black mb-1 sm:mb-2">
-                {totalDuplicates} Item{totalDuplicates > 1 ? 's' : ''} Already in Cart
+                Hold on! Some items are already in your cart
               </DialogTitle>
-              <p className="text-white/90 font-semibold text-sm sm:text-base">
-                Some medications from <strong>{pharmacyName}</strong> are already in your cart from other pharmacies
+              <p className="text-white/95 font-medium text-sm sm:text-base leading-relaxed">
+                You're adding from <strong className="font-black">{pharmacyName}</strong>, but you already have {totalDuplicates} item{totalDuplicates > 1 ? 's' : ''} from other pharmacies
               </p>
             </div>
           </div>
         </div>
 
         {/* Content */}
-        <div className="p-3 sm:p-6 space-y-4 sm:space-y-6">
-          {/* Summary Stats */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="p-3 sm:p-4 bg-orange-50 rounded-xl border-2 border-orange-200">
-              <p className="text-xs font-black text-gray-600 uppercase tracking-wide mb-1">
-                Duplicates Found
-              </p>
-              <p className="text-2xl sm:text-3xl font-black text-orange-600">
-                {totalDuplicates}
-              </p>
-            </div>
-            <div className="p-3 sm:p-4 bg-green-50 rounded-xl border-2 border-green-200">
-              <p className="text-xs font-black text-gray-600 uppercase tracking-wide mb-1">
-                New Items
-              </p>
-              <p className="text-2xl sm:text-3xl font-black text-green-600">
-                {safeItemsCount}
-              </p>
+        <div className="p-4 sm:p-6 space-y-5">
+          {/* Duplicates List */}
+          <div className="space-y-2">
+            <h3 className="text-xs font-black text-gray-600 uppercase tracking-wide flex items-center gap-2">
+              <Package className="h-4 w-4" />
+              Items already in your cart:
+            </h3>
+            <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+              {duplicates.map((dup, idx) => {
+                const priceDiff = dup.currentPrice - dup.newPrice;
+                const isCheaper = priceDiff > 0;
+                const isMoreExpensive = priceDiff < 0;
+                
+                return (
+                  <div key={idx} className="p-3 bg-gradient-to-r from-gray-50 to-gray-50/50 rounded-lg border border-gray-200">
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <p className="text-sm font-bold text-gray-900 flex-1 leading-tight">
+                        {dup.medicationName}
+                      </p>
+                      {isCheaper && (
+                        <Badge className="bg-green-500 text-white border-0 font-black text-xs flex-shrink-0 shadow-sm">
+                          Save ₦{Math.abs(priceDiff).toLocaleString()}
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3 text-xs">
+                      <div className="flex-1">
+                        <p className="text-gray-500 font-semibold mb-0.5">Current</p>
+                        <p className="font-black text-gray-900">
+                          ₦{dup.currentPrice.toLocaleString()}
+                        </p>
+                        <p className="text-gray-400 text-xs mt-0.5 truncate">
+                          {dup.currentPharmacy}
+                        </p>
+                      </div>
+                      <div className="text-gray-300 font-bold">→</div>
+                      <div className="flex-1">
+                        <p className="text-gray-500 font-semibold mb-0.5">{pharmacyName}</p>
+                        <p className={`font-black ${isCheaper ? 'text-green-600' : isMoreExpensive ? 'text-orange-600' : 'text-gray-900'}`}>
+                          ₦{dup.newPrice.toLocaleString()}
+                        </p>
+                        <p className={`text-xs mt-0.5 font-semibold ${isCheaper ? 'text-green-600' : isMoreExpensive ? 'text-orange-600' : 'text-gray-400'}`}>
+                          {isCheaper ? '✓ Cheaper' : isMoreExpensive ? '↑ More expensive' : 'Same price'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
-          {/* Duplicates List */}
-          {duplicates.length > 0 && (
-            <div className="space-y-2">
-              <h3 className="text-sm font-black text-gray-700 uppercase tracking-wide">
-                Duplicate Medications:
-              </h3>
-              <div className="space-y-2 max-h-60 overflow-y-auto">
-                {duplicates.map((dup, idx) => {
-                  const priceDiff = dup.newPrice - dup.currentPrice;
-                  const isNewCheaper = priceDiff < 0;
-                  
-                  return (
-                    <div key={idx} className="p-3 bg-gray-50 rounded-xl border border-gray-200">
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <p className="text-sm font-bold text-gray-900 flex-1">
-                          {dup.medicationName}
-                        </p>
-                        {isNewCheaper && (
-                          <Badge className="bg-green-100 text-green-700 border border-green-300 font-black text-xs flex-shrink-0">
-                            Save ₦{Math.abs(priceDiff).toLocaleString()}
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div className="p-2 bg-blue-50 rounded-lg">
-                          <p className="text-gray-600 font-semibold mb-1">Current</p>
-                          <p className="font-black text-blue-600">
-                            ₦{dup.currentPrice.toLocaleString()}
-                          </p>
-                          <p className="text-gray-500 text-xs mt-1 truncate">
-                            {dup.currentPharmacy}
-                          </p>
-                        </div>
-                        <div className={`p-2 rounded-lg ${isNewCheaper ? 'bg-green-50' : 'bg-gray-100'}`}>
-                          <p className="text-gray-600 font-semibold mb-1">{pharmacyName}</p>
-                          <p className={`font-black ${isNewCheaper ? 'text-green-600' : 'text-gray-600'}`}>
-                            ₦{dup.newPrice.toLocaleString()}
-                          </p>
-                          <p className={`text-xs mt-1 ${isNewCheaper ? 'text-green-600' : 'text-gray-500'}`}>
-                            {isNewCheaper ? '✓ Cheaper' : priceDiff > 0 ? '↑ More expensive' : 'Same price'}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+          {/* Decision Section */}
+          <div className="space-y-3 pt-2">
+            <h3 className="text-sm font-black text-gray-900">
+              What would you like to do?
+            </h3>
 
-          {/* Safe Items Info */}
-          {safeItemsCount > 0 && (
-            <div className="p-3 sm:p-4 bg-green-50 rounded-xl border-2 border-green-200">
-              <p className="text-sm font-bold text-green-700 text-center">
-                ✓ {safeItemsCount} item{safeItemsCount > 1 ? 's' : ''} can be added without conflicts
-              </p>
-            </div>
-          )}
-
-          {/* Action Buttons */}
-          <div className="space-y-2 sm:space-y-3 pt-2">
+            {/* Option 1: Skip Duplicates */}
             {safeItemsCount > 0 && (
-              <Button
-                onClick={onKeepExisting}
+              <button
+                onClick={() => setSelectedAction('skip')}
                 disabled={isProcessing}
-                className="w-full h-12 sm:h-14 rounded-xl font-black text-sm sm:text-base bg-gradient-to-r from-green-500 to-green-600 text-white hover:scale-105 transition-all duration-300 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
+                  selectedAction === 'skip'
+                    ? 'border-blue-500 bg-blue-50 shadow-md'
+                    : 'border-gray-200 hover:border-gray-300 bg-white'
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
               >
-                {isProcessing ? (
-                  <>
-                    <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 mr-2 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5 mr-2 flex-shrink-0" strokeWidth={3} />
-                    <span className="truncate">
-                      Add Only {safeItemsCount} New Item{safeItemsCount > 1 ? 's' : ''} (Keep Current)
-                    </span>
-                  </>
-                )}
-              </Button>
+                <div className="flex items-start gap-3">
+                  <div className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                    selectedAction === 'skip' ? 'border-blue-500 bg-blue-500' : 'border-gray-300'
+                  }`}>
+                    {selectedAction === 'skip' && (
+                      <div className="w-2.5 h-2.5 bg-white rounded-full" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-gray-900 mb-1">
+                      Skip duplicates, add only the {safeItemsCount} new item{safeItemsCount > 1 ? 's' : ''}
+                    </p>
+                    <p className="text-xs text-gray-600 leading-relaxed">
+                      Your cart stays the same for these medications. Only items you don't have yet will be added.
+                    </p>
+                  </div>
+                </div>
+              </button>
             )}
 
-            <Button
-              onClick={onReplaceAll}
+            {/* Option 2: Replace */}
+            <button
+              onClick={() => setSelectedAction('replace')}
               disabled={isProcessing}
-              className="w-full h-12 sm:h-14 rounded-xl font-black text-sm sm:text-base bg-gradient-to-r from-[#1ABA7F] to-[#225F91] text-white hover:scale-105 transition-all duration-300 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
+                selectedAction === 'replace'
+                  ? 'border-green-500 bg-green-50 shadow-md'
+                  : 'border-gray-200 hover:border-gray-300 bg-white'
+              } disabled:opacity-50 disabled:cursor-not-allowed`}
             >
-              {isProcessing ? (
-                <>
-                  <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 mr-2 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                <>
-                  <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5 mr-2 flex-shrink-0" strokeWidth={3} />
-                  <span className="truncate">
-                    Switch to {pharmacyName} (Replace {duplicates.length})
-                  </span>
-                </>
-              )}
-            </Button>
+              <div className="flex items-start gap-3">
+                <div className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                  selectedAction === 'replace' ? 'border-green-500 bg-green-500' : 'border-gray-300'
+                }`}>
+                  {selectedAction === 'replace' && (
+                    <div className="w-2.5 h-2.5 bg-white rounded-full" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <p className="font-bold text-gray-900">
+                      Switch to {pharmacyName} for these items
+                    </p>
+                    {totalSavings > 0 && (
+                      <Badge className="bg-green-500 text-white border-0 font-black text-xs shadow-sm">
+                        Save ₦{totalSavings.toLocaleString()}
+                      </Badge>
+                    )}
+                    {recommendedAction === 'replace' && (
+                      <Badge className="bg-blue-500 text-white border-0 font-bold text-xs shadow-sm">
+                        Recommended
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-600 leading-relaxed">
+                    Remove the {totalDuplicates} duplicate item{totalDuplicates > 1 ? 's' : ''} from your current cart and replace with {pharmacyName}'s versions{safeItemsCount > 0 ? `, plus add ${safeItemsCount} new item${safeItemsCount > 1 ? 's' : ''}` : ''}.
+                  </p>
+                </div>
+              </div>
+            </button>
 
-            <Button
-              onClick={onAddAll}
+            {/* Option 3: Buy from Both */}
+            <button
+              onClick={() => setSelectedAction('both')}
               disabled={isProcessing}
-              variant="outline"
-              className="w-full h-10 sm:h-12 rounded-xl font-bold text-xs sm:text-sm border-2 border-gray-300 hover:border-purple-400 hover:bg-purple-50 transition-all duration-300 text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
+                selectedAction === 'both'
+                  ? 'border-purple-500 bg-purple-50 shadow-md'
+                  : 'border-gray-200 hover:border-gray-300 bg-white'
+              } disabled:opacity-50 disabled:cursor-not-allowed`}
+            >
+              <div className="flex items-start gap-3">
+                <div className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                  selectedAction === 'both' ? 'border-purple-500 bg-purple-500' : 'border-gray-300'
+                }`}>
+                  {selectedAction === 'both' && (
+                    <div className="w-2.5 h-2.5 bg-white rounded-full" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-gray-900 mb-1">
+                    Buy from both pharmacies
+                  </p>
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="h-4 w-4 text-orange-500 flex-shrink-0 mt-0.5" />
+                    <p className="text-xs text-gray-600 leading-relaxed">
+                      <strong className="text-orange-600">You'll receive 2× quantities</strong> for duplicate items (useful for stocking up or backup supply).
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </button>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="space-y-2 pt-3 border-t border-gray-200">
+            <Button
+              onClick={handleContinue}
+              disabled={isProcessing}
+              className="w-full h-12 sm:h-14 rounded-xl font-black text-sm sm:text-base bg-gradient-to-r from-green-500 to-green-600 text-white hover:scale-[1.02] transition-all duration-300 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isProcessing ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
                   Processing...
                 </>
               ) : (
-                'Add All (Buy from Different Pharmacies)'
+                <>
+                  <CheckCircle className="h-5 w-5 mr-2" strokeWidth={2.5} />
+                  Continue
+                </>
               )}
             </Button>
 
@@ -183,7 +248,7 @@ const BulkDuplicateDialog = ({
               onClick={onClose}
               disabled={isProcessing}
               variant="ghost"
-              className="w-full h-9 sm:h-10 rounded-xl font-semibold text-xs sm:text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-50"
+              className="w-full h-10 rounded-xl font-semibold text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-50"
             >
               <X className="h-4 w-4 mr-2" strokeWidth={2.5} />
               Cancel

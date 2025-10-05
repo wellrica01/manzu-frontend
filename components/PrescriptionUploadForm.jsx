@@ -12,7 +12,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { Upload, CheckCircle, FileText, Mail, X, Eye, Camera, AlertCircle, Info, Sparkles, Shield } from 'lucide-react';
+import { Upload, CheckCircle, Clock, FileText, ArrowRight, Mail, X, Eye, Camera, AlertCircle, Info, Sparkles, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 import { getGuestId } from '@/lib/utils';
 import Link from 'next/link';
@@ -209,57 +209,111 @@ export default function PrescriptionUploadForm() {
 
   return (
     <div className="w-full">
-      <Dialog open={openSuccessDialog} onOpenChange={setOpenSuccessDialog}>
-        <DialogContent className="sm:max-w-md p-0 border-0 rounded-3xl bg-white overflow-hidden shadow-2xl">
-          <div className="absolute inset-0 bg-gradient-to-br from-[#1ABA7F]/5 via-white to-[#225F91]/5" />
-          <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-[#1ABA7F]/20 to-transparent rounded-br-full" />
-          <div className="absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-tl from-[#225F91]/20 to-transparent rounded-tl-full" />
+    <Dialog open={openSuccessDialog} onOpenChange={setOpenSuccessDialog}>
+      <DialogContent className="w-[95vw] sm:w-full max-w-md sm:max-w-lg max-h-[90vh] mx-auto p-0 overflow-y-auto rounded-2xl sm:rounded-3xl border-2 border-green-200">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-[#1ABA7F]/100  to-[#225F91]/100 p-6 sm:p-8 text-white relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-24 h-24 sm:w-32 sm:h-32 bg-white/10 rounded-full blur-2xl" />
           
-          <div className="relative z-10 p-6">
-            <div className="flex justify-center mb-6">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-[#1ABA7F] to-[#16a876] rounded-full blur-xl opacity-50 animate-pulse" />
-                <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-[#1ABA7F] to-[#16a876] flex items-center justify-center shadow-xl">
-                  <CheckCircle className="w-10 h-10 text-white animate-in zoom-in-50 duration-500" />
+          <div className="relative z-10 flex flex-col items-center gap-4">
+            <div className="relative">
+              <div className="absolute inset-0 bg-white/20 rounded-full blur-xl animate-pulse" />
+              <div className="relative w-16 h-16 sm:w-20 sm:h-20 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm border-2 border-white/30">
+                <CheckCircle className="h-8 w-8 sm:h-10 sm:w-10 text-white" strokeWidth={3} />
+              </div>
+            </div>
+            
+            <div className="text-center">
+              <DialogTitle className="text-xl sm:text-2xl font-black mb-1">
+                Prescription Uploaded!
+              </DialogTitle>
+              <p className="text-white/90 font-medium text-sm">
+                We've received your prescription successfully
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="p-4 sm:p-6 space-y-5">
+          {/* Confirmation Details */}
+          <div className="space-y-3">
+            <div className="p-4 bg-gradient-to-r from-blue-50 to-blue-50/50 rounded-xl border-2 border-blue-200">
+              <div className="flex items-start gap-3">
+                <div className="p-2 bg-blue-100 rounded-lg flex-shrink-0">
+                  <FileText className="h-5 w-5 text-gray-500 " />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-gray-900 mb-1">
+                    Confirmation sent to:
+                  </p>
+                  <p className="text-base font-black text-[#1ABA7F] break-all">
+                    {submittedContact}
+                  </p>
                 </div>
               </div>
             </div>
 
-            <DialogHeader className="flex flex-col items-center gap-3 mb-6">
-              <DialogTitle className="text-2xl sm:text-3xl font-black text-[#225F91] tracking-tight text-center">
-                {t('upload.success_title')}
-              </DialogTitle>
-            </DialogHeader>
-
-            <div className="text-center mb-8 p-4 rounded-2xl bg-gradient-to-r from-gray-50 to-white border border-gray-100">
-              <p className="text-base text-gray-600">
-                {t('upload.success_message')}{' '}
-                <span className="font-bold text-[#225F91] text-lg block mt-1">{submittedContact}</span>
-                <span className="text-base block mt-2">{t('upload.success_message_end')}</span>
-              </p>
+            {/* Next Steps Info */}
+            <div className="p-2 bg-gradient-to-r from-green-50 to-emerald-50/50 rounded-xl border border-green-200">
+              <div className="flex items-start gap-3">
+                <div className="p-2 bg-green-100 rounded-lg flex-shrink-0">
+                  <Clock className="h-5 w-5 text-green-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-gray-900 mb-2">
+                    What happens next?
+                  </p>
+                  <div className="space-y-2 text-sm font-semibold text-gray-700 leading-relaxed">
+                    <div className="flex items-start gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-green-600 mt-1.5 flex-shrink-0" />
+                      <p>Our pharmacists will review your prescription</p>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-green-600 mt-1.5 flex-shrink-0" />
+                      <p>You'll receive updates via {submittedContact.includes('@') ? 'email' : 'SMS'}</p>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-green-600 mt-1.5 flex-shrink-0" />
+                      <p>Track your prescription status anytime below</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-
-            <DialogFooter className="flex-col sm:flex-row gap-3">
-              <Button
-                asChild
-                className="group flex-1 h-12 p-3 text-sm font-bold rounded-xl bg-gradient-to-r from-[#225F91] to-[#1a4a73] text-white hover:from-[#1a4a73] hover:to-[#225F91] shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 relative overflow-hidden"
-              >
-                <Link href="/check-prescription-status">
-                  <span className="relative z-10">Check Status</span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                </Link>
-              </Button>
-              <Button
-                variant="outline"
-                onClick={handleUploadAnother}
-                className="group flex-1 h-12 p-3 text-sm font-bold rounded-xl border-2 border-[#1ABA7F] text-[#225F91] hover:bg-[#1ABA7F]/10 transition-all duration-300 hover:scale-105"
-              >
-                Close
-              </Button>
-            </DialogFooter>
           </div>
-        </DialogContent>
-      </Dialog>
+
+          {/* Action Buttons */}
+          <div className="space-y-3 pt-2">
+            <Button
+              asChild
+              className="w-full flex-1 h-14 p-3 text-sm font-bold rounded-xl bg-gradient-to-r from-[#225F91] to-[#1a4a73]
+               text-white hover:from-[#1a4a73] hover:to-[#225F91] shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 relative overflow-hidden">
+              <Link href="/check-prescription-status">
+                <Clock className="h-5 w-5 mr-2 group-hover:scale-110 transition-transform" strokeWidth={2.5} />
+                Check Prescription Status
+                <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" strokeWidth={2.5} />
+              </Link>
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={handleUploadAnother}
+              className="w-full flex-1 h-12 p-3 text-sm font-bold rounded-xl border-2 border-[#1ABA7F] text-[#225F91] hover:bg-[#1ABA7F]/10 transition-all duration-300 hover:scale-105"
+            >
+              Close
+            </Button>
+          </div>
+
+          {/* Help Text */}
+          <div className="pt-2 border-t border-gray-200">
+            <p className="text-xs text-center text-gray-500 leading-relaxed">
+              Questions? Contact our support team anytime for help
+            </p>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
 
       <div className="space-y-6">
         <div onSubmit={handleSubmit} className="space-y-6">

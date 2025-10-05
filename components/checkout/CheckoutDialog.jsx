@@ -6,7 +6,6 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { 
   CreditCard, 
-  Package, 
   CheckCircle, 
   Loader2,
   X,
@@ -15,7 +14,6 @@ import {
   Sparkles,
   ArrowRight
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 const CheckoutDialog = ({ 
   show, 
@@ -25,8 +23,6 @@ const CheckoutDialog = ({
   segments = { readyForCheckout: [], totalPrice: 0 }
 }) => {
   if (!show) return null;
-
-  const uniqueMedicationsCount = segments.readyForCheckout.length;
 
   const groupItemsByPharmacy = (items) => {
     const grouped = {};
@@ -83,7 +79,7 @@ const CheckoutDialog = ({
               {pharmacyGroups.map((group, index) => (
                 <div 
                   key={group.pharmacy?.id || index} 
-                  className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-white to-gray-50 border-2 border-gray-100 p-3 sm:p-5 hover:border-[#1ABA7F]/30 transition-all duration-300 hover:shadow-lg"
+                  className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-white to-gray-50 border-2 border-gray-300 p-3 sm:p-5 hover:border-[#1ABA7F]/30 transition-all duration-300 hover:shadow-lg"
                   role="region"
                   aria-label={`Medications from ${group.pharmacy?.name || 'Unknown Pharmacy'}`}
                 >
@@ -94,10 +90,10 @@ const CheckoutDialog = ({
                         <HospitalIcon className="h-4 w-4 sm:h-5 sm:w-5 text-[#1ABA7F]" />
                       </div>
                       <div>
-                        <h4 className="font-bold text-gray-900 text-sm sm:text-base">
+                        <h4 className="font-bold text-gray-900 text-base sm:text-lg">
                           {group.pharmacy?.name || 'Unknown Pharmacy'}
                         </h4>
-                        <p className="text-xs text-gray-500">{group.items.length} medication{group.items.length !== 1 ? 's' : ''}</p>
+                        <p className="text-sm text-gray-500">{group.items.length} medication{group.items.length !== 1 ? 's' : ''}</p>
                       </div>
                     </div>
                   </div>
@@ -107,24 +103,18 @@ const CheckoutDialog = ({
                     {group.items.map((item) => (
                       <div 
                         key={item.id} 
-                        className="flex items-center justify-between p-2 sm:p-3 rounded-xl bg-white border border-gray-100 hover:border-[#1ABA7F]/30 transition-colors duration-200"
+                        className="flex items-center justify-between p-2 sm:p-3 rounded-xl bg-white border border-gray-200 hover:border-[#1ABA7F]/30 transition-colors duration-200"
                         role="listitem"
                         aria-label={`Medication: ${item.medication.displayName}`}
                       >
                         <div className="flex-1 min-w-0 pr-3 sm:pr-4">
                           <div className="flex items-center gap-2 mb-1 flex-wrap">
-                            <span className="font-semibold text-gray-900 text-xs sm:text-sm truncate">
+                            <span className="font-semibold text-gray-900 text-sm sm:text-base">
                               {item.medication.displayName}
                             </span>
-                            {item.medication.prescriptionRequired && (
-                              <Badge className="bg-green-100 text-green-700 border-0 text-xs">
-                                <CheckCircle className="h-3 w-3 mr-1" />
-                                Rx
-                              </Badge>
-                            )}
                           </div>
                           {item.medication.ingredients?.length > 0 && (
-                            <p className="text-xs text-gray-500 truncate">
+                            <p className="text-xs sm:text-sm text-gray-500 truncate">
                               {item.medication.ingredients
                                 .map(ing => `${ing.activeSubstance} ${ing.strengthValue}${ing.strengthUnit}`)
                                 .join(" + ")}
@@ -132,10 +122,10 @@ const CheckoutDialog = ({
                           )}
                         </div>
                         <div className="text-right ml-2 sm:ml-4 flex-shrink-0">
-                          <div className="text-xs text-gray-600">
+                          <div className="text-sm text-gray-600">
                             {item.quantity} × ₦{item.price.toLocaleString()}
                           </div>
-                          <div className="text-sm font-bold text-[#225F91]">
+                          <div className="text-base font-bold text-[#225F91]">
                             ₦{(item.quantity * item.price).toLocaleString()}
                           </div>
                         </div>
@@ -151,12 +141,12 @@ const CheckoutDialog = ({
             {/* Price Breakdown Card */}
             <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#225F91]/5 to-[#1ABA7F]/5 p-4 sm:p-5 border-2 border-[#1ABA7F]/20">
               <div className="space-y-2 sm:space-y-3">
-                <h4 className="font-bold text-gray-900 flex items-center gap-2 text-sm sm:text-base">
+                <h4 className="font-bold text-gray-900 flex items-center gap-2 text-base sm:text-lg">
                   <Sparkles className="h-4 w-4 text-[#1ABA7F]" />
                   Price Breakdown
                 </h4>
                 
-                <div className="space-y-2 text-xs sm:text-sm">
+                <div className="space-y-2 text-sm sm:text-base">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Medications Total:</span>
                     <span className="font-semibold text-gray-900">₦{segments.totalPrice.toLocaleString()}</span>
@@ -184,7 +174,7 @@ const CheckoutDialog = ({
                 <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0">
                   <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
                 </div>
-                <div className="text-xs sm:text-sm text-green-800">
+                <div className="text-sm text-green-800">
                   <p className="font-bold mb-1">Secure Payment</p>
                   <p>Your payment will be processed securely through our payment partner.</p>
                 </div>
@@ -196,7 +186,7 @@ const CheckoutDialog = ({
               <Button
                 onClick={onConfirm}
                 disabled={loading}
-                className="group w-full sm:flex-1 h-12 px-4 sm:px-6 text-sm sm:text-base font-bold rounded-xl bg-gradient-to-r from-[#225F91] to-[#1a4a73] text-white hover:from-[#1a4a73] hover:to-[#225F91] shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 relative overflow-hidden"
+                className="group w-full sm:flex-1 h-12 px-4 sm:px-6 text-base font-bold rounded-xl bg-gradient-to-r from-[#225F91] to-[#1a4a73] text-white hover:from-[#1a4a73] hover:to-[#225F91] shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 relative overflow-hidden"
                 aria-label={`Pay ₦${segments.totalPrice.toLocaleString()}`}
               >
                 {loading ? (

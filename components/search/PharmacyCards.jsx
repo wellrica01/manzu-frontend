@@ -104,7 +104,7 @@ const PharmacyCardHeader = ({ avail, isNearest, isCheapest }) => (
         <div className="p-2 rounded-lg bg-white/20 backdrop-blur-sm">
           <Store className="h-4 w-4 text-white" />
         </div>
-        <h3 className="text-white font-bold text-lg line-clamp-1">{avail.pharmacyName}</h3>
+        <h3 className="text-white font-bold text-xl">{avail.pharmacyName}</h3>
       </div>
     </div>
   </div>
@@ -138,7 +138,7 @@ const PharmacyCard = ({
     )}>
       <PharmacyCardHeader avail={avail} isNearest={avail.isNearest} isCheapest={avail.isCheapest} />
       
-      <div className="p-5 space-y-4">
+      <div className="px-3 pt-4 pb-8 space-y-4">
         {/* Address */}
         {avail.address && (
           <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-xl border border-blue-200">
@@ -154,7 +154,7 @@ const PharmacyCard = ({
         const formattedHours = formatOperatingHours(avail.operatingHours);
         if (!formattedHours) return null;
         return (
-          <div className="flex items-center gap-3 p-3 bg-green-50 rounded-xl border border-green-200">
+          <div className="flex items-center gap-3 px-3 py-2 bg-green-50 rounded-xl border border-green-200">
             <Clock className="h-5 w-5 text-green-600 flex-shrink-0" strokeWidth={2.5} />
             <div className="flex-1">
               <span className="text-xs font-black text-gray-600 uppercase tracking-wide block">
@@ -174,7 +174,7 @@ const PharmacyCard = ({
       })()}
 
         {/* Distance & Price */}
-        <div className="flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-gray-50 to-white border border-gray-200">
+        <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-gradient-to-r from-gray-50 to-white border border-gray-200">
           <div className="flex items-center gap-2">
             <Navigation className="h-4 w-4 text-[#76D1F3]" />
             <span className="text-sm font-semibold text-gray-700">
@@ -200,50 +200,53 @@ const PharmacyCard = ({
           </div>
         </div>
 
-        {/* Quantity Controls */}
-        <div className="flex items-center gap-3 p-3 rounded-xl border-2 border-gray-200 hover:border-[#1ABA7F]/50 transition-colors duration-200">
-          <label htmlFor={`qty-${avail.pharmacyId}`} className="text-sm font-semibold text-gray-700">
-            Quantity:
-          </label>
+      {/* Quantity Controls */}
+      <div className="flex items-center justify-between px-2 py-2 rounded-xl border-2 border-gray-200 hover:border-[#1ABA7F]/50 transition-colors duration-200">
+        <label
+          htmlFor={`qty-${avail.pharmacyId}`}
+          className="text-sm font-semibold text-gray-700"
+        >
+          Quantity:
+        </label>
 
-          <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1 shadow-sm">
-            {/* Decrease button */}
-            <button
-              type="button"
-              aria-label="Decrease quantity"
-              onClick={() =>
-                setQuantities(prev => ({
-                  ...prev,
-                  [avail.pharmacyId]: Math.max(1, (prev[avail.pharmacyId] || 1) - 1),
-                }))
-              }
-              disabled={(quantities[avail.pharmacyId] || 1) <= 1}
-              className="h-8 w-8 p-0 flex items-center justify-center hover:bg-[#1ABA7F]/20 text-[#225F91] disabled:opacity-50 disabled:cursor-not-allowed rounded transition-all duration-200"
-            >
-              <Minus className="h-4 w-4" />
-            </button>
+        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1 shadow-sm">
+          {/* Decrease button */}
+          <button
+            type="button"
+            aria-label="Decrease quantity"
+            onClick={() =>
+              setQuantities((prev) => ({
+                ...prev,
+                [avail.pharmacyId]: Math.max(1, (prev[avail.pharmacyId] || 1) - 1),
+              }))
+            }
+            disabled={(quantities[avail.pharmacyId] || 1) <= 1}
+            className="h-8 w-8 p-0 flex items-center justify-center hover:bg-[#1ABA7F]/20 text-[#225F91] disabled:opacity-50 disabled:cursor-not-allowed rounded transition-all duration-200"
+          >
+            <Minus className="h-4 w-4" />
+          </button>
 
-            {/* Quantity display */}
-            <span className="px-3 py-1 text-sm font-bold text-[#225F91] min-w-[2rem] text-center">
-              {quantities[avail.pharmacyId] || 1}
-            </span>
+          {/* Quantity display */}
+          <span className="px-3 py-1 text-sm font-bold text-[#225F91] min-w-[2rem] text-center">
+            {quantities[avail.pharmacyId] || 1}
+          </span>
 
-            {/* Increase button */}
-            <button
-              type="button"
-              aria-label="Increase quantity"
-              onClick={() =>
-                setQuantities(prev => ({
-                  ...prev,
-                  [avail.pharmacyId]: (prev[avail.pharmacyId] || 1) + 1,
-                }))
-              }
-              className="h-8 w-8 p-0 flex items-center justify-center hover:bg-[#1ABA7F]/20 text-[#225F91] rounded transition-all duration-200"
-            >
-              <Plus className="h-4 w-4" />
-            </button>
-          </div>
+          {/* Increase button */}
+          <button
+            type="button"
+            aria-label="Increase quantity"
+            onClick={() =>
+              setQuantities((prev) => ({
+                ...prev,
+                [avail.pharmacyId]: (prev[avail.pharmacyId] || 1) + 1,
+              }))
+            }
+            className="h-8 w-8 p-0 flex items-center justify-center hover:bg-[#1ABA7F]/20 text-[#225F91] rounded transition-all duration-200"
+          >
+            <Plus className="h-4 w-4" />
+          </button>
         </div>
+      </div>
 
 
       {/* Add to Cart / Remove Buttons */}
@@ -308,58 +311,6 @@ const PharmacyCard = ({
           </Button>
         )}
       </div>
-
-
-        {/* More Details Toggle */}
-        <Button
-          variant="ghost"
-          onClick={() => setExpandedCard(isExpanded ? null : index)}
-          className="w-full h-10 text-sm font-semibold text-[#225F91] hover:bg-[#225F91]/5 rounded-lg transition-all duration-200"
-        >
-          {isExpanded ? 'Show Less' : 'More Details'}
-          <ChevronDown className={cn(
-            "h-4 w-4 ml-2 transition-transform duration-300",
-            isExpanded && "rotate-180"
-          )} />
-        </Button>
-
-        {/* Expanded Details */}
-        {isExpanded && (
-          <div className="space-y-3 pt-3 border-t border-gray-200 animate-in slide-in-from-top-2 duration-300">
-            {avail.phone && (
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-gray-50">
-                <Shield className="h-4 w-4 text-[#225F91] flex-shrink-0" />
-                <div>
-                  <p className="text-xs text-gray-500 font-medium">Phone</p>
-                  <a href={`tel:${avail.phone}`} className="text-sm font-bold text-[#225F91] hover:underline">
-                    {avail.phone}
-                  </a>
-                </div>
-              </div>
-            )}
-            {avail.email && (
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-gray-50">
-                <Shield className="h-4 w-4 text-[#1ABA7F] flex-shrink-0" />
-                <div>
-                  <p className="text-xs text-gray-500 font-medium">Email</p>
-                  <a href={`mailto:${avail.email}`} className="text-sm font-bold text-[#1ABA7F] hover:underline break-all">
-                    {avail.email}
-                  </a>
-                </div>
-              </div>
-            )}
-            {(avail.state || avail.lga || avail.ward) && (
-              <div className="p-3 rounded-lg bg-gradient-to-r from-gray-50 to-white border border-gray-200">
-                <p className="text-xs text-gray-500 font-medium mb-1">Location Details</p>
-                <div className="space-y-1">
-                  {avail.state && <p className="text-sm font-bold text-gray-900">State: {avail.state}</p>}
-                  {avail.lga && <p className="text-sm font-bold text-gray-900">LGA: {avail.lga}</p>}
-                  {avail.ward && <p className="text-sm font-bold text-gray-900">Ward: {avail.ward}</p>}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
       </div>
     </div>
   );
@@ -438,6 +389,9 @@ const PharmacyCards = ({
     return null;
   }
 
+// Check if filter is active but no results
+const noOpenPharmacies = filterOpen && sortedAvailability.length === 0;
+
   return (
     <div className="block sm:hidden space-y-6">
       <SortFilterBar
@@ -446,6 +400,27 @@ const PharmacyCards = ({
         filterOpen={filterOpen}
         setFilterOpen={setFilterOpen}
       />
+
+      {/* Empty state for no open pharmacies */}
+    {noOpenPharmacies && (
+      <div className="flex flex-col items-center justify-center py-12 px-6 bg-gradient-to-br from-orange-50 to-red-50 rounded-2xl border-2 border-red-200">
+        <div className="bg-white p-4 rounded-full shadow-lg mb-4">
+          <Clock className="h-10 w-10 text-red-500" />
+        </div>
+        <h3 className="text-lg font-bold text-center text-gray-800 mb-2">
+          No Pharmacies Currently Open
+        </h3>
+        <p className="text-sm text-gray-600 text-center mb-4">
+          All pharmacies offering this medication are currently closed.
+        </p>
+        <Button
+          onClick={() => setFilterOpen(false)}
+          className="bg-gradient-to-r from-[#225F91] to-[#1a4a73] text-white rounded-xl px-6 py-2 font-bold hover:shadow-lg transition-all duration-300"
+        >
+          Show All Pharmacies
+        </Button>
+      </div>
+    )}
 
       <div className="space-y-4">
         {sortedAvailability.map((avail, index) => (

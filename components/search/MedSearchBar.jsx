@@ -274,6 +274,19 @@ const handleKeyDown = useCallback((e) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  useEffect(() => {
+  if (state.searchTerm && state.results.length > 0) {
+    // Get the medication name from current results
+    const currentMedName = state.results[0]?.displayName?.toLowerCase();
+    const currentSearchTerm = state.searchTerm.toLowerCase().trim();
+    
+    // If search term doesn't match the current results, clear them
+    if (currentMedName && currentSearchTerm !== currentMedName) {
+      dispatch({ type: api.ACTIONS.SET_RESULTS, payload: [] });
+    }
+  }
+}, [state.searchTerm, state.results]);
+
   // --- Render ---
   return (
     <div className="w-full space-y-4 sm:space-y-6">
@@ -298,15 +311,6 @@ const handleKeyDown = useCallback((e) => {
           }}
           isRemoving={isBulkRemoving}
       /> 
-
-
-{(() => {
-  console.log('=== DIALOG RENDER DEBUG ===');
-  console.log('Dialog isOpen:', state.duplicateDialog.isOpen);
-  console.log('Existing item:', state.duplicateDialog.existingItem);
-  console.log('New item:', state.duplicateDialog.newItem);
-  return null;
-})()}
 
 
    <DuplicateMedicationDialog
@@ -368,7 +372,8 @@ const handleKeyDown = useCallback((e) => {
 
         {/* Suggestion / History / Loading Dropdown */}
         {!state.isSearching &&
-          ((state.showDropdown && state.suggestions.length > 0) ||
+         state.results.length === 0 && 
+          ((state.showDropdown && (state.suggestions.length > 0 || state.searchTerm.trim().length > 0)) ||
             (state.showHistory && state.searchHistory.length > 0) ||
             state.isLoadingSuggestions) && (
             <div
@@ -432,52 +437,75 @@ const handleKeyDown = useCallback((e) => {
                 )}
 
                 {/* Suggestions Dropdown */}
+
                 {state.showDropdown && state.suggestions.length > 0 && (
                   <div className="pt-2 pb-4">
-            {state.suggestions.map((suggestion, index) => (
-              <button
-                key={suggestion.id}
-                ref={(el) => (suggestionRefs.current[index] = el)}
-                onClick={() => handleSearch(suggestion.id)} // ← pass ID here
-                className={cn(
-                  'w-full px-3 sm:px-4 py-2 sm:py-3 text-left transition-colors duration-200 flex items-center gap-2 sm:gap-3 text-sm sm:text-base',
-                  state.focusedSuggestionIndex === index
-                    ? 'bg-[#1ABA7F]/10 text-[#225F91]'
-                    : 'hover:bg-[#1ABA7F]/10 text-gray-700'
-                )}
-                role="option"
-                aria-selected={state.focusedSuggestionIndex === index}
-              >
-                {suggestion.imageUrl ? (
-                  <img
-                    src={suggestion.imageUrl}
-                    alt={suggestion.displayName}
-                    className="w-16 h-16 object-cover rounded-sm p-0.5 border border-[#1ABA7F]/20 shadow-md transition-transform duration-300 hover:scale-105"
-                  />
-                ) : (
-                  <TrendingUp className="h-3 sm:h-4 w-3 sm:w-4 text-[#225F91]" />
-                )}
-                <div className="flex-1">
-                  <div className="font-medium">{suggestion.displayName}</div>
-                  <div className="font-light text-sm text-gray-600">
-                    {suggestion.ingredients
-                      ?.map((ing, i) => {
-                        const strength = ing.strengthValue ? ` ${ing.strengthValue}${ing.strengthUnit ?? ''}` : '';
-                        return (
-                          <span key={i}>
-                            {ing.activeSubstance}
-                            {strength}
-                            {i < suggestion.ingredients.length - 1 ? ', ' : ''}
-                          </span>
-                        );
-                      })
-                      .reduce((prev, curr) => [prev, curr], []) || 'No ingredients listed'}
-                  </div>
+                  {state.suggestions.map((suggestion, index) => (
+                    <button
+                      key={suggestion.id}
+                      ref={(el) => (suggestionRefs.current[index] = el)}
+                      onClick={() => handleSearch(suggestion.id)} // ← pass ID here
+                      className={cn(
+                        'w-full px-3 sm:px-4 py-2 sm:py-3 text-left transition-colors duration-200 flex items-center gap-2 sm:gap-3 text-sm sm:text-base',
+                        state.focusedSuggestionIndex === index
+                          ? 'bg-[#1ABA7F]/10 text-[#225F91]'
+                          : 'hover:bg-[#1ABA7F]/10 text-gray-700'
+                      )}
+                      role="option"
+                      aria-selected={state.focusedSuggestionIndex === index}
+                    >
+                      {suggestion.imageUrl ? (
+                        <img
+                          src={suggestion.imageUrl}
+                          alt={suggestion.displayName}
+                          className="w-16 h-16 object-cover rounded-sm p-0.5 border border-[#1ABA7F]/20 shadow-md transition-transform duration-300 hover:scale-105"
+                        />
+                      ) : (
+                        <TrendingUp className="h-3 sm:h-4 w-3 sm:w-4 text-[#225F91]" />
+                      )}
+                      <div className="flex-1">
+                        <div className="font-bold">{suggestion.displayName}</div>
+                        <div className="font-medium text-sm text-gray-600">
+                          {suggestion.ingredients
+                            ?.map((ing, i) => {
+                              const strength = ing.strengthValue ? ` ${ing.strengthValue}${ing.strengthUnit ?? ''}` : '';
+                              return (
+                                <span key={i}>
+                                  {ing.activeSubstance}
+                                  {strength}
+                                  {i < suggestion.ingredients.length - 1 ? ', ' : ''}
+                                </span>
+                              );
+                            })
+                            .reduce((prev, curr) => [prev, curr], []) || 'No ingredients listed'}
+                        </div>
+                      </div>
+                    </button>
+                  ))}
                 </div>
-              </button>
-            ))}
-            </div>
-          )}
+                )}
+   
+              {/* No Matches Message */}
+                  {state.showDropdown && 
+                  state.searchTerm && 
+                  state.suggestions.length === 0 && 
+                  !state.isLoadingSuggestions && (
+                    <div className="p-6 text-center">
+                      <div className="bg-gray-100 p-4 rounded-full w-16 h-16 mx-auto mb-3 flex items-center justify-center">
+                        <X className="h-8 w-8 text-gray-400" />
+                      </div>
+                      <p className="text-gray-600 font-semibold mb-1">
+                        No medications found
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        No matches for "<span className="font-medium text-gray-700">{state.searchTerm}</span>"
+                      </p>
+                      <p className="text-xs text-gray-400 mt-2">
+                        Try a different spelling or search term
+                      </p>
+                    </div>
+                  )}
+
 
                 {/* Loading */}
                 {state.isLoadingSuggestions && (
@@ -539,10 +567,14 @@ const handleKeyDown = useCallback((e) => {
       {!state.isSearching &&
         state.results.length === 0 &&
         !state.error &&
-        state.searchTerm && (
+        state.searchTerm &&
+        !state.showDropdown && (
           <div className="text-center px-1 py-8 sm:py-10 bg-white/95 border border-[#1ABA7F]/20 rounded-sm sm:rounded-2xl shadow-lg">
             <p className="text-gray-600 text-sm font-light sm:text-base leading-relaxed max-w-full sm:max-w-md mx-auto">
-              {t('search.no_results', { searchTerm: state.searchTerm })}
+              {t('search.no_results', 
+                { searchTerm: state.searchTerm }, 
+                { defaultValue: `No medications found for "${state.searchTerm}"` }
+              )}
             </p>
           </div>
         )}

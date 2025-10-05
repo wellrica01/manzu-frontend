@@ -1,18 +1,17 @@
-// UnifiedRemoveDialog.jsx
+import React from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Button } from '@/components/ui/button';
 import { 
   Trash2, 
-  AlertTriangle,
+  AlertCircle,
   X,
-  ShieldAlert
+  Package
 } from 'lucide-react';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function UnifiedRemoveDialog({ 
-  removeItem,           // Single item: { id, name, quantity }
-  bulkRemoveItems,      // Array of items: [{ id, name, quantity }, ...]
+  removeItem,
+  bulkRemoveItems,
   onClose, 
   onConfirm, 
   isRemoving 
@@ -20,155 +19,138 @@ export default function UnifiedRemoveDialog({
   const isBulkRemove = bulkRemoveItems && bulkRemoveItems.length > 0;
   const isOpen = !!removeItem || isBulkRemove;
   const itemCount = isBulkRemove ? bulkRemoveItems.length : 1;
+  const items = isBulkRemove ? bulkRemoveItems : removeItem ? [removeItem] : [];
 
   if (!isOpen) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg bg-white/95 backdrop-blur-xl border-2 border-[#1ABA7F]/30 rounded-3xl px-4 shadow-2xl overflow-hidden">
+    <Dialog open={isOpen} onOpenChange={isRemoving ? undefined : onClose}>
+      <DialogContent className="w-[95vw] sm:w-full max-w-md sm:max-w-lg max-h-[90vh] mx-auto p-0 overflow-y-auto rounded-2xl sm:rounded-3xl border-2 border-red-200">
         <VisuallyHidden>
           <DialogTitle>
             {isBulkRemove ? 'Bulk Remove Confirmation' : 'Remove Item Confirmation'}
           </DialogTitle>
         </VisuallyHidden>
 
-        {/* Decorative Elements */}
-        <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-red-500/10 to-transparent rounded-br-full" />
-        <div className="absolute bottom-0 right-0 w-24 h-24 bg-gradient-to-tl from-orange-500/10 to-transparent rounded-tl-full" />
-
-        {/* Content */}
-        <div className="relative z-10 space-y-6 pt-6">
-          {/* Warning Icon */}
-          <div className="relative mx-auto w-20 h-20">
-            <div className="absolute inset-0 bg-gradient-to-br from-red-500/30 to-orange-500/30 rounded-full blur-xl animate-pulse" />
-            <div className="relative w-full h-full bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center shadow-2xl border-4 border-white animate-in zoom-in-50 duration-500">
-              <AlertTriangle className="h-10 w-10 text-white" strokeWidth={3} />
-            </div>
-            <div className="absolute inset-0 rounded-full border-2 border-red-500/50 animate-ping" />
-          </div>
-
-          {/* Warning Message */}
-          <div className="text-center space-y-2">
-            <h3 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-orange-600">
-              {isBulkRemove 
-                ? `Remove ${itemCount} ${itemCount === 1 ? 'Item' : 'Items'}?` 
-                : 'Remove Item?'
-              }
-            </h3>
-            <p className="text-sm text-gray-600">
-              This action cannot be undone
-            </p>
-          </div>
-
-          {/* Warning Details Card */}
-          <div className="relative p-4 bg-gradient-to-br from-red-50 via-white to-orange-50/50 rounded-2xl border-2 border-red-200/60 shadow-lg overflow-hidden">
-            <div className="absolute inset-0 opacity-30">
-              <div className="absolute top-0 right-0 w-20 h-20 bg-red-500/10 rounded-full blur-2xl" />
-              <div className="absolute bottom-0 left-0 w-16 h-16 bg-orange-500/10 rounded-full blur-2xl" />
-            </div>
-
-            <div className="relative space-y-4">
-              {/* Alert Header */}
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-red-500/20 to-orange-500/20 rounded-xl flex items-center justify-center border border-red-500/30">
-                  <ShieldAlert className="h-6 w-6 text-red-600" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-base font-bold text-red-900 mb-1">Confirm Removal</h4>
-                  <p className="text-sm text-gray-700 leading-relaxed">
-                    {isBulkRemove
-                      ? `You're about to remove ${itemCount} ${itemCount === 1 ? 'item' : 'items'} from your cart:`
-                      : "You're about to remove this item from your cart:"
-                    }
-                  </p>
-                </div>
+        {/* Header */}
+        <div className="bg-gradient-to-r from-red-500 to-orange-500 p-6 sm:p-8 text-white relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-24 h-24 sm:w-32 sm:h-32 bg-white/10 rounded-full blur-2xl" />
+          
+          <div className="relative z-10 flex flex-col items-center gap-4">
+            <div className="relative">
+              <div className="absolute inset-0 bg-white/20 rounded-full blur-xl animate-pulse" />
+              <div className="relative w-16 h-16 sm:w-20 sm:h-20 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm border-2 border-white/30">
+                <AlertCircle className="h-8 w-8 sm:h-10 sm:w-10 text-white" strokeWidth={3} />
               </div>
-
-              {/* Items List */}
-              {isBulkRemove ? (
-                <ScrollArea className={`${bulkRemoveItems.length > 3 ? 'h-64' : 'h-auto'} pr-4`}>
-                  <div className="space-y-3">
-                    {bulkRemoveItems.map((item, index) => (
-                      <div 
-                        key={item.id}
-                        className="p-3 bg-white rounded-lg border-2 border-red-200/50 shadow-sm animate-in fade-in slide-in-from-left duration-300"
-                        style={{ animationDelay: `${index * 50}ms` }}
-                      >
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-bold text-[#225F91] truncate">
-                              {item.name}
-                            </p>
-                            <p className="text-xs text-gray-600 mt-1">
-                              Quantity: <span className="font-semibold text-red-600">{item.quantity}</span>
-                            </p>
-                          </div>
-                          <div className="flex-shrink-0 p-2 bg-red-100 rounded-lg">
-                            <Trash2 className="h-4 w-4 text-red-600" />
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </ScrollArea>
-              ) : (
-                /* Single Item Details */
-                removeItem && (
-                  <div className="p-4 bg-white rounded-xl border-2 border-red-200/50 shadow-sm">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-base font-bold text-[#225F91] mb-1">
-                          {removeItem.name}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          Quantity: <span className="font-semibold text-red-600">{removeItem.quantity}</span>
-                        </p>
-                      </div>
-                      <div className="p-2 bg-red-100 rounded-lg">
-                        <Trash2 className="h-5 w-5 text-red-600" />
-                      </div>
-                    </div>
-                  </div>
-                )
-              )}
+            </div>
+            
+            <div className="text-center">
+              <h3 className="text-xl sm:text-2xl font-black mb-1">
+                Remove {itemCount === 1 ? 'Item' : `${itemCount} Items`}?
+              </h3>
+              <p className="text-white/90 font-medium text-sm">
+                {itemCount === 1 
+                  ? 'This item will be removed from your cart'
+                  : `${itemCount} items will be removed from your cart`
+                }
+              </p>
             </div>
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="relative z-10 flex gap-3 pt-4">
-          <Button
-            variant="outline"
-            onClick={onClose}
-            disabled={isRemoving}
-            className="flex-1 h-14 border-2 border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 rounded-xl font-bold text-base transition-all duration-300 disabled:opacity-50"
-          >
-            <X className="h-5 w-5 mr-2" />
-            Cancel
-          </Button>
-          
-          <Button
-            onClick={onConfirm}
-            disabled={isRemoving}
-            className="flex-1 h-14 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl shadow-lg hover:shadow-xl font-bold text-base transition-all duration-300 group relative overflow-hidden disabled:opacity-70"
-          >
-            <span className="relative z-10 flex items-center justify-center gap-2">
+        {/* Content */}
+        <div className="p-4 sm:p-6 space-y-5">
+          {/* Items to Remove */}
+          <div className="space-y-2">
+            <h3 className="text-xs font-black text-gray-600 uppercase tracking-wide flex items-center gap-2">
+              <Trash2 className="h-4 w-4" />
+              {itemCount === 1 ? 'Item to remove:' : 'Items to remove:'}
+            </h3>
+            
+            {itemCount === 1 ? (
+              <div className="p-4 bg-gradient-to-r from-red-50 to-orange-50/50 rounded-xl border-2 border-red-200">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-red-100 rounded-lg flex-shrink-0">
+                    <Package className="h-5 w-5 text-red-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-base font-bold text-gray-900 mb-1">
+                      {items[0].name}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      Quantity: <span className="font-semibold text-red-600">{items[0].quantity}</span>
+                    </p>
+                  </div>
+                  <X className="h-5 w-5 text-red-600 flex-shrink-0" strokeWidth={2.5} />
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                {items.map((item, index) => (
+                  <div
+                    key={item.id}
+                    className="p-3 bg-gradient-to-r from-red-50 to-orange-50/50 rounded-lg border border-red-200"
+                  >
+                    <div className="flex items-start gap-2">
+                      <X className="h-4 w-4 text-red-600 flex-shrink-0 mt-0.5" strokeWidth={2.5} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-gray-900 break-words">
+                          {item.name}
+                        </p>
+                        <p className="text-xs text-gray-600 mt-1">
+                          Quantity: <span className="font-semibold text-red-600">{item.quantity}</span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Warning Message */}
+          <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="h-4 w-4 text-orange-600 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-orange-700 font-medium leading-relaxed">
+                {itemCount === 1
+                  ? 'This item will be completely removed from your cart. You can add it back later if needed.'
+                  : `These ${itemCount} items will be completely removed from your cart. You can add them back later if needed.`
+                }
+              </p>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-3 pt-2">
+            <Button
+              variant="outline"
+              onClick={onClose}
+              disabled={isRemoving}
+              className="flex-1 h-12 sm:h-14 border-2 border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 rounded-xl font-bold text-sm sm:text-base transition-all disabled:opacity-50"
+            >
+              <X className="h-5 w-5 mr-2" strokeWidth={2.5} />
+              Cancel
+            </Button>
+            
+            <Button
+              onClick={onConfirm}
+              disabled={isRemoving}
+              className="flex-1 h-12 sm:h-14 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl shadow-lg font-bold text-sm sm:text-base transition-all duration-300 group disabled:opacity-70"
+            >
               {isRemoving ? (
                 <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-white/30 border-t-white" />
+                  <div className="h-5 w-5 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   Removing...
                 </>
               ) : (
                 <>
-                  <Trash2 className="h-5 w-5 group-hover:scale-110 transition-transform duration-300" />
-                  {isBulkRemove ? `Remove ${itemCount} ${itemCount === 1 ? 'Item' : 'Items'}` : 'Remove Item'}
+                  <Trash2 className="h-5 w-5 mr-2 group-hover:scale-110 transition-transform" strokeWidth={2.5} />
+                  Remove {itemCount > 1 && itemCount}
                 </>
               )}
-            </span>
-            {!isRemoving && (
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-            )}
-          </Button>
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
