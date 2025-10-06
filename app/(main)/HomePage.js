@@ -10,7 +10,7 @@ import { Suspense, useState, useEffect, useRef, useCallback, useMemo, memo } fro
 import ConsentModal from '@/components/ConsentModal';
 import SearchBar from '@/components/search/MedSearchBar';
 import PrescriptionUploadForm from '@/components/PrescriptionUploadForm';
-import { Pill, MessageCircle, Phone, ChevronDown, Sparkles, Zap, Shield, Globe, Star, Clock, TrendingUp, Users, Award, Box, Loader2, MapIcon, File, FileText } from 'lucide-react';
+import { Pill, ChevronDown, Sparkles, Zap, Shield, Star, Clock, TrendingUp, Award, Box, Loader2, MapIcon, FileText } from 'lucide-react';
 import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
 import { ErrorBoundary } from 'react-error-boundary';
@@ -425,8 +425,41 @@ const ServiceCard = memo(({ title, icon: Icon, children, isActive = false, gradi
   );
 });
 
-
 ServiceCard.displayName = 'ServiceCard';
+
+// Improved scroll utility function with better easing
+const smoothScrollTo = (element, offset = 100, duration = 800) => {
+  if (!element) return;
+
+  const targetPosition = element.getBoundingClientRect().top + window.pageYOffset - offset;
+  const startPosition = window.pageYOffset;
+  const distance = targetPosition - startPosition;
+  let startTime = null;
+
+  // Easing function for smoother animation (ease-in-out-cubic)
+  const easeInOutCubic = (t) => {
+    return t < 0.5 
+      ? 4 * t * t * t 
+      : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  };
+
+  const animation = (currentTime) => {
+    if (startTime === null) startTime = currentTime;
+    const timeElapsed = currentTime - startTime;
+    const progress = Math.min(timeElapsed / duration, 1);
+    const ease = easeInOutCubic(progress);
+
+    window.scrollTo(0, startPosition + distance * ease);
+
+    if (timeElapsed < duration) {
+      requestAnimationFrame(animation);
+    }
+  };
+
+  requestAnimationFrame(animation);
+};
+
+
 
 function HomePageContent() {
   const router = useRouter();
@@ -476,36 +509,53 @@ function HomePageContent() {
     localStorage.setItem('manzu_consent', 'true');
   }, []);
 
-  const handleSearchClick = useCallback(() => {
-    setVisibleSection("search");
-    
-    if (process.env.NODE_ENV === 'production') {
-      // window.analytics?.track('search_section_opened');
+const handleSearchClick = useCallback(() => {
+  setVisibleSection("search");
+  
+  if (process.env.NODE_ENV === 'production') {
+    // window.analytics?.track('search_section_opened');
+  }
+  
+  // Longer delay to ensure content is rendered
+  setTimeout(() => {
+    if (searchRef.current) {
+      // Use custom smooth scroll with better offset
+      smoothScrollTo(searchRef.current, 120, 1000);
+      
+      // Focus search input after scroll completes (on desktop only)
+      setTimeout(() => {
+        const searchInput = searchRef.current?.querySelector('input');
+        if (searchInput && window.innerWidth >= 768) {
+          searchInput.focus();
+        }
+      }, 1000);
     }
-    
-    setTimeout(() => {
-      searchRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      // Don't auto-focus on mobile to prevent keyboard from blocking view
-      const searchInput = searchRef.current?.querySelector('input');
-      if (searchInput && window.innerWidth >= 768) {
-        searchInput.focus();
-      }
-    }, 100);
-  }, []);
+  }, 150);
+}, []);
 
-  const handleUploadClick = useCallback(() => {
-    setVisibleSection("upload");
-    
-    if (process.env.NODE_ENV === 'production') {
-      // window.analytics?.track('upload_section_opened');
+
+
+const handleUploadClick = useCallback(() => {
+  setVisibleSection("upload");
+  
+  if (process.env.NODE_ENV === 'production') {
+    // window.analytics?.track('upload_section_opened');
+  }
+  
+  setTimeout(() => {
+    if (uploadRef.current) {
+      // Use custom smooth scroll with better offset
+      smoothScrollTo(uploadRef.current, 120, 1000);
+      
+      // Focus upload button after scroll completes
+      setTimeout(() => {
+        const uploadButton = uploadRef.current?.querySelector('button');
+        uploadButton?.focus();
+      }, 1000);
     }
-    
-    setTimeout(() => {
-      uploadRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      const uploadButton = uploadRef.current?.querySelector('button');
-      uploadButton?.focus();
-    }, 100);
-  }, []);
+  }, 150);
+}, []);
+
 
   return (
     <div
@@ -532,7 +582,7 @@ function HomePageContent() {
           {visibleSection === "search" && (
             <ErrorBoundary FallbackComponent={SectionErrorFallback}>
               <Suspense fallback={<LoadingSkeleton />}>
-                <div ref={searchRef}>
+                <div ref={searchRef} className="scroll-mt-32">
                   <ServiceCard
                     title={t("services.search_medications")}
                     icon={Pill}
@@ -560,7 +610,7 @@ function HomePageContent() {
           {visibleSection === "upload" && (
             <ErrorBoundary FallbackComponent={SectionErrorFallback}>
               <Suspense fallback={<LoadingSkeleton />}>
-                <div ref={uploadRef}>
+                <div ref={uploadRef} className="scroll-mt-32">
                   <ServiceCard
                     title={t("services.upload_prescription")}
                     icon={Zap}
@@ -609,6 +659,15 @@ function HomePageContent() {
         @keyframes shine {
           0% { transform: translateX(-100%) skewX(-15deg); }
           100% { transform: translateX(200%) skewX(-15deg); }
+        }
+        html {
+          scroll-behavior: smooth;
+          scroll-padding-top: 8rem;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          html {
+            scroll-behavior: auto;
+          }
         }
         .animate-blob {
           animation: blob 7s infinite;

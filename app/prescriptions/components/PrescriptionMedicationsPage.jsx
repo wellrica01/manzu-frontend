@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import { Loader2, ShoppingCart, Pill, AlertCircle } from 'lucide-react';
+import { Loader2, ShoppingCart, Pill, AlertCircle, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import PharmacyRecommendations from './PharmacyRecommendations';
@@ -16,6 +16,7 @@ import DuplicateMedicationDialog from '@/components/cart/DuplicateMedicationDial
 import BulkDuplicateDialog from '@/components/cart/BulkDuplicateDialog';
 import UnifiedRemoveDialog from '@/components/cart/UnifiedRemoveDialog';
 import { bulkRemoveCartItems } from '@/components/cart/cartApi';
+import LocationPrompt from '@/components/search/LocationPrompt';
 import { useCart } from '@/hooks/useCart';
 import FilterControls from '@/components/search/FilterControls';
 
@@ -170,6 +171,9 @@ const PrescriptionMedicationsPage = React.memo(() => {
   const [isAddingToCart, setIsAddingToCart] = useState({});
   const [isBulkRemoving, setIsBulkRemoving] = useState(false);
   const [removeItemDialog, setRemoveItemDialog] = useState(null);
+
+  const [defaultPharmacyRecommendations, setDefaultPharmacyRecommendations] = useState([]);
+  const [locationStatus, setLocationStatus] = useState('pending');
   
   const [duplicateDialog, setDuplicateDialog] = useState({
     isOpen: false,
@@ -201,7 +205,7 @@ const PrescriptionMedicationsPage = React.memo(() => {
   const urlGuestId = searchParams.get('guestId');
   const { cart, fetchCart, isInCart, guestId: cartGuestId } = useCart();
   const guestId = urlGuestId || cartGuestId;
-  const cartItems = useMemo(() => cart?.pharmacies?.flatMap(p => p.items) || [], [cart]);
+  const cartItems = useMemo(() => cart?.pharmacies?.flatMap(p => p?.items) || [], [cart]);
   const isMountedRef = useRef(true);
   const fetchControllerRef = useRef(null);
 
@@ -248,35 +252,83 @@ const PrescriptionMedicationsPage = React.memo(() => {
     loadGeoData();
   }, []);
 
-  useEffect(() => {
-    if (!navigator.geolocation) {
-      toast.info('Geolocation not supported. Showing all pharmacies.', { duration: 4000 });
-      return;
-    }
+useEffect(() => {
+  if (!navigator.geolocation) {
+    setLocationStatus('denied');
+    toast.info('Geolocation not supported. Showing all pharmacies.', { duration: 4000 });
+    return;
+  }
 
-    const geoOptions = {
+  const geoOptions = {
+    timeout: 10000,
+    maximumAge: 0,
+    enableHighAccuracy: true
+  };
+
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      if (!isMountedRef.current) return;
+      setUserLocation({
+        lat: position.coords.latitude,
+        lng: position.coords.longitude,
+      });
+      setLocationStatus('granted');
+    },
+    (err) => {
+      if (isMountedRef.current) {
+        setLocationStatus('denied');
+        toast.info('Unable to fetch location. Please select your location manually.', { duration: 4000 });
+        setUserLocation(null);
+      }
+    },
+    geoOptions
+  );
+}, []);
+
+
+const handleEnableLocation = useCallback(() => {
+  if (!navigator.geolocation) {
+    toast.error('Geolocation not supported by your browser');
+    setLocationStatus('denied');
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      setUserLocation({
+        lat: position.coords.latitude,
+        lng: position.coords.longitude,
+      });
+      setLocationStatus('granted');
+      toast.success('Location enabled successfully');
+    },
+    (error) => {
+      setLocationStatus('denied');
+      if (error.code === error.PERMISSION_DENIED) {
+        toast.error('Location permission denied. Please enable it in your browser settings.');
+      } else {
+        toast.error('Unable to get your location. Please try again.');
+      }
+    },
+    {
+      enableHighAccuracy: true,
       timeout: 10000,
-      maximumAge: 0,
-      enableHighAccuracy: true
-    };
+      maximumAge: 0
+    }
+  );
+}, []);
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        if (!isMountedRef.current) return;
-        setUserLocation({
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-        });
-      },
-      (err) => {
-        if (isMountedRef.current) {
-          toast.info('Unable to fetch location. Showing all pharmacies.', { duration: 4000 });
-          setUserLocation(null);
-        }
-      },
-      geoOptions
-    );
-  }, []);
+
+const handleSelectLocation = useCallback(() => {
+  setShowFilters(true);
+  setTimeout(() => {
+    const filterElement = document.querySelector('[data-filters]');
+    if (filterElement) {
+      filterElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, 200);
+}, []);
+
 
   const updateLgas = useCallback((state) => {
     if (!geoData?.length || !state) {
@@ -336,65 +388,73 @@ const PrescriptionMedicationsPage = React.memo(() => {
     }
   }, [userIdentifier]);
 
-  const fetchPrescriptionOrder = useCallback(async () => {
-    if (!userIdentifier || !guestId) return;
+const fetchPrescriptionOrder = useCallback(async () => {
+  if (!userIdentifier || !guestId) return;
 
-    try {
-      const queryParams = new URLSearchParams();
-      if (userLocation?.lat && userLocation?.lng) {
-        queryParams.append('lat', userLocation.lat);
-        queryParams.append('lng', userLocation.lng);
-        queryParams.append('radius', '10');
-      }
-      if (filterState) queryParams.append('state', filterState);
-      if (filterLga) queryParams.append('lga', filterLga);
-      if (filterWard) queryParams.append('ward', filterWard);
-      
-      const url = `${process.env.NEXT_PUBLIC_API_URL}/api/prescription/${userIdentifier}?${queryParams.toString()}`;
-      
-      fetchControllerRef.current = new AbortController();
-      const response = await fetchWithRetry(url, {
-        headers: { 'x-guest-id': guestId },
-        signal: fetchControllerRef.current.signal
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || ERROR_MESSAGES.PRESCRIPTION_NOT_FOUND);
-      }
-      
-      const data = await response.json();
-      
-      if (!isMountedRef.current) return;
-      
-      setMedications(data.medications || []);
-      setDefaultMedications(data.medications || []);
-      setPrescriptionMetadata(data.prescriptionMetadata || null);
-      setPharmacyRecommendations(data.pharmacyRecommendations || []);
-      setError(null);
-    } catch (err) {
-      if (err.name === 'AbortError') return;
-      
-      console.error('Fetch prescription error:', err);
-      
-      if (!isMountedRef.current) return;
-      
-      const errorMessage = err.message || ERROR_MESSAGES.UNKNOWN;
-      setError(errorMessage);
-      toast.error(errorMessage, { duration: 4000 });
-      
-      if (typeof window !== 'undefined' && window.gtag) {
-        window.gtag('event', 'error', {
-          error_message: errorMessage,
-          page: 'Prescription Medications',
-        });
-      }
-    } finally {
-      if (isMountedRef.current) {
-        setLoading(false);
-      }
+  try {
+    const queryParams = new URLSearchParams();
+    
+    // Always include location if available for distance calculation
+    if (userLocation?.lat && userLocation?.lng) {
+      queryParams.append('lat', userLocation.lat);
+      queryParams.append('lng', userLocation.lng);
+      queryParams.append('radius', '10');
     }
-  }, [userIdentifier, userLocation, guestId, filterState, filterLga, filterWard]);
+    
+    // Include filters for backend filtering
+    if (filterState) queryParams.append('state', filterState);
+    if (filterLga) queryParams.append('lga', filterLga);
+    if (filterWard) queryParams.append('ward', filterWard);
+    
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/api/prescription/${userIdentifier}?${queryParams.toString()}`;
+    
+    fetchControllerRef.current = new AbortController();
+    const response = await fetchWithRetry(url, {
+      headers: { 'x-guest-id': guestId },
+      signal: fetchControllerRef.current.signal
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || ERROR_MESSAGES.PRESCRIPTION_NOT_FOUND);
+    }
+    
+    const data = await response.json();
+    
+    if (!isMountedRef.current) return;
+    
+    setMedications(data.medications || []);
+    setPrescriptionMetadata(data.prescriptionMetadata || null);
+    
+    // Store results appropriately
+    if (!filterState && !filterLga && !filterWard) {
+      // No filters = store as default AND current
+      setDefaultPharmacyRecommendations(data.pharmacyRecommendations || []);
+      setPharmacyRecommendations(data.pharmacyRecommendations || []);
+      setDefaultMedications(data.medications || []);
+    } else {
+      // Filters applied = only update current results
+      setPharmacyRecommendations(data.pharmacyRecommendations || []);
+    }
+    
+    setError(null);
+  } catch (err) {
+    if (err.name === 'AbortError') return;
+    
+    console.error('Fetch prescription error:', err);
+    
+    if (!isMountedRef.current) return;
+    
+    const errorMessage = err.message || ERROR_MESSAGES.UNKNOWN;
+    setError(errorMessage);
+    toast.error(errorMessage, { duration: 4000 });
+  } finally {
+    if (isMountedRef.current) {
+      setLoading(false);
+    }
+  }
+}, [userIdentifier, userLocation, guestId, filterState, filterLga, filterWard]);
+
 
   useEffect(() => {
     if (userIdentifier && guestId) {
@@ -907,21 +967,32 @@ const handleBulkAddAll = useCallback(async () => {
 }, [bulkDuplicateDialog, isInCart, medications, guestId, userIdentifier, prescriptionMetadata, pharmacyRecommendations, fetchCart, setLastAddedItems, setOpenCartDialog]);
 
 
-  const clearFilters = useCallback(() => {
-    setFilterState('');
-    setFilterLga('');
-    setFilterWard('');
-    setSortBy('price');
-    setLgas([]);
-    setWards([]);
-    if (defaultMedications.length > 0) {
-      setMedications(defaultMedications);
-    }
-  }, [defaultMedications]);
-
-    if (!mounted) {
-    return null; // Return nothing on server
+const clearFilters = useCallback(() => {
+  setFilterState('');
+  setFilterLga('');
+  setFilterWard('');
+  setSortBy('price');
+  setLgas([]);
+  setWards([]);
+  
+  // Restore default results
+  if (defaultPharmacyRecommendations.length > 0) {
+    setPharmacyRecommendations(defaultPharmacyRecommendations);
   }
+  if (defaultMedications.length > 0) {
+    setMedications(defaultMedications);
+  }
+}, [defaultPharmacyRecommendations, defaultMedications]);
+
+
+// Check if we should show location prompt
+const shouldShowLocationPrompt = !filterState && !filterLga && !filterWard && locationStatus !== 'granted';
+
+
+  if (!mounted) {
+  return null; // Return nothing on server
+}
+
 
   if (loading) {
     return (
@@ -1028,88 +1099,130 @@ const handleBulkAddAll = useCallback(async () => {
             
             <hr className="border-t border-gray-300 my-4 sm:my-6" />
 
-            {medications.length > 0 && (
-              <>
-                <div className="my-6 px-2">
-                  <FilterControls
-                    sortBy={sortBy}
-                    setSortBy={setSortBy}
-                    showFilters={showFilters}
-                    setShowFilters={setShowFilters}
-                    filterState={filterState}
-                    setFilterState={state => {
-                      setFilterState(state);
-                      updateLgas(state);
-                    }}
-                    filterLga={filterLga}
-                    setFilterLga={lga => {
-                      setFilterLga(lga);
-                      updateWards(filterState, lga);
-                    }}
-                    filterWard={filterWard}
-                    setFilterWard={setFilterWard}
-                    states={states}
-                    lgas={lgas}
-                    wards={wards}
-                    geoData={geoData}
-                    updateLgas={updateLgas}
-                    updateWards={updateWards}
-                    clearFilters={clearFilters}
-                    handleSearch={() => {}}
-                    searchTerm={''}
-                  />
-                </div>
-                
-                <hr className="border-t border-gray-300 mb-8" />
+    {medications.length > 0 && (
+      <>
+        {/* ALWAYS show filter controls */}
+        <div className="my-6 px-2" data-filters>
+          <FilterControls
+            sortBy={sortBy}
+            setSortBy={setSortBy}
+            showFilters={showFilters}
+            setShowFilters={setShowFilters}
+            filterState={filterState}
+            setFilterState={state => {
+              setFilterState(state);
+              updateLgas(state);
+            }}
+            filterLga={filterLga}
+            setFilterLga={lga => {
+              setFilterLga(lga);
+              updateWards(filterState, lga);
+            }}
+            filterWard={filterWard}
+            setFilterWard={setFilterWard}
+            states={states}
+            lgas={lgas}
+            wards={wards}
+            geoData={geoData}
+            updateLgas={updateLgas}
+            updateWards={updateWards}
+            clearFilters={clearFilters}
+            handleSearch={() => {}}
+            searchTerm={''}
+          />
+        </div>
+        
+        <hr className="border-t border-gray-300 mb-8" />
 
-                <PharmacyRecommendations
-                  pharmacyRecommendations={pharmacyRecommendations}
-                  medications={medications}
-                  handleAddToCart={handleAddToCart}
-                  handleBulkAddWithDuplicateCheck={handleBulkAddWithDuplicateCheck}
-                  cart={cart}
-                  isInCart={isInCart}
-                  isAddingToCart={isAddingToCart}
-                  fetchCart={fetchCart}
-                  setLastAddedItems={setLastAddedItems}
-                  setOpenCartDialog={setOpenCartDialog}
-                  userIdentifier={userIdentifier}       
-                  guestId={guestId}                      
-                  prescriptionId={prescriptionMetadata?.id} 
-                  state={filterState}
-                  lga={filterLga}
-                  ward={filterWard}
-                  onRemoveItem={(item) => setRemoveItemDialog(item)}
-                />
+        {/* Show location prompt BEFORE pharmacy cards if conditions are met */}
+        {shouldShowLocationPrompt && (
+          <div className="px-2 mb-8">
+            <LocationPrompt
+              onSelectLocation={handleSelectLocation}
+              onEnableLocation={handleEnableLocation}
+              locationStatus={locationStatus}
+            />
+          </div>
+        )}
 
-                <UnifiedRemoveDialog
-                  removeItem={removeItemDialog}
-                  bulkRemoveItems={null}
-                  onClose={() => setRemoveItemDialog(null)}
-                  onConfirm={async () => {
-                    if (!removeItemDialog?.id) return;
-                    
-                    try {
-                      await fetchWithTimeout(
-                        `${process.env.NEXT_PUBLIC_API_URL}/api/cart/remove/${removeItemDialog.id}`,
-                        {
-                          method: 'DELETE',
-                          headers: { 'x-guest-id': guestId || '' },
-                        }
-                      );
-                      await fetchCart();
-                      setRemoveItemDialog(null);
-                      toast.success('Item removed from cart');
-                    } catch (error) {
-                      console.error('Remove error:', error);
-                      toast.error(error.message || ERROR_MESSAGES.REMOVE_FROM_CART_FAILED);
-                    }
-                  }}
-                  isRemoving={false}
-                />
-              </>
-            )}
+        {/* Show results based on data availability and location status */}
+        {shouldShowLocationPrompt ? (
+          // Don't show any pharmacies when location prompt is displayed
+          null
+        ) : pharmacyRecommendations.length === 0 ? (
+          <div className="px-2 mb-8">
+            <Card className="bg-white border-2 border-gray-200 rounded-2xl shadow-lg p-12">
+              <div className="text-center">
+                <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" strokeWidth={2} />
+                <h3 className="text-2xl font-black text-gray-700 mb-2">
+                  No pharmacies found in your area
+                </h3>
+                <p className="text-gray-600 font-medium mb-4">
+                  {filterState || filterLga || filterWard 
+                    ? 'Try adjusting your location filters'
+                    : 'Please select your location to see available pharmacies'
+                  }
+                </p>
+                {(filterState || filterLga || filterWard) && (
+                  <Button
+                    onClick={clearFilters}
+                    className="mt-4 bg-gradient-to-r from-[#225F91] to-[#1a4a73] text-white rounded-xl px-6 py-2 font-bold hover:shadow-lg hover:scale-105 transition-all duration-300"
+                  >
+                    Clear Filters
+                  </Button>
+                )}
+              </div>
+            </Card>
+          </div>
+        ) : (
+          <PharmacyRecommendations
+            pharmacyRecommendations={pharmacyRecommendations}
+            medications={medications}
+            handleAddToCart={handleAddToCart}
+            handleBulkAddWithDuplicateCheck={handleBulkAddWithDuplicateCheck}
+            cart={cart}
+            isInCart={isInCart}
+            isAddingToCart={isAddingToCart}
+            fetchCart={fetchCart}
+            setLastAddedItems={setLastAddedItems}
+            setOpenCartDialog={setOpenCartDialog}
+            userIdentifier={userIdentifier}       
+            guestId={guestId}                      
+            prescriptionId={prescriptionMetadata?.id} 
+            state={filterState}
+            lga={filterLga}
+            ward={filterWard}
+            onRemoveItem={(item) => setRemoveItemDialog(item)}
+          />
+        )}
 
+        <UnifiedRemoveDialog
+          removeItem={removeItemDialog}
+          bulkRemoveItems={null}
+          onClose={() => setRemoveItemDialog(null)}
+          onConfirm={async () => {
+            if (!removeItemDialog?.id) return;
+            
+            try {
+              await fetchWithTimeout(
+                `${process.env.NEXT_PUBLIC_API_URL}/api/cart/remove/${removeItemDialog.id}`,
+                {
+                  method: 'DELETE',
+                  headers: { 'x-guest-id': guestId || '' },
+                }
+              );
+              await fetchCart();
+              setRemoveItemDialog(null);
+              toast.success('Item removed from cart');
+            } catch (error) {
+              console.error('Remove error:', error);
+              toast.error(error.message || ERROR_MESSAGES.REMOVE_FROM_CART_FAILED);
+            }
+          }}
+          isRemoving={false}
+        />
+      </>
+    )}
             {prescriptionMetadata?.status === 'VERIFIED' && medications.length === 0 && (
               <Card className="relative bg-white/98 backdrop-blur-xl border-2 border-gray-200 rounded-3xl shadow-2xl overflow-hidden p-12">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-gray-200/30 to-transparent rounded-bl-full" />

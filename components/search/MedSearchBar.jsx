@@ -1,13 +1,13 @@
 'use client';
-import { useEffect, useState, useRef, useReducer, useCallback } from 'react';
+import { useEffect, useState, useRef, useReducer, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { Button } from '../ui/button';
-import { History, TrendingUp, X, MapPin } from 'lucide-react';
+import { History, TrendingUp, X, ChevronRight } from 'lucide-react';
 import SearchInput from './SearchInput';
-import FilterControls from './FilterControls';
 import CartDialog from '../cart/CartDialog';
 import DuplicateMedicationDialog from '@/components/cart/DuplicateMedicationDialog';
 import ErrorMessage from '@/components/ErrorMessage';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -17,17 +17,53 @@ import SearchSkeleton from './SearchSkeleton';
 import { searchReducer, initialState } from './searchReducer';
 import {
   useSearchLogic,
-  useGeoLocation,
   useGeoData,
   useAutoPopulateLocation,
 } from '../../hooks/useSearchLogic';
 import * as api from './medicationApi';
+import { TIMING, MESSAGES, ERROR_MESSAGES } from '../../constants/search';
 
 const MedicationCard = dynamic(() => import('./MedicationCard'), {
   ssr: false,
 });
 
-// --- SearchBar Component ---
+// Validate API URL
+const getApiUrl = () => {
+  const url = process.env.NEXT_PUBLIC_API_URL;
+  if (!url) {
+    throw new Error(ERROR_MESSAGES.API_URL_MISSING);
+  }
+  return url;
+};
+
+const smoothScrollToElement = (element, offset = 100, duration = 700) => {
+  if (!element) return;
+
+  const targetPosition = element.getBoundingClientRect().top + window.pageYOffset - offset;
+  const startPosition = window.pageYOffset;
+  const distance = targetPosition - startPosition;
+  let startTime = null;
+
+  const easeInOutCubic = (t) => {
+    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  };
+
+  const animation = (currentTime) => {
+    if (startTime === null) startTime = currentTime;
+    const timeElapsed = currentTime - startTime;
+    const progress = Math.min(timeElapsed / duration, 1);
+    const ease = easeInOutCubic(progress);
+
+    window.scrollTo(0, startPosition + distance * ease);
+
+    if (timeElapsed < duration) {
+      requestAnimationFrame(animation);
+    }
+  };
+
+  requestAnimationFrame(animation);
+};
+
 const SearchBar = () => {
   const { t } = useTranslation();
   const [state, dispatch] = useReducer(searchReducer, initialState);
@@ -40,10 +76,12 @@ const SearchBar = () => {
   const suggestionRefs = useRef([]);
 
   const [selectedMedicationId, setSelectedMedicationId] = useState(null);
-
   const [currentMedicationId, setCurrentMedicationId] = useState(null);
-  
   const [locationStatus, setLocationStatus] = useState('pending');
+
+  const handleLocationStatusChange = useCallback((status) => {
+    setLocationStatus(status);
+  }, []);
 
   useEffect(() => {
     if (state.userLocation) {
@@ -51,82 +89,67 @@ const SearchBar = () => {
     }
   }, [state.userLocation]);
 
+  const apiUrl = getApiUrl();
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-
-  // Custom hooks for separation of concerns
   useGeoData(dispatch, t);
-  useGeoLocation(dispatch, t, setLocationStatus);
   useAutoPopulateLocation(state.userLocation, state.geoData, dispatch);
 
+  const { fetchSuggestions, handleSearch, handleAddToCart, executeAddToCart } = useSearchLogic(
+    state,
+    dispatch,
+    t,
+    apiUrl,
+    fetchCart,
+    guestId,
+    cart
+  );
 
-const { fetchSuggestions, handleSearch, handleAddToCart, executeAddToCart } = useSearchLogic(
-  state,
-  dispatch,
-  t,
-  apiUrl,
-  fetchCart,
-  guestId,
-  cart
-);
-
-  // Cleanup suggestion refs on unmount
   useEffect(() => {
     return () => {
       suggestionRefs.current = [];
     };
   }, []);
 
-// Update cart items when cart changes
-useEffect(() => {
-  if (!cart?.pharmacies) {
+  // Memoize flattened cart items
+  const flattenedCartItems = useMemo(() => {
+    if (!cart?.pharmacies) return [];
+    
+    return cart.pharmacies.flatMap((pharmacyGroup) => 
+      pharmacyGroup.items.map(item => ({
+        ...item,
+        pharmacyId: pharmacyGroup.pharmacy.id,   
+        pharmacyName: pharmacyGroup.pharmacy.name   
+      }))
+    );
+  }, [cart?.pharmacies]);
+
+  useEffect(() => {
     dispatch({
       type: api.ACTIONS.SET_CART_ITEMS,
-      payload: [],
+      payload: flattenedCartItems,
     });
-    return;
-  }
+  }, [flattenedCartItems]);
 
-  const flattenedItems = cart.pharmacies.flatMap((pharmacyGroup) => 
-    pharmacyGroup.items.map(item => ({
-      ...item,
-      pharmacyId: pharmacyGroup.pharmacy.id,   
-      pharmacyName: pharmacyGroup.pharmacy.name   
-    }))
-  );
-  
-  console.log('🛒 Flattened cart items with pharmacy info:', flattenedItems);
-  
-  dispatch({
-    type: api.ACTIONS.SET_CART_ITEMS,
-    payload: flattenedItems,
-  });
-}, [cart]);
-
-
-
-  const handleKeepExisting = () => {
-    toast.info('Keeping your current selection');
+  const handleKeepExisting = useCallback(() => {
+    toast.info(MESSAGES.KEEP_SELECTION);
     dispatch({
       type: api.ACTIONS.SET_DUPLICATE_DIALOG,
       payload: { isOpen: false, existingItem: null, newItem: null }
     });
     dispatch({ type: api.ACTIONS.SET_PENDING_ADD, payload: null });
-  };
+  }, []);
 
-  const handleReplaceWithNew = async () => {
+  const handleReplaceWithNew = useCallback(async () => {
     const { existingItem, newItem } = state.duplicateDialog;
     const pending = state.pendingAdd;
 
     try {
-      // Remove the existing item
       await fetch(`${apiUrl}/api/cart/remove/${existingItem.cartItemId}`, {
         method: 'DELETE',
         headers: { 'x-guest-id': guestId },
       });
       await fetchCart();
 
-      // Add new item
       await executeAddToCart(
         pending.medicationId,
         pending.pharmacyId,
@@ -135,9 +158,8 @@ useEffect(() => {
         pending.quantity
       );
 
-      toast.success(`Switched to ${newItem.pharmacyName}`);
+      toast.success(`${MESSAGES.SWITCHED_PHARMACY} ${newItem.pharmacyName}`);
     } catch (error) {
-      console.error(error);
       toast.error(error.message || 'Failed to replace item');
     } finally {
       dispatch({
@@ -146,9 +168,9 @@ useEffect(() => {
       });
       dispatch({ type: api.ACTIONS.SET_PENDING_ADD, payload: null });
     }
-  };
+  }, [state.duplicateDialog, state.pendingAdd, apiUrl, guestId, fetchCart, executeAddToCart]);
 
-  const handleAddBoth = async () => {
+  const handleAddBoth = useCallback(async () => {
     const pending = state.pendingAdd;
 
     try {
@@ -160,9 +182,8 @@ useEffect(() => {
         pending.quantity
       );
 
-      toast.info('Added from both pharmacies');
+      toast.info(MESSAGES.ADDED_BOTH);
     } catch (error) {
-      console.error(error);
       toast.error('Failed to add both items');
     } finally {
       dispatch({
@@ -171,20 +192,15 @@ useEffect(() => {
       });
       dispatch({ type: api.ACTIONS.SET_PENDING_ADD, payload: null });
     }
-  };
+  }, [state.pendingAdd, executeAddToCart]);
 
-
-// Debounced suggestions fetch
   useEffect(() => {
     const debounce = setTimeout(() => {
       fetchSuggestions(state.searchTerm);
-    }, api.CONFIG.DEBOUNCE_DELAY_MS);
+    }, TIMING.DEBOUNCE_DELAY);
     return () => clearTimeout(debounce);
   }, [state.searchTerm, fetchSuggestions]);
 
-
-
-  // Update LGAs based on selected state
   const updateLgas = useCallback(
     (stateName) => {
       if (!state.geoData) return;
@@ -201,7 +217,6 @@ useEffect(() => {
     [state.geoData]
   );
 
-  // Update wards based on selected state and LGA
   const updateWards = useCallback(
     (stateName, lgaName) => {
       if (!state.geoData) return;
@@ -218,26 +233,22 @@ useEffect(() => {
     [state.geoData]
   );
 
-// Clear all filters
-const clearFilters = useCallback(() => {
-  dispatch({
-    type: api.ACTIONS.SET_FILTERS,
-    payload: { state: '', lga: '', ward: '' },
-  });
-  dispatch({ type: api.ACTIONS.SET_SORT_BY, payload: 'cheapest' });
-  dispatch({ type: api.ACTIONS.SET_LGAS, payload: [] });
-  dispatch({ type: api.ACTIONS.SET_WARDS, payload: [] });
-  dispatch({
-    type: api.ACTIONS.SET_RESULTS,
-    payload: state.defaultResults,
-  });
-  // Reset selected medication so Apply button disables
-  setSelectedMedicationId(null);
-}, [state.defaultResults]);
+  const clearFilters = useCallback(() => {
+    dispatch({
+      type: api.ACTIONS.SET_FILTERS,
+      payload: { state: '', lga: '', ward: '' },
+    });
+    dispatch({ type: api.ACTIONS.SET_SORT_BY, payload: 'cheapest' });
+    dispatch({ type: api.ACTIONS.SET_LGAS, payload: [] });
+    dispatch({ type: api.ACTIONS.SET_WARDS, payload: [] });
+    dispatch({
+      type: api.ACTIONS.SET_RESULTS,
+      payload: state.defaultResults,
+    });
+    setSelectedMedicationId(null);
+  }, [state.defaultResults]);
 
-
-// Keyboard event handlers
-const handleKeyDown = useCallback((e) => {
+  const handleKeyDown = useCallback((e) => {
     if (e.key === 'Escape') {
       dispatch({ type: api.ACTIONS.SET_SHOW_DROPDOWN, payload: false });
       dispatch({ type: api.ACTIONS.SET_SHOW_HISTORY, payload: false });
@@ -250,8 +261,6 @@ const handleKeyDown = useCallback((e) => {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
-
-  // Click outside to close dropdown
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -259,40 +268,37 @@ const handleKeyDown = useCallback((e) => {
         !dropdownRef.current.contains(event.target) &&
         !inputRef.current?.contains(event.target)
       ) {
-        dispatch({ type: api.ACTIONS.SET_SHOW_DROPDOWN, payload: false });
-        dispatch({ type: api.ACTIONS.SET_SHOW_HISTORY, payload: false });
+        // Smooth close with delay for better UX
+        setTimeout(() => {
+          dispatch({ type: api.ACTIONS.SET_SHOW_DROPDOWN, payload: false });
+          dispatch({ type: api.ACTIONS.SET_SHOW_HISTORY, payload: false });
+        }, 200);
       }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
-  if (state.searchTerm && state.results.length > 0) {
-    // Get the medication name from current results
-    const currentMedName = state.results[0]?.displayName?.toLowerCase();
-    const currentSearchTerm = state.searchTerm.toLowerCase().trim();
-    
-    // If search term doesn't match the current results, clear them
-    if (currentMedName && currentSearchTerm !== currentMedName) {
-      dispatch({ type: api.ACTIONS.SET_RESULTS, payload: [] });
+    if (state.searchTerm && state.results.length > 0) {
+      const currentMedName = state.results[0]?.displayName?.toLowerCase();
+      const currentSearchTerm = state.searchTerm.toLowerCase().trim();
+      
+      if (currentMedName && currentSearchTerm !== currentMedName) {
+        dispatch({ type: api.ACTIONS.SET_RESULTS, payload: [] });
+      }
     }
-  }
-}, [state.searchTerm, state.results]);
+  }, [state.searchTerm, state.results]);
 
+  const currentMedicationIdRef = useRef(null);
 
+  const handleSearchWrapper = useCallback((medicationId) => {
+    setSelectedMedicationId(medicationId);
+    currentMedicationIdRef.current = medicationId;
+    handleSearch(medicationId);
+  }, [handleSearch]);
 
-
-const currentMedicationIdRef = useRef(null);
-
-const handleSearchWrapper = useCallback((medicationId) => {
-  setSelectedMedicationId(medicationId);
-  currentMedicationIdRef.current = medicationId; // Store in ref
-  handleSearch(medicationId);
-}, [handleSearch]);
-
-// Auto-apply filters when they change
 useEffect(() => {
   if (!currentMedicationIdRef.current || state.defaultResults.length === 0) {
     return;
@@ -303,15 +309,10 @@ useEffect(() => {
   if (hasFilters) {
     handleSearch(currentMedicationIdRef.current, {
       onComplete: () => {
-        // Scroll to pharmacy comparison after search completes and results are rendered
-        const comparisonSection = document.querySelector('[data-pharmacy-comparison]');
-        if (comparisonSection) {
-          comparisonSection.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'start',
-            inline: 'nearest'
-          });
-        }
+        setTimeout(() => {
+          const comparisonSection = document.querySelector('[data-location-text]');
+          smoothScrollToElement(comparisonSection, 100, 800);
+        }, 300);
       }
     });
   } else {
@@ -322,57 +323,52 @@ useEffect(() => {
   }
 }, [state.filters.state, state.filters.lga, state.filters.ward, state.defaultResults, handleSearch, dispatch]);
 
-const handleSelectMedication = useCallback((suggestion) => {
-  setSelectedMedicationId(suggestion.id);
-  setCurrentMedicationId(suggestion.id);
-  handleSearchWrapper(suggestion.id);
-}, [handleSearchWrapper]);
+  const handleSelectMedication = useCallback((suggestion) => {
+    setSelectedMedicationId(suggestion.id);
+    setCurrentMedicationId(suggestion.id);
+    handleSearchWrapper(suggestion.id);
+  }, [handleSearchWrapper]);
 
+  const handleBulkRemove = useCallback(async (itemIds) => {
+    setIsBulkRemoving(true);
+    try {
+      await bulkRemoveCartItems(guestId, itemIds);
+      await fetchCart();
+    } catch (error) {
+      toast.error(ERROR_MESSAGES.REMOVE_ITEMS_FAILED, { duration: 3000 });
+    } finally {
+      setIsBulkRemoving(false);
+    }
+  }, [guestId, fetchCart]);
 
-
-  // --- Render ---
   return (
-    <div className="w-full space-y-4 sm:space-y-6">
-      {/* Cart Dialog */}
+    <div className="w-full space-y-4 sm:space-y-6" role="search" aria-label="Medication search">
       <CartDialog
         openCartDialog={state.openCartDialog}
         setOpenCartDialog={(val) =>
           dispatch({ type: api.ACTIONS.SET_OPEN_CART_DIALOG, payload: val })
         }
         lastAddedItems={state.lastAddedItems}
-         onRemoveItems={async (itemIds) => {
-            setIsBulkRemoving(true);
-            try {
-              await bulkRemoveCartItems(guestId, itemIds);
-              await fetchCart();
-            } catch (error) {
-              console.error('Failed to remove items:', error);
-              toast.error('Failed to remove items', { duration: 3000 });
-            } finally {
-              setIsBulkRemoving(false);
-            }
-          }}
-          isRemoving={isBulkRemoving}
+        onRemoveItems={handleBulkRemove}
+        isRemoving={isBulkRemoving}
       /> 
 
+      <DuplicateMedicationDialog
+        isOpen={state.duplicateDialog.isOpen}
+        onClose={() => {
+          dispatch({
+            type: api.ACTIONS.SET_DUPLICATE_DIALOG,
+            payload: { isOpen: false, existingItem: null, newItem: null }
+          });
+          dispatch({ type: api.ACTIONS.SET_PENDING_ADD, payload: null });
+        }}
+        existingItem={state.duplicateDialog.existingItem}
+        newItem={state.duplicateDialog.newItem}
+        onKeepExisting={handleKeepExisting}
+        onReplaceWithNew={handleReplaceWithNew}
+        onAddBoth={handleAddBoth}
+      />
 
-   <DuplicateMedicationDialog
-      isOpen={state.duplicateDialog.isOpen}
-      onClose={() => {
-        dispatch({
-          type: api.ACTIONS.SET_DUPLICATE_DIALOG,
-          payload: { isOpen: false, existingItem: null, newItem: null }
-        });
-        dispatch({ type: api.ACTIONS.SET_PENDING_ADD, payload: null });
-      }}
-      existingItem={state.duplicateDialog.existingItem}
-      newItem={state.duplicateDialog.newItem}
-      onKeepExisting={handleKeepExisting}
-      onReplaceWithNew={handleReplaceWithNew}
-      onAddBoth={handleAddBoth}
-    />
-
-      {/* Search Input */}
       <div className="relative w-full">
         <SearchInput
           searchTerm={state.searchTerm}
@@ -396,10 +392,7 @@ const handleSelectMedication = useCallback((suggestion) => {
             dispatch({ type: api.ACTIONS.SET_FOCUSED_INDEX, payload: val })
           }
           handleSearch={handleSearchWrapper}
-          handleSelectMedication={(suggestion) => {
-            setSelectedMedicationId(suggestion.id);  
-            handleSearchWrapper(suggestion.id);           
-          }}
+          handleSelectMedication={handleSelectMedication}
           dropdownRef={dropdownRef}
           inputRef={inputRef}
           suggestionRefs={suggestionRefs}
@@ -413,177 +406,210 @@ const handleSelectMedication = useCallback((suggestion) => {
           }
         />
 
-        {/* Suggestion / History / Loading Dropdown */}
-        {!state.isSearching &&
-         state.results.length === 0 && 
-          ((state.showDropdown && (state.suggestions.length > 0 || state.searchTerm.trim().length > 0)) ||
-            (state.showHistory && state.searchHistory.length > 0) ||
-            state.isLoadingSuggestions) && (
-            <div
-              ref={dropdownRef}
-              className="absolute left-0 right-0 top-full z-[9999] mt-2 pointer-events-auto"
-              style={{ maxHeight: '16rem', overflowY: 'auto' }}
-              role="listbox"
-              aria-label="Search suggestions"
-            >
-              <div className="bg-white/95 backdrop-blur-sm border border-[#1ABA7F]/20 rounded-lg sm:rounded-xl shadow-lg sm:shadow-xl">
-                {/* Search History */}
-                {state.showHistory && state.searchHistory.length > 0 && (
-                  <div>
-                    <div className="p-2 sm:p-3 border-b border-[#1ABA7F]/10 flex items-center justify-between">
-                      <div className="flex items-center gap-1 sm:gap-2">
-                        <History className="h-3 sm:h-4 w-3 sm:w-4 text-[#225F91]" />
-                        <span className="text-xs sm:text-sm font-medium text-[#225F91]">
-                          Recent Searches
-                        </span>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          dispatch({
-                            type: api.ACTIONS.SET_SEARCH_HISTORY,
-                            payload: [],
-                          });
-                          api.clearSearchHistory();
-                        }}
-                        className="h-5 sm:h-6 w-5 sm:w-6 p-0 text-gray-400 hover:text-red-500"
-                        aria-label="Clear search history"
-                      >
-                        <X className="h-2 sm:h-3 w-2 sm:w-3" />
-                      </Button>
+    {!state.isSearching &&
+    state.results.length === 0 && 
+      ((state.showDropdown && (state.suggestions.length > 0 || state.searchTerm.trim().length > 0)) ||
+        (state.showHistory && state.searchHistory.length > 0) ||
+        state.isLoadingSuggestions) && (
+        <div
+          ref={dropdownRef}
+          className="absolute left-0 right-0 top-full z-[9999] mt-2 pointer-events-auto custom-scrollbar"
+          style={{ maxHeight: '24rem', overflowY: 'auto' }}
+          role="listbox"
+          aria-label="Search suggestions"
+        >
+          <div className="bg-white/98 backdrop-blur-xl border-2 border-[#1ABA7F]/20 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-300">
+            {/* Search History Section */}
+            {state.showHistory && state.searchHistory.length > 0 && (
+              <div>
+                <div className="p-3 border-b border-[#1ABA7F]/10 flex items-center justify-between bg-gradient-to-r from-[#1ABA7F]/5 to-transparent">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 bg-[#1ABA7F]/10 rounded-lg">
+                      <History className="h-4 w-4 text-[#225F91]" />
                     </div>
-
-                    {state.searchHistory.map((item, index) => (
-                      <button
-                        key={index}
-                        onClick={() => {
-                          dispatch({
-                            type: api.ACTIONS.SET_SEARCH_TERM,
-                            payload: item.displayName,
-                          });
-                          dispatch({
-                            type: api.ACTIONS.SET_SHOW_HISTORY,
-                            payload: false,
-                          });
-                          handleSearch(item.id);
-                        }}
-                        className="w-full px-3 sm:px-4 py-3 sm:py-3 text-left hover:bg-[#1ABA7F]/10 transition-colors duration-200 flex items-center gap-2 sm:gap-3 text-sm sm:text-base"
-                        role="option"
-                        aria-label={`Search for ${item.displayName}`}
-                      >
-                        <History className="h-3 sm:h-4 w-3 sm:w-4 text-gray-400" />
-                        <span className="text-gray-700">{item.displayName}</span>
-                      </button>
-                    ))}
+                    <span className="text-sm font-bold text-[#225F91]">
+                      Recent Searches
+                    </span>
                   </div>
-                )}
 
-                {/* Suggestions Dropdown */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => dispatch({ type: api.ACTIONS.SET_SHOW_HISTORY, payload: false })}
+                    className="h-7 w-7 p-0 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-200"
+                    aria-label="Close search history"
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
 
-                {state.showDropdown && state.suggestions.length > 0 && (
-                  <div className="pt-2 pb-4">
-                  {state.suggestions.map((suggestion, index) => (
+                {state.searchHistory.map((item, index) => (
+                  <div
+                    key={`${item.id}-${index}`}
+                    className="w-full flex items-center justify-between px-4 py-3 hover:bg-gradient-to-r hover:from-[#1ABA7F]/10 hover:to-transparent transition-all duration-200 group animate-in fade-in slide-in-from-left-2"
+                    style={{ animationDelay: `${index * 40}ms`, animationDuration: '300ms' }}
+                  >
                     <button
-                      key={suggestion.id}
-                      ref={(el) => (suggestionRefs.current[index] = el)}
-                      onClick={() => handleSelectMedication(suggestion)}
-                      className={cn(
-                        'w-full px-3 sm:px-4 py-2 sm:py-3 text-left transition-colors duration-200 flex items-center gap-2 sm:gap-3 text-sm sm:text-base',
-                        state.focusedSuggestionIndex === index
-                          ? 'bg-[#1ABA7F]/10 text-[#225F91]'
-                          : 'hover:bg-[#1ABA7F]/10 text-gray-700'
-                      )}
+                      onClick={() => {
+                        dispatch({ type: api.ACTIONS.SET_SEARCH_TERM, payload: item.displayName });
+                        dispatch({ type: api.ACTIONS.SET_SHOW_HISTORY, payload: false });
+                        handleSearchWrapper(item.id);
+                      }}
+                      className="flex items-center gap-3 text-left flex-grow"
                       role="option"
-                      aria-selected={state.focusedSuggestionIndex === index}
                     >
-                      {suggestion.imageUrl ? (
+                      <div className="p-2 rounded-lg bg-gray-100 group-hover:bg-[#1ABA7F]/20 group-hover:scale-110 transition-all duration-200">
+                        <History className="h-4 w-4 text-gray-600 group-hover:text-[#225F91]" />
+                      </div>
+                      <span className="text-gray-700 font-semibold group-hover:text-[#225F91] transition-colors duration-200">
+                        {item.displayName}
+                      </span>
+                    </button>
+
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const newHistory = state.searchHistory.filter((h) => h.id !== item.id);
+                        dispatch({ type: api.ACTIONS.SET_SEARCH_HISTORY, payload: newHistory });
+                        api.saveSearchHistory(newHistory);
+                      }}
+                      className="h-7 w-7 p-0 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200"
+                      aria-label={`Delete ${item.displayName}`}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Suggestions Section */}
+            {state.showDropdown && state.suggestions.length > 0 && (
+              <div className="py-2">
+                {state.suggestions.map((suggestion, index) => (
+                  <button
+                    key={suggestion.id}
+                    ref={(el) => (suggestionRefs.current[index] = el)}
+                    onClick={() => handleSelectMedication(suggestion)}
+                    className={cn(
+                      'w-full px-4 py-3 text-left transition-all duration-200 flex items-center gap-4 group relative overflow-hidden animate-in fade-in slide-in-from-left-2',
+                      state.focusedSuggestionIndex === index
+                        ? 'bg-gradient-to-r from-[#1ABA7F]/15 to-[#225F91]/10'
+                        : 'hover:bg-gradient-to-r hover:from-[#1ABA7F]/10 hover:to-transparent'
+                    )}
+                    style={{ animationDelay: `${index * 50}ms`, animationDuration: '300ms' }}
+                    role="option"
+                    aria-selected={state.focusedSuggestionIndex === index}
+                  >
+                    {/* Selection indicator */}
+                    <div className={cn(
+                      "absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-[#1ABA7F] to-[#225F91] transition-all duration-300",
+                      state.focusedSuggestionIndex === index ? "opacity-100" : "opacity-0"
+                    )} />
+
+                    {/* Image */}
+                    {suggestion.imageUrl ? (
+                      <div className="relative overflow-hidden rounded-lg flex-shrink-0">
                         <img
                           src={suggestion.imageUrl}
                           alt={suggestion.displayName}
-                          className="w-16 h-16 object-cover rounded-sm p-0.5 border border-[#1ABA7F]/20 shadow-md transition-transform duration-300 hover:scale-105"
+                          className="w-16 h-16 object-cover rounded-lg p-0.5 border-2 border-[#1ABA7F]/20 shadow-md transition-all duration-300 group-hover:scale-110 group-hover:border-[#1ABA7F]/40 group-hover:shadow-lg"
                         />
-                      ) : (
-                        <TrendingUp className="h-3 sm:h-4 w-3 sm:w-4 text-[#225F91]" />
-                      )}
-                      <div className="flex-1">
-                        <div className="font-bold">{suggestion.displayName}</div>
-                        <div className="font-medium text-sm text-gray-600">
-                          {suggestion.ingredients
-                            ?.map((ing, i) => {
-                              const strength = ing.strengthValue ? ` ${ing.strengthValue}${ing.strengthUnit ?? ''}` : '';
-                              return (
-                                <span key={i}>
-                                  {ing.activeSubstance}
-                                  {strength}
-                                  {i < suggestion.ingredients.length - 1 ? ', ' : ''}
-                                </span>
-                              );
-                            })
-                            .reduce((prev, curr) => [prev, curr], []) || 'No ingredients listed'}
-                        </div>
                       </div>
-                    </button>
-                  ))}
-                </div>
-                )}
-   
-              {/* No Matches Message */}
-                  {state.showDropdown && 
-                  state.searchTerm && 
-                  state.suggestions.length === 0 && 
-                  !state.isLoadingSuggestions && (
-                    <div className="p-6 text-center">
-                      <div className="bg-gray-100 p-4 rounded-full w-16 h-16 mx-auto mb-3 flex items-center justify-center">
-                        <X className="h-8 w-8 text-gray-400" />
+                    ) : (
+                      <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-[#1ABA7F]/10 to-[#225F91]/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
+                        <TrendingUp className="h-6 w-6 text-[#225F91]" />
                       </div>
-                      <p className="text-gray-600 font-semibold mb-1">
-                        No medications found
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        No matches for "<span className="font-medium text-gray-700">{state.searchTerm}</span>"
-                      </p>
-                      <p className="text-xs text-gray-400 mt-2">
-                        Try a different spelling or search term
-                      </p>
+                    )}
+
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="text-base font-bold text-gray-800 truncate group-hover:text-[#225F91] transition-colors duration-200">
+                        {suggestion.displayName}
+                      </div>
+                      <div className="font-medium text-sm text-gray-600 truncate">
+                        {suggestion.ingredients
+                          ?.map((ing, i) => {
+                            const strength = ing.strengthValue ? ` ${ing.strengthValue}${ing.strengthUnit ?? ''}` : '';
+                            return `${ing.activeSubstance}${strength}`;
+                          })
+                          .join(', ') || 'No ingredients listed'}
+                      </div>
                     </div>
-                  )}
 
-
-                {/* Loading */}
-                {state.isLoadingSuggestions && (
-                  <div className="p-3 sm:p-4 flex items-center gap-2 sm:gap-3">
-                    <div className="animate-spin rounded-full h-3 sm:h-4 w-3 sm:w-4 border-b-2 border-[#1ABA7F]"></div>
-                    <span className="text-gray-600 text-xs sm:text-sm">
-                      Searching...
-                    </span>
-                  </div>
-                )}
+                    {/* Arrow */}
+                    <ChevronRight className="h-5 w-5 text-[#1ABA7F] opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
+                  </button>
+                ))}
               </div>
-            </div>
-          )}
+            )}
+
+            {/* No Results */}
+            {state.showDropdown && 
+              state.searchTerm && 
+              state.suggestions.length === 0 && 
+              !state.isLoadingSuggestions && (
+                <div className="p-8 text-center animate-in fade-in zoom-in-95 duration-500">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 mb-4">
+                    <X className="h-8 w-8 text-gray-400" />
+                  </div>
+                  <p className="text-gray-600 font-semibold mb-1 text-lg">
+                    No medications found
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    No matches for "<span className="font-bold text-[#225F91]">{state.searchTerm}</span>"
+                  </p>
+                  <p className="text-xs text-gray-400 mt-3">
+                    Try a different spelling or search term
+                  </p>
+                </div>
+              )}
+
+            {/* Loading */}
+            {state.isLoadingSuggestions && (
+              <div className="p-4 flex items-center gap-3 animate-in fade-in duration-300">
+                <div className="animate-spin rounded-full h-5 w-5 border-2 border-[#1ABA7F] border-t-transparent"></div>
+                <span className="text-gray-600 text-sm font-medium">
+                  Searching medications...
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
       </div>
 
       <hr className="border-t border-gray-300 mb-6" />
 
-      {/* Error */}
       <ErrorMessage error={state.error} />
 
-      {/* Loading skeleton */}
+      {/* Add aria-live for screen readers */}
+      <div 
+        role="status" 
+        aria-live="polite" 
+        aria-atomic="true"
+        className="sr-only"
+      >
+        {state.isSearching && "Searching for medications..."}
+        {!state.isSearching && state.results.length > 0 && `Found ${state.results.length} result${state.results.length === 1 ? '' : 's'}`}
+      </div>
+
+    {state.isSearching && state.results.length > 0 && (
+      <div className="flex items-center justify-center gap-3 p-5 rounded-2xl bg-gradient-to-r from-[#1ABA7F]/10 via-[#225F91]/10 to-[#1ABA7F]/10 border-2 border-[#1ABA7F]/20 shadow-lg animate-in fade-in slide-in-from-top-2 duration-300">
+        <div className="relative">
+          <div className="animate-spin rounded-full h-6 w-6 border-3 border-[#1ABA7F] border-t-transparent"></div>
+          <div className="absolute inset-0 rounded-full border-3 border-[#1ABA7F]/20"></div>
+        </div>
+        <span className="text-sm font-bold text-[#225F91] animate-pulse">
+          Updating results with your location filters...
+        </span>
+      </div>
+    )}
+
       {state.isSearching && <SearchSkeleton />}
 
- 
-   {/* Filter application feedback */}
-      {state.isSearching && state.results.length > 0 && (
-        <div className="flex items-center justify-center gap-3 p-4 rounded-xl bg-gradient-to-r from-[#1ABA7F]/10 to-[#225F91]/10 border border-[#1ABA7F]/20">
-          <div className="animate-spin rounded-full h-5 w-5 border-2 border-[#1ABA7F] border-t-transparent"></div>
-          <span className="text-sm font-semibold text-[#225F91]">
-            Updating results with your location filters...
-          </span>
-        </div>
-      )}
-
-      {/* No results message */}
       {!state.isSearching &&
         state.results.length === 0 &&
         !state.error &&
@@ -599,56 +625,62 @@ const handleSelectMedication = useCallback((suggestion) => {
           </div>
         )}
 
-
-    {/* Medication Cards */}
-    {!state.isSearching &&
-      state.results.map((med) => (
-        <MedicationCard
-        key={med.id}
-        med={med}
-        cart={cart}
-        handleAddToCart={handleAddToCart}
-        isInCart={isInCart}
-        isAddingToCart={state.isAddingToCart}
-        searchTerm={state.searchTerm}
-        state={state.filters.state}
-        lga={state.filters.lga}
-        ward={state.filters.ward}
-        guestId={guestId}
-        fetchCart={fetchCart}
-        locationStatus={locationStatus}
-        states={state.states}
-        lgas={state.lgas}
-        wards={state.wards}
-        geoData={state.geoData}
-        updateLgas={updateLgas}
-        updateWards={updateWards}
-        clearFilters={clearFilters}
-        setFilterState={(val) =>
-          dispatch({ type: api.ACTIONS.SET_FILTERS, payload: { state: val } })
-        }
-        setFilterLga={(val) =>
-          dispatch({ type: api.ACTIONS.SET_FILTERS, payload: { lga: val } })
-        }
-        setFilterWard={(val) =>
-          dispatch({ type: api.ACTIONS.SET_FILTERS, payload: { ward: val } })
-        }
-        showFilters={state.showFilters}
-        setShowFilters={(val) =>
-          dispatch({ type: api.ACTIONS.SET_SHOW_FILTERS, payload: val })
-        }
-        onSelectLocation={() => {
-          dispatch({ type: api.ACTIONS.SET_SHOW_FILTERS, payload: true });
-          setTimeout(() => {
-            const filterElement = document.querySelector('[data-filters]');
-            if (filterElement) {
-              filterElement.scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'start' 
-              });
-            }
-          }, 100);
+{!state.isSearching &&
+  state.results.map((med, index) => (
+    <ErrorBoundary key={med.id} fallback={
+      <div className="p-6 bg-red-50 border-2 border-red-200 rounded-xl animate-in fade-in duration-300">
+        <p className="text-red-600 font-semibold">
+          Unable to display this medication card. Please try again.
+        </p>
+      </div>
+    }>
+      <div 
+        className="animate-in fade-in slide-in-from-bottom-4 duration-500"
+        style={{ 
+          animationDelay: `${index * 100}ms`,
+          animationFillMode: 'backwards'
         }}
+      >  
+        <MedicationCard
+          med={med}
+          cart={cart}
+          handleAddToCart={handleAddToCart}
+          isInCart={isInCart}
+          isAddingToCart={state.isAddingToCart}
+          searchTerm={state.searchTerm}
+          state={state.filters.state}
+          lga={state.filters.lga}
+          ward={state.filters.ward}
+          guestId={guestId}
+          fetchCart={fetchCart}
+          locationStatus={locationStatus}
+          states={state.states}
+          lgas={state.lgas}
+          wards={state.wards}
+          geoData={state.geoData}
+          updateLgas={updateLgas}
+          updateWards={updateWards}
+          clearFilters={clearFilters}
+          setFilterState={(val) =>
+            dispatch({ type: api.ACTIONS.SET_FILTERS, payload: { state: val } })
+          }
+          setFilterLga={(val) =>
+            dispatch({ type: api.ACTIONS.SET_FILTERS, payload: { lga: val } })
+          }
+          setFilterWard={(val) =>
+            dispatch({ type: api.ACTIONS.SET_FILTERS, payload: { ward: val } })
+          }
+          showFilters={state.showFilters}
+          setShowFilters={(val) =>
+            dispatch({ type: api.ACTIONS.SET_SHOW_FILTERS, payload: val })
+          }
+          onSelectLocation={() => {
+            dispatch({ type: api.ACTIONS.SET_SHOW_FILTERS, payload: true });
+            setTimeout(() => {
+              const filterElement = document.querySelector('[data-filters]');
+              smoothScrollToElement(filterElement, 80, 600);
+            }, 200);
+          }}
           onEnableLocation={() => {
             if (navigator.geolocation) {
               navigator.geolocation.getCurrentPosition(
@@ -661,17 +693,20 @@ const handleSelectMedication = useCallback((suggestion) => {
                     },
                   });
                   setLocationStatus('granted');
-                  toast.success('Location enabled successfully');
+                  toast.success(MESSAGES.LOCATION_ENABLED);
                 },
                 (error) => {
                   setLocationStatus('denied');
-                  toast.error('Location access denied. Please select manually.');
+                  toast.error(MESSAGES.LOCATION_DENIED);
                 }
               );
             }
           }}
         />
-      ))}
+      </div>
+    </ErrorBoundary>
+  ))}
+
     </div>
   );
 };

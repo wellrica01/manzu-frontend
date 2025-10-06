@@ -260,9 +260,11 @@ const PharmacyTable = ({
                           <>
                             <p className="text-xs text-gray-500">₦{avail.price.toLocaleString()} each</p>
                             <div className="flex items-center gap-2">
+                              <div className="transition-all duration-200 ease-out">
                               <span className="text-xl font-black text-[#225F91]">
                                 ₦{(avail.price * quantities[avail.pharmacyId]).toLocaleString()}
                               </span>
+                              </div>
                               {isCheapest && (
                                 <Badge className="bg-gradient-to-r from-[#1ABA7F] to-[#16a876] text-white border-0 px-2 py-0.5 text-xs font-bold shadow-lg">
                                   <TrendingDown className="h-3 w-3 mr-1" />
@@ -270,7 +272,9 @@ const PharmacyTable = ({
                                 </Badge>
                               )}
                             </div>
+                            <div className="transition-all duration-200 ease-out">
                             <p className="text-xs text-gray-500 font-medium">x{quantities[avail.pharmacyId]} units</p>
+                            </div>
                           </>
                         ) : (
                           <span className="text-xl font-black text-[#225F91]">
@@ -311,7 +315,7 @@ const PharmacyTable = ({
                             [avail.pharmacyId]: Math.max(1, prev[avail.pharmacyId] - 1)
                           }))}
                           disabled={quantities[avail.pharmacyId] <= 1}
-                          className="h-6 w-6 flex items-center justify-center text-[#225F91] hover:bg-[#1ABA7F]/20 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="h-6 w-6 flex items-center justify-center text-[#225F91] hover:bg-[#1ABA7F]/20 rounded disabled:opacity-50 disabled:cursor-not-allowed active:scale-90 transition-transform duration-100"
                         >
                           <Minus className="h-3 w-3" />
                         </button>
@@ -327,7 +331,7 @@ const PharmacyTable = ({
                             ...prev,
                             [avail.pharmacyId]: prev[avail.pharmacyId] + 1
                           }))}
-                          className="h-6 w-6 flex items-center justify-center text-[#225F91] hover:bg-[#1ABA7F]/20 rounded"
+                          className="h-6 w-6 flex items-center justify-center text-[#225F91] hover:bg-[#1ABA7F]/20 rounded active:scale-90 transition-transform duration-100"
                         >
                           <Plus className="h-3 w-3" />
                         </button>
@@ -336,7 +340,7 @@ const PharmacyTable = ({
 
                     <Button
                       id={`add-to-cart-${medId}-${avail.pharmacyId}`}
-                      onClick={() => handleAddToCart(
+                      onClick={() => handleAddToCart(                     
                         medId,
                         avail.pharmacyId,
                         displayName,
@@ -345,7 +349,8 @@ const PharmacyTable = ({
                       )}
                       disabled={isInCart(medId, avail.pharmacyId) || adding} // disable if already in cart or adding
                       className={cn(
-                        'w-full h-10 px-5 text-sm font-bold rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl relative overflow-hidden group',
+                         "w-full h-12 rounded-xl font-bold text-sm transition-all duration-300 shadow-lg hover:shadow-xl relative overflow-hidden",
+                         "bg-gradient-to-r from-[#225F91] to-[#1a4a73] text-white hover:from-[#1a4a73] hover:to-[#225F91] active:scale-95",
                         isInCart(medId, avail.pharmacyId)
                           ? 'bg-gray-400 text-white cursor-not-allowed' // consistent disabled styling
                           : 'bg-gradient-to-r from-[#225F91] to-[#1a4a73] text-white hover:from-[#1a4a73] hover:to-[#225F91] active:scale-95'
@@ -377,7 +382,7 @@ const PharmacyTable = ({
                     
                     {/* Expanded Details Row */}
                     {isExpanded && (
-                      <tr className="border-t border-gray-100 bg-gradient-to-r from-gray-50/50 to-white">
+                      <tr className="border-t border-gray-100 bg-gradient-to-r from-gray-50/50 to-white animate-in slide-in-from-top-2 fade-in duration-200">
                         <td colSpan="5" className="p-6">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in slide-in-from-top-2 duration-300">
                             {/* Contact & Actions */}

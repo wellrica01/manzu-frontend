@@ -40,6 +40,31 @@ const debounce = (func, wait) => {
   };
 };
 
+
+/* ----------------------------- No Open Pharmacies Empty State ----------------------------- */
+const NoOpenPharmaciesState = ({ onShowAll }) => (
+  <Card className="bg-white border-2 border-orange-200 rounded-2xl shadow-lg p-12">
+    <div className="text-center space-y-4">
+      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-orange-100 mb-2">
+        <Clock className="h-8 w-8 text-orange-600" strokeWidth={2.5} />
+      </div>
+      <h3 className="text-2xl font-black text-gray-800">
+        No Pharmacies Currently Open
+      </h3>
+      <p className="text-gray-600 font-medium max-w-md mx-auto">
+        All pharmacies offering these medications are currently closed.
+      </p>
+      <Button
+        onClick={onShowAll}
+        className="bg-gradient-to-r from-[#225F91] to-[#1a4a73] text-white rounded-xl px-6 py-3 font-bold hover:shadow-lg hover:scale-105 transition-all duration-300"
+      >
+        Show All Pharmacies
+      </Button>
+    </div>
+  </Card>
+);
+
+
 const PharmacyRecommendations = ({
   pharmacyRecommendations,
   medications,
@@ -288,7 +313,9 @@ const PharmacyRecommendations = ({
       </div>
 
       {/* Pharmacy cards */}
-      {sortedPharmacyMap.length === 0 ? (
+      {filterOpen && sortedPharmacyMap.length === 0 ? (
+        <NoOpenPharmaciesState onShowAll={() => setFilterOpen(false)} />
+      ) : sortedPharmacyMap.length === 0 ? (
         <Card className="bg-white border-2 border-gray-200 rounded-2xl shadow-lg p-12">
           <div className="text-center">
             <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" strokeWidth={2} />

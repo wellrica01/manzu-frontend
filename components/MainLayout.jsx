@@ -436,6 +436,7 @@ function MainLayoutContent({ children }) {
       {/* Ultra Premium Toast Notifications */}
       <Toaster
         position="bottom-center"
+        duration={2500}
         toastOptions={{
           style: {
             background: 'rgba(255,255,255,0.98)',

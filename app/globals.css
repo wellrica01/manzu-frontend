@@ -171,3 +171,187 @@
   transform: translateY(-8px) scale(1.05);
   cursor: pointer;
 }
+
+/* Custom scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(26, 186, 127, 0.05);
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #1ABA7F, #16a876);
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, #16a876, #1ABA7F);
+}
+
+/* Firefox */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #1ABA7F rgba(26, 186, 127, 0.1);
+}
+
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 100px;
+}
+
+/* Gradient animation */
+@keyframes gradient {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.bg-300\% {
+  background-size: 300% 300%;
+}
+
+.animate-gradient {
+  animation: gradient 3s ease infinite;
+}
+
+/* Respect motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ========================================
+   PART 4: Global CSS Additions
+   ======================================== */
+
+/* Gradient animation for backgrounds */
+@keyframes gradient {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.bg-300\% {
+  background-size: 300% 300%;
+}
+
+.animate-gradient {
+  animation: gradient 3s ease infinite;
+}
+
+/* Smooth scale on hover for cards */
+.group:hover .group-hover\:scale-110 {
+  transform: scale(1.1);
+}
+
+.group:hover .group-hover\:scale-125 {
+  transform: scale(1.25);
+}
+
+/* Active state for buttons */
+.active\:scale-95:active {
+  transform: scale(0.95);
+}
+
+/* Ensure smooth transitions on all interactive elements */
+button, a, [role="button"] {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+}
+
+/* Smooth image loading */
+img {
+  transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+}
+
+/* Custom pulse for specific elements */
+@keyframes custom-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+.animate-custom-pulse {
+  animation: custom-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Bounce animation for icons */
+@keyframes bounce-subtle {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.animate-bounce-subtle {
+  animation: bounce-subtle 2s ease-in-out infinite;
+}
+
+/* Smooth rotation for icons */
+.hover\:rotate-12:hover {
+  transform: rotate(12deg);
+}
+
+.rotate-180 {
+  transform: rotate(180deg);
+}
+
+/* Shadow transitions */
+.hover\:shadow-2xl:hover {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* Ensure number transitions are smooth */
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+}
+
+/* Improved focus states */
+*:focus-visible {
+  outline: 2px solid #1ABA7F;
+  outline-offset: 2px;
+  border-radius: 0.5rem;
+}
+
+/* Mobile-specific improvements */
+@media (max-width: 640px) {
+  /* Ensure touch targets are large enough */
+  button, a, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Prevent text size adjustment on orientation change */
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+}
+
+/* Accessibility: respect motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

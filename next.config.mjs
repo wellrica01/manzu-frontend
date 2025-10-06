@@ -15,7 +15,7 @@ const nextConfig = {
 
   async headers() {
     return [
-      {
+     {
         source: "/:path*",
         headers: [
           { key: "X-DNS-Prefetch-Control", value: "on" },
@@ -24,9 +24,11 @@ const nextConfig = {
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "X-XSS-Protection", value: "1; mode=block" },
           { key: "Referrer-Policy", value: "origin-when-cross-origin" },
-          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+          // ✅ Allow only your site to use camera, mic, and geolocation
+          { key: "Permissions-Policy", value: "geolocation=(self), microphone=(self), camera=(self)" },
         ],
       },
+
       {
         source: "/api/:path*",
         headers: [{ key: "Cache-Control", value: "no-store, max-age=0" }],
