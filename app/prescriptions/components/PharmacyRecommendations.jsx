@@ -9,6 +9,10 @@ import {
   Loader2, Award, ShoppingCart, TrendingDown, Trash2, Package 
 } from 'lucide-react';
 import { formatOperatingHours, getOperatingHoursTextColor } from '@/lib/pharmacyUtils';
+import { cn } from '@/lib/utils';
+
+
+
 import { usePharmacySort } from '@/hooks/usePharmacySort';
 
 // Constants
@@ -18,101 +22,19 @@ const SORT_OPTIONS = {
   NEAREST: 'nearest'
 };
 
-// Utility functions with validation
+/* ===================== UTILITY FUNCTIONS ===================== */
 const formatCurrency = (amount) => {
   if (typeof amount !== 'number' || isNaN(amount)) return '₦0';
   return `₦${amount.toLocaleString('en-NG', { maximumFractionDigits: 0 })}`;
 };
 
 const formatDistance = (distance) => {
-  if (typeof distance !== 'number' || isNaN(distance)) return 'Distance N/A';
-  return `${distance.toFixed(1)} km away`;
-};
-
-const isValidDistance = (distance) => {
-  return typeof distance === 'number' && !isNaN(distance) && distance >= 0;
-};
-
-// Validation helper
-const validateBulkAddParams = (pharmacyId, items) => {
-  // Validate pharmacyId
-  if (
-    pharmacyId === undefined ||
-    pharmacyId === null ||
-    typeof pharmacyId !== 'number' ||
-    isNaN(pharmacyId)
-  ) {
-    throw new Error('Invalid pharmacy ID');
-  }
-
-  // Validate items array
-  if (!Array.isArray(items) || items.length === 0) {
-    throw new Error('No items to add');
-  }
-
-  items.forEach((item, index) => {
-    // Validate medicationId as number
-    if (
-      item.medicationId === undefined ||
-      item.medicationId === null ||
-      typeof item.medicationId !== 'number' ||
-      isNaN(item.medicationId)
-    ) {
-      throw new Error(`Invalid medication ID at index ${index}`);
-    }
-
-    // Validate pharmacyId as number
-    if (
-      item.pharmacyId === undefined ||
-      item.pharmacyId === null ||
-      typeof item.pharmacyId !== 'number' ||
-      isNaN(item.pharmacyId)
-    ) {
-      throw new Error(`Invalid pharmacy ID at index ${index}`);
-    }
-
-    // Validate quantity
-    if (typeof item.quantity !== 'number' || item.quantity < 1) {
-      throw new Error(`Invalid quantity at index ${index}`);
-    }
-  });
+  if (typeof distance !== 'number' || isNaN(distance)) return 'N/A';
+  return `${distance.toFixed(1)} km`;
 };
 
 
-/* ----------------------------- Empty States ----------------------------- */
-const NoOpenPharmaciesState = ({ onShowAll }) => (
-  <Card className="bg-white border-2 border-orange-200 rounded-2xl shadow-lg p-12">
-    <div className="text-center space-y-4">
-      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-orange-100 mb-2">
-        <Clock className="h-8 w-8 text-orange-600" strokeWidth={2.5} />
-      </div>
-      <h3 className="text-2xl font-black text-gray-800">
-        No Pharmacies Currently Open
-      </h3>
-      <p className="text-gray-600 font-medium max-w-md mx-auto">
-        All pharmacies offering these medications are currently closed.
-      </p>
-      <Button
-        onClick={onShowAll}
-        className="bg-gradient-to-r from-[#225F91] to-[#1a4a73] text-white rounded-xl px-6 py-3 font-bold hover:shadow-lg hover:scale-105 transition-all duration-300"
-      >
-        Show All Pharmacies
-      </Button>
-    </div>
-  </Card>
-);
-
-const EmptyPharmaciesState = () => (
-  <Card className="bg-white border-2 border-gray-200 rounded-2xl shadow-lg p-12">
-    <div className="text-center">
-      <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" strokeWidth={2} />
-      <h3 className="text-2xl font-black text-gray-700 mb-2">No pharmacies found</h3>
-      <p className="text-gray-600 font-medium">Try adjusting your filters</p>
-    </div>
-  </Card>
-);
-
-/* ----------------------------- Medication Card Component ----------------------------- */
+/* ===================== MEDICATION CARD ===================== */
 const MedicationCard = React.memo(({ 
   med, 
   pharmacy, 
@@ -128,22 +50,22 @@ const MedicationCard = React.memo(({
 
   return (
     <div className="p-3 bg-gray-50 rounded-lg border border-gray-200 space-y-3">
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex-1 min-w-0">
+      <div className="flex justify-between gap-2">
+        <div className="flex-1">
           <p className="text-sm font-bold text-gray-900 mb-1">
-            {med.displayName || 'Unknown Medication'}
+            {med.displayName || 'Unknown'}
           </p>
-          <div className="flex items-center gap-2 text-xs text-gray-600 font-semibold">
+          <div className="flex items-center gap-2 text-xs text-gray-600">
             <span className="px-2 py-1 bg-white rounded border border-gray-300">
               Qty: {qty}
             </span>
             <span>{formatCurrency(med.price)} each</span>
           </div>
         </div>
-        <div className="text-right flex-shrink-0">
+        <div className="text-right">
           {isLowestPrice && (
-            <Badge className="bg-green-100 text-green-700 border-green-300 font-bold text-xs mb-1">
-              <TrendingDown className="h-3 w-3 mr-1" strokeWidth={3} />
+            <Badge className="bg-green-50 text-green-700 border-green-200 font-bold text-xs mb-1">
+              <TrendingDown className="h-3 w-3 mr-1" strokeWidth={2} />
               Best
             </Badge>
           )}
@@ -159,17 +81,17 @@ const MedicationCard = React.memo(({
             <Button
               variant="ghost"
               disabled
-              className="flex-1 h-10 rounded-lg font-bold text-sm bg-green-100 text-green-700 border border-green-300"
+              className="flex-1 h-10 rounded-lg font-bold text-sm bg-green-50 text-green-700 border border-green-200"
             >
-              <Check className="h-4 w-4 mr-2" strokeWidth={3} />
+              <Check className="h-4 w-4 mr-2" strokeWidth={2} />
               Added
             </Button>
             <Button
               onClick={() => onRemove(med, pharmacy)}
               variant="outline"
-              className="flex-1 h-10 rounded-lg font-bold text-sm border border-red-300 text-red-600 hover:bg-red-50"
+              className="flex-1 h-10 rounded-lg font-bold text-sm border-red-200 text-red-600 hover:bg-red-50"
             >
-              <Trash2 className="h-4 w-4 mr-2" strokeWidth={3} />
+              <Trash2 className="h-4 w-4 mr-2" strokeWidth={2} />
               Remove
             </Button>
           </>
@@ -177,16 +99,16 @@ const MedicationCard = React.memo(({
           <Button
             onClick={() => onAddToCart(med.id, pharmacy.pharmacyId, med.displayName)}
             disabled={isAddingSingle}
-            className="w-full h-10 rounded-lg font-bold text-sm bg-gradient-to-r from-[#1ABA7F] to-[#225F91] text-white hover:scale-[1.02] transition-all disabled:opacity-50"
+            className="w-full h-10 rounded-lg font-bold text-sm bg-gradient-to-r from-[#1ABA7F] to-[#225F91] text-white hover:opacity-90 disabled:opacity-50"
           >
             {isAddingSingle ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin mr-2" strokeWidth={3} />
+                <Loader2 className="h-4 w-4 animate-spin mr-2" strokeWidth={2} />
                 Adding...
               </>
             ) : (
               <>
-                <ShoppingCart className="h-4 w-4 mr-2" strokeWidth={3} />
+                <ShoppingCart className="h-4 w-4 mr-2" strokeWidth={2} />
                 Add to Cart
               </>
             )}
@@ -199,7 +121,7 @@ const MedicationCard = React.memo(({
 
 MedicationCard.displayName = 'MedicationCard';
 
-/* ----------------------------- Pharmacy Card Component ----------------------------- */
+/* ===================== PHARMACY CARD ===================== */
 const PharmacyCard = React.memo(({ 
   pharmacy,
   medications,
@@ -222,57 +144,56 @@ const PharmacyCard = React.memo(({
   const itemsNotInCart = (pharmacy.meds || []).filter(med => med?.id && !isInCart(med.id, pharmacy.pharmacyId)).length;
 
   return (
-    <Card className="overflow-hidden bg-white pt-0 border-2 border-[#1ABA7F]/30 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300">
+    <Card className="border-2 border-gray-100 rounded-2xl bg-white hover:shadow-lg transition-shadow duration-200">
       {/* Cover Image */}
       {pharmacy.logoUrl && (
-        <div className="relative w-full h-40 sm:h-48 overflow-hidden">
+        <div className="relative w-full h-48 overflow-hidden rounded-t-2xl">
           <img
             src={pharmacy.logoUrl}
-            alt={`${pharmacy.pharmacyName || 'Pharmacy'} logo`}
+            alt={pharmacy.pharmacyName}
             className="w-full h-full object-cover"
-            loading="lazy"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
 
-          {/* Badges on Image */}
-          <div className="absolute top-3 left-3 right-3 flex flex-wrap gap-2">
+          {/* Badges */}
+          <div className="absolute top-3 left-3 flex gap-2">
             {isNearest && (
-              <Badge className="px-3 py-1.5 rounded-lg font-bold text-sm bg-[#225F91] text-white border-2 border-white shadow-lg">
-                <Navigation className="h-3 w-3 mr-1" strokeWidth={3} />
+              <Badge className="px-3 py-1.5 rounded-lg font-bold bg-[#225F91] text-white border-2 border-white">
+                <Navigation className="h-3 w-3 mr-1" strokeWidth={2} />
                 Nearest
               </Badge>
             )}
             {isCheapest && (
-              <Badge className="px-3 py-1.5 rounded-lg font-bold text-sm bg-[#1ABA7F] text-white border-2 border-white shadow-lg">
-                <DollarSign className="h-3 w-3 mr-1" strokeWidth={3} />
+              <Badge className="px-3 py-1.5 rounded-lg font-bold bg-[#1ABA7F] text-white border-2 border-white">
+                <DollarSign className="h-3 w-3 mr-1" strokeWidth={2} />
                 Cheapest
               </Badge>
             )}
           </div>
 
-          {/* Pharmacy Name on Image */}
+          {/* Pharmacy Name */}
           <div className="absolute bottom-0 left-0 right-0 p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-white/20 backdrop-blur-md border border-white/30">
-                <Store className="h-5 w-5 text-white" />
+              <div className="p-2 rounded-lg bg-white/20 backdrop-blur-sm border border-white/30">
+                <Store className="h-5 w-5 text-white" strokeWidth={2} />
               </div>
-              <h3 className="text-xl font-black text-white drop-shadow-lg flex-1">
-                {pharmacy.pharmacyName || 'Unknown Pharmacy'}
+              <h3 className="text-xl font-black text-white">
+                {pharmacy.pharmacyName}
               </h3>
             </div>
           </div>
         </div>
       )}
 
-      <CardContent className="pt-0 px-4 sm:p-6 space-y-4">
-        {/* Header (without cover) */}
+      <CardContent className="p-6 space-y-4">
+        {/* Header without cover */}
         {!pharmacy.logoUrl && (
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-3 rounded-xl bg-gradient-to-br from-[#1ABA7F]/20 to-[#225F91]/20">
-              <Store className="h-6 w-6 text-[#225F91]" />
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-3 rounded-xl bg-[#1ABA7F]/10">
+              <Store className="h-6 w-6 text-[#225F91]" strokeWidth={2} />
             </div>
-            <h3 className="text-xl sm:text-2xl font-black text-[#225F91] flex-1">
-              {pharmacy.pharmacyName || 'Unknown Pharmacy'}
+            <h3 className="text-2xl font-black text-[#225F91]">
+              {pharmacy.pharmacyName}
             </h3>
           </div>
         )}
@@ -281,8 +202,8 @@ const PharmacyCard = React.memo(({
         <div className="space-y-2">
           {pharmacy.address && (
             <div className="flex items-start gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
-              <MapPin className="h-4 w-4 text-[#1ABA7F] mt-0.5 flex-shrink-0" strokeWidth={2.5} />
-              <span className="text-sm text-gray-700 font-medium line-clamp-2 flex-1">
+              <MapPin className="h-4 w-4 text-[#1ABA7F] mt-0.5" strokeWidth={2} />
+              <span className="text-sm text-gray-700 line-clamp-2 flex-1">
                 {pharmacy.address}
               </span>
             </div>
@@ -293,12 +214,12 @@ const PharmacyCard = React.memo(({
             if (!formattedHours) return null;
             return (
               <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                <Clock className="h-4 w-4 text-[#225F91] flex-shrink-0" strokeWidth={2.5} />
+                <Clock className="h-4 w-4 text-[#225F91]" strokeWidth={2} />
                 <span className={`text-sm font-semibold flex-1 ${getOperatingHoursTextColor(pharmacy.operatingHours)}`}>
                   {formattedHours.text}
                 </span>
                 {formattedHours.status === 'open' && (
-                  <Badge className="bg-green-500 text-white border-0 px-2 py-0.5 text-xs font-bold">
+                  <Badge className="bg-green-500 text-white px-2 py-0.5 text-xs">
                     Open
                   </Badge>
                 )}
@@ -307,29 +228,29 @@ const PharmacyCard = React.memo(({
           })()}
 
           <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
-            <Navigation className="h-4 w-4 text-[#76D1F3] flex-shrink-0" strokeWidth={2.5} />
+            <Navigation className="h-4 w-4 text-[#76D1F3]" strokeWidth={2} />
             <span className="text-sm font-semibold text-gray-700">
-              {formatDistance(pharmacy.distance_km)}
+              {formatDistance(pharmacy.distance_km)} away
             </span>
           </div>
 
           {/* Summary */}
-          <div className="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-[#1ABA7F]/10 to-[#225F91]/10 border border-[#1ABA7F]/30">
+          <div className="flex items-center justify-between p-3 rounded-lg bg-[#1ABA7F]/10 border border-[#1ABA7F]/30">
             <div className="flex items-center gap-2">
-              <Package className="h-4 w-4 text-[#225F91]" />
+              <Package className="h-4 w-4 text-[#225F91]" strokeWidth={2} />
               <span className="text-sm font-bold text-gray-700">
                 {pharmacy.medCount || 0}/{medications?.length || 0} available
               </span>
             </div>
-            <span className="text-base sm:text-lg font-black text-[#225F91]">
+            <span className="text-lg font-black text-[#225F91]">
               {formatCurrency(pharmacy.trueTotalPrice)}
             </span>
           </div>
         </div>
 
-        {/* Medications List */}
+        {/* Medications */}
         <div className="space-y-2">
-          <h4 className="text-sm font-black text-gray-700 uppercase tracking-wide">
+          <h4 className="text-sm font-bold text-gray-700 uppercase">
             Medications
           </h4>
 
@@ -363,24 +284,24 @@ const PharmacyCard = React.memo(({
             <Button
               onClick={() => onBulkAdd(pharmacy.pharmacyId, pharmacy.meds)}
               disabled={isBulkAdding}
-              className="w-full h-12 rounded-xl font-black text-base bg-gradient-to-r from-[#1ABA7F] to-[#225F91] text-white hover:scale-[1.02] transition-all disabled:opacity-50"
+              className="w-full h-12 rounded-xl font-bold bg-gradient-to-r from-[#1ABA7F] to-[#225F91] text-white hover:opacity-90 disabled:opacity-50"
             >
               {isBulkAdding ? (
                 <>
-                  <Loader2 className="h-5 w-5 animate-spin mr-2" strokeWidth={3} />
+                  <Loader2 className="h-5 w-5 animate-spin mr-2" strokeWidth={2} />
                   Adding...
                 </>
               ) : (
                 <>
-                  <ShoppingCart className="h-5 w-5 mr-2" strokeWidth={3} />
+                  <ShoppingCart className="h-5 w-5 mr-2" strokeWidth={2} />
                   Add All {itemsNotInCart} to Cart
                 </>
               )}
             </Button>
           ) : (
             itemsInCart > 0 && (
-              <div className="flex items-center justify-center gap-2 p-3 bg-green-100 rounded-xl border border-green-300">
-                <Check className="h-5 w-5 text-green-700" strokeWidth={3} />
+              <div className="flex items-center justify-center gap-2 p-3 bg-green-50 rounded-xl border border-green-200">
+                <Check className="h-5 w-5 text-green-700" strokeWidth={2} />
                 <span className="text-sm font-bold text-green-700">
                   All items in cart
                 </span>
@@ -395,7 +316,7 @@ const PharmacyCard = React.memo(({
 
 PharmacyCard.displayName = 'PharmacyCard';
 
-/* ----------------------------- Main Component ----------------------------- */
+/* ===================== PHARMACY RECOMMENDATIONS ===================== */
 const PharmacyRecommendations = ({
   pharmacyRecommendations,
   medications,
@@ -408,7 +329,6 @@ const PharmacyRecommendations = ({
 }) => {
   const [filterOpen, setFilterOpen] = useState(false);
 
-  // Use custom hook for sorting logic
   const {
     sortOption,
     setSortOption,
@@ -433,51 +353,27 @@ const PharmacyRecommendations = ({
     if (cartItem) {
       onRemoveItem({
         id: cartItem.id,
-        name: med.displayName || 'Unknown Item',
+        name: med.displayName || 'Unknown',
         quantity: cartItem.quantity || 1
       });
     }
   }, [cart, onRemoveItem]);
 
-  // Bulk add with validation
   const handleBulkAdd = useCallback(async (pharmacyId, meds) => {
     if (!meds?.length) {
       toast.error('No medications to add');
       return;
     }
 
-    try {
-      // Validate and prepare items
-      const itemsToAdd = meds
-        .filter(med => med?.id && !isInCart(med.id, pharmacyId))
-        .map(med => ({
-          medicationId: med.id,
-          pharmacyId,
-          quantity: getQty(med.id),
-        }));
-
-      if (itemsToAdd.length === 0) {
-        toast.info('All items already in cart');
-        return;
-      }
-
-      // Validate parameters
-      validateBulkAddParams(pharmacyId, itemsToAdd);
-
-      // Use duplicate check if provided
-      if (handleBulkAddWithDuplicateCheck) {
-        await handleBulkAddWithDuplicateCheck(pharmacyId, meds);
-      }
-    } catch (error) {
-      console.error('Bulk add validation error:', error);
-      toast.error(error.message || 'Failed to add medications');
+    if (handleBulkAddWithDuplicateCheck) {
+      await handleBulkAddWithDuplicateCheck(pharmacyId, meds);
     }
-  }, [isInCart, getQty, handleBulkAddWithDuplicateCheck]);
+  }, [handleBulkAddWithDuplicateCheck]);
 
-  const sortFilterOptions = [
-    { value: SORT_OPTIONS.DEFAULT, label: 'Best Deal', icon: Award },
-    { value: SORT_OPTIONS.CHEAPEST, label: 'Cheapest', icon: DollarSign },
-    { value: SORT_OPTIONS.NEAREST, label: 'Nearest', icon: Navigation },
+  const sortOptions = [
+    { value: 'default', label: 'Best Deal', icon: Award },
+    { value: 'cheapest', label: 'Cheapest', icon: DollarSign },
+    { value: 'nearest', label: 'Nearest', icon: Navigation },
     { value: 'open', label: 'Open Now', icon: Clock, isFilter: true },
   ];
 
@@ -485,41 +381,66 @@ const PharmacyRecommendations = ({
 
   return (
     <div className="space-y-6 pb-24">
-      {/* Sort & Filter Controls */}
+      {/* Sort Controls */}
       <div className="space-y-3">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          {sortFilterOptions.map((option) => (
+          {sortOptions.map((option) => (
             <Button
               key={option.value}
               variant="outline"
               onClick={() => option.isFilter ? setFilterOpen(!filterOpen) : setSortOption(option.value)}
-              className={`h-11 rounded-xl font-bold text-sm transition-all duration-300 border-2 ${
+              className={cn(
+                "h-11 rounded-xl font-bold text-sm border-2 transition-colors duration-200",
                 (option.isFilter ? filterOpen : sortOption === option.value)
-                  ? "bg-gradient-to-r from-[#225F91] to-[#1a4a73] text-white border-[#225F91]"
+                  ? "bg-[#225F91] text-white border-[#225F91]"
                   : "bg-white text-[#225F91] border-gray-300 hover:border-[#1ABA7F]"
-              }`}
+              )}
             >
-              <option.icon className="h-4 w-4 mr-2" strokeWidth={2.5} />
+              <option.icon className="h-4 w-4 mr-2" strokeWidth={2} />
               {option.label}
             </Button>
           ))}
         </div>
 
-        <div className="p-3 bg-gradient-to-r from-[#1ABA7F]/10 to-[#225F91]/10 rounded-xl border border-[#1ABA7F]/20">
+        <div className="p-3 bg-[#1ABA7F]/10 rounded-xl border border-[#1ABA7F]/20">
           <p className="text-sm font-semibold text-gray-700 text-center">
             {filterOpen && <span className="text-green-600">✓ Open pharmacies only · </span>}
-            {sortOption === SORT_OPTIONS.DEFAULT && 'Sorted by most medications available'}
-            {sortOption === SORT_OPTIONS.CHEAPEST && 'Sorted by cheapest total price'}
-            {sortOption === SORT_OPTIONS.NEAREST && 'Sorted by nearest distance'}
+            {sortOption === 'default' && 'Sorted by most medications available'}
+            {sortOption === 'cheapest' && 'Sorted by cheapest total price'}
+            {sortOption === 'nearest' && 'Sorted by nearest distance'}
           </p>
         </div>
       </div>
 
-      {/* Pharmacy Cards or Empty States */}
+      {/* Empty States */}
       {filterOpen && sortedPharmacies.length === 0 ? (
-        <NoOpenPharmaciesState onShowAll={() => setFilterOpen(false)} />
+        <Card className="bg-white border-2 border-orange-200 rounded-2xl p-12">
+          <div className="text-center space-y-4">
+            <div className="w-16 h-16 mx-auto rounded-full bg-orange-100 flex items-center justify-center">
+              <Clock className="h-8 w-8 text-orange-600" strokeWidth={2} />
+            </div>
+            <h3 className="text-2xl font-black text-gray-800">
+              No Pharmacies Currently Open
+            </h3>
+            <p className="text-gray-600">
+              All pharmacies are currently closed
+            </p>
+            <Button
+              onClick={() => setFilterOpen(false)}
+              className="bg-[#225F91] text-white rounded-xl px-6 py-3 font-bold hover:opacity-90"
+            >
+              Show All Pharmacies
+            </Button>
+          </div>
+        </Card>
       ) : sortedPharmacies.length === 0 ? (
-        <EmptyPharmaciesState />
+        <Card className="bg-white border-2 border-gray-200 rounded-2xl p-12">
+          <div className="text-center">
+            <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" strokeWidth={2} />
+            <h3 className="text-2xl font-black text-gray-700 mb-2">No pharmacies found</h3>
+            <p className="text-gray-600">Try adjusting your filters</p>
+          </div>
+        </Card>
       ) : (
         <div className="space-y-6">
           {sortedPharmacies.map((pharmacy) => (
@@ -544,5 +465,6 @@ const PharmacyRecommendations = ({
     </div>
   );
 };
+
 
 export default PharmacyRecommendations;

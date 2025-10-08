@@ -14,14 +14,15 @@ import {
 import CartItem from './CartItem';
 import { cn } from '@/lib/utils';
 
-export const PharmacyCartCard = ({ 
+
+const PharmacyCartCard = ({ 
   pharmacy, 
   handleQuantityChange, 
   setRemoveItem, 
   isUpdating, 
   calculateItemPrice,
   segment = 'ready',
-  selectionMode = false,     
+  selectionMode = false,
   isSelected = () => false, 
   onToggleSelect = () => {} 
 }) => {
@@ -37,86 +38,55 @@ export const PharmacyCartCard = ({
       : null;
   }, [pharmacy.pharmacy.operatingHours]);
 
-  const cartItemsList = useMemo(() => {
-    return pharmacy.items.map((item, index) => (
-      <div key={item.id}>
-        <CartItem
-          item={item}
-          handleQuantityChange={handleQuantityChange}
-          setRemoveItem={setRemoveItem}
-          isUpdating={isUpdating}
-          calculateItemPrice={calculateItemPrice}
-          segment={segment}
-          selectionMode={selectionMode}
-          isSelected={isSelected(item.id)}
-          onToggleSelect={onToggleSelect}
-        />
-        {index < pharmacy.items.length - 1 && (
-          <Separator className="my-3 bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
-        )}
-      </div>
-    ));
-  }, [pharmacy.items, handleQuantityChange, setRemoveItem, isUpdating, calculateItemPrice, segment, selectionMode, isSelected, onToggleSelect]);
-
   return (
     <Card className={cn(
-      "relative overflow-hidden bg-white border-2 pt-0 rounded-2xl shadow-lg transition-all duration-300",
+      "bg-white border-2 rounded-2xl transition-shadow duration-200 pt-0",
       segment === 'ready' ? "border-[#1ABA7F]/30" : "border-orange-300",
-      "hover:shadow-xl"
+      "hover:shadow-lg"
     )}>
-      {/* Cover Photo with Overlay */}
+      {/* Cover Photo */}
       {pharmacy.pharmacy.logoUrl && (
-        <div className="relative w-full h-40 sm:h-48 overflow-hidden">
+        <div className="relative w-full h-48 overflow-hidden rounded-t-2xl">
           <img
             src={pharmacy.pharmacy.logoUrl}
-            alt={`${pharmacy.pharmacy.name} cover`}
+            alt={pharmacy.pharmacy.name}
             loading="lazy"
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
           
-          {/* Pharmacy Name on Cover */}
-          <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6">
+          {/* Pharmacy Name */}
+          <div className="absolute bottom-0 left-0 right-0 p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 sm:p-3 rounded-xl bg-white/20 backdrop-blur-md border border-white/30">
-                <Store className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+              <div className="p-2 rounded-lg bg-white/20 backdrop-blur-sm border border-white/30">
+                <Store className="h-5 w-5 text-white" strokeWidth={2} />
               </div>
-              <h3 className="text-xl sm:text-2xl font-black text-white drop-shadow-lg flex-1">
+              <h3 className="text-xl font-black text-white flex-1">
                 {pharmacy.pharmacy.name}
               </h3>
               
-              {/* Collapse button on image */}
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setExpanded(!expanded)}
-                className={cn(
-                  "h-10 w-10 rounded-lg transition-all duration-300 backdrop-blur-md border flex-shrink-0",
-                  expanded 
-                    ? "bg-white/20 text-white border-white/30 hover:bg-white/30" 
-                    : "bg-white/20 text-white border-white/30 hover:bg-white/30"
-                )}
-                aria-label={expanded ? "Collapse items" : "Expand items"}
+                className="h-10 w-10 rounded-lg bg-white/20 text-white border border-white/30 hover:bg-white/30"
               >
-                <ChevronDown className={cn("w-5 h-5 transition-transform duration-300", expanded && "rotate-180")} />
+                <ChevronDown className={cn("w-5 h-5 transition-transform duration-200", expanded && "rotate-180")} strokeWidth={2} />
               </Button>
             </div>
           </div>
         </div>
       )}
 
-      <CardHeader className={cn(
-        "p-4 sm:p-6 space-y-3",
-        !pharmacy.pharmacy.logoUrl && "pt-6"
-      )}>
-        {/* Pharmacy Name if no cover photo */}
+      <CardHeader className="p-4 space-y-3">
+        {/* Pharmacy Name (no cover) */}
         {!pharmacy.pharmacy.logoUrl && (
           <div className="flex items-center justify-between gap-4 mb-2">
-            <div className="flex items-center gap-3 flex-1 min-w-0">
-              <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-[#1ABA7F]/20 to-[#225F91]/20">
-                <Store className="h-5 w-5 sm:h-6 sm:w-6 text-[#225F91]" />
+            <div className="flex items-center gap-3 flex-1">
+              <div className="p-3 rounded-xl bg-[#1ABA7F]/10">
+                <Store className="h-6 w-6 text-[#225F91]" strokeWidth={2} />
               </div>
-              <h3 className="text-xl sm:text-2xl font-black text-[#225F91] flex-1 min-w-0">
+              <h3 className="text-2xl font-black text-[#225F91]">
                 {pharmacy.pharmacy.name}
               </h3>
             </div>
@@ -126,56 +96,49 @@ export const PharmacyCartCard = ({
               size="icon"
               onClick={() => setExpanded(!expanded)}
               className={cn(
-                "h-10 w-10 rounded-lg transition-all duration-300 flex-shrink-0",
-                expanded 
-                  ? "bg-[#1ABA7F]/20 text-[#1ABA7F] hover:bg-[#1ABA7F]/30" 
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                "h-10 w-10 rounded-lg",
+                expanded ? "bg-[#1ABA7F]/10 text-[#1ABA7F]" : "bg-gray-100 text-gray-600"
               )}
-              aria-label={expanded ? "Collapse items" : "Expand items"}
             >
-              <ChevronDown className={cn("w-5 h-5 transition-transform duration-300", expanded && "rotate-180")} />
+              <ChevronDown className={cn("w-5 h-5 transition-transform duration-200", expanded && "rotate-180")} strokeWidth={2} />
             </Button>
           </div>
         )}
 
-        {/* Pharmacy Info */}
+        {/* Info Cards */}
         <div className="space-y-2">
-          {/* Address */}
           {pharmacy.pharmacy.address && (
             <div className="flex items-start gap-2 p-3 rounded-lg bg-gray-50 border border-gray-200">
-              <MapPin className="h-4 w-4 text-[#1ABA7F] mt-0.5 flex-shrink-0" />
-              <span className="text-xs sm:text-sm text-gray-700 font-medium line-clamp-2 flex-1">
+              <MapPin className="h-4 w-4 text-[#1ABA7F] mt-0.5" strokeWidth={2} />
+              <span className="text-sm text-gray-700 line-clamp-2 flex-1">
                 {pharmacy.pharmacy.address}
               </span>
             </div>
           )}
 
-          {/* Operating Hours */}
           {formattedHours && (
             <div className="flex items-center gap-2 p-3 rounded-lg bg-gray-50 border border-gray-200">
-              <Clock className="h-4 w-4 text-[#225F91] flex-shrink-0" />
-              <div className="flex-1 min-w-0">
-                <span className={cn('text-xs sm:text-sm font-semibold', getOperatingHoursTextColor(pharmacy.pharmacy.operatingHours))}>
-                  {formattedHours.text}
-                </span>
-              </div>
+              <Clock className="h-4 w-4 text-[#225F91]" strokeWidth={2} />
+              <span className={cn('text-sm font-semibold flex-1', getOperatingHoursTextColor(pharmacy.pharmacy.operatingHours))}>
+                {formattedHours.text}
+              </span>
               {formattedHours.status === 'open' && (
-                <Badge className="bg-green-500 text-white border-0 px-2 py-0.5 text-xs font-bold">
+                <Badge className="bg-green-500 text-white px-2 py-0.5 text-xs">
                   Open
                 </Badge>
               )}
             </div>
           )}
 
-          {/* Summary Bar */}
-          <div className="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-[#1ABA7F]/10 to-[#225F91]/10 border border-[#1ABA7F]/30">
+          {/* Summary */}
+          <div className="flex items-center justify-between p-3 rounded-lg bg-[#1ABA7F]/10 border border-[#1ABA7F]/30">
             <div className="flex items-center gap-2">
-              <Package className="h-4 w-4 text-[#225F91]" />
+              <Package className="h-4 w-4 text-[#225F91]" strokeWidth={2} />
               <span className="text-sm font-bold text-gray-700">
                 {pharmacy.items.length} {pharmacy.items.length === 1 ? 'item' : 'items'}
               </span>
             </div>
-            <span className="text-base sm:text-lg font-black text-[#225F91]">
+            <span className="text-lg font-black text-[#225F91]">
               ₦{pharmacyTotal.toLocaleString()}
             </span>
           </div>
@@ -183,17 +146,34 @@ export const PharmacyCartCard = ({
       </CardHeader>
 
       {expanded && (
-        <CardContent className="p-4 sm:p-6 pt-0 space-y-3 animate-in slide-in-from-top-2 duration-300">
-          {cartItemsList}
+        <CardContent className="p-3 pt-0 space-y-3">
+          {pharmacy.items.map((item, index) => (
+            <div key={item.id}>
+              <CartItem
+                item={item}
+                handleQuantityChange={handleQuantityChange}
+                setRemoveItem={setRemoveItem}
+                isUpdating={isUpdating}
+                calculateItemPrice={calculateItemPrice}
+                segment={segment}
+                selectionMode={selectionMode}
+                isSelected={isSelected(item.id)}
+                onToggleSelect={onToggleSelect}
+              />
+              {index < pharmacy.items.length - 1 && (
+                <Separator className="my-3 bg-gray-200" />
+              )}
+            </div>
+          ))}
 
-          {/* Pharmacy Total */}
+          {/* Total */}
           {pharmacy.items.length > 1 && (
             <div className="pt-4 mt-3 border-t-2 border-gray-200">
-              <div className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-[#225F91]/10 to-[#1ABA7F]/10 border-2 border-[#225F91]/30">
-                <span className="text-sm sm:text-base font-bold text-gray-700">
+              <div className="flex items-center justify-between p-4 rounded-xl bg-[#225F91]/10 border-2 border-[#225F91]/30">
+                <span className="text-base font-bold text-gray-700">
                   Pharmacy Total:
                 </span>
-                <span className="text-xl sm:text-2xl font-black text-[#225F91]">
+                <span className="text-2xl font-black text-[#225F91]">
                   ₦{pharmacyTotal.toLocaleString()}
                 </span>
               </div>

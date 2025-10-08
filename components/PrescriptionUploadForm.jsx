@@ -10,9 +10,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from '@/components/ui/dialog';
-import { Upload, CheckCircle, Clock, FileText, ArrowRight, Mail, X, Eye, Camera, AlertCircle, Info, Sparkles, Shield } from 'lucide-react';
+import { Upload, CheckCircle, Clock, FileText, ArrowRight, Mail, X, Eye, Camera, AlertCircle, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 import { getGuestId } from '@/lib/utils';
 import Link from 'next/link';
@@ -51,10 +50,10 @@ export default function PrescriptionUploadForm() {
 
   const validateForm = () => {
     const newErrors = {};
-    if (!file) newErrors.file = t('upload.errors.file_required');
-    if (!contact) newErrors.contact = t('upload.errors.contact_required');
+    if (!file) newErrors.file = t('upload.errors.file_required', 'Prescription file is required');
+    if (!contact) newErrors.contact = t('upload.errors.contact_required', 'Contact information is required');
     if (contact && !validateContact(contact))
-      newErrors.contact = t('upload.errors.invalid_contact');
+      newErrors.contact = t('upload.errors.invalid_contact', 'Please enter a valid email or phone number');
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -69,7 +68,7 @@ export default function PrescriptionUploadForm() {
       setErrors((prev) => ({ ...prev, file: null }));
       createFilePreview(selectedFile);
     } else {
-      toast.error(t('upload.errors.invalid_file'));
+      toast.error(t('upload.errors.invalid_file', 'Please upload a PDF, JPG, or PNG file'));
     }
   };
 
@@ -98,7 +97,7 @@ export default function PrescriptionUploadForm() {
       setErrors((prev) => ({ ...prev, file: null }));
       createFilePreview(droppedFile);
     } else {
-      toast.error(t('upload.errors.invalid_file'));
+      toast.error(t('upload.errors.invalid_file', 'Please upload a PDF, JPG, or PNG file'));
     }
   };
 
@@ -131,8 +130,8 @@ export default function PrescriptionUploadForm() {
   };
 
   const getFileIcon = (type) => {
-    if (type.startsWith('image/')) return <Camera className="h-5 w-5 sm:h-6 sm:w-6 text-[#1ABA7F]" />;
-    return <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-[#225F91]" />;
+    if (type.startsWith('image/')) return <Camera className="h-5 w-5 text-[#1ABA7F]" strokeWidth={2} />;
+    return <FileText className="h-5 w-5 text-[#225F91]" strokeWidth={2} />;
   };
 
   const handleSubmit = async (e) => {
@@ -140,7 +139,7 @@ export default function PrescriptionUploadForm() {
     setIsUploading(true);
 
     if (!validateForm()) {
-      toast.error(t('upload.errors.fix_errors'));
+      toast.error(t('upload.errors.fix_errors', 'Please fix the errors before submitting'));
       setIsUploading(false);
       return;
     }
@@ -177,14 +176,14 @@ export default function PrescriptionUploadForm() {
           } catch (parseError) {
             console.error('Failed to parse error response:', parseError);
           }
-          toast.error(errorData.message || t('upload.errors.upload_failed'));
+          toast.error(errorData.message || t('upload.errors.upload_failed', 'Upload failed. Please try again.'));
         }
         setIsUploading(false);
         setUploadProgress(0);
       });
 
       xhr.addEventListener('error', () => {
-        toast.error(t('upload.errors.upload_failed'));
+        toast.error(t('upload.errors.upload_failed', 'Upload failed. Please try again.'));
         setIsUploading(false);
         setUploadProgress(0);
       });
@@ -193,7 +192,7 @@ export default function PrescriptionUploadForm() {
       xhr.setRequestHeader('x-guest-id', userIdentifier);
       xhr.send(formData);
     } catch (err) {
-      toast.error(err.message || t('upload.errors.upload_failed'));
+      toast.error(err.message || t('upload.errors.upload_failed', 'Upload failed. Please try again.'));
       setIsUploading(false);
       setUploadProgress(0);
     }
@@ -209,363 +208,329 @@ export default function PrescriptionUploadForm() {
 
   return (
     <div className="w-full">
-    <Dialog open={openSuccessDialog} onOpenChange={setOpenSuccessDialog}>
-      <DialogContent className="w-[95vw] sm:w-full max-w-md sm:max-w-lg max-h-[90vh] mx-auto p-0 overflow-y-auto rounded-2xl sm:rounded-3xl border-2 border-green-200">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-[#1ABA7F]/100  to-[#225F91]/100 p-6 sm:p-8 text-white relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-24 h-24 sm:w-32 sm:h-32 bg-white/10 rounded-full blur-2xl" />
-          
-          <div className="relative z-10 flex flex-col items-center gap-4">
-            <div className="relative">
-              <div className="absolute inset-0 bg-white/20 rounded-full blur-xl animate-pulse" />
-              <div className="relative w-16 h-16 sm:w-20 sm:h-20 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm border-2 border-white/30">
-                <CheckCircle className="h-8 w-8 sm:h-10 sm:w-10 text-white" strokeWidth={3} />
+      {/* Success Dialog */}
+      <Dialog open={openSuccessDialog} onOpenChange={setOpenSuccessDialog}>
+        <DialogContent className="w-[95vw] sm:w-full max-w-md sm:max-w-lg max-h-[90vh] mx-auto p-0 overflow-y-auto rounded-3xl border border-gray-200 shadow-2xl">
+          {/* Header */}
+          <div className="relative bg-gradient-to-br from-[#1ABA7F] to-[#16a876] p-8 sm:p-10 text-white overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl" />
+            
+            <div className="relative z-10 flex flex-col items-center gap-6">
+              <div className="relative">
+                <div className="absolute inset-0 bg-white/20 rounded-full blur-xl animate-pulse" />
+                <div className="relative w-20 h-20 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm border-2 border-white/30">
+                  <CheckCircle className="h-10 w-10 text-white" strokeWidth={2.5} />
+                </div>
+              </div>
+              
+              <div className="text-center">
+                <DialogTitle className="text-2xl sm:text-3xl font-bold mb-2">
+                  Prescription Uploaded Successfully
+                </DialogTitle>
+                <p className="text-white/90 font-medium">
+                  We've received your prescription
+                </p>
               </div>
             </div>
-            
-            <div className="text-center">
-              <DialogTitle className="text-xl sm:text-2xl font-black mb-1">
-                Prescription Uploaded!
-              </DialogTitle>
-              <p className="text-white/90 font-medium text-sm">
-                We've received your prescription successfully
-              </p>
-            </div>
           </div>
-        </div>
 
-        {/* Content */}
-        <div className="p-4 sm:p-6 space-y-5">
-          {/* Confirmation Details */}
-          <div className="space-y-3">
-            <div className="p-4 bg-gradient-to-r from-blue-50 to-blue-50/50 rounded-xl border-2 border-blue-200">
-              <div className="flex items-start gap-3">
-                <div className="p-2 bg-blue-100 rounded-lg flex-shrink-0">
-                  <FileText className="h-5 w-5 text-gray-500 " />
+          {/* Content */}
+          <div className="p-6 sm:p-8 space-y-6">
+            {/* Confirmation Details */}
+            <div className="p-5 bg-gradient-to-br from-gray-50 to-white rounded-2xl border border-gray-200">
+              <div className="flex items-start gap-4">
+                <div className="p-2.5 bg-[#1ABA7F]/10 rounded-xl flex-shrink-0">
+                  <Mail className="h-5 w-5 text-[#1ABA7F]" strokeWidth={2} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-gray-900 mb-1">
-                    Confirmation sent to:
+                  <p className="text-sm font-semibold text-gray-600 mb-1">
+                    Confirmation sent to
                   </p>
-                  <p className="text-base font-black text-[#1ABA7F] break-all">
+                  <p className="text-base font-bold text-[#225F91] break-all">
                     {submittedContact}
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Next Steps Info */}
-            <div className="p-2 bg-gradient-to-r from-green-50 to-emerald-50/50 rounded-xl border border-green-200">
-              <div className="flex items-start gap-3">
-                <div className="p-2 bg-green-100 rounded-lg flex-shrink-0">
-                  <Clock className="h-5 w-5 text-green-600" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-gray-900 mb-2">
-                    What happens next?
-                  </p>
-                  <div className="space-y-2 text-sm font-semibold text-gray-700 leading-relaxed">
-                    <div className="flex items-start gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-green-600 mt-1.5 flex-shrink-0" />
-                      <p>Our pharmacists will review your prescription</p>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-green-600 mt-1.5 flex-shrink-0" />
-                      <p>You'll receive updates via {submittedContact.includes('@') ? 'email' : 'SMS'}</p>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-green-600 mt-1.5 flex-shrink-0" />
-                      <p>Track your prescription status anytime below</p>
-                    </div>
+            {/* Next Steps */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 mb-4">
+                <Clock className="h-5 w-5 text-[#225F91]" strokeWidth={2} />
+                <h3 className="text-base font-bold text-gray-900">What happens next?</h3>
+              </div>
+              
+              <div className="space-y-3">
+                {[
+                  'Our pharmacists will review your prescription',
+                  `You'll receive updates via ${submittedContact.includes('@') ? 'email' : 'SMS'}`,
+                  'Track your prescription status anytime'
+                ].map((step, i) => (
+                  <div key={i} className="flex items-start gap-3">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#1ABA7F] mt-2 flex-shrink-0" />
+                    <p className="text-sm text-gray-700 font-medium leading-relaxed">{step}</p>
                   </div>
-                </div>
+                ))}
               </div>
             </div>
-          </div>
 
-          {/* Action Buttons */}
-          <div className="space-y-3 pt-2">
-            <Button
-              asChild
-              className="w-full flex-1 h-14 p-3 text-sm font-bold rounded-xl bg-gradient-to-r from-[#225F91] to-[#1a4a73]
-               text-white hover:from-[#1a4a73] hover:to-[#225F91] shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 relative overflow-hidden">
-              <Link href="/check-prescription-status">
-                <Clock className="h-5 w-5 mr-2 group-hover:scale-110 transition-transform" strokeWidth={2.5} />
-                Check Prescription Status
-                <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" strokeWidth={2.5} />
-              </Link>
-            </Button>
+            {/* Action Buttons */}
+            <div className="space-y-3 pt-4">
+              <Button
+                asChild
+                className="w-full h-14 text-base font-bold rounded-xl bg-gradient-to-r from-[#225F91] to-[#1a4a73] hover:from-[#1a4a73] hover:to-[#225F91] text-white shadow-lg transition-all duration-300"
+              >
+                <Link href="/check-prescription-status">
+                  <Clock className="h-5 w-5 mr-2" strokeWidth={2} />
+                  Check Prescription Status
+                  <ArrowRight className="h-4 w-4 ml-2" strokeWidth={2.5} />
+                </Link>
+              </Button>
 
-            <Button
-              variant="outline"
-              onClick={handleUploadAnother}
-              className="w-full flex-1 h-12 p-3 text-sm font-bold rounded-xl border-2 border-[#1ABA7F] text-[#225F91] hover:bg-[#1ABA7F]/10 transition-all duration-300 hover:scale-105"
-            >
-              Close
-            </Button>
-          </div>
-
-          {/* Help Text */}
-          <div className="pt-2 border-t border-gray-200">
-            <p className="text-xs text-center text-gray-500 leading-relaxed">
-              Questions? Contact our support team anytime for help
-            </p>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-
-      <div className="space-y-6">
-        <div onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="fileInput" className="text-sm font-black text-[#225F91] uppercase tracking-wider flex items-center gap-2">
-                <Shield className="h-4 w-4 text-[#1ABA7F]" />
-                {t('upload.file_label')}
-              </Label>
-              {file && (
-                <Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white border-0 px-2 py-1 text-xs font-bold shadow-sm">
-                  <CheckCircle className="h-3 w-3 mr-1" />
-                  Ready
-                </Badge>
-              )}
+              <Button
+                variant="outline"
+                onClick={handleUploadAnother}
+                className="w-full h-12 text-base font-semibold rounded-xl border-2 border-gray-200 text-gray-700 hover:bg-gray-50 transition-all duration-300"
+              >
+                Close
+              </Button>
             </div>
-            
+
+            {/* Help Text */}
+            <div className="pt-4 border-t border-gray-100">
+              <p className="text-xs text-center text-gray-500">
+                Questions? Contact our support team anytime for assistance
+              </p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Upload Form */}
+      <form onSubmit={handleSubmit} className="space-y-8 p-2">
+        {/* File Upload Section */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="fileInput" className="text-sm font-bold text-gray-900 flex items-center gap-2">
+              <Shield className="h-4 w-4 text-[#1ABA7F]" strokeWidth={2} />
+              Prescription Document
+            </Label>
             {file && (
-              <div className="p-4 border-2 border-[#1ABA7F]/30 rounded-2xl bg-gradient-to-br from-[#1ABA7F]/5 to-white animate-in slide-in-from-top-2 duration-300 shadow-lg">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className="p-2 rounded-xl bg-white shadow-sm">
-                      {getFileIcon(file.type)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm sm:text-base font-bold text-gray-900 truncate">
-                        {file.name}
-                      </p>
-                      <p className="text-xs sm:text-sm text-gray-500 font-medium">
-                        {getFileSize(file.size)} • {file.type.split('/')[1].toUpperCase()}
-                      </p>
-                    </div>
+              <Badge className="bg-[#1ABA7F] text-white border-0 px-3 py-1 text-xs font-semibold">
+                <CheckCircle className="h-3 w-3 mr-1" strokeWidth={2.5} />
+                Ready
+              </Badge>
+            )}
+          </div>
+          
+          {/* File Preview Card */}
+          {file && (
+            <div className="p-5 border-2 border-gray-200 rounded-2xl bg-white shadow-sm">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4 flex-1 min-w-0">
+                  <div className="p-2.5 rounded-xl bg-gray-50 border border-gray-200">
+                    {getFileIcon(file.type)}
                   </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    {filePreview && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setShowFilePreview(!showFilePreview)}
-                        className="h-8 w-8 p-0 rounded-lg text-[#225F91] hover:bg-[#225F91]/10 transition-all duration-200"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                    )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-gray-900 truncate">
+                      {file.name}
+                    </p>
+                    <p className="text-xs text-gray-500 font-medium">
+                      {getFileSize(file.size)} • {file.type.split('/')[1].toUpperCase()}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {filePreview && (
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
-                      onClick={removeFile}
-                      className="h-8 w-8 p-0 rounded-lg text-red-500 hover:bg-red-50 transition-all duration-200"
+                      onClick={() => setShowFilePreview(!showFilePreview)}
+                      className="h-9 w-9 p-0 rounded-lg hover:bg-gray-100"
                     >
-                      <X className="h-4 w-4" />
+                      <Eye className="h-4 w-4 text-gray-600" strokeWidth={2} />
                     </Button>
-                  </div>
-                </div>
-                
-                {showFilePreview && filePreview && (
-                  <div className="mt-3 p-3 border-2 border-[#1ABA7F]/20 rounded-xl bg-white shadow-inner">
-                    <img 
-                      src={filePreview} 
-                      alt="File preview" 
-                      className="w-full h-auto max-h-48 object-contain rounded-lg"
-                    />
-                  </div>
-                )}
-              </div>
-            )}
-
-            {!file && (
-              <div
-                onDrop={handleDrop}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                className={cn(
-                  "relative p-6 sm:p-10 border-2 border-dashed rounded-2xl text-center transition-all duration-300 overflow-hidden",
-                  isDragOver
-                    ? "border-[#1ABA7F] bg-gradient-to-br from-[#1ABA7F]/10 to-[#225F91]/5 shadow-[0_0_30px_rgba(26,186,127,0.3)] scale-[1.02]"
-                    : "border-[#1ABA7F]/30 bg-gradient-to-br from-white to-gray-50 hover:border-[#1ABA7F]/60 hover:shadow-xl"
-                )}
-              >
-                {isDragOver && (
-                  <div className="absolute inset-0 pointer-events-none">
-                    <Sparkles className="absolute top-4 right-4 h-6 w-6 text-[#1ABA7F] animate-pulse" />
-                    <Sparkles className="absolute bottom-4 left-4 h-4 w-4 text-[#225F91] animate-pulse" style={{ animationDelay: '0.2s' }} />
-                    <Sparkles className="absolute top-1/2 left-1/4 h-5 w-5 text-[#76D1F3] animate-pulse" style={{ animationDelay: '0.4s' }} />
-                  </div>
-                )}
-                
-                <Input
-                  id="fileInput"
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".pdf,.jpg,.jpeg,.png"
-                  onChange={handleFileChange}
-                  className="hidden"
-                />
-                
-                <div className="flex flex-col items-center gap-4">
-                  <div className={cn(
-                    "relative p-4 rounded-2xl transition-all duration-300",
-                    isDragOver ? "bg-[#1ABA7F]/20 scale-110" : "bg-[#1ABA7F]/10"
-                  )}>
-                    <div className={cn(
-                      "absolute inset-0 rounded-2xl blur-xl opacity-0 transition-opacity duration-300",
-                      isDragOver && "opacity-50 bg-gradient-to-r from-[#1ABA7F] to-[#225F91]"
-                    )} />
-                    <Upload className={cn(
-                      "relative h-8 w-8 transition-all duration-300",
-                      isDragOver ? "text-[#1ABA7F] animate-bounce" : "text-[#225F91]"
-                    )} />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <p className="text-base sm:text-lg font-bold text-gray-900">
-                      {isDragOver ? "Drop your prescription here!" : "Drag & drop your prescription"}
-                    </p>
-                    <p className="text-sm sm:text-base text-gray-600">
-                      or{' '}
-                      <button
-                        type="button"
-                        onClick={() => fileInputRef.current.click()}
-                        className="text-[#225F91] hover:text-[#1ABA7F] font-bold underline underline-offset-2 transition-colors duration-200"
-                      >
-                        browse files
-                      </button>
-                    </p>
-                  </div>
-                  
-                  <div className="flex flex-wrap items-center justify-center gap-3 text-xs sm:text-sm">
-                    <Badge className="bg-gradient-to-r from-[#1ABA7F]/10 to-[#225F91]/10 text-[#225F91] border border-[#1ABA7F]/30 px-3 py-1 font-semibold">
-                      PDF, JPG, PNG
-                    </Badge>
-                    <Badge className="bg-gradient-to-r from-[#1ABA7F]/10 to-[#225F91]/10 text-[#225F91] border border-[#1ABA7F]/30 px-3 py-1 font-semibold">
-                      Max 10MB
-                    </Badge>
-                  </div>
-                  
-                  <div className="flex items-start gap-2 p-3 rounded-xl bg-blue-50 border border-blue-200 max-w-md">
-                    <Info className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
-                    <p className="text-xs text-blue-900 text-left font-medium">
-                      Ensure your prescription is clearly visible and readable
-                    </p>
-                  </div>
+                  )}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={removeFile}
+                    className="h-9 w-9 p-0 rounded-lg hover:bg-red-50 text-red-500"
+                  >
+                    <X className="h-4 w-4" strokeWidth={2} />
+                  </Button>
                 </div>
               </div>
-            )}
-            
-            {errors.file && (
-              <p className="text-sm text-red-600 font-semibold flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-200">
-                <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                {errors.file}
-              </p>
-            )}
-          </div>
-
-          {isUploading && (
-            <div className="space-y-2 p-4 rounded-2xl bg-gradient-to-r from-[#1ABA7F]/5 to-[#225F91]/5 border-2 border-[#1ABA7F]/20">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-700 font-semibold flex items-center gap-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#1ABA7F] border-t-transparent"></div>
-                  Uploading your prescription...
-                </span>
-                <span className="text-[#225F91] font-black text-lg">{Math.round(uploadProgress)}%</span>
-              </div>
-              <Progress value={uploadProgress} className="h-2 bg-gray-200" />
+              
+              {showFilePreview && filePreview && (
+                <div className="mt-4 p-3 border border-gray-200 rounded-xl bg-gray-50">
+                  <img 
+                    src={filePreview} 
+                    alt="File preview" 
+                    className="w-full h-auto max-h-48 object-contain rounded-lg"
+                  />
+                </div>
+              )}
             </div>
           )}
 
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="contact" className="text-sm font-black text-[#225F91] uppercase tracking-wider flex items-center gap-2">
-                <Mail className="h-4 w-4 text-[#1ABA7F]" />
-                {t('upload.contact_label')}
-              </Label>
-              {contact && validateContact(contact) && (
-                <Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white border-0 px-2 py-1 text-xs font-bold shadow-sm">
-                  <CheckCircle className="h-3 w-3 mr-1" />
-                  Valid
-                </Badge>
+          {/* Upload Area */}
+          {!file && (
+            <div
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              className={cn(
+                "relative p-12 border-2 border-dashed rounded-2xl text-center transition-all duration-300",
+                isDragOver
+                  ? "border-[#1ABA7F] bg-[#1ABA7F]/5 shadow-lg scale-[1.01]"
+                  : "border-gray-300 bg-gray-50 hover:border-[#1ABA7F]/50 hover:bg-white"
               )}
-            </div>
-            
-            <div className="relative group">
-              <div className={cn(
-                "absolute inset-0 rounded-2xl bg-gradient-to-r from-[#1ABA7F] via-[#225F91] to-[#1ABA7F] opacity-0 transition-opacity duration-500 blur-sm",
-                contactFocused && "opacity-20"
-              )} />
+            >
+              <Input
+                id="fileInput"
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png"
+                onChange={handleFileChange}
+                className="hidden"
+              />
               
-              <div className="relative">
-                <Mail
-                  className={cn(
-                    "absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 transition-all duration-300",
-                    contactFocused ? "text-[#1ABA7F] scale-110" : "text-[#225F91]/70"
-                  )}
-                />
-                <Input
-                  id="contact"
-                  type="text"
-                  value={contact}
-                  onChange={(e) => {
-                    setContact(e.target.value);
-                    setErrors((prev) => ({ ...prev, contact: null }));
-                  }}
-                  onFocus={() => setContactFocused(true)}
-                  onBlur={() => setContactFocused(false)}
-                  placeholder={t('upload.contact_placeholder')}
-                  className={cn(
-                    "h-14 pl-12 pr-4 text-base font-medium rounded-2xl border-2 bg-white text-gray-900 placeholder:text-gray-400 transition-all duration-300 shadow-lg",
-                    errors.contact
-                      ? "border-red-300 focus:border-red-500"
-                      : contactFocused
-                      ? "border-[#1ABA7F] shadow-[0_0_20px_rgba(26,186,127,0.2)]"
-                      : "border-gray-200 hover:border-[#1ABA7F]/50"
-                  )}
-                />
+              <div className="flex flex-col items-center gap-4">
+                <div className={cn(
+                  "p-4 rounded-2xl transition-all duration-300",
+                  isDragOver ? "bg-[#1ABA7F]/20 scale-110" : "bg-[#1ABA7F]/10"
+                )}>
+                  <Upload className={cn(
+                    "h-10 w-10 transition-colors duration-300",
+                    isDragOver ? "text-[#1ABA7F]" : "text-gray-600"
+                  )} strokeWidth={2} />
+                </div>
+                
+                <div className="space-y-2">
+                  <p className="text-base font-bold text-gray-900">
+                    {isDragOver ? "Drop your file here" : "Drag & drop your prescription"}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    or{' '}
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current.click()}
+                      className="text-[#225F91] hover:text-[#1ABA7F] font-bold underline underline-offset-2 transition-colors"
+                    >
+                      browse files
+                    </button>
+                  </p>
+                </div>
+                
+                <div className="flex flex-wrap items-center justify-center gap-2 text-xs">
+                  <Badge variant="outline" className="border-gray-300 text-gray-600 font-medium">
+                    PDF, JPG, PNG
+                  </Badge>
+                  <Badge variant="outline" className="border-gray-300 text-gray-600 font-medium">
+                    Max 10MB
+                  </Badge>
+                </div>
               </div>
             </div>
-            
-            {errors.contact && (
-              <p className="text-sm text-red-600 font-semibold flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-200">
-                <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                {errors.contact}
-              </p>
+          )}
+          
+          {errors.file && (
+            <p className="text-sm text-red-600 font-medium flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-200">
+              <AlertCircle className="h-4 w-4 flex-shrink-0" strokeWidth={2} />
+              {errors.file}
+            </p>
+          )}
+        </div>
+
+        {/* Upload Progress */}
+        {isUploading && (
+          <div className="space-y-3 p-5 rounded-2xl bg-gradient-to-br from-[#1ABA7F]/5 to-white border border-[#1ABA7F]/20">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-700 font-semibold flex items-center gap-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#1ABA7F] border-t-transparent"></div>
+                Uploading prescription...
+              </span>
+              <span className="text-[#225F91] font-bold">{Math.round(uploadProgress)}%</span>
+            </div>
+            <Progress value={uploadProgress} className="h-2" />
+          </div>
+        )}
+
+        {/* Contact Input */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="contact" className="text-sm font-bold text-gray-900 flex items-center gap-2">
+              <Mail className="h-4 w-4 text-[#1ABA7F]" strokeWidth={2} />
+              Contact Information
+            </Label>
+            {contact && validateContact(contact) && (
+              <Badge className="bg-[#1ABA7F] text-white border-0 px-3 py-1 text-xs font-semibold">
+                <CheckCircle className="h-3 w-3 mr-1" strokeWidth={2.5} />
+                Valid
+              </Badge>
             )}
           </div>
-
-          <Button
-            type="submit"
-            onClick={handleSubmit}
-            disabled={isUploading || !file || !contact}
-            className="group relative w-full h-14 px-6 text-base font-black rounded-2xl bg-gradient-to-r from-[#225F91] to-[#1a4a73] text-white hover:from-[#1a4a73] hover:to-[#225F91] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] overflow-hidden"
-          >
-            <span className="relative z-10 flex items-center justify-center gap-2">
-              {isUploading ? (
-                <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
-                  {t('upload.uploading')}
-                </>
-              ) : (
-                <>
-                  <Upload className="h-5 w-5" />
-                  {t('upload.upload_button')}
-                </>
+          
+          <div className="relative">
+            <Mail
+              className={cn(
+                "absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 transition-colors duration-300",
+                contactFocused ? "text-[#1ABA7F]" : "text-gray-400"
               )}
-            </span>
-            {!isUploading && (
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-            )}
-          </Button>
+              strokeWidth={2}
+            />
+            <Input
+              id="contact"
+              type="text"
+              value={contact}
+              onChange={(e) => {
+                setContact(e.target.value);
+                setErrors((prev) => ({ ...prev, contact: null }));
+              }}
+              onFocus={() => setContactFocused(true)}
+              onBlur={() => setContactFocused(false)}
+              placeholder="Email or phone number"
+              className={cn(
+                "h-14 pl-12 pr-4 text-base font-medium rounded-xl border-2 transition-all duration-300",
+                errors.contact
+                  ? "border-red-300 focus:border-red-500"
+                  : contactFocused
+                  ? "border-[#1ABA7F] shadow-sm"
+                  : "border-gray-200 hover:border-gray-300"
+              )}
+            />
+          </div>
+          
+          {errors.contact && (
+            <p className="text-sm text-red-600 font-medium flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-200">
+              <AlertCircle className="h-4 w-4 flex-shrink-0" strokeWidth={2} />
+              {errors.contact}
+            </p>
+          )}
         </div>
-      </div>
+
+        {/* Submit Button */}
+        <Button
+          type="submit"
+          disabled={isUploading || !file || !contact}
+          className="group w-full h-14 px-6 text-base font-bold rounded-xl bg-gradient-to-r from-[#225F91] to-[#1a4a73] hover:from-[#1a4a73] hover:to-[#225F91] text-white disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transition-all duration-300"
+        >
+          {isUploading ? (
+            <>
+              <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-2"></div>
+              Uploading...
+            </>
+          ) : (
+            <>
+              <Upload className="h-5 w-5 mr-2" strokeWidth={2} />
+              Upload Prescription
+            </>
+          )}
+        </Button>
+      </form>
     </div>
   );
 }

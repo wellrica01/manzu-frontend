@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { Button } from '../ui/button';
-import { History, TrendingUp, X, ChevronRight } from 'lucide-react';
+import { History, TrendingUp, X, ChevronRight, Search, MapPin } from 'lucide-react';
 import SearchInput from './SearchInput';
 import CartDialog from '../cart/CartDialog';
 import DuplicateMedicationDialog from '@/components/cart/DuplicateMedicationDialog';
@@ -25,52 +25,18 @@ const MedicationCard = dynamic(() => import('./MedicationCard'), {
   ssr: false,
 });
 
-// Constants
-const MESSAGES = {
-  LOCATION_ENABLED: 'Location enabled successfully',
-  LOCATION_DENIED: 'Location access denied',
-};
-
-const ERROR_MESSAGES = {
-  API_URL_MISSING: 'API URL is not configured',
-};
-
 // Validate API URL
 const getApiUrl = () => {
   const url = process.env.NEXT_PUBLIC_API_URL;
-  if (!url) {
-    throw new Error(ERROR_MESSAGES.API_URL_MISSING);
-  }
+  if (!url) throw new Error('API URL is not configured');
   return url;
 };
 
-// Smooth scroll utility
-const smoothScrollToElement = (element, offset = 100, duration = 700) => {
+// Refined smooth scroll
+const smoothScrollTo = (element, offset = 100) => {
   if (!element) return;
-
   const targetPosition = element.getBoundingClientRect().top + window.pageYOffset - offset;
-  const startPosition = window.pageYOffset;
-  const distance = targetPosition - startPosition;
-  let startTime = null;
-
-  const easeInOutCubic = (t) => {
-    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-  };
-
-  const animation = (currentTime) => {
-    if (startTime === null) startTime = currentTime;
-    const timeElapsed = currentTime - startTime;
-    const progress = Math.min(timeElapsed / duration, 1);
-    const ease = easeInOutCubic(progress);
-
-    window.scrollTo(0, startPosition + distance * ease);
-
-    if (timeElapsed < duration) {
-      requestAnimationFrame(animation);
-    }
-  };
-
-  requestAnimationFrame(animation);
+  window.scrollTo({ top: targetPosition, behavior: 'smooth' });
 };
 
 const SearchBar = () => {
@@ -82,11 +48,9 @@ const SearchBar = () => {
   const suggestions = useSearchSuggestions(apiUrl);
   const search = useMedicationSearch(apiUrl);
   const history = useSearchHistory();
-
-  // Cart operations hook
   const cartOps = useCartOperations(null, guestId, null, fetchCart);
 
-  // Local state
+  // State
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({ state: '', lga: '', ward: '' });
   const [filtersWereSet, setFiltersWereSet] = useState(false);
@@ -94,10 +58,10 @@ const SearchBar = () => {
   const [sortBy, setSortBy] = useState('cheapest');
   const [focusedSuggestionIndex, setFocusedSuggestionIndex] = useState(-1);
   const [selectedMedicationId, setSelectedMedicationId] = useState(null);
-  
-  // Cart dialog state
   const [openCartDialog, setOpenCartDialog] = useState(false);
   const [lastAddedItems, setLastAddedItems] = useState([]);
+  const [lgas, setLgas] = useState([]);
+  const [wards, setWards] = useState([]);
 
   // Refs
   const dropdownRef = useRef(null);
@@ -105,58 +69,40 @@ const SearchBar = () => {
   const suggestionRefs = useRef([]);
   const currentMedicationIdRef = useRef(null);
 
-  const [lgas, setLgas] = useState([]);
-  const [wards, setWards] = useState([]);
+  // Location & geo data
+  const { 
+    geoData, 
+    states, 
+    getLgas, 
+    getWards,
+    reverseGeocode 
+  } = useGeoData();
+  
+  const {
+    userLocation,
+    locationStatus,
+    requestLocation,
+  } = useLocationDetection();
 
-  // Filter state
-  const [filterState, setFilterState] = useState('');
-  const [filterLga, setFilterLga] = useState('');
-  const [filterWard, setFilterWard] = useState('');
-
-
-    // Location and geo data
-    const { 
-      geoData, 
-      states, 
-      getLgas, 
-      getWards,
-      loading: geoLoading,
-      error: geoError,
-      reverseGeocode 
-    } = useGeoData();
-    
-    const {
-      userLocation,
-      locationStatus,
-      requestLocation,
-    } = useLocationDetection();
-
-
-  // Callback for when items are added (shows cart dialog)
+  // Items added callback
   const handleItemsAdded = useCallback((items) => {
-    // Transform items to match CartDialog expected format
-  const formattedItems = items.map(item => ({
-      id: item.id || crypto.randomUUID?.(), // optional
-      name: item.name,                     
-      pharmacy: item.pharmacy,            
+    const formattedItems = items.map(item => ({
+      id: item.id || crypto.randomUUID?.(),
+      name: item.name,
+      pharmacy: item.pharmacy,
       quantity: item.quantity,
     }));
-    
     setLastAddedItems(formattedItems);
     setOpenCartDialog(true);
   }, []);
 
-
-  // Build pharmacy recommendations structure for duplicate detection
+  // Build pharmacy recommendations for duplicate detection
   const pharmacyRecommendations = useCallback(() => {
     if (!search.results.length) return [];
-    
-    // Extract unique pharmacies from search results
     const pharmacyMap = new Map();
     
     search.results.forEach(med => {
       if (!med.availability) return;
-      
       med.availability.forEach(avail => {
         if (!pharmacyMap.has(avail.pharmacyId)) {
           pharmacyMap.set(avail.pharmacyId, {
@@ -165,7 +111,6 @@ const SearchBar = () => {
             meds: []
           });
         }
-        
         pharmacyMap.get(avail.pharmacyId).meds.push({
           id: med.id,
           displayName: med.displayName,
@@ -177,18 +122,15 @@ const SearchBar = () => {
     return Array.from(pharmacyMap.values());
   }, [search.results]);
 
-
-  // Build medications list for duplicate detection
   const medications = useCallback(() => {
     return search.results.map(med => ({
       id: med.id,
       displayName: med.displayName,
-      quantity: 1, // Default quantity for search
+      quantity: 1,
     }));
   }, [search.results]);
 
-
-  // Duplicate detection hook
+  // Duplicate detection
   const duplicateDetection = useDuplicateDetection({
     cart,
     isInCart,
@@ -201,21 +143,18 @@ const SearchBar = () => {
     onItemsAdded: handleItemsAdded,
   });
 
-
-  // Update LGAs when state changes
+  // Update LGAs/Wards
   const updateLgas = useCallback((stateName) => {
     setLgas(getLgas(stateName));
     setWards([]);
     setFilters(prev => ({ ...prev, lga: '', ward: '' }));
   }, [getLgas]);
 
-  // Update wards when LGA changes
   const updateWards = useCallback((stateName, lgaName) => {
     setWards(getWards(stateName, lgaName));
     setFilters(prev => ({ ...prev, ward: '' }));
   }, [getWards]);
 
-  // Clear all filters
   const clearFilters = useCallback(() => {
     setFilters({ state: '', lga: '', ward: '' });
     setSortBy('cheapest');
@@ -226,12 +165,11 @@ const SearchBar = () => {
     setSelectedMedicationId(null);
   }, [search]);
 
-  
   const setFilterStateWrapper = (val) => {
     setFilters(prev => ({ ...prev, state: val }));
     if (val) {
       setFiltersWereSet(true);
-      updateLgas(val); // Trigger LGA update
+      updateLgas(val);
     } else {
       setFiltersWereSet(false);
       setLgas([]);
@@ -243,7 +181,7 @@ const SearchBar = () => {
     setFilters(prev => ({ ...prev, lga: val }));
     if (val) {
       setFiltersWereSet(true);
-      updateWards(filters.state, val); // Trigger Ward update
+      updateWards(filters.state, val);
     } else {
       setWards([]);
     }
@@ -254,27 +192,22 @@ const SearchBar = () => {
     if (val) setFiltersWereSet(true);
   };
 
-
-  // Handle location enable
   const handleEnableLocation = useCallback(() => {
     requestLocation()
-      .then(() => toast.success('Location enabled successfully'))
+      .then(() => toast.success('Location enabled'))
       .catch((error) => {
-        if (error.code === 1) {
-          toast.error('Location permission denied. Please enable in browser settings.');
-        } else {
-          toast.error('Unable to get location. Please try again.');
-        }
+        toast.error(error.code === 1 
+          ? 'Location permission denied' 
+          : 'Unable to get location');
       });
   }, [requestLocation]);
 
-
-  // Fetch suggestions on search term change
+  // Fetch suggestions on term change
   useEffect(() => {
     suggestions.fetchSuggestions(searchTerm);
   }, [searchTerm, suggestions.fetchSuggestions]);
 
-  // Handle keyboard shortcuts
+  // Keyboard shortcuts
   const handleKeyDown = useCallback((e) => {
     if (e.key === 'Escape') {
       suggestions.setShowDropdown(false);
@@ -288,7 +221,7 @@ const SearchBar = () => {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
-  // Handle click outside dropdown
+  // Click outside dropdown
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -307,7 +240,7 @@ const SearchBar = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [suggestions, history]);
 
-  // Clear results when search term changes significantly
+  // Clear results when search term changes
   useEffect(() => {
     if (searchTerm && search.results.length > 0) {
       const currentMedName = search.results[0]?.displayName?.toLowerCase();
@@ -318,7 +251,6 @@ const SearchBar = () => {
       }
     }
   }, [searchTerm, search]);
-
 
   // Search handler
   const handleSearch = useCallback(async (medicationId, options = {}) => {
@@ -334,55 +266,47 @@ const SearchBar = () => {
       sortBy,
     });
 
-    if (options.onComplete) {
-      options.onComplete();
-    }
-
+    if (options.onComplete) options.onComplete();
     return results;
   }, [search, filters, userLocation, sortBy]);
 
-  
-// Handle filter changes
-useEffect(() => {
-  if (!currentMedicationIdRef.current) {
-    return;
-  }
+  // Filter changes
+  useEffect(() => {
+    if (!currentMedicationIdRef.current) return;
 
-  const hasFilters = filters.state || filters.lga || filters.ward;
-  
-  if (hasFilters) {
-    handleSearch(currentMedicationIdRef.current, {
-      onComplete: () => {
-        setTimeout(() => {
-          const comparisonSection = document.querySelector('[data-location-text]');
-          smoothScrollToElement(comparisonSection, 100, 800);
-        }, 300);
-      }
-    });
-  } else {
-    search.restoreDefaults();
-  }
-}, [filters.state, filters.lga, filters.ward]);
-
-
-useEffect(() => {
-  if (userLocation && geoData?.length) {
-    const match = reverseGeocode(userLocation.lat, userLocation.lng);
-    if (match) {
-      setFilters(prev => ({
-        ...prev,
-        state: match.state,
-        lga: match.lga,
-      }));
-      setFiltersWereSet(true);
-      updateLgas(match.state);
+    const hasFilters = filters.state || filters.lga || filters.ward;
+    
+    if (hasFilters) {
+      handleSearch(currentMedicationIdRef.current, {
+        onComplete: () => {
+          setTimeout(() => {
+            const section = document.querySelector('[data-location-text]');
+            smoothScrollTo(section, 100);
+          }, 300);
+        }
+      });
+    } else {
+      search.restoreDefaults();
     }
-  }
-}, [userLocation, geoData, reverseGeocode]);
+  }, [filters.state, filters.lga, filters.ward]);
 
+  // Reverse geocode on location
+  useEffect(() => {
+    if (userLocation && geoData?.length) {
+      const match = reverseGeocode(userLocation.lat, userLocation.lng);
+      if (match) {
+        setFilters(prev => ({
+          ...prev,
+          state: match.state,
+          lga: match.lga,
+        }));
+        setFiltersWereSet(true);
+        updateLgas(match.state);
+      }
+    }
+  }, [userLocation, geoData, reverseGeocode]);
 
-
-  // Select medication from suggestions
+  // Select medication
   const handleSelectMedication = useCallback(async (suggestion) => {
     setSearchTerm(suggestion.displayName);
     suggestions.setShowDropdown(false);
@@ -397,7 +321,7 @@ useEffect(() => {
     }
   }, [handleSearch, suggestions, history]);
 
-  // Add to cart handler - now uses duplicate detection like prescription workflow
+  // Add to cart with duplicate detection
   const handleAddToCart = useCallback(async (
     medicationId,
     pharmacyId,
@@ -405,19 +329,14 @@ useEffect(() => {
     pharmacyName,
     quantity = 1
   ) => {
-    // Check for duplicates first (same as prescription workflow)
     const hasDuplicate = duplicateDetection.checkForDuplicates(
       medicationId,
       pharmacyId,
       medicationName
     );
 
-    // If duplicate found, the dialog will handle it
-    if (hasDuplicate) {
-      return;
-    }
+    if (hasDuplicate) return;
 
-    // No duplicate, add directly (same pattern as prescription workflow)
     try {
       const result = await cartOps.addToCart(
         medicationId,
@@ -426,7 +345,6 @@ useEffect(() => {
         quantity
       );
 
-      // Show cart dialog with added item
       if (result?.orderItem) {
         handleItemsAdded([{
           id: result.orderItem.id,
@@ -440,10 +358,9 @@ useEffect(() => {
     }
   }, [duplicateDetection, cartOps, handleItemsAdded]);
 
-
   return (
-    <div className="w-full space-y-4 sm:space-y-6" role="search" aria-label="Medication search">
-      {/* Cart Dialog */}
+    <div className="w-full space-y-6" role="search" aria-label="Medication search">
+      {/* Dialogs */}
       <CartDialog
         openCartDialog={openCartDialog}
         setOpenCartDialog={setOpenCartDialog}
@@ -452,7 +369,6 @@ useEffect(() => {
         isRemoving={cartOps.isRemoving}
       />
 
-      {/* Duplicate Medication Dialog */}
       <DuplicateMedicationDialog
         isOpen={duplicateDetection.duplicateDialog.isOpen}
         onClose={duplicateDetection.closeDuplicateDialog}
@@ -486,9 +402,7 @@ useEffect(() => {
           setShowHistory={history.setShowHistory}
         />
 
-
-
-        {/* Dropdown */}
+        {/* Dropdown - Refined Design */}
         {!search.isSearching &&
           search.results.length === 0 && 
           ((suggestions.showDropdown && (suggestions.suggestions.length > 0 || searchTerm.trim().length > 0)) ||
@@ -496,41 +410,33 @@ useEffect(() => {
             suggestions.isLoading) && (
           <div
             ref={dropdownRef}
-            className="absolute left-0 right-0 top-full z-[9999] mt-2 pointer-events-auto custom-scrollbar"
-            style={{ maxHeight: '24rem', overflowY: 'auto' }}
+            className="absolute left-0 right-0 top-full z-50 mt-3"
             role="listbox"
             aria-label="Search suggestions"
           >
-            <div className="bg-white/98 backdrop-blur-xl border-2 border-[#1ABA7F]/20 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-300">
-              {/* Search History Section */}
+            <div className="bg-white border-2 border-gray-100 rounded-2xl shadow-2xl overflow-hidden max-h-96 overflow-y-auto">
+              {/* Search History */}
               {history.showHistory && history.history.length > 0 && (
-                <div>
-                  <div className="p-3 border-b border-[#1ABA7F]/10 flex items-center justify-between bg-gradient-to-r from-[#1ABA7F]/5 to-transparent">
+                <div className="border-b border-gray-100">
+                  <div className="px-4 py-3 bg-gray-50 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="p-1.5 bg-[#1ABA7F]/10 rounded-lg">
-                        <History className="h-4 w-4 text-[#225F91]" />
-                      </div>
-                      <span className="text-sm font-bold text-[#225F91]">
-                        Recent Searches
-                      </span>
+                      <History className="h-4 w-4 text-gray-500" strokeWidth={2} />
+                      <span className="text-sm font-bold text-gray-700">Recent Searches</span>
                     </div>
-
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => history.setShowHistory(false)}
-                      className="h-7 w-7 p-0 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-200"
-                      aria-label="Close search history"
+                      className="h-7 w-7 p-0 text-gray-400 hover:text-gray-600 rounded-lg"
                     >
-                      <X className="h-3 w-3" />
+                      <X className="h-4 w-4" strokeWidth={2} />
                     </Button>
                   </div>
 
                   {history.history.map((item, index) => (
                     <div
                       key={`${item.id}-${index}`}
-                      className="w-full flex items-center justify-between px-4 py-3 hover:bg-gradient-to-r hover:from-[#1ABA7F]/10 hover:to-transparent transition-all duration-200 group animate-in fade-in slide-in-from-left-2"
-                      style={{ animationDelay: `${index * 40}ms`, animationDuration: '300ms' }}
+                      className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors duration-200 group"
                     >
                       <button
                         onClick={() => {
@@ -538,13 +444,12 @@ useEffect(() => {
                           history.setShowHistory(false);
                           handleSearch(item.id);
                         }}
-                        className="flex items-center gap-3 text-left flex-grow"
-                        role="option"
+                        className="flex items-center gap-3 flex-grow text-left"
                       >
-                        <div className="p-2 rounded-lg bg-gray-100 group-hover:bg-[#1ABA7F]/20 group-hover:scale-110 transition-all duration-200">
-                          <History className="h-4 w-4 text-gray-600 group-hover:text-[#225F91]" />
+                        <div className="p-2 rounded-lg bg-gray-100 group-hover:bg-[#1ABA7F]/10 transition-colors duration-200">
+                          <History className="h-4 w-4 text-gray-500 group-hover:text-[#1ABA7F]" strokeWidth={2} />
                         </div>
-                        <span className="text-gray-700 font-semibold group-hover:text-[#225F91] transition-colors duration-200">
+                        <span className="text-sm font-medium text-gray-700 group-hover:text-[#225F91]">
                           {item.displayName}
                         </span>
                       </button>
@@ -557,57 +462,48 @@ useEffect(() => {
                           history.removeFromHistory(item.id);
                         }}
                         className="h-7 w-7 p-0 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200"
-                        aria-label={`Delete ${item.displayName}`}
                       >
-                        <X className="h-3 w-3" />
+                        <X className="h-4 w-4" strokeWidth={2} />
                       </Button>
                     </div>
                   ))}
                 </div>
               )}
 
-              {/* Suggestions Section */}
+              {/* Suggestions */}
               {suggestions.showDropdown && suggestions.suggestions.length > 0 && (
-                <div className="py-2">
+                <div>
                   {suggestions.suggestions.map((suggestion, index) => (
                     <button
                       key={suggestion.id}
                       ref={(el) => (suggestionRefs.current[index] = el)}
                       onClick={() => handleSelectMedication(suggestion)}
                       className={cn(
-                        'w-full px-4 py-3 text-left transition-all duration-200 flex items-center gap-4 group relative overflow-hidden animate-in fade-in slide-in-from-left-2',
+                        'w-full px-4 py-3 text-left transition-colors duration-200 flex items-center gap-4 group',
                         focusedSuggestionIndex === index
-                          ? 'bg-gradient-to-r from-[#1ABA7F]/15 to-[#225F91]/10'
-                          : 'hover:bg-gradient-to-r hover:from-[#1ABA7F]/10 hover:to-transparent'
+                          ? 'bg-gray-50'
+                          : 'hover:bg-gray-50'
                       )}
-                      style={{ animationDelay: `${index * 50}ms`, animationDuration: '300ms' }}
                       role="option"
                       aria-selected={focusedSuggestionIndex === index}
                     >
-                      <div className={cn(
-                        "absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-[#1ABA7F] to-[#225F91] transition-all duration-300",
-                        focusedSuggestionIndex === index ? "opacity-100" : "opacity-0"
-                      )} />
-
                       {suggestion.imageUrl ? (
-                        <div className="relative overflow-hidden rounded-lg flex-shrink-0">
-                          <img
-                            src={suggestion.imageUrl}
-                            alt={suggestion.displayName}
-                            className="w-16 h-16 object-cover rounded-lg p-0.5 border-2 border-[#1ABA7F]/20 shadow-md transition-all duration-300 group-hover:scale-110 group-hover:border-[#1ABA7F]/40 group-hover:shadow-lg"
-                          />
-                        </div>
+                        <img
+                          src={suggestion.imageUrl}
+                          alt={suggestion.displayName}
+                          className="w-12 h-12 object-cover rounded-lg border-2 border-gray-100 group-hover:border-[#1ABA7F]/30 transition-colors duration-200"
+                        />
                       ) : (
-                        <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-[#1ABA7F]/10 to-[#225F91]/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
-                          <TrendingUp className="h-6 w-6 text-[#225F91]" />
+                        <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center">
+                          <Search className="h-5 w-5 text-gray-400" strokeWidth={2} />
                         </div>
                       )}
 
                       <div className="flex-1 min-w-0">
-                        <div className="text-base font-bold text-gray-800 truncate group-hover:text-[#225F91] transition-colors duration-200">
+                        <div className="text-sm font-bold text-gray-800 truncate group-hover:text-[#225F91] transition-colors duration-200">
                           {suggestion.displayName}
                         </div>
-                        <div className="font-medium text-sm text-gray-600 truncate">
+                        <div className="text-xs text-gray-500 truncate mt-0.5">
                           {suggestion.ingredients
                             ?.map((ing) => {
                               const strength = ing.strengthValue ? ` ${ing.strengthValue}${ing.strengthUnit ?? ''}` : '';
@@ -617,7 +513,7 @@ useEffect(() => {
                         </div>
                       </div>
 
-                      <ChevronRight className="h-5 w-5 text-[#1ABA7F] opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
+                      <ChevronRight className="h-5 w-5 text-gray-300 group-hover:text-[#1ABA7F] transition-colors duration-200" strokeWidth={2} />
                     </button>
                   ))}
                 </div>
@@ -628,29 +524,22 @@ useEffect(() => {
                 searchTerm && 
                 suggestions.suggestions.length === 0 && 
                 !suggestions.isLoading && (
-                  <div className="p-8 text-center animate-in fade-in zoom-in-95 duration-500">
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 mb-4">
-                      <X className="h-8 w-8 text-gray-400" />
+                  <div className="p-10 text-center">
+                    <div className="w-16 h-16 mx-auto rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                      <X className="h-8 w-8 text-gray-400" strokeWidth={2} />
                     </div>
-                    <p className="text-gray-600 font-semibold mb-1 text-lg">
-                      No medications found
-                    </p>
+                    <p className="text-gray-700 font-bold mb-2">No medications found</p>
                     <p className="text-sm text-gray-500">
-                      No matches for "<span className="font-bold text-[#225F91]">{searchTerm}</span>"
-                    </p>
-                    <p className="text-xs text-gray-400 mt-3">
-                      Try a different spelling or search term
+                      No matches for "<span className="font-bold">{searchTerm}</span>"
                     </p>
                   </div>
                 )}
 
               {/* Loading */}
               {suggestions.isLoading && (
-                <div className="p-4 flex items-center gap-3 animate-in fade-in duration-300">
-                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-[#1ABA7F] border-t-transparent"></div>
-                  <span className="text-gray-600 text-sm font-medium">
-                    Searching medications...
-                  </span>
+                <div className="p-4 flex items-center justify-center gap-3">
+                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-[#1ABA7F] border-t-transparent" />
+                  <span className="text-sm text-gray-600">Searching...</span>
                 </div>
               )}
             </div>
@@ -658,32 +547,24 @@ useEffect(() => {
         )}
       </div>
 
-      <hr className="border-t border-gray-300 mb-6" />
+      {/* Divider */}
+      <div className="h-px bg-gray-200" />
 
       {/* Error Message */}
       <ErrorMessage error={search.error} />
 
       {/* Screen Reader Status */}
-      <div 
-        role="status" 
-        aria-live="polite" 
-        aria-atomic="true"
-        className="sr-only"
-      >
+      <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
         {search.isSearching && "Searching for medications..."}
-        {!search.isSearching && search.results.length > 0 && `Found ${search.results.length} result${search.results.length === 1 ? '' : 's'}`}
+        {!search.isSearching && search.results.length > 0 && 
+          `Found ${search.results.length} result${search.results.length === 1 ? '' : 's'}`}
       </div>
 
-      {/* Loading State */}
+      {/* Loading State - Refined */}
       {search.isSearching && search.results.length > 0 && (
-        <div className="flex items-center justify-center gap-3 p-5 rounded-2xl bg-gradient-to-r from-[#1ABA7F]/10 via-[#225F91]/10 to-[#1ABA7F]/10 border-2 border-[#1ABA7F]/20 shadow-lg animate-in fade-in slide-in-from-top-2 duration-300">
-          <div className="relative">
-            <div className="animate-spin rounded-full h-6 w-6 border-3 border-[#1ABA7F] border-t-transparent"></div>
-            <div className="absolute inset-0 rounded-full border-3 border-[#1ABA7F]/20"></div>
-          </div>
-          <span className="text-sm font-bold text-[#225F91] animate-pulse">
-            Updating results with your location filters...
-          </span>
+        <div className="flex items-center justify-center gap-3 p-4 rounded-xl bg-[#1ABA7F]/5 border border-[#1ABA7F]/20">
+          <div className="animate-spin rounded-full h-5 w-5 border-2 border-[#1ABA7F] border-t-transparent" />
+          <span className="text-sm font-medium text-gray-700">Updating results...</span>
         </div>
       )}
 
@@ -695,36 +576,31 @@ useEffect(() => {
         !search.error &&
         searchTerm &&
         !suggestions.showDropdown && (
-          <div className="text-center px-1 py-8 sm:py-10 bg-white/95 border border-[#1ABA7F]/20 rounded-sm sm:rounded-2xl shadow-lg">
-            <p className="text-gray-600 text-sm font-light sm:text-base leading-relaxed max-w-full sm:max-w-md mx-auto">
-              {t('search.no_results', 
-                { searchTerm }, 
-                { defaultValue: `No medications found for "${searchTerm}"` }
-              )}
+          <div className="text-center p-10 bg-white border-2 border-gray-100 rounded-2xl">
+            <div className="w-16 h-16 mx-auto rounded-full bg-gray-100 flex items-center justify-center mb-4">
+              <Search className="h-8 w-8 text-gray-400" strokeWidth={2} />
+            </div>
+            <p className="text-gray-700 font-bold mb-2">No medications found</p>
+            <p className="text-sm text-gray-500">
+              Try a different search term or check your spelling
             </p>
           </div>
         )}
 
-      {/* Results */}
+      {/* Results - Clean Animation */}
       {!search.isSearching &&
         search.results.map((med, index) => (
           <ErrorBoundary 
             key={med.id} 
             fallback={
-              <div className="p-6 bg-red-50 border-2 border-red-200 rounded-xl animate-in fade-in duration-300">
-                <p className="text-red-600 font-semibold">
-                  Unable to display this medication card. Please try again.
+              <div className="p-6 bg-red-50 border-2 border-red-100 rounded-xl">
+                <p className="text-red-600 font-medium text-sm">
+                  Unable to display this medication. Please try again.
                 </p>
               </div>
             }
           >
-            <div 
-              className="animate-in fade-in slide-in-from-bottom-4 duration-500"
-              style={{ 
-                animationDelay: `${index * 100}ms`,
-                animationFillMode: 'backwards'
-              }}
-            >  
+            <div className="transition-opacity duration-300">
               <MedicationCard
                 med={med}
                 cart={cart}
@@ -755,7 +631,7 @@ useEffect(() => {
                   setShowFilters(true);
                   setTimeout(() => {
                     const filterElement = document.querySelector('[data-filters]');
-                    smoothScrollToElement(filterElement, 80, 600);
+                    smoothScrollTo(filterElement, 80);
                   }, 200);
                 }}
                 onEnableLocation={handleEnableLocation}

@@ -220,7 +220,7 @@ const handleInputFocus = useCallback(() => {
           onFocus={handleInputFocus}
           onBlur={handleInputBlur}
           className={cn(
-            "pl-12 pr-32 h-14 text-base sm:text-lg font-bold rounded-2xl border-2 bg-white text-gray-600 placeholder:text-gray-400 transition-all duration-300 w-full shadow-lg",
+            "pl-12 pr-24 sm:pr-32 h-14 text-base sm:text-lg font-bold rounded-2xl border-2 bg-white text-gray-600 placeholder:text-gray-400 transition-all duration-300 w-full shadow-lg",
             isFocused 
               ? "border-[#1ABA7F] shadow-[0_0_20px_rgba(26,186,127,0.2)] focus:ring-2 focus:ring-[#1ABA7F] focus:ring-offset-2" 
               : "border-gray-200 hover:border-[#1ABA7F]/50"

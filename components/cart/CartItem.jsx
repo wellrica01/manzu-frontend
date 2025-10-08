@@ -17,7 +17,7 @@ const CartItem = ({
   selectionMode = false,
   isSelected = false,
   onToggleSelect
- }) => {
+}) => {
   const [showMeta, setShowMeta] = useState(false);
   const metaRef = useRef(null);
   const [metaHeight, setMetaHeight] = useState('0px');
@@ -32,16 +32,51 @@ const CartItem = ({
     if (item.medication?.prescriptionRequired) {
       switch (item.prescriptionStatus) {
         case 'VERIFIED':
-          return { status: 'verified', icon: CheckCircle, color: 'text-[#1ABA7F]', bgColor: 'bg-[#1ABA7F]/10', borderColor: 'border-[#1ABA7F]/30', text: 'Verified', description: 'Ready for checkout' };
+          return { 
+            status: 'verified', 
+            icon: CheckCircle, 
+            color: 'text-green-700', 
+            bgColor: 'bg-green-50', 
+            borderColor: 'border-green-200', 
+            text: 'Verified' 
+          };
         case 'PENDING':
-          return { status: 'pending', icon: Clock, color: 'text-orange-600', bgColor: 'bg-orange-100', borderColor: 'border-orange-300', text: 'Under Review', description: 'Being verified' };
+          return { 
+            status: 'pending', 
+            icon: Clock, 
+            color: 'text-orange-600', 
+            bgColor: 'bg-orange-50', 
+            borderColor: 'border-orange-200', 
+            text: 'Under Review' 
+          };
         case 'REJECTED':
-          return { status: 'rejected', icon: AlertTriangle, color: 'text-red-600', bgColor: 'bg-red-100', borderColor: 'border-red-300', text: 'Rejected', description: 'Upload new prescription' };
+          return { 
+            status: 'rejected', 
+            icon: AlertTriangle, 
+            color: 'text-red-600', 
+            bgColor: 'bg-red-50', 
+            borderColor: 'border-red-200', 
+            text: 'Rejected' 
+          };
         default:
-          return { status: 'needs_prescription', icon: AlertCircle, color: 'text-orange-600', bgColor: 'bg-orange-100', borderColor: 'border-orange-300', text: 'Prescription Required', description: 'Upload prescription' };
+          return { 
+            status: 'needs_prescription', 
+            icon: AlertCircle, 
+            color: 'text-orange-600', 
+            bgColor: 'bg-orange-50', 
+            borderColor: 'border-orange-200', 
+            text: 'Rx Required' 
+          };
       }
     }
-    return { status: 'ready', icon: Package, color: 'text-[#225F91]', bgColor: 'bg-[#225F91]/10', borderColor: 'border-[#225F91]/30', text: 'Ready', description: 'Available for checkout' };
+    return { 
+      status: 'ready', 
+      icon: Package, 
+      color: 'text-[#225F91]', 
+      bgColor: 'bg-[#225F91]/5', 
+      borderColor: 'border-[#225F91]/20', 
+      text: 'Ready' 
+    };
   }, [item.medication?.prescriptionRequired, item.prescriptionStatus]);
 
   const StatusIcon = itemStatus.icon;
@@ -57,10 +92,10 @@ const CartItem = ({
 
   return (
     <Card className={cn(
-      "relative bg-white border-2 rounded-2xl transition-all duration-300 hover:shadow-lg overflow-hidden",
+      "bg-white border-2 rounded-xl transition-all duration-200",
       itemStatus.borderColor,
-      selectionMode && "cursor-pointer hover:scale-[1.01]",
-      isSelected && "ring-4 ring-[#1ABA7F]/40 border-[#1ABA7F] shadow-lg"
+      selectionMode && "cursor-pointer hover:shadow-md",
+      isSelected && "ring-2 ring-[#1ABA7F] border-[#1ABA7F] shadow-md"
     )}
     onClick={selectionMode ? () => onToggleSelect(item.id) : undefined}
     >
@@ -68,38 +103,35 @@ const CartItem = ({
       {selectionMode && (
         <div className="absolute top-3 left-3 z-20">
           <div className={cn(
-            "w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all duration-200",
+            "w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-colors duration-200",
             isSelected 
-              ? "bg-[#1ABA7F] border-[#1ABA7F] shadow-md scale-110" 
+              ? "bg-[#1ABA7F] border-[#1ABA7F]" 
               : "bg-white border-gray-300 hover:border-[#1ABA7F]"
           )}>
             {isSelected && (
-              <CheckCircle className="h-4 w-4 text-white" strokeWidth={3} />
+              <CheckCircle className="h-4 w-4 text-white" strokeWidth={2} />
             )}
           </div>
         </div>
       )}
 
-      {/* Status Bar */}
-      <div className={cn("absolute top-0 left-0 right-0 h-1", itemStatus.bgColor)} />
-      
       <div className="p-4 space-y-4">
-        {/* Header Section */}
+        {/* Header */}
         <div className="flex gap-4">
           {/* Image */}
-          <div className="relative flex-shrink-0">
-            <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-[#1ABA7F]/10 to-[#225F91]/10 rounded-xl flex items-center justify-center border-2 border-gray-100 overflow-hidden group-hover:scale-105 transition-transform duration-300">
+          <div className="flex-shrink-0">
+            <div className="w-20 h-20 bg-gray-100 rounded-xl flex items-center justify-center border-2 border-gray-200 overflow-hidden">
               {item.medication.imageUrl ? (
                 <Dialog>
                   <DialogTrigger asChild>
                     <img 
                       src={item.medication.imageUrl} 
                       alt={item.medication.displayName} 
-                      className="w-full h-full object-cover cursor-pointer hover:scale-110 transition-transform duration-300" 
+                      className="w-full h-full object-cover cursor-pointer hover:scale-110 transition-transform duration-200" 
                       loading="lazy" 
                     />
                   </DialogTrigger>
-                  <DialogContent className="max-w-3xl p-0 border-0 rounded-3xl overflow-hidden">
+                  <DialogContent className="max-w-3xl p-0 rounded-2xl">
                     <VisuallyHidden>
                       <DialogTitle>{item.medication.displayName}</DialogTitle>
                     </VisuallyHidden>
@@ -107,19 +139,19 @@ const CartItem = ({
                   </DialogContent>
                 </Dialog>
               ) : (
-                <Pill className="h-10 w-10 text-[#225F91]" />
+                <Pill className="h-8 w-8 text-gray-400" strokeWidth={2} />
               )}
             </div>
           </div>
 
           {/* Info */}
           <div className="flex-1 min-w-0">
-            <h3 className="text-base sm:text-lg font-bold text-[#225F91] leading-tight mb-1 line-clamp-2">
+            <h3 className="text-base font-bold text-[#225F91] leading-tight mb-1 line-clamp-2">
               {item.medication.displayName}
             </h3>
             
             {item.medication.ingredients?.length > 0 && (
-              <p className="text-xs sm:text-sm text-gray-600 font-medium mb-2 line-clamp-1">
+              <p className="text-sm text-gray-600 mb-2 line-clamp-1">
                 {item.medication.ingredients.map(ing => 
                   `${ing.activeSubstance} ${ing.strengthValue}${ing.strengthUnit}`
                 ).join(" + ")}
@@ -129,57 +161,57 @@ const CartItem = ({
             <div className="flex items-center gap-2 flex-wrap">
               <Badge className={cn(
                 item.medication.prescriptionRequired 
-                  ? "bg-purple-100 text-purple-700 border-purple-200" 
+                  ? "bg-purple-50 text-purple-700 border-purple-200" 
                   : "bg-[#225F91]/10 text-[#225F91] border-[#225F91]/20",
-                "border text-xs font-semibold px-2 py-1 rounded-lg"
+                "border text-xs font-bold px-2 py-1 rounded-lg"
               )}>
                 {item.medication.prescriptionRequired ? (
                   <>
-                    <FileText className="h-3 w-3 mr-1" />
+                    <FileText className="h-3 w-3 mr-1" strokeWidth={2} />
                     Rx
                   </>
                 ) : (
                   <>
-                    <Package className="h-3 w-3 mr-1" />
+                    <Package className="h-3 w-3 mr-1" strokeWidth={2} />
                     OTC
                   </>
                 )}
               </Badge>
 
               <Badge className={cn(
-                "border text-xs font-semibold px-2 py-1 rounded-lg",
+                "border text-xs font-bold px-2 py-1 rounded-lg",
                 itemStatus.bgColor,
                 itemStatus.color,
                 itemStatus.borderColor
               )}>
-                <StatusIcon className="h-3 w-3 mr-1" />
+                <StatusIcon className="h-3 w-3 mr-1" strokeWidth={2} />
                 {itemStatus.text}
               </Badge>
             </div>
           </div>
         </div>
 
-        {/* Price Display */}
-        <div className="p-3 rounded-xl bg-gradient-to-r from-[#1ABA7F]/5 to-[#225F91]/5 border border-[#1ABA7F]/20">
+        {/* Price */}
+        <div className="p-3 rounded-xl bg-[#1ABA7F]/5 border border-[#1ABA7F]/20">
           <div className="flex items-center justify-between">
             <div className="flex flex-col">
-              <span className="text-xs text-gray-600 font-medium uppercase tracking-wide">
+              <span className="text-xs text-gray-600 font-medium uppercase">
                 Total Price
               </span>
               {item.quantity > 1 && (
-                <span className="text-xs sm:text-sm text-[#1ABA7F] font-semibold">
+                <span className="text-sm text-[#1ABA7F] font-semibold">
                   {item.quantity} × ₦{item.price.toLocaleString()}
                 </span>
               )}
             </div>
-            <div className="text-lg sm:text-xl font-black text-[#225F91]">
+            <div className="text-xl font-black text-[#225F91]">
               ₦{calculateItemPrice(item).toLocaleString()}
             </div>
           </div>
         </div>
 
         {/* Actions */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 rounded-xl bg-gray-50 border border-gray-200">
+        <div className="flex items-center justify-between gap-3 p-3 rounded-xl bg-gray-50 border border-gray-200">
           <QuantityControl
             quantity={item.quantity}
             onUpdate={handleQuantityUpdate}
@@ -191,10 +223,9 @@ const CartItem = ({
             size="sm"
             onClick={handleRemove}
             disabled={isUpdating[item.id]}
-            className="h-10 px-4 text-sm font-semibold hover:bg-red-50 text-red-600 hover:text-red-700 border border-transparent hover:border-red-200 rounded-lg transition-all duration-200"
+            className="h-10 px-4 text-sm font-bold hover:bg-red-50 text-red-600 border-2 hover:border-red-200 rounded-lg"
           >
-            <Trash2 className="h-4 w-4 mr-2" strokeWidth={2} />
-            Remove
+            <Trash2 className="h-4 w-4" strokeWidth={2} />
           </Button>
         </div>
 
@@ -204,26 +235,27 @@ const CartItem = ({
             variant="ghost"
             size="sm"
             onClick={() => setShowMeta(!showMeta)}
-            className="w-full justify-between text-[#225F91] hover:bg-[#225F91]/5 rounded-lg transition-all duration-200 h-10"
+            className="w-full justify-between text-[#225F91] hover:bg-[#225F91]/5 rounded-lg h-10"
           >
-            <span className="flex items-center gap-2 text-sm font-semibold">
-              <Info className="h-4 w-4" />
-              Medication Details
+            <span className="flex items-center gap-2 text-sm font-bold">
+              <Info className="h-4 w-4" strokeWidth={2} />
+              Details
             </span>
             <ChevronDown 
               className={cn(
-                "h-4 w-4 transition-transform duration-300", 
+                "h-4 w-4 transition-transform duration-200", 
                 showMeta && "rotate-180"
               )} 
+              strokeWidth={2}
             />
           </Button>
 
           <div 
             ref={metaRef} 
             style={{ maxHeight: metaHeight }} 
-            className="overflow-hidden transition-all duration-300 ease-in-out"
+            className="overflow-hidden transition-all duration-200"
           >
-            <div className="p-3 rounded-xl bg-gradient-to-br from-gray-50 to-white border border-gray-200 space-y-2 text-xs sm:text-sm">
+            <div className="p-3 rounded-xl bg-gray-50 border border-gray-200 space-y-2 text-sm">
               {item.medication.manufacturerName && (
                 <MetaRow 
                   icon={Building} 
@@ -245,13 +277,6 @@ const CartItem = ({
                   value={`${item.medication.packSizeExpression} ${item.medication.packSizeUnit}`} 
                 />
               )}
-              {item.medication.brandDescription && (
-                <MetaRow 
-                  icon={Info} 
-                  label="Description" 
-                  value={item.medication.brandDescription} 
-                />
-              )}
             </div>
           </div>
         </div>
@@ -262,17 +287,17 @@ const CartItem = ({
 
 const MetaRow = ({ icon: Icon, label, value }) => (
   <div className="flex items-start gap-2">
-    <Icon className="h-4 w-4 text-[#225F91] flex-shrink-0 mt-0.5" />
+    <Icon className="h-4 w-4 text-[#225F91] flex-shrink-0 mt-0.5" strokeWidth={2} />
     <div className="flex-1 min-w-0">
       <span className="text-gray-600 font-medium">{label}: </span>
-      <span className="text-gray-900 font-semibold break-words">{value}</span>
+      <span className="text-gray-900 font-bold break-words">{value}</span>
     </div>
   </div>
 );
 
 const QuantityControl = ({ quantity, onUpdate, isUpdating }) => (
   <div className="flex items-center gap-2">
-    <span className="text-sm font-semibold text-gray-700 mr-2">Qty:</span>
+    <span className="text-sm font-bold text-gray-700 mr-2">Qty:</span>
     <div className="flex items-center gap-1 bg-white rounded-lg border-2 border-gray-200">
       <Button 
         variant="ghost" 
@@ -281,7 +306,7 @@ const QuantityControl = ({ quantity, onUpdate, isUpdating }) => (
         disabled={quantity <= 1 || isUpdating} 
         className="h-9 w-9 p-0 hover:bg-[#1ABA7F]/10 text-[#225F91] disabled:opacity-50 rounded-l-lg"
       >
-        <Minus className="h-4 w-4" strokeWidth={2.5} />
+        <Minus className="h-4 w-4" strokeWidth={2} />
       </Button>
       <span className="px-3 py-2 text-sm font-bold text-[#225F91] min-w-[2.5rem] text-center">
         {isUpdating ? (
@@ -297,7 +322,7 @@ const QuantityControl = ({ quantity, onUpdate, isUpdating }) => (
         disabled={isUpdating} 
         className="h-9 w-9 p-0 hover:bg-[#1ABA7F]/10 text-[#225F91] rounded-r-lg"
       >
-        <Plus className="h-4 w-4" strokeWidth={2.5} />
+        <Plus className="h-4 w-4" strokeWidth={2} />
       </Button>
     </div>
   </div>

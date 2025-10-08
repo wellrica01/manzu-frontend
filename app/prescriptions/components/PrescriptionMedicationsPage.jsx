@@ -53,12 +53,11 @@ const safeLocalStorage = {
 
 const sanitizeUrlParam = (param) => {
   if (!param || typeof param !== 'string') return null;
-  // Remove any potentially harmful characters
   return param.replace(/[^a-zA-Z0-9-_]/g, '');
 };
 
 const PrescriptionMedicationsPage = () => {
-  // URL params with validation
+  // URL params
   const { userIdentifier } = useParams();
   const searchParams = useSearchParams();
   const urlGuestId = sanitizeUrlParam(searchParams.get('guestId'));
@@ -82,7 +81,7 @@ const PrescriptionMedicationsPage = () => {
     requestLocation,
   } = useLocationDetection();
 
-  // Refs for stable references
+  // Refs
   const refetchRef = useRef(null);
   const isInitialMount = useRef(true);
   const locationProcessingRef = useRef(false);
@@ -94,9 +93,6 @@ const PrescriptionMedicationsPage = () => {
   const [sortBy, setSortBy] = useState('price');
   const [showFilters, setShowFilters] = useState(false);
   const [filtersCleared, setFiltersCleared] = useState(false);
-
-
-  // Location processing state
   const [isLocationProcessed, setIsLocationProcessed] = useState(false);
 
   // UI state
@@ -134,7 +130,6 @@ const PrescriptionMedicationsPage = () => {
     isLocationProcessed,
   });
 
-  // Store refetch in ref for stable access
   useEffect(() => {
     refetchRef.current = refetch;
   }, [refetch]);
@@ -183,20 +178,17 @@ const PrescriptionMedicationsPage = () => {
     },
   });
 
-  // Mount detection
   useEffect(() => {
     setMounted(true);
     isInitialMount.current = false;
   }, []);
 
-  // Sync URL guest ID to localStorage (only once on mount)
   useEffect(() => {
     if (urlGuestId && urlGuestId !== safeLocalStorage.getItem('guestId')) {
       safeLocalStorage.setItem('guestId', urlGuestId);
     }
   }, [urlGuestId]);
 
-  // Stable debounced refetch using callback
   const triggerRefetch = useCallback(() => {
     if (refetchRef.current) {
       refetchRef.current();
@@ -205,56 +197,47 @@ const PrescriptionMedicationsPage = () => {
 
   const debouncedRefetch = useDebounce(triggerRefetch, 300);
 
-  // Auto-detect location from coordinates (one-time processing)
-useEffect(() => {
-  if (!userLocation || !geoData?.length || isLocationProcessed || locationProcessingRef.current || filtersCleared) {
-    return;
-  }
-
-  locationProcessingRef.current = true;
-
-  try {
-    const match = reverseGeocode(userLocation.lat, userLocation.lng);
-    
-    if (match) {
-      setFilterState(match.state);
-      setFilterLga(match.lga);
-      setFilterWard('');
-      setIsLocationProcessed(true);
-      
-      // Trigger refetch after location is set
-      setTimeout(() => {
-        debouncedRefetch();
-      }, 0);
-    } else {
-      console.error('Reverse geocoding failed:', { 
-        lat: userLocation.lat, 
-        lng: userLocation.lng 
-      });
-      toast.error('Unable to determine your location. Please select manually.');
-    }
-  } catch (err) {
-    console.error('Reverse geocoding error:', err);
-    toast.error('Error processing location. Please select manually.');
-  } finally {
-    locationProcessingRef.current = false;
-  }
-}, [userLocation, geoData, reverseGeocode, isLocationProcessed, debouncedRefetch, filtersCleared]);
-
-  // Handle manual filter changes with debounced refetch
+  // Auto-detect location
   useEffect(() => {
-    // Skip on initial mount
-    if (isInitialMount.current) {
+    if (!userLocation || !geoData?.length || isLocationProcessed || locationProcessingRef.current || filtersCleared) {
       return;
     }
 
-    // Only refetch if filters are manually set (not from location auto-detection)
+    locationProcessingRef.current = true;
+
+    try {
+      const match = reverseGeocode(userLocation.lat, userLocation.lng);
+      
+      if (match) {
+        setFilterState(match.state);
+        setFilterLga(match.lga);
+        setFilterWard('');
+        setIsLocationProcessed(true);
+        
+        setTimeout(() => {
+          debouncedRefetch();
+        }, 0);
+      } else {
+        toast.error('Unable to determine your location. Please select manually.');
+      }
+    } catch (err) {
+      console.error('Reverse geocoding error:', err);
+      toast.error('Error processing location. Please select manually.');
+    } finally {
+      locationProcessingRef.current = false;
+    }
+  }, [userLocation, geoData, reverseGeocode, isLocationProcessed, debouncedRefetch, filtersCleared]);
+
+  // Handle filter changes
+  useEffect(() => {
+    if (isInitialMount.current) return;
+
     if (!locationProcessingRef.current) {
       debouncedRefetch();
     }
   }, [filterState, filterLga, filterWard, debouncedRefetch]);
 
-  // Analytics tracking
+  // Analytics
   useEffect(() => {
     if (typeof window !== 'undefined' && window.gtag && userIdentifier) {
       window.gtag('event', 'page_view', {
@@ -264,33 +247,25 @@ useEffect(() => {
     }
   }, [userIdentifier]);
 
-  // Cart items for floating button
   const cartItems = useMemo(() => 
     cart?.pharmacies?.flatMap(p => p?.items || []) || [],
     [cart]
   );
 
-  // Check if pharmacy data exists
   const hasPharmacyData = useMemo(() => {
     return pharmacyRecommendations?.length > 0 || 
            medications?.some(med => med.availability?.length > 0);
   }, [pharmacyRecommendations, medications]);
 
-  // Show location prompt logic
   const shouldShowLocationPrompt = !hasPharmacyData && 
                                    !filterState && 
                                    !filterLga && 
                                    !filterWard;
 
-   console.log('shouldShowLocationPrompt:', shouldShowLocationPrompt)                                
-
-  // Add to cart handler
   const handleAddToCart = useCallback(async (medicationId, pharmacyId, displayName) => {
     const hasDuplicate = checkForDuplicates(medicationId, pharmacyId, displayName);
     
-    if (hasDuplicate) {
-      return;
-    }
+    if (hasDuplicate) return;
 
     const medQuantity = medications?.find(m => m.id === medicationId)?.quantity || 1;
     
@@ -311,17 +286,14 @@ useEffect(() => {
       }
     } catch (error) {
       console.error('Add to cart error:', error);
-      toast.error('Failed to add item to cart. Please try again.');
+      toast.error('Failed to add item to cart');
     }
   }, [checkForDuplicates, medications, addToCart, pharmacyRecommendations]);
 
-  // Bulk add handler
   const handleBulkAdd = useCallback(async (pharmacyId, meds) => {
     const { hasDuplicates, safeItems } = checkBulkDuplicates(pharmacyId, meds);
     
-    if (hasDuplicates || safeItems.length === 0) {
-      return;
-    }
+    if (hasDuplicates || safeItems.length === 0) return;
 
     const pharmacy = pharmacyRecommendations?.find(p => p.pharmacyId === pharmacyId);
     const items = safeItems.map(med => ({
@@ -346,25 +318,22 @@ useEffect(() => {
       }
     } catch (error) {
       console.error('Bulk add error:', error);
-      toast.error('Failed to add items to cart. Please try again.');
+      toast.error('Failed to add items to cart');
     }
   }, [checkBulkDuplicates, pharmacyRecommendations, medications, bulkAddToCart]);
 
-  // Clear all filters
-const clearFilters = useCallback(() => {
-  setFilterState('');
-  setFilterLga('');
-  setFilterWard('');
-  setSortBy('price');
-  setShowFilters(false);
-  setIsLocationProcessed(false); // Reset to allow geolocation to re-evaluate if needed
-  setFiltersCleared(true); // Mark filters as cleared
-  debouncedRefetch();
-}, [debouncedRefetch]);
+  const clearFilters = useCallback(() => {
+    setFilterState('');
+    setFilterLga('');
+    setFilterWard('');
+    setSortBy('price');
+    setShowFilters(false);
+    setIsLocationProcessed(false);
+    setFiltersCleared(true);
+    debouncedRefetch();
+  }, [debouncedRefetch]);
 
-  // Handle location enable
   const handleEnableLocation = useCallback(async () => {
-    // Clear existing filters and reset state
     setFilterState('');
     setFilterLga('');
     setFilterWard('');
@@ -374,186 +343,128 @@ const clearFilters = useCallback(() => {
     
     try {
       await requestLocation();
-      toast.success('Location enabled successfully');
+      toast.success('Location enabled');
     } catch (error) {
       const errorMessage = error?.code === 1 
-        ? 'Location permission denied. Please enable in your browser settings.'
-        : 'Unable to get your location. Please try again or select manually.';
+        ? 'Location permission denied'
+        : 'Unable to get location';
       
       toast.error(errorMessage);
-      console.error('Location error:', error);
     }
   }, [requestLocation]);
 
-  // Handle manual location select
-const handleSelectLocation = useCallback(() => {
-  setFilterState('');
-  setFilterLga('');
-  setFilterWard('');
-  setShowFilters(true);
-  setTimeout(() => {
-    const filterElement = document.querySelector('[data-filters]');
-    if (filterElement) {
-      filterElement.scrollIntoView({ 
-        behavior: 'smooth', 
-        block: 'start' 
-      });
-    }
-  }, 200);
-}, []);
+  const handleSelectLocation = useCallback(() => {
+    setFilterState('');
+    setFilterLga('');
+    setFilterWard('');
+    setShowFilters(true);
+    setTimeout(() => {
+      const filterElement = document.querySelector('[data-filters]');
+      if (filterElement) {
+        filterElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 200);
+  }, []);
 
-  // Handle remove item confirmation
   const handleRemoveConfirm = useCallback(async () => {
     if (!removeItemDialog?.id) return;
     
     try {
       await removeFromCart(removeItemDialog.id);
       setRemoveItemDialog(null);
-      toast.success('Item removed from cart');
+      toast.success('Item removed');
     } catch (error) {
-      console.error('Remove item error:', error);
-      toast.error('Failed to remove item. Please try again.');
+      console.error('Remove error:', error);
+      toast.error('Failed to remove item');
     }
   }, [removeItemDialog, removeFromCart]);
 
-  // SSR guard
-  if (!mounted) {
-    return null;
-  }
-
-  // Loading state
-  if (loading) {
-    return <LoadingState />;
-  }
-
-  // Error state
-  if (error) {
-    return <ErrorState error={error} onRetry={refetch} />;
-  }
+  if (!mounted) return null;
+  if (loading) return <LoadingState />;
+  if (error) return <ErrorState error={error} onRetry={refetch} />;
 
   return (
-    <div className="min-h-screen p-1 bg-gradient-to-br from-gray-50 via-white to-gray-50 relative overflow-hidden">
-      {/* Background decorations */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#1ABA7F]/5 rounded-full blur-3xl animate-blob" />
-        <div className="absolute top-0 right-1/4 w-96 h-96 bg-[#225F91]/5 rounded-full blur-3xl animate-blob animation-delay-2000" />
-      </div>
+    <div className="min-h-screen bg-white">
+      <main className="py-8 px-4 max-w-6xl mx-auto">
+        <HeroSection
+          userName={null}
+          prescriptionMetadata={prescriptionMetadata}
+          medications={medications}
+        />
+        
+        <PrescriptionInfoCard
+          prescriptionMetadata={prescriptionMetadata}
+          medications={medications}
+        />
+        
+        <div className="h-px bg-gray-200 my-8" />
 
-      <main className="py-8 px-2 sm:px-4">
-        <div className="max-w-6xl mx-auto lg:flex lg:gap-8">
-          <div className="flex-1 min-w-0">
-            {/* Hero Section */}
-            <HeroSection
-              userName={null}
-              prescriptionMetadata={prescriptionMetadata}
-              medications={medications}
-            />
-            
-            {/* Prescription Info Card */}
-            <div className="px-2">
-              <PrescriptionInfoCard
-                prescriptionMetadata={prescriptionMetadata}
-                medications={medications}
+        {medications?.length > 0 && (
+          <>
+            <div className="mb-8" data-filters>
+              <FilterControls
+                sortBy={sortBy}
+                setSortBy={setSortBy}
+                showFilters={showFilters}
+                setShowFilters={setShowFilters}
+                filterState={filterState}
+                setFilterState={setFilterState}
+                filterLga={filterLga}
+                setFilterLga={setFilterLga}
+                filterWard={filterWard}
+                setFilterWard={setFilterWard}
+                states={states}
+                lgas={lgas}
+                wards={wards}
+                clearFilters={clearFilters}
               />
             </div>
             
-            <hr className="border-t border-gray-300 my-4 sm:my-6" />
+            <div className="h-px bg-gray-200 mb-8" />
 
-            {medications?.length > 0 && (
-              <>
-                {/* Filter Controls */}
-                <div className="my-6 px-2" data-filters>
-                  <FilterControls
-                    sortBy={sortBy}
-                    setSortBy={setSortBy}
-                    showFilters={showFilters}
-                    setShowFilters={setShowFilters}
-                    filterState={filterState}
-                    setFilterState={setFilterState}
-                    filterLga={filterLga}
-                    setFilterLga={setFilterLga}
-                    filterWard={filterWard}
-                    setFilterWard={setFilterWard}
-                    states={states}
-                    lgas={lgas}
-                    wards={wards}
-                    clearFilters={clearFilters}
-                  />
+            {shouldShowLocationPrompt ? (
+              <div className="mb-8">
+                <LocationPrompt
+                  onSelectLocation={handleSelectLocation}
+                  onEnableLocation={handleEnableLocation}
+                  locationStatus={locationStatus}
+                />
+              </div>
+            ) : !hasPharmacyData ? (
+              <div className="text-center p-12 bg-gray-50 rounded-2xl border-2 border-gray-200">
+                <div className="w-16 h-16 mx-auto rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                  <MapPin className="h-8 w-8 text-gray-400" strokeWidth={2} />
                 </div>
-                
-                <hr className="border-t border-gray-300 mb-8" />
-
-                {/* Location Prompt or Pharmacy Results */}
-                {shouldShowLocationPrompt ? (
-                  <div className="px-2 mb-8">
-                    <LocationPrompt
-                      onSelectLocation={handleSelectLocation}
-                      onEnableLocation={handleEnableLocation}
-                      locationStatus={locationStatus}
-                    />
+                <h3 className="text-xl font-bold text-gray-800 mb-2">
+                  No pharmacies found
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  No pharmacies in your selected location
+                </p>
+                {(filterState || filterLga || filterWard) && (
+                  <div className="mt-4 p-3 rounded-xl bg-white border border-gray-200">
+                    <p className="text-sm font-medium text-gray-700">
+                      Location: {filterState}{filterLga ? `, ${filterLga}` : ''}{filterWard ? `, ${filterWard}` : ''}
+                    </p>
                   </div>
-                ) : !hasPharmacyData ? (
-                  <div className="px-2 mb-8">
-                        <div className="text-center py-12 px-6 rounded-2xl bg-gradient-to-br from-gray-50 to-white border-2 border-dashed border-gray-300">
-                                {/* Animated Icon */}
-                          <div className="relative w-24 h-24 mx-auto mb-6 animate-in zoom-in-50 duration-700" 
-                                style={{ animationDelay: '200ms' }}>
-                            <div className="absolute inset-0 bg-gradient-to-br from-teal-400 to-blue-500 rounded-full blur-2xl opacity-30 animate-pulse" 
-                                  style={{ animationDuration: '2s' }} />
-                            <div className="relative w-full h-full bg-white rounded-full flex items-center justify-center shadow-xl">
-                              <MapPin className="h-12 w-12 text-teal-600 animate-bounce" 
-                                      style={{ animationDuration: '2s' }} />
-                            </div>
-                          </div>
-                          
-                              {/* Title with slide animation */}
-                              <h3 className="text-2xl font-black text-[#225F91] mb-3 animate-in slide-in-from-bottom-2 duration-500" 
-                                  style={{ animationDelay: '300ms' }}>
-                                No pharmacies found
-                              </h3>
-                        
-                              {/* Description */}
-                              <p className="text-gray-600 text-base mb-6 max-w-md mx-auto leading-relaxed animate-in fade-in duration-500" 
-                                  style={{ animationDelay: '400ms' }}>
-                              No pharmacies found in your selected location.
-                              </p>
-                        
-                              {/* Location Used */}
-                      
-                              {(filterState || filterLga || filterWard) && (
-                                <div className="mt-4 p-3 rounded-xl bg-gray-100">
-                                  <p className="text-gray-600 text-sm font-bold">
-                                    Chosen Location: {filterState}{filterLga ? `, ${filterLga}` : ''}{filterWard ? `, ${filterWard}` : ''}
-                                  </p>
-                                </div>
-                              )}
-                      
-                              {/* Helper Text */}
-                            <p className="text-xs text-gray-500 mt-6 animate-in fade-in duration-500" 
-                              style={{ animationDelay: '700ms' }}>
-                              Try a different location or broader area to find available pharmacies.
-                            </p>
-                        </div>
-                  </div>
-                ) : (
-                  <PharmacyRecommendations
-                    pharmacyRecommendations={pharmacyRecommendations}
-                    medications={medications}
-                    handleAddToCart={handleAddToCart}
-                    handleBulkAddWithDuplicateCheck={handleBulkAdd}
-                    cart={cart}
-                    isInCart={isInCart}
-                    isAddingToCart={isAddingToCart}
-                    onRemoveItem={(item) => setRemoveItemDialog(item)}
-                  />
                 )}
-              </>
+              </div>
+            ) : (
+              <PharmacyRecommendations
+                pharmacyRecommendations={pharmacyRecommendations}
+                medications={medications}
+                handleAddToCart={handleAddToCart}
+                handleBulkAddWithDuplicateCheck={handleBulkAdd}
+                cart={cart}
+                isInCart={isInCart}
+                isAddingToCart={isAddingToCart}
+                onRemoveItem={(item) => setRemoveItemDialog(item)}
+              />
             )}
-          </div>
-        </div>
+          </>
+        )}
       </main>
 
-      {/* Floating Cart Button */}
       {cartItems.length > 0 && (
         <FloatingCartSummary
           cartItemsCount={cartItems.length}
@@ -561,7 +472,6 @@ const handleSelectLocation = useCallback(() => {
         />
       )}
 
-      {/* Dialogs */}
       <CartDialog
         openCartDialog={openCartDialog}
         setOpenCartDialog={setOpenCartDialog}
@@ -602,10 +512,9 @@ const handleSelectLocation = useCallback(() => {
         isRemoving={isRemoving}
       />
 
-      {/* Footer */}
-      <footer className="relative z-10 bg-gradient-to-r from-[#225F91] to-[#1a4a73] text-white py-6 px-4 mt-6">
+      <footer className="bg-[#225F91] text-white py-6 px-4 mt-12">
         <div className="text-center">
-          <p className="text-sm opacity-90">
+          <p className="text-sm">
             &copy; {new Date().getFullYear()} Manzu. Powered by WellRica.
           </p>
         </div>
@@ -613,7 +522,5 @@ const handleSelectLocation = useCallback(() => {
     </div>
   );
 };
-
-PrescriptionMedicationsPage.displayName = 'PrescriptionMedicationsPage';
 
 export default PrescriptionMedicationsPage;
