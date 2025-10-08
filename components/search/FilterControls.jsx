@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Save, Bookmark, X, MapPin, Filter } from "lucide-react";
 import Select from "react-select";
@@ -27,7 +27,6 @@ const customSelectStyles = {
     ...provided,
     margin: 0,
     padding: 0,
-    // iOS-specific fix: 16px font prevents zoom which triggers scroll
     fontSize: "16px",
     "@media (min-width: 640px)": {
       fontSize: "0.875rem",
@@ -85,18 +84,16 @@ const FilterControls = ({
   states,
   lgas,
   wards,
-  updateLgas,
-  updateWards,
   clearFilters,
   showFilters,     
   setShowFilters,
+  // Remove updateLgas and updateWards - they're not needed
 }) => {
   const [savedFilters, setSavedFilters] = useState([]);
   const [activeFilters, setActiveFilters] = useState(0);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const filterContainerRef = useRef(null);
 
-  // Detect when mobile keyboard appears (same as SearchInput)
   useEffect(() => {
     const handleResize = () => {
       if (window.visualViewport) {
@@ -113,24 +110,22 @@ const FilterControls = ({
     }
   }, []);
 
-  // Scroll filter into view when keyboard appears (same pattern as SearchInput)
-useEffect(() => {
-  if (isKeyboardVisible && showFilters && filterContainerRef.current) {
-    // Check if the focused element is actually within the filter container
-    const activeElement = document.activeElement;
-    const isFilterInput = filterContainerRef.current.contains(activeElement);
-    
-    if (isFilterInput) {
-      setTimeout(() => {
-        filterContainerRef.current?.scrollIntoView({ 
-          behavior: 'smooth', 
-          block: 'start',
-          inline: 'nearest'
-        });
-      }, 100);
+  useEffect(() => {
+    if (isKeyboardVisible && showFilters && filterContainerRef.current) {
+      const activeElement = document.activeElement;
+      const isFilterInput = filterContainerRef.current.contains(activeElement);
+      
+      if (isFilterInput) {
+        setTimeout(() => {
+          filterContainerRef.current?.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start',
+            inline: 'nearest'
+          });
+        }, 100);
+      }
     }
-  }
-}, [isKeyboardVisible, showFilters]);
+  }, [isKeyboardVisible, showFilters]);
 
   useEffect(() => {
     const saved = localStorage.getItem("savedFilters");
@@ -168,17 +163,10 @@ useEffect(() => {
     localStorage.setItem("savedFilters", JSON.stringify(newSaved));
   };
 
-  const applySavedFilter = async (filter) => {
-    try {
-      setFilterState(filter.filterState);
-      await updateLgas(filter.filterState);
-      setFilterLga(filter.filterLga);
-      await updateWards(filter.filterState, filter.filterLga);
-      setFilterWard(filter.filterWard);
-
-    } catch (error) {
-      console.error("Failed to apply saved filter:", error);
-    }
+  const applySavedFilter = (filter) => {
+    setFilterState(filter.filterState);
+    setFilterLga(filter.filterLga);
+    setFilterWard(filter.filterWard);
   };
 
   const deleteSavedFilter = (id) => {
@@ -195,7 +183,7 @@ useEffect(() => {
     return text;
   })();
 
-    return (
+  return (
     <div data-filters className="space-y-4" ref={filterContainerRef}>
       <div className="flex items-center justify-between animate-in fade-in slide-in-from-top-2 duration-500">
         <Button
@@ -203,7 +191,6 @@ useEffect(() => {
           onClick={() => setShowFilters(!showFilters)}
           className="group h-12 px-6 text-sm font-semibold rounded-xl border-2 border-[#1ABA7F]/30 text-[#225F91] hover:bg-gradient-to-r hover:from-[#1ABA7F]/10 hover:to-transparent transition-all duration-300 hover:shadow-lg hover:scale-105 relative overflow-hidden"
         >
-          {/* Shine effect */}
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
           
           <Filter className={cn(
@@ -232,7 +219,6 @@ useEffect(() => {
         )}
       </div>
 
-      {/* Saved Filters with stagger animation */}
       {savedFilters.length > 0 && (
         <div className="flex flex-wrap items-center gap-2 p-4 rounded-xl bg-gradient-to-r from-gray-50 to-white border border-gray-200 animate-in fade-in slide-in-from-bottom-2 duration-500" style={{ animationDelay: '100ms' }}>
           <Bookmark className="h-4 w-4 text-[#225F91]" />
@@ -263,11 +249,9 @@ useEffect(() => {
         </div>
       )}
 
-      {/* Filter Dropdowns with smooth entrance */}
       {showFilters && (
         <div className="space-y-4 p-6 rounded-2xl bg-gradient-to-br from-white to-gray-50 border-2 border-[#1ABA7F]/20 shadow-xl animate-in fade-in slide-in-from-top-4 duration-500">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {/* State dropdown with stagger */}
             <div className="space-y-2 animate-in fade-in slide-in-from-left-2" style={{ animationDelay: '100ms', animationDuration: '500ms' }}>
               <label htmlFor="state-filter" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                 <MapPin className="h-3.5 w-3.5 text-[#1ABA7F]" />
@@ -279,8 +263,12 @@ useEffect(() => {
                 onChange={(selected) => {
                   const newState = selected?.value || "";
                   setFilterState(newState);
-                  updateLgas(newState);
+                  // Clear dependent filters when state changes
                   if (!newState) {
+                    setFilterLga("");
+                    setFilterWard("");
+                  } else {
+                    // Reset LGA and Ward when state changes
                     setFilterLga("");
                     setFilterWard("");
                   }
@@ -292,7 +280,6 @@ useEffect(() => {
               />
             </div>
 
-            {/* LGA dropdown with stagger */}
             <div className="space-y-2 animate-in fade-in slide-in-from-left-2" style={{ animationDelay: '200ms', animationDuration: '500ms' }}>
               <label htmlFor="lga-filter" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                 <MapPin className="h-3.5 w-3.5 text-[#225F91]" />
@@ -304,8 +291,9 @@ useEffect(() => {
                 onChange={(selected) => {
                   const newLga = selected?.value || "";
                   setFilterLga(newLga);
-                  updateWards(filterState, newLga);
+                  // Clear ward when LGA changes
                   if (!newLga) setFilterWard("");
+                  else setFilterWard("");
                 }}
                 value={lgas.find((o) => o.value === filterLga) || null}
                 placeholder="Select LGA..."
@@ -315,7 +303,6 @@ useEffect(() => {
               />
             </div>
 
-            {/* Ward dropdown with stagger */}
             <div className="space-y-2 animate-in fade-in slide-in-from-left-2" style={{ animationDelay: '300ms', animationDuration: '500ms' }}>
               <label htmlFor="ward-filter" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                 <MapPin className="h-3.5 w-3.5 text-[#76D1F3]" />
@@ -336,7 +323,6 @@ useEffect(() => {
             </div>
           </div>
 
-          {/* Action Buttons with animation */}
           {activeFilters > 0 && (
             <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-gray-200 animate-in fade-in slide-in-from-bottom-2" style={{ animationDelay: '400ms', animationDuration: '500ms' }}>
               <div className="flex gap-2">
@@ -370,7 +356,6 @@ useEffect(() => {
         </div>
       )}
 
-      {/* Location Context with slide animation */}
       {locationText && (
         <div className="flex items-center gap-2 p-4 rounded-xl bg-gradient-to-r from-[#1ABA7F]/5 to-[#225F91]/5 border border-[#1ABA7F]/20 animate-in fade-in slide-in-from-bottom-2 duration-500" data-location-text>
           <MapPin className="h-4 w-4 text-[#1ABA7F] flex-shrink-0 animate-pulse" />

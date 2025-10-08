@@ -13,7 +13,7 @@ import {
   Shield,
   CreditCard,
   Loader2,
-  HospitalIcon,
+  Store,
   MapPin,
   Sparkles
 } from 'lucide-react';
@@ -27,7 +27,7 @@ const DELIVERY_METHODS = {
 const DELIVERY_OPTIONS = [
   {
     value: DELIVERY_METHODS.PICKUP,
-    icon: HospitalIcon,
+    icon: Store,
     label: 'Pickup',
     description: 'Collect from pharmacy',
   },
@@ -367,7 +367,7 @@ const CheckoutForm = ({
                 <ul className="space-y-2">
                   {uniquePharmacies.map((pharmacy, index) => (
                     <li key={`${pharmacy.name}-${index}`} className="flex items-start gap-3 p-3 bg-white rounded-xl shadow-sm">
-                      <HospitalIcon className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                      <Store className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
                       <div className="text-sm">
                         <p className="font-bold text-blue-900">{pharmacy.name}</p>
                         <p className="text-blue-700">{pharmacy.address}</p>

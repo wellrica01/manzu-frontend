@@ -1,10 +1,9 @@
-// /app/confirmation/page.tsx
 
 'use client';
 export const dynamic = 'force-dynamic';
 
 import { Suspense } from 'react';
-import ConfirmationInner from './ConfirmationInner';
+import ConfirmationInner from '@/components/confirmation/ConfirmationInner';
 
 export default function ConfirmationPage() {
   return (

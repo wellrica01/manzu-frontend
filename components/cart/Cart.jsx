@@ -1,9 +1,24 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { useCart } from '@/hooks/useCart';
+import { useGuestId } from '@/hooks/useGuestId';
+import { Button } from '@/components/ui/button';
+import { 
+  ShoppingCart, 
+  ArrowLeft, 
+  Loader2, 
+  RefreshCw, 
+  WifiOff, 
+  Trash2, 
+  X,
+  AlertCircle,
+  CheckCircle
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+// Components
 import ErrorMessage from '@/components/ErrorMessage';
 import EmptyCart from './EmptyCart';
 import UnifiedRemoveDialog from './UnifiedRemoveDialog';
@@ -11,41 +26,28 @@ import QuantityUpdateDialog from './QuantityUpdateDialog';
 import PharmacyCartCard from './PharmacyCartCard';
 import CartSummary from './CartSummary';
 import PrescriptionUploadSection from './PrescriptionUploadSection';
+
+// Utilities
 import { 
   getCartSegments, 
-  getCartStatus, 
   canProceedToCheckout,
   calculateItemPrice,
   groupItemsByPharmacy,
   trackEvent,
-  deduplicateRequest,
   getCartType,
   getTabSummary
-
- } from '@/lib/cartUtils';
+} from '@/lib/cartUtils';
 import { getAvailableTabs } from '@/lib/cartConfig';
 
-import { Button } from '@/components/ui/button';
-import { ShoppingCart, ArrowLeft, Clock, CheckCircle, AlertCircle, Loader2, RefreshCw, AlertTriangle, WifiOff, Trash2, X } from 'lucide-react';
-import { cn } from '@/lib/utils';
+// Custom Hooks
+import { useCartData } from '@/hooks/useCartData';
+import { useCartMutations } from '@/hooks/useCartMutations';
+import { useOfflineDetection } from '@/hooks/useOfflineDetection';
+import { usePrescriptionPolling } from '@/hooks/usePrescriptionPolling';
+import { useSelectionMode } from '@/hooks/useSelectionMode';
 
-
-// Import API functions
-import {
-  fetchCartData,
-  loadPrescriptionStatuses,
-  pollPrescriptionStatuses,
-  updateCartQuantity,
-  removeCartItem,
-  bulkRemoveCartItems,
-  refreshCartData,
-  API_CONSTANTS,
-  PrescriptionStatuses,
-  isApiConfigured
-} from './cartApi';
-
-// Constants
-const { POLLING_INTERVAL, MAX_QUANTITY = 99, MIN_QUANTITY = 1 } = API_CONSTANTS;
+// API
+import { uploadPrescription, loadPrescriptionStatuses } from '@/lib/cartApiClient';
 
 
 // Error Boundary Component
@@ -68,14 +70,10 @@ class CartErrorBoundary extends React.Component {
     if (this.state.hasError) {
       return (
         <div className="min-h-screen bg-gradient-to-br from-[#1ABA7F]/5 via-white to-[#225F91]/5 relative overflow-hidden flex items-center justify-center p-4">
-          {/* Background elements */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            {/* Animated gradient orbs */}
             <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-to-br from-[#1ABA7F]/10 to-transparent rounded-full blur-3xl animate-pulse" />
             <div className="absolute bottom-1/4 right-1/3 w-80 h-80 bg-gradient-to-tl from-[#225F91]/10 to-transparent rounded-full blur-3xl animate-pulse delay-1000" />
             <div className="absolute top-1/2 right-1/4 w-64 h-64 bg-gradient-to-br from-purple-500/5 to-transparent rounded-full blur-3xl animate-pulse delay-500" />
-            
-            {/* Dot pattern overlay */}
             <div 
               className="absolute inset-0 opacity-20"
               style={{
@@ -86,7 +84,6 @@ class CartErrorBoundary extends React.Component {
           </div>
 
           <div className="relative z-10 bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 sm:p-12 max-w-lg w-full border-2 border-red-200/50">
-            {/* Error Icon */}
             <div className="relative mx-auto w-24 h-24 mb-6">
               <div className="absolute inset-0 bg-gradient-to-br from-red-500/30 to-orange-500/30 rounded-full blur-xl animate-pulse" />
               <div className="relative w-full h-full bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center shadow-2xl border-4 border-white">
@@ -102,7 +99,6 @@ class CartErrorBoundary extends React.Component {
                 We encountered an issue while loading your cart. This might be a temporary glitch.
               </p>
 
-              {/* Error details card */}
               <div className="p-4 bg-red-50 rounded-xl border-2 border-red-200/50 text-left">
                 <p className="text-sm text-gray-700 font-mono">
                   {this.state.error?.message || 'Unknown error occurred'}
@@ -130,6 +126,7 @@ class CartErrorBoundary extends React.Component {
 }
 
 
+// Bulk Remove Action Bar Component
 const BulkRemoveActionBar = ({ 
   selectedCount, 
   onRemove, 
@@ -143,13 +140,11 @@ const BulkRemoveActionBar = ({
   return (
     <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-4 duration-300 w-[90%] sm:w-auto">
       <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border-2 border-[#1ABA7F]/30 p-4 flex flex-wrap items-center gap-3 justify-center sm:justify-start">
-        {/* Selection Count */}
         <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-[#1ABA7F]/10 to-[#225F91]/10 rounded-xl text-sm">
           <CheckCircle className="h-5 w-5 text-[#1ABA7F]" />
           <span className="font-bold text-[#225F91]">{selectedCount} selected</span>
         </div>
 
-        {/* Select All */}
         {selectedCount < totalItems && (
           <Button
             variant="outline"
@@ -161,7 +156,6 @@ const BulkRemoveActionBar = ({
           </Button>
         )}
 
-        {/* Clear Selection */}
         <Button
           variant="ghost"
           size="sm"
@@ -171,7 +165,6 @@ const BulkRemoveActionBar = ({
           Clear
         </Button>
 
-        {/* Remove Button */}
         <Button
           onClick={onRemove}
           disabled={isRemoving}
@@ -197,48 +190,103 @@ const BulkRemoveActionBar = ({
 };
 
 
+// Main Cart Component
 function CartComponent() {
-  // State
-  const [error, setError] = useState(null);
-  const [quantityUpdate, setQuantityUpdate] = useState(null);
-  const [prescriptionStatuses, setPrescriptionStatuses] = useState({});
-  const [isUpdating, setIsUpdating] = useState({});
-  const [isFetched, setIsFetched] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [activeTab, setActiveTab] = useState('ready');
-  const [isOnline, setIsOnline] = useState(true);
-  const [pendingActions, setPendingActions] = useState([]);
-  const [selectionMode, setSelectionMode] = useState(false);
-  const [selectedItems, setSelectedItems] = useState(new Set());
-  const [showBulkRemoveDialog, setShowBulkRemoveDialog] = useState(false);
-  const [removeItem, setRemoveItem] = useState(null);
-  const [bulkRemoveItems, setBulkRemoveItems] = useState([]);
-  const [isBulkRemoving, setIsBulkRemoving] = useState(false);
-  
-  // Refs for cleanup and debouncing
-  const abortControllerRef = useRef(null);
-  const pollingIntervalRef = useRef(null);
-  const isComponentMountedRef = useRef(true);
-  const prescriptionStatusesRef = useRef({});
-
   const router = useRouter();
-  const { cart, fetchCart, guestId } = useCart();
+  
+  // Get environment config
+  const guestId = useGuestId();
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  
+  // Custom hooks
+  const { cart, itemCount, isLoading, isError, error, refetch } = useCartData(guestId, apiUrl);
+  const { 
+    updateQuantity, 
+    removeItem: removeItemMutation, 
+    bulkRemove,
+    isUpdating,
+    isRemoving 
+  } = useCartMutations(guestId, apiUrl);
+  const isOnline = useOfflineDetection();
+  const {
+    selectionMode,
+    setSelectionMode,
+    selectedItems,
+    toggleSelect,
+    selectAll,
+    clearSelection
+  } = useSelectionMode();
+  
+  // Local state
+  const [activeTab, setActiveTab] = useState('ready');
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [quantityUpdate, setQuantityUpdate] = useState(null);
+  const [removeItem, setRemoveItem] = useState(null);
+  const [showBulkRemoveDialog, setShowBulkRemoveDialog] = useState(false);
+  const [bulkRemoveItems, setBulkRemoveItems] = useState([]);
+  const [prescriptionStatuses, setPrescriptionStatuses] = useState({});
+
+  // Memoized segments calculation
+  const segments = useMemo(() => getCartSegments(cart), [cart]);
+  const canCheckout = useMemo(() => canProceedToCheckout(segments), [segments]);
+  const cartType = useMemo(() => getCartType(segments), [segments]);
+  const tabSummary = useMemo(() => getTabSummary(activeTab, segments), [activeTab, segments]);
+
+  // Get medication IDs for prescription polling
+  const medicationIds = useMemo(() => {
+    return cart?.pharmacies
+      ?.flatMap(pharmacy => pharmacy.items || [])
+      .filter(item => item.medication?.prescriptionRequired)
+      .map(item => item.medication.id) || [];
+  }, [cart]);
+
+  // Prescription polling
+  const polledStatuses = usePrescriptionPolling(guestId, medicationIds, apiUrl);
+  
+  // Update prescription statuses
+  useEffect(() => {
+    if (polledStatuses && Object.keys(polledStatuses).length > 0) {
+      setPrescriptionStatuses(prev => ({
+        ...prev,
+        ...polledStatuses
+      }));
+    }
+  }, [polledStatuses]);
+
+  // Initialize prescription statuses from cart data immediately
+useEffect(() => {
+  if (cart?.pharmacies) {
+    const initialStatuses = {};
+    
+    cart.pharmacies.forEach(pharmacy => {
+      pharmacy.items?.forEach(item => {
+        if (item.medication?.prescriptionRequired && item.prescriptionStatus) {
+          initialStatuses[item.medication.id] = item.prescriptionStatus;
+        }
+      });
+    });
+    
+    // Set initial statuses from cart data
+    if (Object.keys(initialStatuses).length > 0) {
+      setPrescriptionStatuses(prev => ({
+        ...prev,
+        ...initialStatuses
+      }));
+    }
+  }
+}, [cart]);
 
 
-// Track entry point when component mounts
+  // Track entry point when component mounts
   useEffect(() => {
     const currentReferrer = sessionStorage.getItem('cart_referrer');
     
-    // Only set entry point if:
-    // 1. It doesn't exist yet, AND
-    // 2. We're not coming from checkout
     if (!sessionStorage.getItem('cart_entry_point') && currentReferrer !== '/checkout') {
       try {
         const referrerUrl = document.referrer;
         if (referrerUrl) {
           const url = new URL(referrerUrl);
           const path = url.pathname;
-          // Don't set cart or checkout as entry points
           if (path !== '/cart' && path !== '/checkout') {
             sessionStorage.setItem('cart_entry_point', path);
           } else {
@@ -252,213 +300,7 @@ function CartComponent() {
       }
     }
     
-    // Clear the cart_referrer flag now that we've used it
     sessionStorage.removeItem('cart_referrer');
-  }, []);
-
-  // Keep ref in sync with state
-  useEffect(() => {
-    prescriptionStatusesRef.current = prescriptionStatuses;
-  }, [prescriptionStatuses]);
-
-  // Memoized segments calculation
-  const segments = useMemo(() => getCartSegments(cart), [cart]);
-  const cartStatus = useMemo(() => getCartStatus(segments), [segments]);
-  const canCheckout = useMemo(() => canProceedToCheckout(segments), [segments]);
-
-  // Online/Offline detection
-  useEffect(() => {
-    const handleOnline = () => {
-      setIsOnline(true);
-      toast.success('Connection restored', { duration: 2000 });
-      // Retry pending actions
-      if (pendingActions.length > 0) {
-        toast.info('Retrying pending actions...', { duration: 2000 });
-        loadCart();
-      }
-    };
-
-    const handleOffline = () => {
-      setIsOnline(false);
-      toast.error('No internet connection', { duration: 4000 });
-    };
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    // Check initial status
-    setIsOnline(navigator.onLine);
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, [pendingActions.length]);
-
-  // Fetch cart with error handling
-  const loadCart = useCallback(async () => {
-    if (!isComponentMountedRef.current || !isApiConfigured()) return;
-    
-    try {
-      await fetchCartData(fetchCart);
-      setError(null);
-      setPendingActions([]);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load cart';
-      setError(message);
-      toast.error(message, { duration: 4000 });
-      trackEvent('cart_load_error', { error: message });
-    } finally {
-      if (isComponentMountedRef.current) {
-        setIsFetched(true);
-      }
-    }
-  }, [fetchCart]);
-
-  // Load prescription statuses with abort controller
-  const loadPrescriptionStatusesData = useCallback(async () => {
-    if (!guestId || !cart?.pharmacies || !isApiConfigured()) return;
-
-    const prescriptionItems = cart.pharmacies
-      .flatMap(pharmacy => pharmacy.items || [])
-      .filter(item => item.medication?.prescriptionRequired);
-
-    if (prescriptionItems.length === 0) return;
-
-    // Cancel previous request
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-
-    // Create new abort controller
-    abortControllerRef.current = new AbortController();
-
-    try {
-      const medicationIds = prescriptionItems.map(item => item.medication.id);
-
-      const statusData = await loadPrescriptionStatuses(
-        guestId, 
-        medicationIds, 
-        abortControllerRef.current.signal
-      );
-      
-      if (isComponentMountedRef.current) {
-        setPrescriptionStatuses(statusData);
-      }
-    } catch (err) {
-      if (err instanceof Error && err.name === 'AbortError') {
-        return;
-      }
-      if (process.env.NODE_ENV === 'development') {
-        console.error('Failed to load prescription statuses:', err);
-      }
-    }
-  }, [guestId, cart]);
-
-  // Initial cart load
-  useEffect(() => {
-    loadCart();
-  }, [loadCart]);
-
-  // Load prescription statuses when cart changes
-  useEffect(() => {
-    loadPrescriptionStatusesData();
-  }, [loadPrescriptionStatusesData]);
-
-  // Setup polling with Page Visibility API
-  useEffect(() => {
-    if (!guestId || !cart?.pharmacies || !isApiConfigured()) return;
-
-    const prescriptionItems = cart.pharmacies
-      .flatMap(pharmacy => pharmacy.items || [])
-      .filter(item => item.medication?.prescriptionRequired);
-
-    // Only poll items that are still pending
-    const pendingItems = prescriptionItems.filter(item => {
-      const status = prescriptionStatusesRef.current[item.medication.id];
-      return !status || status === PrescriptionStatuses.PENDING;
-    });
-
-    if (pendingItems.length === 0) return;
-
-    // Polling function
-    const pollStatuses = async () => {
-      if (document.hidden || !isOnline) return;
-
-      try {
-        const medicationIds = pendingItems.map(item => item.medication.id);
-        const statusData = await pollPrescriptionStatuses(guestId, medicationIds);
-
-        if (!isComponentMountedRef.current || !statusData) return;
-
-        const currentStatuses = prescriptionStatusesRef.current;
-
-        // Check for status changes
-        const newlyVerified = Object.keys(statusData).filter(medId => 
-          statusData[medId] === PrescriptionStatuses.VERIFIED && 
-          currentStatuses[medId] !== PrescriptionStatuses.VERIFIED
-        );
-        
-        const newlyRejected = Object.keys(statusData).filter(medId => 
-          statusData[medId] === PrescriptionStatuses.REJECTED && 
-          currentStatuses[medId] !== PrescriptionStatuses.REJECTED
-        );
-
-        // Update statuses first
-        setPrescriptionStatuses(statusData);
-
-        // Then refresh cart if needed
-        if (newlyVerified.length > 0) {
-          await fetchCart();
-          toast.success('Your prescription has been verified!', { duration: 5000 });
-          trackEvent('prescription_verified', { count: newlyVerified.length });
-        }
-        
-        if (newlyRejected.length > 0) {
-          await fetchCart();
-          toast.error('Your prescription has been rejected. Please upload a new prescription.', { duration: 5000 });
-          trackEvent('prescription_rejected', { count: newlyRejected.length });
-        }
-      } catch (err) {
-        if (process.env.NODE_ENV === 'development') {
-          console.error('Polling error:', err);
-        }
-      }
-    };
-
-    // Start polling
-    pollingIntervalRef.current = setInterval(pollStatuses, POLLING_INTERVAL);
-
-    // Handle visibility change
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        pollStatuses();
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      if (pollingIntervalRef.current) {
-        clearInterval(pollingIntervalRef.current);
-      }
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [guestId, cart?.pharmacies, fetchCart, isOnline]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    isComponentMountedRef.current = true;
-    
-    return () => {
-      isComponentMountedRef.current = false;
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-      if (pollingIntervalRef.current) {
-        clearInterval(pollingIntervalRef.current);
-      }
-    };
   }, []);
 
   // Refresh cart handler
@@ -472,12 +314,14 @@ function CartComponent() {
     
     setIsRefreshing(true);
     try {
-      const medicationIds = cart?.pharmacies
-        ?.flatMap(pharmacy => pharmacy.items || [])
-        .filter(item => item.medication?.prescriptionRequired)
-        .map(item => item.medication.id) || [];
-
-      await refreshCartData(fetchCart, guestId, medicationIds);
+      await refetch();
+      
+      // Reload prescription statuses
+      if (medicationIds.length > 0) {
+        const statuses = await loadPrescriptionStatuses(guestId, medicationIds, apiUrl);
+        setPrescriptionStatuses(statuses);
+      }
+      
       toast.success('Cart updated successfully', { duration: 2000 });
       trackEvent('cart_refreshed');
     } catch (err) {
@@ -488,164 +332,84 @@ function CartComponent() {
     }
   };
 
-
-  // Toggle item selection
-const handleToggleSelect = useCallback((itemId) => {
-  setSelectedItems(prev => {
-    const newSet = new Set(prev);
-    if (newSet.has(itemId)) {
-      newSet.delete(itemId);
-    } else {
-      newSet.add(itemId);
-    }
-    return newSet;
-  });
-}, []);
-
-// Select all items
-const handleSelectAll = useCallback(() => {
-  const allItemIds = [
-    ...segments.readyForCheckout,
-    ...segments.needsPrescription,
-    ...segments.pendingPrescription,
-    ...segments.rejectedPrescription
-  ].map(item => item.id);
-  setSelectedItems(new Set(allItemIds));
-}, [segments]);
-
-// Clear selection
-const handleClearSelection = useCallback(() => {
-  setSelectedItems(new Set());
-}, []);
-
-
-// Bulk remove with API call
-const handleBulkRemove = async () => {
-  if (selectedItems.size === 0) return;
-
-  // Get full item details for selected items
-  const allItems = [
-    ...segments.readyForCheckout,
-    ...segments.needsPrescription,
-    ...segments.pendingPrescription,
-    ...segments.rejectedPrescription
-  ];
-  
-    const itemsToRemoveDetails = allItems
-    .filter(item => selectedItems.has(item.id))
-    .map(item => ({
-      id: item.id,
-      name: item.medication?.displayName || 'Unknown Item',
-      quantity: item.quantity
-    }));
-
-  setBulkRemoveItems(itemsToRemoveDetails);
-  setShowBulkRemoveDialog(true);
-};
-
-// Update the actual bulk remove confirmation
-const handleBulkRemoveConfirm = async () => {
-  if (selectedItems.size === 0) return;
-
-  setIsBulkRemoving(true);
-  const itemIds = [...selectedItems];
-
-  try {
-    await bulkRemoveCartItems(guestId, itemIds);
-    await fetchCart();
-    setSelectedItems(new Set());
-    setSelectionMode(false);
-    setShowBulkRemoveDialog(false);
-    setBulkRemoveItems([]);
-
-    toast.success(`${itemIds.length} items removed from cart`, { duration: 3000 });
-    trackEvent('bulk_remove_from_cart', { count: itemIds.length });
-  } catch (err) {
-    toast.error('Failed to remove items', { duration: 4000 });
-    trackEvent('bulk_remove_error', { error: err.message });
-  } finally {
-    setIsBulkRemoving(false);
-  }
-};
-
-  // Quantity change handler with validation
-  const handleQuantityChange = async (orderItemId, newQuantity, itemName) => {
-    if (!orderItemId || !isApiConfigured()) {
-      toast.error('Invalid item', { duration: 3000 });
-      return;
-    }
-
-    if (newQuantity < MIN_QUANTITY || newQuantity > MAX_QUANTITY) {
-      toast.error(`Quantity must be between ${MIN_QUANTITY} and ${MAX_QUANTITY}`, { duration: 3000 });
-      return;
-    }
-
+  // Quantity change handler
+  const handleQuantityChange = useCallback((orderItemId, newQuantity, itemName) => {
     if (!isOnline) {
-      toast.error('No internet connection. Changes will be saved when online.', { duration: 4000 });
-      setPendingActions(prev => [...prev, { type: 'quantity', orderItemId, newQuantity }]);
+      toast.error('No internet connection', { duration: 4000 });
       return;
     }
 
-    if (isUpdating[orderItemId]) return;
-
-    setIsUpdating(prev => ({ ...prev, [orderItemId]: true }));
-
-    try {
-      await deduplicateRequest(`quantity-${orderItemId}`, async () => {
-        await updateCartQuantity(guestId, orderItemId, newQuantity);
-      });
-
-      await fetchCart();
-      setQuantityUpdate({ id: orderItemId, name: itemName, quantity: newQuantity });
-      trackEvent('update_cart_quantity', { orderItemId, quantity: newQuantity });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to update item';
-      toast.error(message, { duration: 4000 });
-      trackEvent('update_cart_quantity_error', { orderItemId, error: message });
-    } finally {
-      if (isComponentMountedRef.current) {
-        setIsUpdating(prev => ({ ...prev, [orderItemId]: false }));
-      }
-    }
-  };
+    updateQuantity({ orderItemId, quantity: newQuantity });
+    setQuantityUpdate({ id: orderItemId, name: itemName, quantity: newQuantity });
+    trackEvent('update_cart_quantity', { orderItemId, quantity: newQuantity });
+  }, [updateQuantity, isOnline]);
 
   // Remove item handler
-  const handleRemoveItem = async () => {
-    if (!removeItem?.id || !isApiConfigured()) {
-      toast.error('Invalid item', { duration: 3000 });
-      return;
-    }
-
-    if (!isOnline) {
-      toast.error('No internet connection. Please try again when online.', { duration: 4000 });
+  const handleRemoveItem = useCallback(() => {
+    if (!removeItem?.id || !isOnline) {
+      if (!isOnline) {
+        toast.error('No internet connection', { duration: 4000 });
+      }
       return;
     }
 
     const itemId = removeItem.id;
-    setIsUpdating(prev => ({ ...prev, [itemId]: true }));
+    removeItemMutation(itemId);
+    setRemoveItem(null);
+    trackEvent('remove_from_cart', { orderItemId: itemId });
+  }, [removeItem, removeItemMutation, isOnline]);
 
-    try {
-      await deduplicateRequest(`remove-${itemId}`, async () => {
-        await removeCartItem(guestId, itemId);
-      });
+  // Bulk remove handler
+  const handleBulkRemove = useCallback(() => {
+    if (selectedItems.size === 0) return;
 
-      await fetchCart();
-      setRemoveItem(null);
-      toast.success('Item removed from cart', { duration: 2000 });
-      trackEvent('remove_from_cart', { orderItemId: itemId });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to remove item';
-      toast.error(message, { duration: 4000 });
-      trackEvent('remove_from_cart_error', { orderItemId: itemId, error: message });
-    } finally {
-      if (isComponentMountedRef.current) {
-        setIsUpdating(prev => ({ ...prev, [itemId]: false }));
-      }
-    }
-  };
+    const allItems = [
+      ...segments.readyForCheckout,
+      ...segments.needsPrescription,
+      ...segments.pendingPrescription,
+      ...segments.rejectedPrescription
+    ];
+    
+    const itemsToRemoveDetails = allItems
+      .filter(item => selectedItems.has(item.id))
+      .map(item => ({
+        id: item.id,
+        name: item.medication?.displayName || 'Unknown Item',
+        quantity: item.quantity
+      }));
+
+    setBulkRemoveItems(itemsToRemoveDetails);
+    setShowBulkRemoveDialog(true);
+  }, [selectedItems, segments]);
+
+  // Bulk remove confirmation
+  const handleBulkRemoveConfirm = useCallback(async () => {
+    if (selectedItems.size === 0) return;
+
+    const itemIds = [...selectedItems];
+    bulkRemove(itemIds);
+    
+    clearSelection();
+    setSelectionMode(false);
+    setShowBulkRemoveDialog(false);
+    setBulkRemoveItems([]);
+    
+    trackEvent('bulk_remove_from_cart', { count: itemIds.length });
+  }, [selectedItems, bulkRemove, clearSelection, setSelectionMode]);
+
+  // Select all items
+  const handleSelectAll = useCallback(() => {
+    const allItemIds = [
+      ...segments.readyForCheckout,
+      ...segments.needsPrescription,
+      ...segments.pendingPrescription,
+      ...segments.rejectedPrescription
+    ].map(item => item.id);
+    selectAll(allItemIds);
+  }, [segments, selectAll]);
 
   // Checkout handler
-  const handleCheckout = () => {
+  const handleCheckout = useCallback(() => {
     if (!canCheckout) {
       toast.error('No medications ready for checkout. Please complete prescription requirements first.', { duration: 4000 });
       return;
@@ -656,61 +420,58 @@ const handleBulkRemoveConfirm = async () => {
       return;
     }
 
-   // Mark that we're going to checkout
     sessionStorage.setItem('cart_referrer', '/cart');
-    
     trackEvent('checkout_initiated', { totalItems: segments.readyItemsCount });
     router.replace('/checkout');
-  };
+  }, [canCheckout, isOnline, segments, router]);
 
   // Prescription upload success handler
-  const handlePrescriptionUploadSuccess = async () => {
+  const handlePrescriptionUploadSuccess = useCallback(async () => {
     try {
-      await fetchCart();
-      await loadPrescriptionStatusesData();
+      await refetch();
+      
+      if (medicationIds.length > 0) {
+        const statuses = await loadPrescriptionStatuses(guestId, medicationIds, apiUrl);
+        setPrescriptionStatuses(statuses);
+      }
+      
       toast.success('Prescription uploaded successfully. Please wait for verification.', { duration: 4000 });
       trackEvent('prescription_uploaded');
     } catch (err) {
       toast.error('Failed to refresh cart after upload', { duration: 4000 });
     }
-  };
+  }, [refetch, medicationIds, guestId, apiUrl]);
 
+  // Back navigation handler
+  const handleGoBack = useCallback(() => {
+    const referrer = document.referrer;
+    const isFromCheckout = referrer.includes('/checkout');
+    const isFromPrescriptions = referrer.includes('/prescriptions');
 
-// Back navigation handler
-const handleGoBack = () => {
-  const referrer = document.referrer;
-  const isFromCheckout = referrer.includes('/checkout');
-  const isFromPrescriptions = referrer.includes('/prescriptions');
-
-  if (isFromCheckout) {
-    const entryPoint = sessionStorage.getItem('cart_entry_point');
-
-    if (entryPoint && entryPoint !== '/cart' && entryPoint !== '/checkout') {
-      if (entryPoint.includes('/prescriptions')) {
-        // Use window.location for /prescriptions
-        window.location.href = entryPoint;
+    if (isFromCheckout) {
+      const entryPoint = sessionStorage.getItem('cart_entry_point');
+      if (entryPoint && entryPoint !== '/cart' && entryPoint !== '/checkout') {
+        if (entryPoint.includes('/prescriptions')) {
+          window.location.href = entryPoint;
+        } else {
+          router.replace(entryPoint);
+        }
       } else {
-        router.replace(entryPoint);
+        router.replace('/');
       }
+    } else if (isFromPrescriptions) {
+      window.location.href = referrer;
+    } else if (window.history.length > 1) {
+      router.back();
     } else {
-      router.replace('/');
+      router.push('/');
     }
-  } else if (isFromPrescriptions) {
-    // Directly came from /prescriptions → use full reload
-    window.location.href = referrer;
-  } else if (window.history.length > 1) {
-    router.back();
-  } else {
-    router.push('/');
-  }
-};
-
-
+  }, [router]);
 
   // Memoize pharmacy groups
   const readyPharmacies = useMemo(
     () => groupItemsByPharmacy(segments.readyForCheckout),
-    [segments.readyForCheckout, groupItemsByPharmacy]
+    [segments.readyForCheckout]
   );
 
   const prescriptionPharmacies = useMemo(
@@ -719,12 +480,8 @@ const handleGoBack = () => {
       ...segments.pendingPrescription,
       ...segments.rejectedPrescription
     ]),
-    [segments, groupItemsByPharmacy]
+    [segments]
   );
-
-// Get cart type
-const cartType = useMemo(() => getCartType(segments), [segments]);
-
 
   // Check if tabs should be visible
   const shouldShowTabs = useCallback(() => {
@@ -738,8 +495,7 @@ const cartType = useMemo(() => getCartType(segments), [segments]);
   }, [segments]);
 
   // Get available tabs
- const availableTabs = useMemo(() => getAvailableTabs(segments), [segments]);
-
+  const availableTabs = useMemo(() => getAvailableTabs(segments), [segments]);
 
   // Auto-select active tab
   useEffect(() => {
@@ -759,28 +515,21 @@ const cartType = useMemo(() => getCartType(segments), [segments]);
     }
   }, [availableTabs, activeTab]);
 
- 
-  // Get tab-specific summary
- const tabSummary = useMemo(() => getTabSummary(activeTab, segments), [activeTab, segments]);
-
-
   const totalItemCount = useMemo(
     () => segments.readyItemsCount + segments.prescriptionItemsCount + segments.pendingItemsCount + segments.rejectedItemsCount,
     [segments]
   );
 
   // Render loading state
-  if (!isFetched) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#1ABA7F]/5 via-white to-[#225F91]/5 relative overflow-hidden flex items-center justify-center">
-        {/* Animated background orbs */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#1ABA7F]/10 rounded-full blur-3xl animate-pulse" />
           <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-[#225F91]/10 rounded-full blur-3xl animate-pulse delay-700" />
         </div>
 
         <div className="relative z-10 flex flex-col items-center gap-8">
-          {/* Premium loading spinner */}
           <div className="relative">
             <div className="absolute inset-0 bg-gradient-to-r from-[#1ABA7F] to-[#225F91] rounded-full blur-xl opacity-50 animate-pulse" />
             <div className="relative animate-spin rounded-full h-20 w-20 border-4 border-transparent bg-gradient-to-r from-[#1ABA7F] to-[#225F91] bg-clip-padding" style={{
@@ -794,7 +543,6 @@ const cartType = useMemo(() => getCartType(segments), [segments]);
             <ShoppingCart className="absolute inset-0 m-auto h-8 w-8 text-[#225F91]" />
           </div>
 
-          {/* Loading text with shimmer effect */}
           <div className="text-center space-y-3">
             <h2 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#225F91] to-[#1ABA7F] animate-pulse">
               Loading Your Cart
@@ -839,7 +587,6 @@ const cartType = useMemo(() => getCartType(segments), [segments]);
   // Main render
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1ABA7F]/10 to-gray-50/30 relative p-1 overflow-hidden">
-      {/* Background Pattern */}
       <div 
         className="absolute inset-0 bg-[url('/svg/pattern-dots.svg')] opacity-10 pointer-events-none hidden sm:block" 
         aria-hidden="true" 
@@ -867,7 +614,6 @@ const cartType = useMemo(() => getCartType(segments), [segments]);
       {/* Navigation */}
       <nav className={`sticky ${!isOnline ? 'top-[52px]' : 'top-0'} z-40 bg-white/95 backdrop-blur-xl shadow-lg border-b-2 border-[#1ABA7F]/10 py-4 px-4 sm:px-6 transition-all duration-300`}>
         <div className="w-full max-w-7xl mx-auto flex items-center justify-between gap-4">
-          {/* Back Button */}
           <Button
             variant="ghost"
             onClick={handleGoBack}
@@ -878,7 +624,6 @@ const cartType = useMemo(() => getCartType(segments), [segments]);
             <span className="ml-2 hidden sm:inline font-semibold">Back</span>
           </Button>
 
-          {/* Title with Icon */}
           <div className="flex items-center gap-3 flex-1 justify-center">
             <div className="hidden sm:flex p-2 bg-gradient-to-br from-[#1ABA7F]/20 to-[#225F91]/20 rounded-xl">
               <ShoppingCart className="h-6 w-6 text-[#225F91]" />
@@ -888,9 +633,7 @@ const cartType = useMemo(() => getCartType(segments), [segments]);
             </h2>
           </div>
 
-          {/* Actions Group */}
           <div className="flex items-center gap-2 sm:gap-3">
-            {/* Refresh Button */}
             <button
               onClick={handleRefreshCart}
               disabled={isRefreshing || !isOnline}
@@ -904,38 +647,35 @@ const cartType = useMemo(() => getCartType(segments), [segments]);
               )}
             </button>
 
-            {/* Selection Mode Toggle */}
-          {(segments.readyForCheckout.length + segments.needsPrescription.length + 
-            segments.pendingPrescription.length + segments.rejectedPrescription.length) > 1 && (
-            <button
-              onClick={() => {
-                setSelectionMode(!selectionMode);
-                setSelectedItems(new Set());
-              }}
-              className={cn(
-                "group relative h-12 px-4 rounded-xl font-semibold transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#1ABA7F] focus:ring-offset-2 shadow-sm hover:shadow-md",
-                selectionMode 
-                  ? "bg-gradient-to-br from-red-50 to-orange-50 border-2 border-red-300 text-red-700 hover:border-red-400"
-                  : "bg-gradient-to-br from-gray-50 to-white border-2 border-gray-200 text-gray-700 hover:border-gray-300"
-              )}
-            >
-              <span className="flex items-center gap-2">
-                {selectionMode ? (
-                  <>
-                    <X className="h-5 w-5" />
-                    <span className="hidden sm:inline">Cancel</span>
-                  </>
-                ) : (
-                  <>
-                    <Trash2 className="h-5 w-5" />
-                    <span className="hidden sm:inline">Select Items</span>
-                  </>
+            {totalItemCount > 1 && (
+              <button
+                onClick={() => {
+                  setSelectionMode(!selectionMode);
+                  clearSelection();
+                }}
+                className={cn(
+                  "group relative h-12 px-4 rounded-xl font-semibold transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#1ABA7F] focus:ring-offset-2 shadow-sm hover:shadow-md",
+                  selectionMode 
+                    ? "bg-gradient-to-br from-red-50 to-orange-50 border-2 border-red-300 text-red-700 hover:border-red-400"
+                    : "bg-gradient-to-br from-gray-50 to-white border-2 border-gray-200 text-gray-700 hover:border-gray-300"
                 )}
-              </span>
-            </button>
+              >
+                <span className="flex items-center gap-2">
+                  {selectionMode ? (
+                    <>
+                      <X className="h-5 w-5" />
+                      <span className="hidden sm:inline">Cancel</span>
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="h-5 w-5" />
+                      <span className="hidden sm:inline">Select Items</span>
+                    </>
+                  )}
+                </span>
+              </button>
             )}
 
-            {/* Cart Icon with Badge */}
             <div className="relative">
               <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#1ABA7F]/10 to-[#225F91]/10 border-2 border-[#1ABA7F]/30 flex items-center justify-center shadow-md">
                 <ShoppingCart className="h-6 w-6 text-[#225F91]" aria-label="Shopping cart" />
@@ -966,8 +706,9 @@ const cartType = useMemo(() => getCartType(segments), [segments]);
                 setBulkRemoveItems([]);
               }}
               onConfirm={showBulkRemoveDialog ? handleBulkRemoveConfirm : handleRemoveItem}
-              isRemoving={showBulkRemoveDialog ? isBulkRemoving : (removeItem ? isUpdating[removeItem.id] : false)}
+              isRemoving={showBulkRemoveDialog ? isRemoving : isUpdating}
             />
+            
             <QuantityUpdateDialog
               quantityUpdate={quantityUpdate}
               setQuantityUpdate={setQuantityUpdate}
@@ -997,7 +738,6 @@ const cartType = useMemo(() => getCartType(segments), [segments]);
                             animationDelay: `${index * 100}ms`
                           }}
                         >
-                          {/* Icon with background */}
                           <div className={`relative p-2 rounded-lg transition-all duration-300 ${
                             activeTab === tab.id 
                               ? tab.color.replace('text-', 'bg-').replace('/10', '/20')
@@ -1010,7 +750,6 @@ const cartType = useMemo(() => getCartType(segments), [segments]);
                             }`} />
                           </div>
 
-                          {/* Label */}
                           <div className="flex flex-col sm:flex-row items-center gap-2">
                             <span className={`text-xs sm:text-sm font-bold transition-colors duration-300 ${
                               activeTab === tab.id ? 'text-[#225F91]' : 'text-gray-600 group-hover:text-gray-900'
@@ -1019,7 +758,6 @@ const cartType = useMemo(() => getCartType(segments), [segments]);
                               <span className="lg:hidden">{tab.shortLabel}</span>
                             </span>
                             
-                            {/* Count badge */}
                             <div className={`px-2.5 py-1 rounded-full text-xs font-black shadow-sm transition-all duration-300 ${
                               activeTab === tab.id 
                                 ? tab.color
@@ -1034,7 +772,6 @@ const cartType = useMemo(() => getCartType(segments), [segments]);
                   </div>
                 </div>
 
-                {/* Tab description */}
                 <div className="mt-4 p-6 rounded-xl bg-gradient-to-r from-blue-50 to-gray-50 border border-blue-200/80">
                   <p className="text-base text-gray-700 text-center font-medium">
                     {tabSummary.message}
@@ -1060,7 +797,7 @@ const cartType = useMemo(() => getCartType(segments), [segments]);
                           segment="ready"
                           selectionMode={selectionMode}
                           isSelected={(itemId) => selectedItems.has(itemId)}
-                          onToggleSelect={handleToggleSelect}
+                          onToggleSelect={toggleSelect}
                         />
                       ))}
                     </div>
@@ -1079,7 +816,7 @@ const cartType = useMemo(() => getCartType(segments), [segments]);
                           segment="needs_prescription"
                           selectionMode={selectionMode}
                           isSelected={(itemId) => selectedItems.has(itemId)}
-                          onToggleSelect={handleToggleSelect}
+                          onToggleSelect={toggleSelect}
                         />
                       ))}
                       <PrescriptionUploadSection
@@ -1104,7 +841,7 @@ const cartType = useMemo(() => getCartType(segments), [segments]);
                           segment="pending"
                           selectionMode={selectionMode}
                           isSelected={(itemId) => selectedItems.has(itemId)}
-                          onToggleSelect={handleToggleSelect}
+                          onToggleSelect={toggleSelect}
                         />
                       ))}
                     </div>
@@ -1123,7 +860,7 @@ const cartType = useMemo(() => getCartType(segments), [segments]);
                           segment="rejected"
                           selectionMode={selectionMode}
                           isSelected={(itemId) => selectedItems.has(itemId)}
-                          onToggleSelect={handleToggleSelect}
+                          onToggleSelect={toggleSelect}
                         />
                       ))}
                       <PrescriptionUploadSection
@@ -1150,7 +887,7 @@ const cartType = useMemo(() => getCartType(segments), [segments]);
                           segment="ready"
                           selectionMode={selectionMode}
                           isSelected={(itemId) => selectedItems.has(itemId)}
-                          onToggleSelect={handleToggleSelect}
+                          onToggleSelect={toggleSelect}
                         />
                       ))}
                     </div>
@@ -1169,7 +906,7 @@ const cartType = useMemo(() => getCartType(segments), [segments]);
                           segment="prescription"
                           selectionMode={selectionMode}
                           isSelected={(itemId) => selectedItems.has(itemId)}
-                          onToggleSelect={handleToggleSelect}
+                          onToggleSelect={toggleSelect}
                         />
                       ))}
                       <PrescriptionUploadSection
@@ -1199,13 +936,13 @@ const cartType = useMemo(() => getCartType(segments), [segments]);
         </div>
       </main>
 
-    <BulkRemoveActionBar
+      <BulkRemoveActionBar
         selectedCount={selectedItems.size}
         onRemove={handleBulkRemove}
         onSelectAll={handleSelectAll}
-        onClear={handleClearSelection}
+        onClear={clearSelection}
         totalItems={totalItemCount}
-        isRemoving={isBulkRemoving}
+        isRemoving={isRemoving}
       />
     </div>
   );

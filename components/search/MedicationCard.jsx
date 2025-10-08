@@ -67,6 +67,7 @@ const MedicationCard = ({
   setFilterWard,
   showFilters,
   setShowFilters, 
+  filtersWereSet,
 }) => {
   const getAvailabilityCount = () => med.availability?.length || 0;
   const [removeItemDialog, setRemoveItemDialog] = useState(null);
@@ -358,8 +359,8 @@ const MedicationCard = ({
         )}
         </div>
 
-        {/* Check if location is needed */}
-        {!state && !lga && !ward && locationStatus !== 'granted' ? (
+      {/* Check if location is needed */}
+      {!filtersWereSet ? (
           <LocationPrompt
             onSelectLocation={onSelectLocation}
             onEnableLocation={onEnableLocation}

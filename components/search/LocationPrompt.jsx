@@ -30,7 +30,6 @@ const LocationPrompt = ({ onSelectLocation, onEnableLocation, locationStatus }) 
 
       {/* Action Buttons with stagger */}
       <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
-        {locationStatus !== 'granted' && (
           <Button
             onClick={onEnableLocation}
             className="bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 text-white px-6 py-6 rounded-xl font-bold shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 w-full sm:w-auto animate-in slide-in-from-left-4" 
@@ -39,7 +38,6 @@ const LocationPrompt = ({ onSelectLocation, onEnableLocation, locationStatus }) 
             <Navigation className="h-5 w-5 mr-2" />
             Use My Location
           </Button>
-        )}
         
         <Button
           onClick={onSelectLocation}
