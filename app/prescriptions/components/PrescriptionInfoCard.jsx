@@ -20,7 +20,7 @@ const PrescriptionInfoCard = ({ prescriptionMetadata, medications }) => {
           <Pill className="h-4 w-4 text-[#225F91]" strokeWidth={2.5} />
         </div>
         <h4 className="text-base sm:text-lg font-black text-[#225F91]">
-          Prescribed Medications ({medications.length})
+          Prescribed Medications
         </h4>
       </div>
 
@@ -37,50 +37,51 @@ const PrescriptionInfoCard = ({ prescriptionMetadata, medications }) => {
             )}
           >
             {medications.map((med, index) => (
-              <li 
-                key={med.id} 
-                className="group relative border border-gray-200 hover:border-[#1ABA7F]/40 rounded-xl p-3 transition-all duration-300 hover:shadow-md bg-white"
-              >
-                <div className="flex items-center gap-3">
-                  {/* Thumbnail */}
-                  {med.imageUrl ? (
-                    <div className="relative flex-shrink-0">
-                      <img
-                        src={med.imageUrl}
-                        alt={med.displayName}
-                        className="w-14 h-14 sm:w-16 sm:h-16 object-cover rounded-lg border border-gray-200 group-hover:border-[#1ABA7F]/40 transition-all"
-                      />
-                    </div>
-                  ) : (
-                    <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center border border-gray-200">
-                      <Pill className="h-6 w-6 sm:h-7 sm:w-7 text-gray-400" />
-                    </div>
-                  )}
-
-                  {/* Med info */}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-gray-900 font-bold text-sm sm:text-base mb-1.5 group-hover:text-[#225F91] transition-colors">
-                      {med.displayName}
-                    </p>
-
-                    <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-xs flex-wrap">
-                      <span className="px-2 py-0.5 rounded-md bg-gradient-to-r from-[#1ABA7F]/10 to-[#225F91]/10 font-bold text-[#225F91]">
-                        {med.quantity} {getUnitLabel(med.form)}{med.quantity > 1 ? 's' : ''}
-                      </span>
-                      <span className="text-gray-600 font-semibold">
-                        {med.packSizeExpression} {med.packSizeUnit} {med.quantity > 1 ? 'each' : ''}
-                      </span>
-                    </div>
-                      {med.dosageInstructions && (
-                        <p className="text-xs text-gray-600 font-medium mt-1">
-                          <span className="font-bold text-gray-700">Dosage:</span> {med.dosageInstructions}
-                        </p>
-                      )}
-                    </div>
-                  </div>
+          <li 
+            key={med.id} 
+            className="group relative border border-gray-200 hover:border-[#1ABA7F]/40 rounded-xl p-3 transition-all duration-300 hover:shadow-md bg-white"
+          >
+            <div className="flex items-center justify-between gap-3 flex-row-reverse">
+              {/* Thumbnail */}
+              {med.imageUrl ? (
+                <div className="relative flex-shrink-0">
+                  <img
+                    src={med.imageUrl}
+                    alt={med.displayName}
+                    className="w-14 h-14 sm:w-16 sm:h-16 object-cover rounded-lg border border-gray-200 group-hover:border-[#1ABA7F]/40 transition-all"
+                  />
                 </div>
-              </li>
+              ) : (
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center border border-gray-200">
+                  <Pill className="h-6 w-6 sm:h-7 sm:w-7 text-gray-400" />
+                </div>
+              )}
+
+              {/* Med info */}
+              <div className="flex-1 min-w-0 text-left">
+                <p className="text-gray-900 font-bold text-sm sm:text-base mb-1.5 group-hover:text-[#225F91] transition-colors">
+                  {med.displayName}
+                </p>
+
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-xs flex-wrap">
+                    <span className="px-2 py-0.5 rounded-md bg-gradient-to-r from-[#1ABA7F]/10 to-[#225F91]/10 font-bold text-[#225F91]">
+                      {med.quantity} {getUnitLabel(med.form)}{med.quantity > 1 ? 's' : ''}
+                    </span>
+                    <span className="text-gray-600 font-semibold">
+                      {med.packSizeExpression} {med.packSizeUnit} {med.quantity > 1 ? 'each' : ''}
+                    </span>
+                  </div>
+
+                  {med.dosageInstructions && (
+                    <p className="text-xs text-gray-600 font-medium mt-1">
+                      <span className="font-bold text-gray-700">Dosage:</span> {med.dosageInstructions}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </li>
             ))}
 
             {!isExpanded && medications.length > 5 && (
@@ -145,7 +146,7 @@ const PrescriptionInfoCard = ({ prescriptionMetadata, medications }) => {
           {prescriptionMetadata.fileUrl && (
             <Button
               onClick={() => setShowPreview(true)}
-              className="h-10 sm:h-11 px-4 sm:px-5 rounded-xl border-2 border-[#225F91] text-[#225F91] bg-white hover:bg-[#225F91] hover:text-white font-bold text-sm transition-all duration-300 hover:scale-105 shadow-md group"
+              className="h-8 sm:h-11 px-3 sm:px-5 rounded-xl border-2 border-[#225F91] text-[#225F91] bg-white hover:bg-[#225F91] hover:text-white font-bold text-sm transition-all duration-300 hover:scale-105 shadow-md group"
             >
               <Eye className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform" strokeWidth={2.5} />
               View Prescription

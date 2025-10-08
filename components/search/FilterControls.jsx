@@ -87,7 +87,6 @@ const FilterControls = ({
   clearFilters,
   showFilters,     
   setShowFilters,
-  // Remove updateLgas and updateWards - they're not needed
 }) => {
   const [savedFilters, setSavedFilters] = useState([]);
   const [activeFilters, setActiveFilters] = useState(0);
@@ -261,14 +260,11 @@ const FilterControls = ({
                 inputId="state-filter"
                 options={states}
                 onChange={(selected) => {
-                  const newState = selected?.value || "";
-                  setFilterState(newState);
-                  // Clear dependent filters when state changes
-                  if (!newState) {
-                    setFilterLga("");
-                    setFilterWard("");
+                  if (!selected) {
+                    clearFilters(); // Clear all filters when clearing state
                   } else {
-                    // Reset LGA and Ward when state changes
+                    const newState = selected.value;
+                    setFilterState(newState);
                     setFilterLga("");
                     setFilterWard("");
                   }
@@ -289,11 +285,14 @@ const FilterControls = ({
                 inputId="lga-filter"
                 options={lgas}
                 onChange={(selected) => {
-                  const newLga = selected?.value || "";
-                  setFilterLga(newLga);
-                  // Clear ward when LGA changes
-                  if (!newLga) setFilterWard("");
-                  else setFilterWard("");
+                  if (!selected) {
+                    setFilterLga("");
+                    setFilterWard("");
+                  } else {
+                    const newLga = selected.value;
+                    setFilterLga(newLga);
+                    setFilterWard("");
+                  }
                 }}
                 value={lgas.find((o) => o.value === filterLga) || null}
                 placeholder="Select LGA..."

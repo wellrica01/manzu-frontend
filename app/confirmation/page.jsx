@@ -3,12 +3,12 @@
 export const dynamic = 'force-dynamic';
 
 import { Suspense } from 'react';
-import ConfirmationInner from '@/components/confirmation/ConfirmationInner';
+import Confirmation from '@/components/confirmation/Confirmation';
 
 export default function ConfirmationPage() {
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <ConfirmationInner />
+      <Confirmation />
     </Suspense>
   );
 }

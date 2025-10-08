@@ -440,6 +440,7 @@ useEffect(() => {
     }
   }, [duplicateDetection, cartOps, handleItemsAdded]);
 
+
   return (
     <div className="w-full space-y-4 sm:space-y-6" role="search" aria-label="Medication search">
       {/* Cart Dialog */}
@@ -484,6 +485,8 @@ useEffect(() => {
           showHistory={history.showHistory}
           setShowHistory={history.setShowHistory}
         />
+
+
 
         {/* Dropdown */}
         {!search.isSearching &&

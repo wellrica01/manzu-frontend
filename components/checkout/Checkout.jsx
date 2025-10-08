@@ -23,7 +23,6 @@ import { useCheckoutMutation } from '@/hooks/useCheckoutMutation';
 import { getCartSegments, canProceedToCheckout } from '@/lib/cartUtils';
 import { getUniquePharmacies } from '@/lib/checkoutUtils';
 
-
 // Payment Error Component
 const PaymentError = ({ error, onBackToCart, onRetry }) => (
   <div className="relative animate-in fade-in slide-in-from-top-4 duration-500">
@@ -35,7 +34,6 @@ const PaymentError = ({ error, onBackToCart, onRetry }) => (
     <Card className="relative bg-white/95 backdrop-blur-sm border-2 border-red-200/50 rounded-3xl shadow-2xl overflow-hidden w-full max-w-2xl mx-auto">
       <CardHeader className="pb-4">
         <div className="relative mx-auto w-20 h-20 mb-4">
-          <div className="absolute inset-0 bg-gradient-to-br from-red-500/30 to-orange-500/30 rounded-full blur-xl animate-pulse" />
           <div className="relative w-full h-full bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center shadow-2xl border-4 border-white">
             <AlertCircle className="h-10 w-10 text-white" strokeWidth={3} />
           </div>
@@ -92,8 +90,7 @@ const PaymentError = ({ error, onBackToCart, onRetry }) => (
   </div>
 );
 
-
-// No Checkout Available Component
+// No Checkout Available Component 
 const NoCheckoutAvailable = ({ onBackToCart }) => (
   <div className="min-h-screen bg-gradient-to-br from-[#1ABA7F]/5 via-white to-[#225F91]/5 relative overflow-hidden py-8 px-4">
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -163,7 +160,6 @@ const NoCheckoutAvailable = ({ onBackToCart }) => (
   </div>
 );
 
-
 // Loading Component
 const CheckoutLoading = () => (
   <div className="min-h-screen bg-gradient-to-br from-[#1ABA7F]/5 via-white to-[#225F91]/5 relative overflow-hidden flex items-center justify-center px-4">
@@ -196,8 +192,7 @@ const CheckoutLoading = () => (
   </div>
 );
 
-
-// Processing Payment Overlay
+// Processing Payment Overlay 
 const ProcessingPayment = () => (
   <div 
     className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-gradient-to-br from-white/95 via-gray-50/95 to-white/95 backdrop-blur-lg"
@@ -252,7 +247,6 @@ const ProcessingPayment = () => (
   </div>
 );
 
-
 // Main Checkout Component
 function CheckoutComponent() {
   const router = useRouter();
@@ -265,9 +259,14 @@ function CheckoutComponent() {
   const { cart, isLoading, isError, error: cartError, refetch } = useCartData(guestId, apiUrl);
   const { 
     form, 
+    touched,
+    errors,
+    isFormValid,
     handleInputChange, 
     handleDeliveryMethodChange,
+    handleBlur,
     validateForm,
+    getOrderType,
     clearForm 
   } = useCheckoutForm();
   const {
@@ -301,6 +300,7 @@ function CheckoutComponent() {
   const segments = useMemo(() => getCartSegments(cart), [cart]);
   const canCheckout = useMemo(() => canProceedToCheckout(segments), [segments]);
   const uniquePharmacies = useMemo(() => getUniquePharmacies(segments.readyForCheckout), [segments.readyForCheckout]);
+  const orderType = useMemo(() => getOrderType(segments), [segments, getOrderType]);
 
   // Track entry on checkout page
   useEffect(() => {
@@ -467,10 +467,14 @@ function CheckoutComponent() {
             <div className="space-y-4 sm:space-y-6">
               <CheckoutForm
                 form={form}
+                touched={touched}
+                errors={errors}
+                isFormValid={isFormValid}
                 handleInputChange={handleInputChange}
                 handleDeliveryMethodChange={handleDeliveryMethodChange}
+                handleBlur={handleBlur}
                 handleCheckout={handleCheckout}
-                segments={segments}
+                orderType={orderType}
                 uniquePharmacies={uniquePharmacies}
                 loading={isCheckoutPending}
               />
@@ -493,4 +497,4 @@ function CheckoutComponent() {
 // Export with error handling
 export default function Checkout() {
   return <CheckoutComponent />;
-}
+} 

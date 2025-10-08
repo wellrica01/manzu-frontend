@@ -72,7 +72,7 @@ const CartDialog = ({
                   Added to Cart!
                 </h3>
                 <p className="text-white/90 font-medium text-sm">
-                  {isSingleItem ? '1 item' : `${items.length} items`} ready for checkout
+                  {isSingleItem ? 'Item is' : 'Items are'} ready for checkout
                 </p>
               </div>
             </div>
@@ -90,7 +90,7 @@ const CartDialog = ({
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-base font-bold text-gray-900 mb-1">
-                        {items[0].name}
+                        {items[0].name} x{items[0].quantity}
                       </p>
                       <p className="text-sm text-gray-600">
                         from <span className="font-semibold text-green-700">{items[0].pharmacy}</span>
@@ -127,7 +127,7 @@ const CartDialog = ({
                       >
                         <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" strokeWidth={2.5} />
                         <span className="text-sm font-medium text-gray-700 flex-1">
-                          {item.name}
+                          {item.name} x{item.quantity}
                         </span>
                       </div>
                     ))}

@@ -16,7 +16,7 @@ const LocationPrompt = ({ onSelectLocation, onEnableLocation, locationStatus }) 
       </div>
 
       {/* Title with slide animation */}
-      <h3 className="text-2xl font-black text-gray-900 mb-3 animate-in slide-in-from-bottom-2 duration-500" 
+      <h3 className="text-2xl font-black text-[#225F91] mb-3 animate-in slide-in-from-bottom-2 duration-500" 
           style={{ animationDelay: '300ms' }}>
         Select Your Location
       </h3>
@@ -24,8 +24,7 @@ const LocationPrompt = ({ onSelectLocation, onEnableLocation, locationStatus }) 
       {/* Description */}
       <p className="text-gray-600 text-base mb-6 max-w-md mx-auto leading-relaxed animate-in fade-in duration-500" 
          style={{ animationDelay: '400ms' }}>
-        We found pharmacies that stock this medication! To show you nearby options 
-        with accurate prices and delivery times, please select your location.
+       We found pharmacies with this medication! Share your location to see the closest ones and their prices.
       </p>
 
       {/* Action Buttons with stagger */}
@@ -46,7 +45,7 @@ const LocationPrompt = ({ onSelectLocation, onEnableLocation, locationStatus }) 
           style={{ animationDelay: '600ms', animationDuration: '500ms' }}
         >
           <MapPin className="h-5 w-5 mr-2" />
-          Select Manually
+          Choose Location
         </Button>
       </div>
 

@@ -160,12 +160,17 @@ const SearchInput = ({
   }, [searchHistory, setSearchHistory, setSearchTerm, setShowDropdown, setShowHistory, handleSelectMedication]);
 
   // Input handlers with smooth transitions
-  const handleInputFocus = useCallback(() => {
-    setIsFocused(true);
-    if (searchHistory.length > 0 && !searchTerm) {
-      setTimeout(() => setShowHistory(true), 100);
-    }
-  }, [searchHistory.length, searchTerm, setShowHistory]);
+const handleInputFocus = useCallback(() => {
+  setIsFocused(true);
+
+  if (searchHistory.length > 0 && !searchTerm) {
+    setShowDropdown(false);  
+    setTimeout(() => setShowHistory(true), 100);
+  } else if (searchTerm) {
+    setShowDropdown(true);  
+    setShowHistory(false);
+  }
+}, [searchHistory.length, searchTerm, setShowHistory, setShowDropdown]);
 
   const handleInputBlur = useCallback(() => {
     setTimeout(() => setIsFocused(false), 150);

@@ -177,38 +177,68 @@ const StatsSection = memo(() => {
     return () => currentRef && observer.unobserve(currentRef);
   }, []);
 
-  const stats = [
-    { icon: Pill, value: '7800+', label: 'Genuine Medications', color: 'from-[#225F91] to-[#1a4a73]' },
-    { icon: Award, value: '150+', label: 'Partner Pharmacies', color: 'from-[#FF6B6B] to-[#ee5a5a]' },
-    { icon: Box, value: '60K+', label: 'Orders Fulfilled', color: 'from-[#1ABA7F] to-[#16a876]' },
-    { icon: TrendingUp, value: '99%', label: 'Customer Satisfaction', color: 'from-[#FFA500] to-[#ff8c00]' },
-  ];
+const stats = [
+  { 
+    icon: Pill, 
+    value: '10,000+', 
+    label: 'Medications Listed', 
+    color: 'from-[#225F91] to-[#1a4a73]',
+    description: 'NAFDAC-approved medicines'
+  },
+  { 
+    icon: Award, 
+    value: '500+', 
+    label: 'Target Pharmacies', 
+    color: 'from-[#FF6B6B] to-[#ee5a5a]',
+    description: 'By end of 2025'
+  },
+  { 
+    icon: MapIcon, 
+    value: '10 States', 
+    label: 'Platform Coverage', 
+    color: 'from-[#1ABA7F] to-[#16a876]',
+    description: 'Expanding nationwide'
+  },
+  { 
+    icon: TrendingUp, 
+    value: '774 LGAs', 
+    label: 'National Reach', 
+    color: 'from-[#FFA500] to-[#ff8c00]',
+    description: 'Complete coverage goal'
+  },
+];
 
   return (
     <div ref={statsRef} className="py-20 px-4 relative">
       <div className="max-w-7xl mx-auto relative z-10">
-        <div className="text-center mb-16 space-y-4">
-          <h2 className="text-4xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#225F91] to-[#1ABA7F]">
-            Trusted by Thousands
-          </h2>
-          <div className="h-2 w-32 mx-auto rounded-full bg-gradient-to-r from-[#1ABA7F] via-[#76D1F3] to-[#225F91]" />
-        </div>
+<div className="text-center mb-16 space-y-4">
+  <h2 className="text-4xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#225F91] to-[#1ABA7F]">
+    Transforming Healthcare Access in Nigeria
+  </h2>
+  
+  <p className="text-gray-600 text-lg font-semibold max-w-2xl mx-auto">
+    Building the infrastructure that connects patients with medications across all 774 LGAs
+  </p>
+  
+  <div className="h-2 w-32 mx-auto rounded-full bg-gradient-to-r from-[#1ABA7F] via-[#76D1F3] to-[#225F91]" />
+</div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-          {stats.map((stat, i) => (
-            <div key={i} className={`group flex flex-col justify-center items-center bg-white/95 rounded-3xl p-8 shadow-xl transition-all duration-500 ${
-              isVisible ? 'animate-in zoom-in-50 fade-in opacity-100' : 'opacity-0 scale-90'
-            }`} style={{ animationDelay: `${i*100}ms` }}>
-              <div className={`relative p-4 rounded-2xl bg-gradient-to-br ${stat.color} text-white shadow-lg mb-6`}>
-                <stat.icon className="h-8 w-8" strokeWidth={2.5} />
-              </div>
-              <div className={`text-3xl font-black bg-gradient-to-br ${stat.color} bg-clip-text text-transparent mb-2`}>
-                {stat.value}
-              </div>
-              <div className="text-gray-600 text-sm font-bold text-center">{stat.label}</div>
-            </div>
-          ))}
-        </div>
+<div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+  {stats.map((stat, i) => (
+    <div key={i} className={`group flex flex-col justify-center items-center bg-white/95 rounded-3xl p-8 shadow-xl transition-all duration-500 ${
+      isVisible ? 'animate-in zoom-in-50 fade-in opacity-100' : 'opacity-0 scale-90'
+    }`} style={{ animationDelay: `${i*100}ms` }}>
+      <div className={`relative p-4 rounded-2xl bg-gradient-to-br ${stat.color} text-white shadow-lg mb-6`}>
+        <stat.icon className="h-8 w-8" strokeWidth={2.5} />
+      </div>
+      <div className={`text-3xl font-black bg-gradient-to-br ${stat.color} bg-clip-text text-transparent mb-2`}>
+        {stat.value}
+      </div>
+      <div className="text-gray-700 text-sm font-bold text-center mb-1">{stat.label}</div>
+      <div className="text-gray-500 text-xs font-medium text-center">{stat.description}</div>
+    </div>
+  ))}
+</div>
       </div>
     </div>
   );
@@ -257,16 +287,33 @@ const HeroSection = memo(({ onSearchClick, onUploadClick }) => {
       <div className="relative z-10 max-w-6xl mx-auto">
         <LanguageToggle />
 
-        {/* Trust badge */}
-        <div className={`inline-flex items-center gap-3 mb-6 px-3 py-2 rounded-2xl bg-white/25 text-white font-black shadow-2xl border-2 border-white/40 transition-all duration-700 ${
-          isVisible ? 'animate-in zoom-in-50 fade-in opacity-100' : 'opacity-0 scale-95'
-        }`}>
-          <Shield className="w-5 h-5 text-[#1ABA7F]" />
-          <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-gray-50 to-white font-black">
-            {t('hero.trusted_platform')}
-          </span>
-          <Sparkles className="w-5 h-5 text-yellow-300 animate-pulse" />
-        </div>
+{/* Trust badges container */}
+<div className="flex flex-col items-center mb-3">
+  {/* 🥇 Primary badge (now first / on top) */}
+  <div
+    className={`flex w-fit items-center gap-2 mb-5 px-4 py-2 rounded-2xl bg-white/25  text-white font-bold border border-white/30 shadow-xl transition-all duration-700 delay-75 ${
+      isVisible ? 'animate-in zoom-in-50 fade-in opacity-100' : 'opacity-0 scale-95'
+    }`}
+  >
+    <Award className="w-5 h-5 text-[#1ABA7F]" />
+    <span>Nigeria&apos;s First Medication Discovery Platform</span>
+    <Sparkles className="w-5 h-5 text-yellow-300 animate-pulse" />
+  </div>
+
+  {/* 🛡️ Secondary badge (now below) */}
+  <div
+    className={`flex w-fit items-center gap-3 px-3 py-2 rounded-2xl bg-gradient-to-r from-[#1ABA7F]/20 to-[#225F91]/20 text-white font-black text-sm shadow-2xl border-2 border-white/40 transition-all duration-700 delay-150 ${
+      isVisible ? 'animate-in zoom-in-50 fade-in opacity-100' : 'opacity-0 scale-95'
+    }`}
+  >
+    <Shield className="w-4 h-4 text-[#1ABA7F]" />
+    <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-gray-50 to-white font-black">
+      {t('hero.trusted_platform')}
+    </span>
+  </div>
+</div>
+
+
 
         {/* Main title */}
         <h1 className={`text-5xl sm:text-6xl lg:text-7xl font-black text-white leading-[1.05] mb-6 transition-all duration-1000 ${
@@ -317,18 +364,20 @@ const HeroSection = memo(({ onSearchClick, onUploadClick }) => {
 
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-5 animate-in slide-in-from-top fade-in duration-300">
 
-            <Button
-              className="w-fit group h-12 sm:h-16 px-6 text-base sm:text-lg font-black rounded-2xl bg-white/15 border-2 border-white/60 text-white shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105"
-            >
-              <Link href="/track-order">
-                <span className="relative z-10 flex text-white items-center gap-3">
-                  <div className="p-1.5 bg-yellow-300/80 rounded-lg">
+          <Button
+            asChild
+            className="w-fit group h-12 sm:h-16 px-6 text-base sm:text-lg font-black rounded-2xl bg-white/15 border-2 border-white/60 text-white shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105"
+          >
+            <Link href="/track-order">
+              <span className="relative z-10 flex items-center gap-3">
+                <div className="p-1.5 bg-yellow-300/80 rounded-lg">
                   <MapIcon className="h-6 w-6 text-[#225F91]" aria-hidden="true" strokeWidth={3}/>
-                  </div>
-                  Track Order
-                </span>
-              </Link>
-            </Button>
+                </div>
+                Track Order
+              </span>
+            </Link>
+          </Button>
+
           <Button
               asChild
               className="w-fit group h-12 sm:h-16 px-6 text-base sm:text-lg font-black rounded-2xl bg-gradient-to-r from-[#1ABA7F] to-[#16a876] text-white shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105"
@@ -349,234 +398,280 @@ const HeroSection = memo(({ onSearchClick, onUploadClick }) => {
   );
 });
 
-HeroSection.displayName = 'HeroSection';
+  HeroSection.displayName = 'HeroSection';
 
-const ServiceCard = memo(({ title, icon: Icon, children, isActive = false, gradient = "from-[#1ABA7F] to-[#225F91]" }) => {
-  const [isHovered, setIsHovered] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
-  const cardRef = useRef(null);
+  const ServiceCard = memo(({ title, icon: Icon, children, isActive = false, gradient = "from-[#1ABA7F] to-[#225F91]" }) => {
+    const [isHovered, setIsHovered] = useState(false);
+    const [isVisible, setIsVisible] = useState(false);
+    const cardRef = useRef(null);
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) setIsVisible(true); },
-      { threshold: 0.1, rootMargin: '50px' }
-    );
-    const currentRef = cardRef.current;
-    if (currentRef) observer.observe(currentRef);
-    return () => currentRef && observer.unobserve(currentRef);
-  }, []);
+    useEffect(() => {
+      const observer = new IntersectionObserver(
+        ([entry]) => { if (entry.isIntersecting) setIsVisible(true); },
+        { threshold: 0.1, rootMargin: '50px' }
+      );
+      const currentRef = cardRef.current;
+      if (currentRef) observer.observe(currentRef);
+      return () => currentRef && observer.unobserve(currentRef);
+    }, []);
 
-  return (
-    <Card
-      ref={cardRef}
-      className={`
-        relative bg-white/95 border-0 rounded-[2rem] mt-8 sm:mt-20 mb-20 pt-10 pb-28 shadow-2xl
-        transition-transform duration-500 ease-in-out hover:-translate-y-2 sm:hover:-translate-y-3 sm:hover:shadow-2xl
-        sm:max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto group
-        ${isVisible ? 'animate-in slide-in-from-bottom fade-in opacity-100' : 'opacity-0 translate-y-8'}
-      `}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      style={{
-        boxShadow: isHovered 
-          ? '0 20px 40px -10px rgba(26, 186, 127, 0.25)' 
-          : '0 15px 30px -8px rgba(0,0,0,0.15)'
-      }}
-    >
-      {/* Gradient overlay is ALWAYS visible now */}
-      <div className={`absolute inset-0 rounded-[2rem] bg-gradient-to-br ${gradient} opacity-40`} />
+    return (
+      <Card
+        ref={cardRef}
+        className={`
+          relative bg-white/95 border-0 rounded-[2rem] mt-8 sm:mt-20 mb-20 pt-10 pb-28 shadow-2xl
+          transition-transform duration-500 ease-in-out hover:-translate-y-2 sm:hover:-translate-y-3 sm:hover:shadow-2xl
+          sm:max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto group
+          ${isVisible ? 'animate-in slide-in-from-bottom fade-in opacity-100' : 'opacity-0 translate-y-8'}
+        `}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        style={{
+          boxShadow: isHovered 
+            ? '0 20px 40px -10px rgba(26, 186, 127, 0.25)' 
+            : '0 15px 30px -8px rgba(0,0,0,0.15)'
+        }}
+      >
+        {/* Gradient overlay is ALWAYS visible now */}
+        <div className={`absolute inset-0 rounded-[2rem] bg-gradient-to-br ${gradient} opacity-40`} />
 
-      {/* Decorative shapes */}
-      <div className="absolute top-0 left-0 w-36 h-36 bg-gradient-to-br from-[#1ABA7F]/15 to-transparent rounded-br-full pointer-events-none" />
-      <div className="absolute bottom-0 right-0 w-36 h-36 bg-gradient-to-tl from-[#225F91]/15 to-transparent rounded-tl-full pointer-events-none" />
+        {/* Decorative shapes */}
+        <div className="absolute top-0 left-0 w-36 h-36 bg-gradient-to-br from-[#1ABA7F]/15 to-transparent rounded-br-full pointer-events-none" />
+        <div className="absolute bottom-0 right-0 w-36 h-36 bg-gradient-to-tl from-[#225F91]/15 to-transparent rounded-tl-full pointer-events-none" />
 
-      {/* Content */}
-      <CardHeader className="p-4 sm:p-10 relative z-10">
-        <div className="flex items-center justify-between mb-6 sm:mb-8">
-          {Icon && (
-            <div className="relative">
-              <div className={`relative p-3 sm:p-5 rounded-3xl bg-gradient-to-br ${gradient} shadow-lg transition-transform duration-500 ${isHovered ? 'scale-105' : ''}`}>
-                <Icon className="w-8 sm:w-10 h-8 sm:h-10 text-white" strokeWidth={2.5} />
+        {/* Content */}
+        <CardHeader className="p-4 sm:p-10 relative z-10">
+          <div className="flex items-center justify-between mb-6 sm:mb-8">
+            {Icon && (
+              <div className="relative">
+                <div className={`relative p-3 sm:p-5 rounded-3xl bg-gradient-to-br ${gradient} shadow-lg transition-transform duration-500 ${isHovered ? 'scale-105' : ''}`}>
+                  <Icon className="w-8 sm:w-10 h-8 sm:h-10 text-white" strokeWidth={2.5} />
+                </div>
               </div>
-            </div>
-          )}
-          {isActive && (
-            <Badge className={`bg-gradient-to-r ${gradient} text-white border-0 px-5 py-2.5 rounded-2xl text-sm font-black shadow-lg transition-transform duration-300`}>
-              <Star className="h-4 w-4 mr-1.5 fill-current" /> Popular
-            </Badge>
-          )}
-        </div>
+            )}
+            {isActive && (
+              <Badge className={`bg-gradient-to-r ${gradient} text-white border-0 px-5 py-2.5 rounded-2xl text-sm font-black shadow-lg transition-transform duration-300`}>
+                <Star className="h-4 w-4 mr-1.5 fill-current" /> Popular
+              </Badge>
+            )}
+          </div>
 
-        <CardTitle className="text-3xl sm:text-5xl font-black text-[#225F91] tracking-tight text-center mb-4">
-          {title}
-        </CardTitle>
+          <CardTitle className="text-3xl sm:text-5xl font-black text-[#225F91] tracking-tight text-center mb-4">
+            {title}
+          </CardTitle>
 
-        {/* Gradient underline */}
-        <div className={`h-1.5 w-28 mx-auto rounded-full bg-gradient-to-r ${gradient} transition-all duration-500 shadow-sm ${isHovered ? 'w-36' : ''}`} />
-      </CardHeader>
+          {/* Gradient underline */}
+          <div className={`h-1.5 w-28 mx-auto rounded-full bg-gradient-to-r ${gradient} transition-all duration-500 shadow-sm ${isHovered ? 'w-36' : ''}`} />
+        </CardHeader>
 
-      <CardContent className="px-3 sm:px-10 relative z-10">
-        {children}
-      </CardContent>
+        <CardContent className="px-3 sm:px-10 relative z-10">
+          {children}
+        </CardContent>
 
-      {/* Shine effect stays on hover */}
-      <div className={`absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700`} />
-    </Card>
-  );
-});
+        {/* Shine effect stays on hover */}
+        <div className={`absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700`} />
+      </Card>
+    );
+  });
 
-ServiceCard.displayName = 'ServiceCard';
+  ServiceCard.displayName = 'ServiceCard';
 
-// Improved scroll utility function with better easing
-const smoothScrollTo = (element, offset = 100, duration = 800) => {
-  if (!element) return;
+  // Improved scroll utility function with better easing
+  const smoothScrollTo = (element, offset = 100, duration = 800) => {
+    if (!element) return;
 
-  const targetPosition = element.getBoundingClientRect().top + window.pageYOffset - offset;
-  const startPosition = window.pageYOffset;
-  const distance = targetPosition - startPosition;
-  let startTime = null;
+    const targetPosition = element.getBoundingClientRect().top + window.pageYOffset - offset;
+    const startPosition = window.pageYOffset;
+    const distance = targetPosition - startPosition;
+    let startTime = null;
 
-  // Easing function for smoother animation (ease-in-out-cubic)
-  const easeInOutCubic = (t) => {
-    return t < 0.5 
-      ? 4 * t * t * t 
-      : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    // Easing function for smoother animation (ease-in-out-cubic)
+    const easeInOutCubic = (t) => {
+      return t < 0.5 
+        ? 4 * t * t * t 
+        : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    };
+
+    const animation = (currentTime) => {
+      if (startTime === null) startTime = currentTime;
+      const timeElapsed = currentTime - startTime;
+      const progress = Math.min(timeElapsed / duration, 1);
+      const ease = easeInOutCubic(progress);
+
+      window.scrollTo(0, startPosition + distance * ease);
+
+      if (timeElapsed < duration) {
+        requestAnimationFrame(animation);
+      }
+    };
+
+    requestAnimationFrame(animation);
   };
 
-  const animation = (currentTime) => {
-    if (startTime === null) startTime = currentTime;
-    const timeElapsed = currentTime - startTime;
-    const progress = Math.min(timeElapsed / duration, 1);
-    const ease = easeInOutCubic(progress);
-
-    window.scrollTo(0, startPosition + distance * ease);
-
-    if (timeElapsed < duration) {
-      requestAnimationFrame(animation);
-    }
-  };
-
-  requestAnimationFrame(animation);
-};
 
 
+  function HomePageContent() {
+    const router = useRouter();
+    const { t } = useTranslation();
+    const [isConsentOpen, setIsConsentOpen] = useState(false);
+    const [isPageLoaded, setIsPageLoaded] = useState(false);
+    const [visibleSection, setVisibleSection] = useState(null);
 
-function HomePageContent() {
-  const router = useRouter();
-  const { t } = useTranslation();
-  const [isConsentOpen, setIsConsentOpen] = useState(false);
-  const [isPageLoaded, setIsPageLoaded] = useState(false);
-  const [visibleSection, setVisibleSection] = useState(null);
+    const searchRef = useRef(null);
+    const uploadRef = useRef(null);
 
-  const searchRef = useRef(null);
-  const uploadRef = useRef(null);
-
-  const pathname = usePathname();
+    const pathname = usePathname();
 
 
-  useEffect(() => {
-    const hasConsent = localStorage.getItem('manzu_consent');
-    if (!hasConsent) {
-      setIsConsentOpen(true);
+    useEffect(() => {
+      const hasConsent = localStorage.getItem('manzu_consent');
+      if (!hasConsent) {
+        setIsConsentOpen(true);
+      }
+      
+      const timer = setTimeout(() => setIsPageLoaded(true), 100);
+      return () => clearTimeout(timer);
+    }, []);
+
+
+    useEffect(() => {
+      // Scroll to top when this page first loads (refresh or direct visit)
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+
+      // Prevent browser restoring scroll position (Safari/Chrome behavior)
+      const handleBeforeUnload = () => window.scrollTo(0, 0);
+      window.addEventListener("beforeunload", handleBeforeUnload);
+
+      return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+    }, []);
+
+    // When navigating back to this page via router (client-side navigation)
+    useEffect(() => {
+      if (pathname === "/") {
+        window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+      }
+    }, [pathname]);
+
+
+    const handleConsentClose = useCallback(() => {
+      setIsConsentOpen(false);
+      localStorage.setItem('manzu_consent', 'true');
+    }, []);
+
+  const handleSearchClick = useCallback(() => {
+    setVisibleSection("search");
+    
+    if (process.env.NODE_ENV === 'production') {
+      // window.analytics?.track('search_section_opened');
     }
     
-    const timer = setTimeout(() => setIsPageLoaded(true), 100);
-    return () => clearTimeout(timer);
+    // Longer delay to ensure content is rendered
+    setTimeout(() => {
+      if (searchRef.current) {
+        // Use custom smooth scroll with better offset
+        smoothScrollTo(searchRef.current, 120, 1000);
+        
+        // Focus search input after scroll completes (on desktop only)
+        setTimeout(() => {
+          const searchInput = searchRef.current?.querySelector('input');
+          if (searchInput && window.innerWidth >= 768) {
+            searchInput.focus();
+          }
+        }, 1000);
+      }
+    }, 150);
   }, []);
 
 
-  useEffect(() => {
-    // Scroll to top when this page first loads (refresh or direct visit)
-    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
 
-    // Prevent browser restoring scroll position (Safari/Chrome behavior)
-    const handleBeforeUnload = () => window.scrollTo(0, 0);
-    window.addEventListener("beforeunload", handleBeforeUnload);
-
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  const handleUploadClick = useCallback(() => {
+    setVisibleSection("upload");
+    
+    if (process.env.NODE_ENV === 'production') {
+      // window.analytics?.track('upload_section_opened');
+    }
+    
+    setTimeout(() => {
+      if (uploadRef.current) {
+        // Use custom smooth scroll with better offset
+        smoothScrollTo(uploadRef.current, 120, 1000);
+        
+        // Focus upload button after scroll completes
+        setTimeout(() => {
+          const uploadButton = uploadRef.current?.querySelector('button');
+          uploadButton?.focus();
+        }, 1000);
+      }
+    }, 150);
   }, []);
 
-  // When navigating back to this page via router (client-side navigation)
-  useEffect(() => {
-    if (pathname === "/") {
-      window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
-    }
-  }, [pathname]);
+
+    return (
+      <div
+        className={`min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 pt-12 pb-24 sm:py-8 relative transition-all duration-1000 ${
+          isPageLoaded ? "opacity-100" : "opacity-0"
+        }`}
+      >
+        {/* Enhanced Animated Background Pattern */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+          <div className="absolute top-0 left-0 w-full h-full opacity-5">
+            <div className="absolute top-20 left-10 w-96 h-96 bg-[#1ABA7F] rounded-full mix-blend-multiply filter blur-3xl animate-blob" />
+            <div className="absolute top-40 right-10 w-96 h-96 bg-[#225F91] rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000" />
+            <div className="absolute bottom-20 left-1/2 w-96 h-96 bg-[#76D1F3] rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-4000" />
+          </div>
+        </div>
+
+        <div className="mx-auto flex-1 flex-col relative z-10">
+          <HeroSection onSearchClick={handleSearchClick} onUploadClick={handleUploadClick} />
+
+          {/* Stats Section */}
+          <StatsSection />
 
 
-  const handleConsentClose = useCallback(() => {
-    setIsConsentOpen(false);
-    localStorage.setItem('manzu_consent', 'true');
-  }, []);
-
-const handleSearchClick = useCallback(() => {
-  setVisibleSection("search");
-  
-  if (process.env.NODE_ENV === 'production') {
-    // window.analytics?.track('search_section_opened');
-  }
-  
-  // Longer delay to ensure content is rendered
-  setTimeout(() => {
-    if (searchRef.current) {
-      // Use custom smooth scroll with better offset
-      smoothScrollTo(searchRef.current, 120, 1000);
-      
-      // Focus search input after scroll completes (on desktop only)
-      setTimeout(() => {
-        const searchInput = searchRef.current?.querySelector('input');
-        if (searchInput && window.innerWidth >= 768) {
-          searchInput.focus();
-        }
-      }, 1000);
-    }
-  }, 150);
-}, []);
-
-
-
-const handleUploadClick = useCallback(() => {
-  setVisibleSection("upload");
-  
-  if (process.env.NODE_ENV === 'production') {
-    // window.analytics?.track('upload_section_opened');
-  }
-  
-  setTimeout(() => {
-    if (uploadRef.current) {
-      // Use custom smooth scroll with better offset
-      smoothScrollTo(uploadRef.current, 120, 1000);
-      
-      // Focus upload button after scroll completes
-      setTimeout(() => {
-        const uploadButton = uploadRef.current?.querySelector('button');
-        uploadButton?.focus();
-      }, 1000);
-    }
-  }, 150);
-}, []);
-
-
-  return (
-    <div
-      className={`min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 pt-12 pb-24 sm:py-8 relative transition-all duration-1000 ${
-        isPageLoaded ? "opacity-100" : "opacity-0"
-      }`}
-    >
-      {/* Enhanced Animated Background Pattern */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-        <div className="absolute top-0 left-0 w-full h-full opacity-5">
-          <div className="absolute top-20 left-10 w-96 h-96 bg-[#1ABA7F] rounded-full mix-blend-multiply filter blur-3xl animate-blob" />
-          <div className="absolute top-40 right-10 w-96 h-96 bg-[#225F91] rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000" />
-          <div className="absolute bottom-20 left-1/2 w-96 h-96 bg-[#76D1F3] rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-4000" />
+          {/* Vision Statement Section - ADD THIS ENTIRE BLOCK */}
+  <Suspense fallback={<LoadingSkeleton />}>
+    <div className="py-16 px-4 relative">
+    <div className="max-w-5xl mx-auto">
+      <div className="bg-gradient-to-br from-[#225F91] to-[#1a4a73] rounded-3xl p-8 sm:p-12 text-white relative overflow-hidden shadow-2xl">
+        {/* Decorative elements */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-[#1ABA7F]/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#76D1F3]/20 rounded-full blur-3xl" />
+        
+        <div className="relative z-10 text-center space-y-6">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/20 mb-4">
+            <Sparkles className="w-5 h-5 text-[#1ABA7F]" />
+            <span className="text-sm font-bold">Our Mission</span>
+          </div>
+          
+          <h2 className="text-3xl sm:text-5xl font-black leading-tight">
+            Making Every Medication Findable and Accessible
+          </h2>
+          
+          <p className="text-lg sm:text-xl text-gray-100 font-medium max-w-3xl mx-auto leading-relaxed">
+      We&apos;re not just another pharmacy app. We&apos;re building Nigeria&apos;s medication discovery infrastructure        </p>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-10">
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+              <div className="text-3xl mb-3">🎯</div>
+              <div className="font-bold mb-2">Patient-First</div>
+              <div className="text-sm text-gray-200">Your health access is our priority</div>
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+              <div className="text-3xl mb-3">💎</div>
+              <div className="font-bold mb-2">Transparency</div>
+              <div className="text-sm text-gray-200">Real prices, real availability</div>
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+              <div className="text-3xl mb-3">🚀</div>
+              <div className="font-bold mb-2">Innovation</div>
+              <div className="text-sm text-gray-200">Technology solving real problems</div>
+            </div>
+          </div>
         </div>
       </div>
-
-      <div className="mx-auto flex-1 flex-col relative z-10">
-        <HeroSection onSearchClick={handleSearchClick} onUploadClick={handleUploadClick} />
-
-        {/* Stats Section */}
-        <StatsSection />
+    </div>
+  </div>
+  </Suspense>
 
         <div className="px-2 relative z-10">
           {visibleSection === "search" && (

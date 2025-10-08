@@ -38,7 +38,7 @@ const CONFETTI_CONFIG = {
 };
 
 
-export default function ConfirmationInner() {
+export default function Confirmation() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const guestId = useGuestId();

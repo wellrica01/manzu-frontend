@@ -352,7 +352,7 @@ const MedicationCard = ({
             <h3 className="text-xl font-black text-[#225F91]">Compare Pharmacies</h3>
           </div>
         {/* ✅ Show badge ONLY when location prompt is NOT showing */}
-        {!( !state && !lga && !ward && locationStatus !== 'granted') && availabilityCount > 0 && (
+        {filtersWereSet && availabilityCount > 0 && (
           <Badge className="bg-gradient-to-r from-[#1ABA7F] to-[#16a876] text-white border-0 px-4 py-1.5 text-sm font-bold shadow-lg">
             {availabilityCount} available
           </Badge>
@@ -360,74 +360,93 @@ const MedicationCard = ({
         </div>
 
       {/* Check if location is needed */}
-      {!filtersWereSet ? (
-          <LocationPrompt
-            onSelectLocation={onSelectLocation}
-            onEnableLocation={onEnableLocation}
-            locationStatus={locationStatus}
-          />
-        ) : availabilityCount === 0 ? (
-          <div className="block sm:hidden text-center py-12 px-6 rounded-2xl bg-gradient-to-br from-gray-50 to-white border-2 border-dashed border-gray-300">
-            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <MapPin className="h-10 w-10 text-gray-400" />
-            </div>
-            <p className="text-gray-600 text-lg font-bold mb-2">
-              No pharmacies found
-            </p>
-            <p className="text-gray-500 text-sm">
-              for {searchTerm || med.displayName}
-            </p>
-            {(state || lga || ward) && (
-              <div className="mt-4 p-3 rounded-xl bg-gray-100">
-                <p className="text-gray-600 text-sm">
-                  Location: <span className="font-semibold">{state}{lga ? `, ${lga}` : ''}{ward ? ` (Ward: ${ward})` : ''}</span>
-                </p>
-              </div>
-            )}
-            <p className="text-gray-400 text-sm mt-4">
-              Try adjusting your location filters
+{!filtersWereSet ? (
+  <LocationPrompt
+    onSelectLocation={onSelectLocation}
+    onEnableLocation={onEnableLocation}
+    locationStatus={locationStatus}
+  />
+) : availabilityCount === 0 ? (
+  <div className="text-center py-12 px-6 rounded-2xl bg-gradient-to-br from-gray-50 to-white border-2 border-dashed border-gray-300">
+          {/* Animated Icon */}
+    <div className="relative w-24 h-24 mx-auto mb-6 animate-in zoom-in-50 duration-700" 
+          style={{ animationDelay: '200ms' }}>
+      <div className="absolute inset-0 bg-gradient-to-br from-teal-400 to-blue-500 rounded-full blur-2xl opacity-30 animate-pulse" 
+            style={{ animationDuration: '2s' }} />
+      <div className="relative w-full h-full bg-white rounded-full flex items-center justify-center shadow-xl">
+        <MapPin className="h-12 w-12 text-teal-600 animate-bounce" 
+                style={{ animationDuration: '2s' }} />
+      </div>
+    </div>
+    
+        {/* Title with slide animation */}
+        <h3 className="text-2xl font-black text-[#225F91] mb-3 animate-in slide-in-from-bottom-2 duration-500" 
+            style={{ animationDelay: '300ms' }}>
+          No pharmacies found
+        </h3>
+  
+        {/* Description */}
+        <p className="text-gray-600 text-base mb-6 max-w-md mx-auto leading-relaxed animate-in fade-in duration-500" 
+            style={{ animationDelay: '400ms' }}>
+        No pharmacies found for <strong>{searchTerm || med.displayName}</strong> in your selected location.
+        </p>
+  
+        {/* Location Used */}
+
+        {(state || lga || ward) && (
+          <div className="mt-4 p-3 rounded-xl bg-gray-100">
+            <p className="text-gray-600 text-sm font-bold">
+              Chosen Location: {state}{lga ? `, ${lga}` : ''}{ward ? `, ${ward}` : ''}
             </p>
           </div>
-        ) : (
-          <>
-            <PharmacyCards
-              availability={isMultiMed ? med.availability.slice(0, 3) : med.availability}
-              medId={med.id}
-              cart={cart}
-              onRemoveFromCart={(item) => setRemoveItemDialog(item)}
-              handleAddToCart={handleAddToCart}
-              isInCart={isInCart}
-              displayName={med.displayName}
-              isAddingToCart={isAddingToCart}
-              searchTerm={searchTerm}
-              state={state}
-              lga={lga}
-              ward={ward}
-              showSeeMore={isMultiMed && med.availability.length > 3}
-              quantity={isMultiMed ? (med.quantity || 1) : 1}
-              guestId={guestId} 
-              fetchCart={fetchCart}
-            />
-            {!isMultiMed && (
-              <PharmacyTable
-                availability={med.availability}
-                medId={med.id}
-                cart={cart}
-                onRemoveFromCart={(item) => setRemoveItemDialog(item)}
-                handleAddToCart={handleAddToCart}
-                isInCart={isInCart}
-                displayName={med.displayName}
-                isAddingToCart={isAddingToCart}
-                searchTerm={searchTerm}
-                state={state}
-                lga={lga}
-                ward={ward}
-                guestId={guestId} 
-                fetchCart={fetchCart}
-              />
-            )}
-          </>
         )}
+
+        {/* Helper Text */}
+      <p className="text-xs text-gray-500 mt-6 animate-in fade-in duration-500" 
+        style={{ animationDelay: '700ms' }}>
+        Try a different location or broader area to find available pharmacies.
+      </p>
+  </div>
+) : (
+  <>
+    <PharmacyCards
+      availability={isMultiMed ? med.availability.slice(0, 3) : med.availability}
+      medId={med.id}
+      cart={cart}
+      onRemoveFromCart={(item) => setRemoveItemDialog(item)}
+      handleAddToCart={handleAddToCart}
+      isInCart={isInCart}
+      displayName={med.displayName}
+      isAddingToCart={isAddingToCart}
+      searchTerm={searchTerm}
+      state={state}
+      lga={lga}
+      ward={ward}
+      showSeeMore={isMultiMed && med.availability.length > 3}
+      quantity={isMultiMed ? (med.quantity || 1) : 1}
+      guestId={guestId} 
+      fetchCart={fetchCart}
+    />
+    {!isMultiMed && (
+      <PharmacyTable
+        availability={med.availability}
+        medId={med.id}
+        cart={cart}
+        onRemoveFromCart={(item) => setRemoveItemDialog(item)}
+        handleAddToCart={handleAddToCart}
+        isInCart={isInCart}
+        displayName={med.displayName}
+        isAddingToCart={isAddingToCart}
+        searchTerm={searchTerm}
+        state={state}
+        lga={lga}
+        ward={ward}
+        guestId={guestId} 
+        fetchCart={fetchCart}
+      />
+    )}
+  </>
+)}
       </div>
 
       {/* Divider for non-multi-med */}

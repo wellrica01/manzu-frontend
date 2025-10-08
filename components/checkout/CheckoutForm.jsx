@@ -1,6 +1,5 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,150 +17,21 @@ import {
   Sparkles
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-const DELIVERY_METHODS = {
-  PICKUP: 'PICKUP',
-  COURIER: 'COURIER',
-};
-
-const DELIVERY_OPTIONS = [
-  {
-    value: DELIVERY_METHODS.PICKUP,
-    icon: Store,
-    label: 'Pickup',
-    description: 'Collect from pharmacy',
-  },
-  {
-    value: DELIVERY_METHODS.COURIER,
-    icon: Truck,
-    label: 'Delivery',
-    description: 'Delivered to your address',
-  },
-];
-
-const VALIDATION_RULES = {
-  phone: {
-    pattern: /^\+?234\d{10}$|^0\d{10}$/,
-    message: 'Enter a valid Nigerian phone number',
-  },
-  email: {
-    pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-    message: 'Please enter a valid email address',
-  },
-  name: {
-    minLength: 2,
-    message: 'Name must be at least 2 characters',
-  },
-};
+import { DELIVERY_METHODS, DELIVERY_OPTIONS, FORM_CONFIG } from '../../constants/checkout';
 
 const CheckoutForm = ({
   form,
+  touched,
+  errors,
+  isFormValid,
   handleInputChange,
   handleDeliveryMethodChange,
+  handleBlur,
   handleCheckout,
+  orderType,
   uniquePharmacies,
-  segments,
   loading
 }) => {
-  const [touched, setTouched] = useState({
-    name: false,
-    email: false,
-    phone: false,
-    address: false,
-  });
-
-  const handleBlur = useCallback((fieldName) => {
-    setTouched(prev => ({ ...prev, [fieldName]: true }));
-  }, []);
-
-  const validateField = useCallback((fieldName, value) => {
-    switch (fieldName) {
-      case 'name':
-        if (!value || value.length < VALIDATION_RULES.name.minLength) {
-          return VALIDATION_RULES.name.message;
-        }
-        return null;
-
-      case 'phone':
-        if (!value) {
-          return 'Phone number is required';
-        }
-        if (!VALIDATION_RULES.phone.pattern.test(value)) {
-          return VALIDATION_RULES.phone.message;
-        }
-        return null;
-
-      case 'email':
-        if (value && !VALIDATION_RULES.email.pattern.test(value)) {
-          return VALIDATION_RULES.email.message;
-        }
-        return null;
-
-      case 'address':
-        if (form.deliveryMethod === DELIVERY_METHODS.COURIER && !value) {
-          return 'Delivery address is required';
-        }
-        return null;
-
-      default:
-        return null;
-    }
-  }, [form.deliveryMethod]);
-
-  const errors = useMemo(() => ({
-    name: touched.name ? validateField('name', form.name) : null,
-    phone: touched.phone ? validateField('phone', form.phone) : null,
-    email: touched.email ? validateField('email', form.email) : null,
-    address: touched.address ? validateField('address', form.address) : null,
-  }), [touched, form, validateField]);
-
-  const isFormValid = useMemo(() => {
-    const hasRequiredFields = form.name && form.phone;
-    const hasNoErrors = !validateField('name', form.name) && 
-                        !validateField('phone', form.phone) && 
-                        !validateField('email', form.email);
-    const hasAddressIfNeeded = form.deliveryMethod === DELIVERY_METHODS.COURIER 
-      ? !!form.address 
-      : true;
-
-    return hasRequiredFields && hasNoErrors && hasAddressIfNeeded;
-  }, [form, validateField]);
-
-  const orderType = useMemo(() => {
-    const hasOTC = segments.readyForCheckout.some(
-      item => !item.medication.prescriptionRequired
-    );
-    const hasPrescription = segments.readyForCheckout.some(
-      item => item.medication.prescriptionRequired
-    );
-
-    if (hasOTC && hasPrescription) {
-      return {
-        type: 'mixed',
-        title: 'Mixed Order - OTC + Verified Prescriptions',
-        badgeClass: 'bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0 shadow-md',
-      };
-    } else if (hasOTC && !hasPrescription) {
-      return {
-        type: 'otc_only',
-        title: 'Over-the-Counter Order',
-        badgeClass: 'bg-gradient-to-r from-[#1ABA7F] to-[#16a876] text-white border-0 shadow-md',
-      };
-    } else if (hasPrescription && !hasOTC) {
-      return {
-        type: 'prescription_verified',
-        title: 'Prescription Order - All Verified',
-        badgeClass: 'bg-gradient-to-r from-green-500 to-green-600 text-white border-0 shadow-md',
-      };
-    } else {
-      return {
-        type: 'ready',
-        title: 'Ready for Checkout',
-        badgeClass: 'bg-gradient-to-r from-[#225F91] to-[#1a4a73] text-white border-0 shadow-md',
-      };
-    }
-  }, [segments.readyForCheckout]);
-
   return (
     <Card className="relative bg-white border-2 border-[#1ABA7F]/20 rounded-3xl shadow-2xl overflow-hidden transition-all duration-500 hover:shadow-[0_20px_60px_rgba(26,186,127,0.15)]">
       {/* Decorative background elements */}
@@ -286,7 +156,7 @@ const CheckoutForm = ({
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" role="radiogroup">
               {DELIVERY_OPTIONS.map((option) => {
-                const Icon = option.icon;
+                const IconComponent = option.value === DELIVERY_METHODS.PICKUP ? Store : Truck;
                 const isSelected = form.deliveryMethod === option.value;
 
                 return (
@@ -316,7 +186,7 @@ const CheckoutForm = ({
                           ? "bg-gradient-to-br from-[#1ABA7F] to-[#16a876] shadow-lg" 
                           : "bg-gray-100 group-hover:bg-[#1ABA7F]/10"
                       )}>
-                        <Icon className={cn("h-6 w-6", isSelected ? "text-white" : "text-[#1ABA7F]")} />
+                        <IconComponent className={cn("h-6 w-6", isSelected ? "text-white" : "text-[#1ABA7F]")} />
                       </div>
                       <div>
                         <div className="font-bold text-gray-900">{option.label}</div>
@@ -344,7 +214,7 @@ const CheckoutForm = ({
                 onBlur={() => handleBlur('address')}
                 placeholder="Enter your complete delivery address"
                 rows={3}
-                maxLength={500}
+                maxLength={FORM_CONFIG.ADDRESS_MAX_LENGTH}
                 className={cn(
                   "w-full border-2 rounded-xl px-4 py-3 transition-all duration-300 resize-none focus:shadow-[0_0_20px_rgba(26,186,127,0.2)]",
                   errors.address ? "border-red-500 focus:border-red-500" : "border-gray-200 focus:border-[#1ABA7F]"
@@ -355,7 +225,9 @@ const CheckoutForm = ({
               {errors.address && (
                 <p className="text-xs text-red-600 font-medium">{errors.address}</p>
               )}
-              <p className="text-xs text-gray-500">{form.address.length}/500 characters</p>
+              <p className="text-xs text-gray-500">
+                {form.address.length}/{FORM_CONFIG.ADDRESS_MAX_LENGTH} characters
+              </p>
             </div>
           ) : (
             uniquePharmacies.length > 0 && (

@@ -43,7 +43,7 @@ const HeroSection = ({ prescriptionMetadata, medications }) => {
         {/* Subtitle */}
         <p className="text-base sm:text-lg md:text-xl text-gray-700 max-w-2xl mx-auto leading-relaxed font-medium">
           Your prescription is <span className="text-[#1ABA7F] font-bold">verified</span> and ready. 
-          Review <span className="text-[#1ABA7F] font-bold">{medications?.length || 0}</span> prescribed 
+          Review the <span className="text-[#1ABA7F] font-bold">{medications?.length || 0}</span> prescribed 
           medication{medications?.length !== 1 ? 's' : ''} below and order with{' '}
           <span className="text-[#225F91] font-bold">fast delivery</span>.
         </p>

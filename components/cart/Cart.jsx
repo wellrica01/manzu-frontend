@@ -254,17 +254,17 @@ function CartComponent() {
   }, [polledStatuses]);
 
   // Initialize prescription statuses from cart data immediately
-useEffect(() => {
-  if (cart?.pharmacies) {
-    const initialStatuses = {};
-    
-    cart.pharmacies.forEach(pharmacy => {
-      pharmacy.items?.forEach(item => {
-        if (item.medication?.prescriptionRequired && item.prescriptionStatus) {
-          initialStatuses[item.medication.id] = item.prescriptionStatus;
-        }
+  useEffect(() => {
+    if (cart?.pharmacies) {
+      const initialStatuses = {};
+      
+      cart.pharmacies.forEach(pharmacy => {
+        pharmacy.items?.forEach(item => {
+          if (item.medication?.prescriptionRequired && item.prescriptionStatus) {
+            initialStatuses[item.medication.id] = item.prescriptionStatus;
+          }
+        });
       });
-    });
     
     // Set initial statuses from cart data
     if (Object.keys(initialStatuses).length > 0) {

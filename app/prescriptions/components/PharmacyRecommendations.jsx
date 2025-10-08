@@ -8,9 +8,8 @@ import {
   MapPin, Store, DollarSign, Navigation, Clock, Check, 
   Loader2, Award, ShoppingCart, TrendingDown, Trash2, Package 
 } from 'lucide-react';
-import { formatOperatingHours, getOperatingHoursTextColor, isPharmacyOpenNow } from '@/lib/pharmacyUtils';
+import { formatOperatingHours, getOperatingHoursTextColor } from '@/lib/pharmacyUtils';
 import { usePharmacySort } from '@/hooks/usePharmacySort';
-import { useCartOperations } from '@/hooks/useCartOperations';
 
 // Constants
 const SORT_OPTIONS = {

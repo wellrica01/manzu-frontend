@@ -57,11 +57,12 @@ export default function OrderSummaryCard({ order, pharmacy }) {
                     <div className="w-2 h-2 rounded-full bg-[#1ABA7F] flex-shrink-0 mt-2" />
                     <div>
                       <span className="font-semibold text-gray-900">
+                        {item.medication.displayName} x{item.quantity}
                         {item.medication.ingredients?.length > 0 && (
                         <p className="text-xs text-gray-500 mt-1">
-                          {item.medication.ingredients
+                          ({item.medication.ingredients
                             .map(ing => `${ing.activeSubstance || ''} ${ing.strengthValue ?? ''}${ing.strengthUnit ?? ''}`)
-                            .join(' + ')}
+                            .join(' + ')})
                         </p>
                       )}
                       </span>
@@ -69,7 +70,6 @@ export default function OrderSummaryCard({ order, pharmacy }) {
                   </div>
                 </div>
                 <div className="flex items-center gap-4 flex-shrink-0">
-                  <span className="text-sm text-gray-600 font-medium">x{item.quantity}</span>
                   <span className="text-base font-black text-[#225F91]">
                     ₦{(item.price * item.quantity).toLocaleString()}
                   </span>

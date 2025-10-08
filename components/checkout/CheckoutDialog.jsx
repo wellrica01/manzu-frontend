@@ -10,7 +10,7 @@ import {
   Loader2,
   X,
   Shield,
-  HospitalIcon,
+  Store,
   Sparkles,
   ArrowRight
 } from 'lucide-react';
@@ -87,7 +87,7 @@ const CheckoutDialog = ({
                   <div className="flex items-center justify-between mb-3 sm:mb-4">
                     <div className="flex items-center gap-2 sm:gap-3">
                       <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-[#1ABA7F]/20 to-[#1ABA7F]/10 flex items-center justify-center">
-                        <HospitalIcon className="h-4 w-4 sm:h-5 sm:w-5 text-[#1ABA7F]" />
+                        <Store className="h-4 w-4 sm:h-5 sm:w-5 text-[#1ABA7F]" />
                       </div>
                       <div>
                         <h4 className="font-bold text-gray-900 text-base sm:text-lg">

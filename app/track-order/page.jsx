@@ -4,12 +4,12 @@
 export const dynamic = 'force-dynamic';
 
 import { Suspense } from 'react';
-import Track from './TrackOrderClient';
+import TrackOrder from '@/components/track-order/TrackOrder';
 
 export default function TrackOrderPage() {
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <Track />
+      <TrackOrder />
     </Suspense>
   );
 }
