@@ -23,8 +23,8 @@ const CONFIG = {
     logo: '/logo_1.png',
   },
   contact: {
-    phone: '+234 90 0000 1111',
-    email: 'contact@manzu.ng'
+    phone: '+234 900 000 1111',
+    email: 'support@manzu.ng'
   }
 };
 
@@ -300,7 +300,7 @@ function MainLayoutContent({ children }) {
             {/* Quick Links */}
             <div>
               <h3 className="text-sm font-bold text-gray-900 mb-6 uppercase tracking-wider">Company</h3>
-              <nav className="space-y-4">
+              <nav className="space-y-2">
                 {['About', 'Contact', 'Careers'].map((item) => (
                   <Link
                     key={item}
@@ -316,7 +316,7 @@ function MainLayoutContent({ children }) {
             {/* Contact */}
             <div>
               <h3 className="text-sm font-bold text-gray-900 mb-6 uppercase tracking-wider">Contact</h3>
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <a 
                   href={`tel:${CONFIG.contact.phone}`} 
                   className="flex items-center gap-3 text-base text-gray-600 hover:text-[#225F91] transition-colors group"

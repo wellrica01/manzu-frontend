@@ -68,7 +68,7 @@ const OrderCard = ({
       </CardHeader>
 
       {isExpanded && (
-        <CardContent className="p-6">
+        <CardContent className="p-4">
           <OrderDetails order={order} />
         </CardContent>
       )}

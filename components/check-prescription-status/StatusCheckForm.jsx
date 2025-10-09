@@ -7,9 +7,6 @@ import {
   Search, 
   Home, 
   Clock, 
-  CheckCircle2, 
-  Package, 
-  AlertCircle,
   FileText,
   Mail,
   Loader2
@@ -70,8 +67,8 @@ const StatusCheckForm = ({ onSubmit, onBackToHome, isLoading }) => {
                   onChange={(e) => setIdentifier(e.target.value)}
                   onFocus={() => setIsFocused(true)}
                   onBlur={() => setIsFocused(false)}
-                  className="relative h-14 pl-12 pr-4 text-base font-medium rounded-xl border-2 border-gray-200 focus:border-[#1ABA7F] focus:ring-4 focus:ring-[#1ABA7F]/10 transition-all duration-300"
-                  placeholder="your@email.com or +234..."
+                  className="relative h-14 pl-12 pr-4 text-sm sm:text-base font-medium rounded-xl border-2 border-gray-200 focus:border-[#1ABA7F] focus:ring-4 focus:ring-[#1ABA7F]/10 transition-all duration-300"
+                  placeholder="your@email.com or +234 901 2345 678..."
                   required
                 />
               </div>
@@ -79,7 +76,7 @@ const StatusCheckForm = ({ onSubmit, onBackToHome, isLoading }) => {
             
             <p className="text-sm text-gray-500 flex items-start gap-2">
               <Clock className="h-4 w-4 flex-shrink-0 mt-0.5 text-gray-400" strokeWidth={2} />
-              <span>Use the same contact info you provided during checkout</span>
+              <span>Use the same contact info you provided when uploading your file</span>
             </p>
           </div>
 

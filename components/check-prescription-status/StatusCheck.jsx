@@ -102,7 +102,7 @@ export default function StatusCheck() {
               Check Prescription Status
             </h1>
             <p className="text-base text-gray-600 font-medium max-w-2xl mx-auto">
-              Enter your email or phone number to view your prescription status and order details
+              Enter your email or phone number to view your prescription status and order right away
             </p>
           </div>
         )}

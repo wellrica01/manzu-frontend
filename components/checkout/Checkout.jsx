@@ -278,6 +278,7 @@ function CheckoutComponent() {
     onSuccess: (data) => {
       if (data.paymentUrl) {
         clearForm();
+        setIsRedirecting(true);
         window.location.href = data.paymentUrl;
       } else {
         clearForm();
@@ -294,6 +295,7 @@ function CheckoutComponent() {
   // Local state
   const [showCheckoutDialog, setShowCheckoutDialog] = useState(false);
   const [cartLoaded, setCartLoaded] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const hasRedirectedRef = useRef(false);
 
   // Memoized calculations
@@ -452,7 +454,7 @@ function CheckoutComponent() {
       />
 
       {/* Processing overlay */}
-      {isCheckoutPending && <ProcessingPayment />}
+      {(isCheckoutPending || isRedirecting) && <ProcessingPayment />}
 
       {/* Main Content */}
       <div className="py-8 px-2 sm:px-4">

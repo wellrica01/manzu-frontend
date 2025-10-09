@@ -3,15 +3,8 @@ import { CheckCircle, XCircle, Check, Package, Clock, PackageCheck, Truck } from
 import { getOrderSteps, getOrderStepIndex } from '@/lib/trackOrderUtils';
 
 const OrderProgressTracker = ({ order }) => {
-  const steps = [
-    { key: 'placed', label: 'Placed', icon: Package },
-    { key: 'processing', label: 'Processing', icon: Clock },
-    { key: 'ready', label: 'Ready', icon: PackageCheck },
-    { key: 'transit', label: 'In Transit', icon: Truck },
-    { key: 'delivered', label: 'Delivered', icon: CheckCircle }
-  ];
-  
-  const currentIdx = 1; // Replace with actual logic from getOrderStepIndex
+  const steps = getOrderSteps(order);
+  const currentIdx = getOrderStepIndex(order, steps);
 
   if (order.status === 'CANCELLED') {
     return (

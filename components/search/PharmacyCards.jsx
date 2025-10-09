@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, HospitalIcon, Clock, Shield, ChevronDown, TrendingDown, Navigation, Store, Trash2, Plus, Minus, Award, DollarSign } from 'lucide-react';
+import { MapPin, HospitalIcon, Clock, Shield, ShoppingCart, ChevronDown, TrendingDown, Navigation, Store, Trash2, Plus, Minus, Award, DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatOperatingHours, getOperatingHoursTextColor, isPharmacyOpenNow } from '@/lib/pharmacyUtils';
 import UnifiedRemoveDialog from '@/components/cart/UnifiedRemoveDialog';
@@ -174,14 +174,14 @@ const PharmacyCard = ({
         
         {/* Badges with entrance animation */}
         {avail.isNearest && (
-          <Badge className="absolute top-3 left-3 bg-gradient-to-r from-[#76D1F3] to-[#5bc0de] text-white border-0 px-3 py-1 text-xs font-bold shadow-lg backdrop-blur-sm animate-in slide-in-from-left-2 duration-500" 
+          <Badge className="absolute top-3 left-3 px-3 py-1.5 rounded-lg bg-[#225F91] text-white border-2 border-white text-xs font-bold shadow-lg backdrop-blur-sm animate-in slide-in-from-left-2 duration-500" 
                  style={{ animationDelay: `${index * 120 + 200}ms` }}>
             <Navigation className="h-3 w-3 mr-1 animate-pulse" />
             Nearest
           </Badge>
         )}
         {avail.isCheapest && (
-          <Badge className="absolute top-3 right-3 bg-gradient-to-r from-[#1ABA7F] to-[#16a876] text-white border-0 px-3 py-1 text-xs font-bold shadow-lg backdrop-blur-sm animate-in slide-in-from-right-2 duration-500" 
+          <Badge className="absolute top-3 right-3 px-3 py-1.5 rounded-lg bg-[#1ABA7F] text-white border-2 border-white text-xs font-bold shadow-lg backdrop-blur-sm animate-in slide-in-from-right-2 duration-500" 
                  style={{ animationDelay: `${index * 120 + 300}ms` }}>
             <TrendingDown className="h-3 w-3 mr-1 animate-pulse" />
             Cheapest
@@ -192,20 +192,20 @@ const PharmacyCard = ({
         <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent animate-in slide-in-from-bottom-2 duration-500" 
              style={{ animationDelay: `${index * 120 + 400}ms` }}>
           <div className="flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-white/20 backdrop-blur-sm group-hover:bg-white/30 transition-colors duration-300">
-              <Store className="h-4 w-4 text-white" />
+            <div className="p-2 rounded-lg bg-white/20 backdrop-blur-sm border border-white/30">
+              <Store className="h-5 w-5 text-white" strokeWidth={2}/>
             </div>
             <h3 className="text-white font-bold text-xl">{avail.pharmacyName}</h3>
           </div>
         </div>
       </div>
       
-      <div className="px-3 pt-4 pb-8 space-y-4">
+      <div className="px-3 pt-4 pb-8 space-y-2">
         {/* Address with icon animation */}
         {avail.address && (
-          <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-xl border border-blue-200 hover:bg-blue-100 hover:border-blue-300 transition-all duration-300 group animate-in fade-in slide-in-from-left-2" 
+          <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200"
                style={{ animationDelay: `${index * 120 + 500}ms` }}>
-            <MapPin className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform duration-300" strokeWidth={2.5} />
+            <MapPin className="h-4 w-4 text-[#1ABA7F] flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform duration-300" strokeWidth={2.5} />
             <p className="text-sm text-gray-700 font-semibold line-clamp-2">
               {avail.address}
             </p>
@@ -217,17 +217,17 @@ const PharmacyCard = ({
           const formattedHours = formatOperatingHours(avail.operatingHours);
           if (!formattedHours) return null;
           return (
-            <div className="flex items-center gap-3 px-3 py-2 bg-green-50 rounded-xl border border-green-200 hover:bg-green-100 hover:border-green-300 transition-all duration-300 animate-in fade-in slide-in-from-left-2" 
-                 style={{ animationDelay: `${index * 120 + 600}ms` }}>
-              <Clock className="h-5 w-5 text-green-600 flex-shrink-0" strokeWidth={2.5} />
-              <div className="flex-1">
-                <span className="text-xs font-black text-gray-600 uppercase tracking-wide block">
-                  Opening Hours
-                </span>
-                <span className={cn('text-sm font-bold', getOperatingHoursTextColor(avail.operatingHours))}>
-                  {formattedHours.text}
-                </span>
-              </div>
+          <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200"
+              style={{ animationDelay: `${index * 120 + 600}ms` }}>
+          <Clock className="h-4 w-4 text-[#225F91] flex-shrink-0" strokeWidth={2} />
+            <span className={cn('text-sm font-bold flex-1', getOperatingHoursTextColor(avail.operatingHours))}>
+              {formattedHours.text}
+            </span>
+              {formattedHours.status === 'open' && (
+                <Badge className="bg-green-500 text-white px-2 py-0.5 text-xs">
+                  Open
+                </Badge>
+              )}
             </div>
           );
         })()}
@@ -269,7 +269,7 @@ const PharmacyCard = ({
             Quantity:
           </label>
 
-          <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1 shadow-sm">
+          <div className="flex items-center gap-1 bg-gray-100 rounded-lg shadow-sm">
             <button
               type="button"
               aria-label="Decrease quantity"
@@ -280,7 +280,7 @@ const PharmacyCard = ({
                 }))
               }
               disabled={(quantities[avail.pharmacyId] || 1) <= 1}
-              className="h-8 w-8 p-0 flex items-center justify-center hover:bg-[#1ABA7F]/20 text-[#225F91] disabled:opacity-50 disabled:cursor-not-allowed rounded active:scale-90 transition-all duration-200"
+              className="h-6 w-6  flex items-center justify-center hover:bg-[#1ABA7F]/20 text-[#225F91] disabled:opacity-50 disabled:cursor-not-allowed rounded active:scale-90 transition-all duration-200"
             >
               <Minus className="h-4 w-4" />
             </button>
@@ -298,7 +298,7 @@ const PharmacyCard = ({
                   [avail.pharmacyId]: (prev[avail.pharmacyId] || 1) + 1,
                 }))
               }
-              className="h-8 w-8 p-0 flex items-center justify-center hover:bg-[#1ABA7F]/20 text-[#225F91] rounded active:scale-90 transition-all duration-200"
+              className="h-6 w-6 flex items-center justify-center hover:bg-[#1ABA7F]/20 text-[#225F91] rounded active:scale-90 transition-all duration-200"
             >
               <Plus className="h-4 w-4" />
             </button>
@@ -349,7 +349,7 @@ const PharmacyCard = ({
               disabled={adding}
               className={cn(
                 "w-full h-12 rounded-xl font-bold text-sm transition-all duration-300 shadow-lg hover:shadow-2xl relative overflow-hidden",
-                "bg-gradient-to-r from-[#225F91] to-[#1a4a73] text-white hover:from-[#1a4a73] hover:to-[#225F91] active:scale-95 hover:scale-105"
+                "bg-gradient-to-r from-[#1ABA7F] to-[#225F91] text-white hover:from-[#1a4a73] hover:to-[#225F91] active:scale-95 hover:scale-105"
               )}
             >
               {/* Shine effect on hover */}
@@ -362,7 +362,10 @@ const PharmacyCard = ({
                     Adding...
                   </>
                 ) : (
-                  'Add to Cart'
+                  <>
+                 <ShoppingCart className="h-4 w-4 mr-2" strokeWidth={2} />
+                  Add to Cart
+                  </>
                 )}
               </span>
             </Button>

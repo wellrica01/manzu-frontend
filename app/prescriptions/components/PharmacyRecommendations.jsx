@@ -233,23 +233,23 @@ const PharmacyCard = React.memo(({
               {formatDistance(pharmacy.distance_km)} away
             </span>
           </div>
-
-          {/* Summary */}
-          <div className="flex items-center justify-between p-3 rounded-lg bg-[#1ABA7F]/10 border border-[#1ABA7F]/30">
-            <div className="flex items-center gap-2">
-              <Package className="h-4 w-4 text-[#225F91]" strokeWidth={2} />
-              <span className="text-sm font-bold text-gray-700">
-                {pharmacy.medCount || 0}/{medications?.length || 0} available
-              </span>
-            </div>
-            <span className="text-lg font-black text-[#225F91]">
-              {formatCurrency(pharmacy.trueTotalPrice)}
-            </span>
-          </div>
         </div>
 
+      {/* Summary */}
+      <div className="flex items-center justify-between p-3 rounded-lg bg-[#1ABA7F]/10 border border-[#1ABA7F]/30">
+        <div className="flex items-center gap-2">
+          <Package className="h-4 w-4 text-[#225F91]" strokeWidth={2} />
+          <span className="text-sm font-bold text-gray-700">
+            {pharmacy.medCount || 0}/{medications?.length || 0} available
+          </span>
+        </div>
+        <span className="text-lg font-black text-[#225F91]">
+          {formatCurrency(pharmacy.trueTotalPrice)}
+        </span>
+      </div>
+
         {/* Medications */}
-        <div className="space-y-2">
+        <div className="space-y-3 mb-5">
           <h4 className="text-sm font-bold text-gray-700 uppercase">
             Medications
           </h4>
@@ -380,7 +380,7 @@ const PharmacyRecommendations = ({
   if (!pharmacyRecommendations) return null;
 
   return (
-    <div className="space-y-6 pb-24">
+    <div className="space-y-6 pb-24 relative">
       {/* Sort Controls */}
       <div className="space-y-3">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">

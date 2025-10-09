@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
-import { MapPin, Navigation } from 'lucide-react';
+import { MapPin, Navigation, Loader2 } from 'lucide-react';
 
-const LocationPrompt = ({ onSelectLocation, onEnableLocation, locationStatus }) => {
+const LocationPrompt = ({ onSelectLocation, onEnableLocation, locationStatus, isLoadingLocation }) => {
   return (
     <div className="text-center py-12 px-6 rounded-2xl bg-gradient-to-br from-teal-50 via-blue-50 to-indigo-50 border-2 border-teal-200 animate-in fade-in zoom-in-95 duration-500">
       {/* Animated Icon */}
@@ -29,13 +29,23 @@ const LocationPrompt = ({ onSelectLocation, onEnableLocation, locationStatus }) 
 
       {/* Action Buttons with stagger */}
       <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
-          <Button
+         <Button
             onClick={onEnableLocation}
-            className="bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 text-white px-6 py-6 rounded-xl font-bold shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 w-full sm:w-auto animate-in slide-in-from-left-4" 
+            disabled={isLoadingLocation}
+            className="bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 text-white px-6 py-6 rounded-xl font-bold shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 w-full sm:w-auto animate-in slide-in-from-left-4 disabled:opacity-50 disabled:cursor-not-allowed" 
             style={{ animationDelay: '500ms', animationDuration: '500ms' }}
           >
-            <Navigation className="h-5 w-5 mr-2" />
-            Use My Location
+            {isLoadingLocation ? (
+              <>
+                <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                Getting Location...
+              </>
+            ) : (
+              <>
+                <Navigation className="h-5 w-5 mr-2" />
+                Use My Location
+              </>
+            )}
           </Button>
         
         <Button

@@ -4,7 +4,7 @@
 export const dynamic = 'force-dynamic';
 
 import { Suspense } from 'react';
-import StatusCheck from '../../components/check-prescription-status/StatusCheck';
+import StatusCheck from '@/components/check-prescription-status/StatusCheck';
 
 export default function StatusCheckPage() {
   return (

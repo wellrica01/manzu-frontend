@@ -54,6 +54,7 @@ const MedicationCard = ({
   locationStatus, 
   onSelectLocation,
   onEnableLocation,
+  isLoadingLocation,
   isMultiMed = false,
   states,
   lgas,
@@ -365,6 +366,7 @@ const MedicationCard = ({
     onSelectLocation={onSelectLocation}
     onEnableLocation={onEnableLocation}
     locationStatus={locationStatus}
+    isLoadingLocation={isLoadingLocation}
   />
 ) : availabilityCount === 0 ? (
   <div className="text-center py-12 px-6 rounded-2xl bg-gradient-to-br from-gray-50 to-white border-2 border-dashed border-gray-300">

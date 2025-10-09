@@ -94,12 +94,14 @@ const PrescriptionMedicationsPage = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [filtersCleared, setFiltersCleared] = useState(false);
   const [isLocationProcessed, setIsLocationProcessed] = useState(false);
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
 
   // UI state
   const [mounted, setMounted] = useState(false);
   const [openCartDialog, setOpenCartDialog] = useState(false);
   const [lastAddedItems, setLastAddedItems] = useState([]);
   const [removeItemDialog, setRemoveItemDialog] = useState(null);
+
 
   // Derived filter options
   const lgas = useMemo(() => 
@@ -197,7 +199,8 @@ const PrescriptionMedicationsPage = () => {
 
   const debouncedRefetch = useDebounce(triggerRefetch, 300);
 
-  // Auto-detect location
+
+// Auto-detect location
   useEffect(() => {
     if (!userLocation || !geoData?.length || isLocationProcessed || locationProcessingRef.current || filtersCleared) {
       return;
@@ -216,13 +219,16 @@ const PrescriptionMedicationsPage = () => {
         
         setTimeout(() => {
           debouncedRefetch();
+          setIsLoadingLocation(false);
         }, 0);
       } else {
         toast.error('Unable to determine your location. Please select manually.');
+        setIsLoadingLocation(false);
       }
     } catch (err) {
       console.error('Reverse geocoding error:', err);
       toast.error('Error processing location. Please select manually.');
+      setIsLoadingLocation(false);
     } finally {
       locationProcessingRef.current = false;
     }
@@ -334,24 +340,26 @@ const PrescriptionMedicationsPage = () => {
   }, [debouncedRefetch]);
 
   const handleEnableLocation = useCallback(async () => {
-    setFilterState('');
-    setFilterLga('');
-    setFilterWard('');
-    setIsLocationProcessed(false);
-    setFiltersCleared(false);
-    locationProcessingRef.current = false;
-    
-    try {
-      await requestLocation();
-      toast.success('Location enabled');
-    } catch (error) {
-      const errorMessage = error?.code === 1 
-        ? 'Location permission denied'
-        : 'Unable to get location';
+      setFilterState('');
+      setFilterLga('');
+      setFilterWard('');
+      setIsLocationProcessed(false);
+      setFiltersCleared(false);
+      setIsLoadingLocation(true);
+      locationProcessingRef.current = false;
       
-      toast.error(errorMessage);
-    }
-  }, [requestLocation]);
+      try {
+        await requestLocation();
+        toast.success('Location detected successfully');
+      } catch (error) {
+        const errorMessage = error?.code === 1 
+          ? 'Location permission denied'
+          : 'Unable to get location';
+        
+        toast.error(errorMessage);
+        setIsLoadingLocation(false);
+      }
+    }, [requestLocation]);
 
   const handleSelectLocation = useCallback(() => {
     setFilterState('');
@@ -428,6 +436,7 @@ const PrescriptionMedicationsPage = () => {
                   onSelectLocation={handleSelectLocation}
                   onEnableLocation={handleEnableLocation}
                   locationStatus={locationStatus}
+                  isLoadingLocation={isLoadingLocation}
                 />
               </div>
             ) : !hasPharmacyData ? (

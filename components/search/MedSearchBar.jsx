@@ -62,6 +62,7 @@ const SearchBar = () => {
   const [lastAddedItems, setLastAddedItems] = useState([]);
   const [lgas, setLgas] = useState([]);
   const [wards, setWards] = useState([]);
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
 
   // Refs
   const dropdownRef = useRef(null);
@@ -192,13 +193,15 @@ const SearchBar = () => {
     if (val) setFiltersWereSet(true);
   };
 
-  const handleEnableLocation = useCallback(() => {
+const handleEnableLocation = useCallback(() => {
+    setIsLoadingLocation(true);
     requestLocation()
-      .then(() => toast.success('Location enabled'))
+      .then(() => toast.success('Location detected successfully'))
       .catch((error) => {
         toast.error(error.code === 1 
           ? 'Location permission denied' 
           : 'Unable to get location');
+        setIsLoadingLocation(false);
       });
   }, [requestLocation]);
 
@@ -290,7 +293,7 @@ const SearchBar = () => {
     }
   }, [filters.state, filters.lga, filters.ward]);
 
-  // Reverse geocode on location
+// Reverse geocode on location
   useEffect(() => {
     if (userLocation && geoData?.length) {
       const match = reverseGeocode(userLocation.lat, userLocation.lng);
@@ -302,9 +305,12 @@ const SearchBar = () => {
         }));
         setFiltersWereSet(true);
         updateLgas(match.state);
+        setIsLoadingLocation(false);
+      } else {
+        setIsLoadingLocation(false);
       }
     }
-  }, [userLocation, geoData, reverseGeocode]);
+  }, [userLocation, geoData, reverseGeocode, updateLgas]);
 
   // Select medication
   const handleSelectMedication = useCallback(async (suggestion) => {
@@ -635,6 +641,7 @@ const SearchBar = () => {
                   }, 200);
                 }}
                 onEnableLocation={handleEnableLocation}
+                isLoadingLocation={isLoadingLocation}
               />
             </div>
           </ErrorBoundary>

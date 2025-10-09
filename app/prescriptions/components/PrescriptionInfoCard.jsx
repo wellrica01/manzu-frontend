@@ -17,7 +17,7 @@ const PrescriptionInfoCard = ({ prescriptionMetadata, medications }) => {
     <Card className="border-2 border-gray-100 rounded-2xl bg-white p-6 mb-8">
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex justify-between items-start gap-4">
+        <div className="flex flex-wrap justify-between items-start gap-4">
           <div className="flex items-center gap-3">
             <div className="p-3 rounded-xl bg-gradient-to-br from-[#1ABA7F] to-[#225F91]">
               <FileText className="h-6 w-6 text-white" strokeWidth={2} />
@@ -40,13 +40,14 @@ const PrescriptionInfoCard = ({ prescriptionMetadata, medications }) => {
           </div>
 
           {prescriptionMetadata.fileUrl && (
-            <Button
-              onClick={() => setShowPreview(true)}
-              className="h-11 px-5 rounded-xl border-2 border-[#225F91] bg-white text-[#225F91] hover:bg-[#225F91] hover:text-white font-bold transition-colors duration-200"
-            >
-              <Eye className="h-4 w-4 mr-2" strokeWidth={2} />
-              View
-            </Button>
+          <Button
+            onClick={() => setShowPreview(true)}
+            className="h-11 px-5 rounded-lg border-2 border-[#225F91] bg-white text-[#225F91] hover:bg-[#225F91] hover:text-white font-bold transition-colors duration-200 shrink-0 mt-3 sm:mt-0"
+          >
+            <Eye className="h-4 w-4 mr-2" strokeWidth={2} />
+            View
+          </Button>
+
           )}
         </div>
 

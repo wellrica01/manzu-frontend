@@ -56,7 +56,7 @@ const TrackOrderForm = ({
                 onChange={(e) => onTrackingCodeChange(e.target.value)}
                 onFocus={() => setIsFocused(true)}
                 onBlur={() => setIsFocused(false)}
-                className="relative h-14 text-base font-medium rounded-xl border-2 border-gray-200 focus:border-[#1ABA7F] focus:ring-4 focus:ring-[#1ABA7F]/10 transition-all duration-300 px-4"
+                className="relative h-14 text-sm sm:text-base font-medium rounded-xl border-2 border-gray-200 focus:border-[#1ABA7F] focus:ring-4 focus:ring-[#1ABA7F]/10 transition-all duration-300 px-4"
                 placeholder="e.g., TRK-00A7-LMK6X1-J8Q"
                 required
               />
