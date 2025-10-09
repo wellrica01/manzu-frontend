@@ -1,92 +1,112 @@
+'use client';
+
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Search, Home, Loader2 } from 'lucide-react';
+import { Search, Home, Loader2, Clock } from 'lucide-react';
 
-export default function TrackOrderForm({ 
+const TrackOrderForm = ({ 
   trackingCode, 
   onTrackingCodeChange, 
   onSubmit, 
   onBackToHome, 
   isLoading 
-}) {
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSubmit(trackingCode);
-  };
+}) => {
+  const [isFocused, setIsFocused] = useState(false);
 
   return (
-    <Card className="relative bg-white/95 backdrop-blur-sm border-2 border-[#1ABA7F]/30 rounded-3xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top duration-500">
-      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-[#1ABA7F]/20 to-transparent rounded-bl-full" />
-      <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-[#225F91]/20 to-transparent rounded-tr-full" />
-
-      <CardHeader className="relative z-10 bg-gradient-to-r from-[#225F91]/10 to-[#1ABA7F]/10 px-3 py-4 sm:p-8">
-        <div className="flex items-center gap-3 justify-center mb-2">
-          <div className="p-3 bg-gradient-to-br from-[#1ABA7F]/20 to-[#225F91]/20 rounded-xl">
-            <Search className="h-6 w-6 text-[#225F91]" />
+    <Card className="relative bg-white border-2 border-gray-100 rounded-3xl shadow-lg overflow-hidden">
+      {/* Subtle decorative element */}
+      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-[#1ABA7F]/5 to-transparent" />
+      
+      <CardHeader className="relative z-10 px-6 py-8 border-b border-gray-100">
+        <div className="flex items-center gap-3 justify-center mb-3">
+          <div className="p-3 rounded-xl bg-gradient-to-br from-[#1ABA7F] to-[#16a876] shadow-md">
+            <Search className="h-6 w-6 text-white" strokeWidth={2} />
           </div>
-          <CardTitle className="text-2xl font-black text-[#225F91]">
-            Order Tracking
+          <CardTitle className="text-3xl font-bold text-[#225F91]">
+            Track Your Order
           </CardTitle>
         </div>
-        <p className="text-center text-gray-600 text-sm">
-          Track your medication delivery in real-time
+        <p className="text-center text-gray-600 leading-relaxed">
+          Enter your tracking code to see real-time order status
         </p>
       </CardHeader>
 
-      <CardContent className="relative z-10 p-6 sm:p-8 space-y-4">
-        <form onSubmit={handleSubmit} className="space-y-6">
+      <CardContent className="relative z-10 p-6 sm:p-8 space-y-6">
+        <div className="space-y-6">
           <div className="space-y-3">
-            <Label htmlFor="trackingCode" className="text-sm font-bold text-gray-700 uppercase tracking-wide">
+            <Label 
+              htmlFor="trackingCode" 
+              className="text-sm font-bold text-gray-900 uppercase tracking-wider"
+            >
               Tracking Code
             </Label>
-            <Input
-              id="trackingCode"
-              value={trackingCode}
-              onChange={(e) => onTrackingCodeChange(e.target.value)}
-              className="h-12 text-base font-medium rounded-lg border-2 border-gray-300 focus:border-[#1ABA7F] focus:ring-4 focus:ring-[#1ABA7F]/20 transition-all duration-300"
-              placeholder="e.g., TRK-00A7-LMK6X1-J8Q"
-              required
-            />
-            <p className="text-xs text-gray-500">
-              Your tracking code was sent to your email after checkout
+            
+            <div className="relative">
+              <div className={`absolute inset-0 rounded-xl bg-gradient-to-r from-[#1ABA7F] to-[#16a876] opacity-0 blur-lg transition-opacity duration-300 ${
+                isFocused ? 'opacity-20' : ''
+              }`} />
+              
+              <Input
+                id="trackingCode"
+                value={trackingCode}
+                onChange={(e) => onTrackingCodeChange(e.target.value)}
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setIsFocused(false)}
+                className="relative h-14 text-base font-medium rounded-xl border-2 border-gray-200 focus:border-[#1ABA7F] focus:ring-4 focus:ring-[#1ABA7F]/10 transition-all duration-300 px-4"
+                placeholder="e.g., TRK-00A7-LMK6X1-J8Q"
+                required
+              />
+            </div>
+            
+            <p className="text-sm text-gray-500 flex items-start gap-2">
+              <Clock className="h-4 w-4 flex-shrink-0 mt-0.5 text-gray-400" />
+              <span>Your tracking code was sent to your email or phone after checkout</span>
             </p>
           </div>
 
           <Button
-            type="submit"
-            disabled={isLoading}
-            className="w-full h-12 bg-gradient-to-r from-[#225F91] to-[#1a4a73] hover:from-[#1a4a73] hover:to-[#225F91] text-white font-bold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 group relative overflow-hidden disabled:opacity-70"
+            onClick={() => onSubmit(trackingCode)}
+            disabled={isLoading || !trackingCode}
+            className="w-full h-14 bg-gradient-to-r from-[#1ABA7F] to-[#16a876] hover:from-[#16a876] hover:to-[#1ABA7F] text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <span className="relative z-10 flex items-center justify-center gap-2">
-              {isLoading ? (
-                <>
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                  Tracking...
-                </>
-              ) : (
-                <>
-                  <Search className="h-5 w-5 group-hover:scale-110 transition-transform duration-300" />
-                  Track Order
-                </>
-              )}
-            </span>
-            {!isLoading && (
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+            {isLoading ? (
+              <span className="flex items-center justify-center gap-2">
+                <Loader2 className="h-5 w-5 animate-spin" strokeWidth={2.5} />
+                Tracking Order...
+              </span>
+            ) : (
+              <span className="flex items-center justify-center gap-2">
+                <Search className="h-5 w-5" strokeWidth={2.5} />
+                Track Order
+              </span>
             )}
           </Button>
-        </form>
+        </div>
+
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-200" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-white px-3 text-gray-500 font-medium">or</span>
+          </div>
+        </div>
 
         <Button
           onClick={onBackToHome}
           variant="outline"
-          className="w-full h-12 border-2 border-[#1ABA7F] text-[#1ABA7F] hover:bg-[#1ABA7F]/10 font-bold rounded-lg transition-all duration-300"
+          className="w-full h-12 border-2 border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 font-semibold rounded-xl transition-all duration-200"
         >
-          <Home className="h-5 w-5 mr-2" />
+          <Home className="h-5 w-5 mr-2" strokeWidth={2} />
           Back to Home
         </Button>
       </CardContent>
     </Card>
   );
 }
+
+export default TrackOrderForm;

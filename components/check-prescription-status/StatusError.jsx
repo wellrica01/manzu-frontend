@@ -4,10 +4,8 @@ import { AlertCircle, Home } from 'lucide-react';
 
 export default function StatusError({ error, onReset, onBackToHome }) {
   return (
-    <Card className="relative bg-white/95 backdrop-blur-sm border-2 border-red-500/30 rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-700">
-      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-red-500/20 to-transparent rounded-bl-full" />
-      
-      <CardHeader className="relative z-10 bg-gradient-to-r from-red-500/10 to-pink-500/10 p-8 text-center">
+    <Card className="relative bg-white border-2 border-gray-100 rounded-3xl shadow-lg overflow-hidden">
+      <CardHeader className="relative bg-gradient-to-br from-red-50 to-red-50 p-8 text-center border-b border-yellow-100">
         <div className="relative mx-auto w-20 h-20 mb-6">
           <div className="absolute inset-0 bg-gradient-to-br from-red-500/30 to-pink-500/30 rounded-full blur-xl animate-pulse" />
           <div className="relative w-full h-full bg-gradient-to-br from-red-500 to-pink-600 rounded-full flex items-center justify-center shadow-2xl border-4 border-white">

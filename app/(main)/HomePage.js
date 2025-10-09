@@ -1,13 +1,15 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import ConsentModal from '@/components/ConsentModal';
 import Link from 'next/link';
 import { Pill, ChevronDown, Zap, Shield, Clock, Award, MapIcon, FileText, Check, ArrowRight, TrendingUp, Users, Building2, Globe } from 'lucide-react';
-import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
+
+
 import SearchBar from '@/components/search/MedSearchBar';
 import PrescriptionUploadForm from '@/components/PrescriptionUploadForm';
 
@@ -472,10 +474,33 @@ function HomePageContent() {
   const [visibleSection, setVisibleSection] = useState(null);
   const searchRef = useRef(null);
   const uploadRef = useRef(null);
+  const [isConsentOpen, setIsConsentOpen] = useState(false);
+  const [isPageLoaded, setIsPageLoaded] = useState(false);
+
+
+
+      useEffect(() => {
+      const hasConsent = localStorage.getItem('manzu_consent');
+      if (!hasConsent) {
+        setIsConsentOpen(true);
+      }
+      
+      const timer = setTimeout(() => setIsPageLoaded(true), 100);
+      return () => clearTimeout(timer);
+    }, []);
+
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, []);
+
+  const handleConsentClose = useCallback((accepted = false) => {
+    setIsConsentOpen(false);
+    if (accepted) {
+      localStorage.setItem('manzu_consent', 'true');
+    }
+  }, []);
+
 
   const handleSearchClick = useCallback(() => {
     setVisibleSection("search");
@@ -563,6 +588,8 @@ function HomePageContent() {
           </Button>
         </div>
       </section>
+
+      <ConsentModal isOpen={isConsentOpen} onClose={handleConsentClose} />
 
       <style jsx>{`
         @keyframes float {

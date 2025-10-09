@@ -3,10 +3,21 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Search, Home } from 'lucide-react';
+import { 
+  Search, 
+  Home, 
+  Clock, 
+  CheckCircle2, 
+  Package, 
+  AlertCircle,
+  FileText,
+  Mail,
+  Loader2
+} from 'lucide-react';
 
-export default function StatusCheckForm({ onSubmit, onBackToHome, isLoading }) {
+const StatusCheckForm = ({ onSubmit, onBackToHome, isLoading }) => {
   const [identifier, setIdentifier] = useState('');
+  const [isFocused, setIsFocused] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -14,66 +25,103 @@ export default function StatusCheckForm({ onSubmit, onBackToHome, isLoading }) {
   };
 
   return (
-    <Card className="relative bg-white/95 backdrop-blur-sm border-2 border-[#1ABA7F]/30 rounded-3xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top duration-500">
-      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-[#1ABA7F]/20 to-transparent rounded-bl-full" />
-      <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-[#225F91]/20 to-transparent rounded-tr-full" />
-
-      <CardHeader className="relative z-10 bg-gradient-to-r from-[#225F91]/10 to-[#1ABA7F]/10 px-3 py-4 sm:p-8">
-        <div className="flex items-center gap-3 justify-center mb-2">
-          <div className="p-3 bg-gradient-to-br from-[#1ABA7F]/20 to-[#225F91]/20 rounded-xl">
-            <Search className="h-6 w-6 text-[#225F91]" />
+    <Card className="relative bg-white border-2 border-gray-100 rounded-3xl shadow-lg overflow-hidden">
+      {/* Subtle decorative element */}
+      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-[#1ABA7F]/5 to-transparent" />
+      
+      <CardHeader className="relative z-10 px-6 py-8 border-b border-gray-100">
+        <div className="flex items-center gap-3 justify-center mb-3">
+          <div className="p-3 rounded-xl bg-gradient-to-br from-[#1ABA7F] to-[#16a876] shadow-md">
+            <FileText className="h-6 w-6 text-white" strokeWidth={2} />
           </div>
-          <CardTitle className="text-2xl font-black text-[#225F91]">
+          <CardTitle className="text-3xl font-bold text-[#225F91]">
             Check Your Status
           </CardTitle>
         </div>
-        <p className="text-center text-gray-600 text-sm">
-          Track your prescription verification and order progress
+        <p className="text-center text-gray-600 leading-relaxed">
+          Enter your contact information to view your prescription status
         </p>
       </CardHeader>
 
-      <CardContent className="relative z-10 p-6 sm:p-8 space-y-4">
-        <form onSubmit={handleSubmit} className="space-y-6">
+      <CardContent className="relative z-10 p-6 sm:p-8 space-y-6">
+        <div className="space-y-6">
           <div className="space-y-3">
-            <Label htmlFor="identifier" className="text-sm font-bold text-gray-700 uppercase tracking-wide">
+            <Label 
+              htmlFor="identifier" 
+              className="text-sm font-bold text-gray-900 uppercase tracking-wider"
+            >
               Email or Phone Number
             </Label>
-            <Input
-              id="identifier"
-              type="text"
-              value={identifier}
-              onChange={(e) => setIdentifier(e.target.value)}
-              className="h-12 text-base font-medium rounded-lg border-2 border-gray-300 focus:border-[#1ABA7F] focus:ring-4 focus:ring-[#1ABA7F]/20 transition-all duration-300"
-              placeholder="e.g., your@email.com or +234..."
-              required
-            />
-            <p className="text-xs text-gray-500">
-              Use the same contact info you provided during checkout
+            
+            <div className="relative">
+              <div className={`absolute inset-0 rounded-xl bg-gradient-to-r from-[#1ABA7F] to-[#16a876] opacity-0 blur-lg transition-opacity duration-300 ${
+                isFocused ? 'opacity-20' : ''
+              }`} />
+              
+              <div className="relative">
+                <Mail className={`absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 transition-colors duration-300 ${
+                  isFocused ? 'text-[#1ABA7F]' : 'text-gray-400'
+                }`} strokeWidth={2} />
+                
+                <Input
+                  id="identifier"
+                  type="text"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
+                  onFocus={() => setIsFocused(true)}
+                  onBlur={() => setIsFocused(false)}
+                  className="relative h-14 pl-12 pr-4 text-base font-medium rounded-xl border-2 border-gray-200 focus:border-[#1ABA7F] focus:ring-4 focus:ring-[#1ABA7F]/10 transition-all duration-300"
+                  placeholder="your@email.com or +234..."
+                  required
+                />
+              </div>
+            </div>
+            
+            <p className="text-sm text-gray-500 flex items-start gap-2">
+              <Clock className="h-4 w-4 flex-shrink-0 mt-0.5 text-gray-400" strokeWidth={2} />
+              <span>Use the same contact info you provided during checkout</span>
             </p>
           </div>
 
           <Button
-            type="submit"
-            disabled={isLoading}
-            className="w-full h-12 bg-gradient-to-r from-[#225F91] to-[#1a4a73] hover:from-[#1a4a73] hover:to-[#225F91] text-white font-bold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 group relative overflow-hidden disabled:opacity-70"
+            onClick={handleSubmit}
+            disabled={isLoading || !identifier}
+            className="w-full h-14 bg-gradient-to-r from-[#1ABA7F] to-[#16a876] hover:from-[#16a876] hover:to-[#1ABA7F] text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <span className="relative z-10 flex items-center justify-center gap-2">
-              <Search className="h-5 w-5 group-hover:scale-110 transition-transform duration-300" />
-              Check Status
-            </span>
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+            {isLoading ? (
+              <span className="flex items-center justify-center gap-2">
+                <Loader2 className="h-5 w-5 animate-spin" strokeWidth={2.5} />
+                Checking Status...
+              </span>
+            ) : (
+              <span className="flex items-center justify-center gap-2">
+                <Search className="h-5 w-5" strokeWidth={2.5} />
+                Check Status
+              </span>
+            )}
           </Button>
-        </form>
+        </div>
+
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-200" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-white px-3 text-gray-500 font-medium">or</span>
+          </div>
+        </div>
 
         <Button
           onClick={onBackToHome}
           variant="outline"
-          className="w-full h-12 border-2 border-[#1ABA7F] text-[#1ABA7F] hover:bg-[#1ABA7F]/10 font-bold rounded-lg transition-all duration-300"
+          className="w-full h-12 border-2 border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 font-semibold rounded-xl transition-all duration-200"
         >
-          <Home className="h-5 w-5 mr-2" />
+          <Home className="h-5 w-5 mr-2" strokeWidth={2} />
           Back to Home
         </Button>
       </CardContent>
     </Card>
   );
 }
+
+export default StatusCheckForm;
