@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { X } from "lucide-react";
 
 export function AutocompleteInput({
   label,
@@ -12,7 +13,8 @@ export function AutocompleteInput({
   displayFn,         
   minChars = 1,      
   allowCustomInput = false, 
-  onCustomInput = null       
+  onCustomInput = null,
+  showClearButton = true  // New prop to control clear button visibility
 }) {
   const [inputText, setInputText] = useState(
     typeof value === "string" ? value : value?.name || ""
@@ -66,6 +68,7 @@ export function AutocompleteInput({
         if (res?.data?.result?.manufacturers) items = res.data.result.manufacturers;
         else if (res?.data?.result?.activeSubstances) items = res.data.result.activeSubstances;
         else if (res?.data?.result?.medicationIngredients) items = res.data.result.medicationIngredients;
+        else if (res?.data?.result?.medications) items = res.data.result.medications;
 
         setOptions(items);
         setShowOptions(true);
@@ -76,6 +79,13 @@ export function AutocompleteInput({
         setLoading(false);
       }
     }, 300);
+  };
+
+  const handleClear = () => {
+    setInputText("");
+    onChange(null);
+    setOptions([]);
+    setShowOptions(false);
   };
 
   const handleSelect = (option) => {
@@ -115,17 +125,31 @@ export function AutocompleteInput({
 
   return (
     <div className="relative" ref={containerRef}>
-      {label && <label className="block text-sm font-medium text-gray-900">{label}</label>}
-      <input
-        type="text"
-        value={inputText}
-        onChange={handleInputChange}
-        onKeyDown={handleKeyDown}
-        placeholder={placeholder}
-        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#1ABA7F] focus:border-transparent ${
-          error ? "border-red-300 bg-red-50" : "border-gray-300"
-        }`}
-      />
+      {label && <label className="block text-sm font-medium text-gray-900 mb-2">{label}</label>}
+      <div className="relative">
+        <input
+          type="text"
+          value={inputText}
+          onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
+          placeholder={placeholder}
+          className={`w-full px-3 py-2 pr-10 border rounded-lg focus:ring-2 focus:ring-[#1ABA7F] focus:border-transparent ${
+            error ? "border-red-300 bg-red-50" : "border-gray-300"
+          }`}
+        />
+        {/* Clear Button */}
+        {showClearButton && inputText && (
+          <button
+            type="button"
+            onClick={handleClear}
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full transition-colors"
+            title="Clear"
+            tabIndex={-1}
+          >
+            <X className="w-4 h-4 text-gray-500 hover:text-gray-700" />
+          </button>
+        )}
+      </div>
       {showOptions && (
         <ul className="absolute z-10 w-full bg-white border border-gray-300 rounded-md mt-1 max-h-48 overflow-auto shadow-md">
           {options.length > 0 ? (

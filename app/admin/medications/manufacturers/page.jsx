@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import Dialog from "../../components/Dialog";
+import Dialog from "../../../../components/Dialog";
 import ManufacturerForm from "./ManufacturerForm";
 import {
   fetchManufacturers,

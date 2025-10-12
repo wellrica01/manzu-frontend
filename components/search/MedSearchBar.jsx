@@ -293,10 +293,13 @@ const handleEnableLocation = useCallback(() => {
     }
   }, [filters.state, filters.lga, filters.ward]);
 
+
+
 // Reverse geocode on location
   useEffect(() => {
     if (userLocation && geoData?.length) {
       const match = reverseGeocode(userLocation.lat, userLocation.lng);
+      console.log(match);
       if (match) {
         setFilters(prev => ({
           ...prev,

@@ -2,9 +2,9 @@
 import { useEffect, useState } from "react";
 import { Loader2, AlertTriangle, Edit, Trash2, Plus, CheckCircle, Pill, RefreshCw } from "lucide-react";
 import { fetchMedications, deleteMedication } from "./api";
-import Dialog from "../../components/Dialog";
+import Dialog from "@/components/Dialog";
 import MedicationForm from "./MedicationForm";
-import DataTableView from "../../components/DataTableView";
+import DataTableView from "@/components/DataTableView";
 
 export default function MedicationsPage() {
   const [medications, setMedications] = useState([]);

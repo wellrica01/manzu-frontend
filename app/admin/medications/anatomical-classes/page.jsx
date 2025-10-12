@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import Dialog from "../../components/Dialog";
+import Dialog from "../../../../components/Dialog";
 import AnatomicalClassForm from "./AnatomicalClassForm ";
 import {
   fetchAnatomicalClasses,

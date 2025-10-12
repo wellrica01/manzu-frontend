@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Loader2, AlertTriangle, CheckCircle, ShoppingCart } from "lucide-react";
-import DataTableView from "../../components/DataTableView";
+import DataTableView from "../../../../components/DataTableView";
 
 const statusOptions = ["ALL", "PENDING", "VERIFIED", "REJECTED"];
 

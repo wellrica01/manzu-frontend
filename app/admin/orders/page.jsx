@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ShoppingCart, User, Calendar, DollarSign } from "lucide-react";
 import { fetchOrders } from "./api";
-import DataTableView from "../components/DataTableView";
+import DataTableView from "../../../components/DataTableView";
 
 const statusOptions = [
   'CART', 'PENDING', 

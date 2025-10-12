@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { fetchUsers } from "./api";
-import DataTableView from "../components/DataTableView";
+import DataTableView from "../../../components/DataTableView";
 import { ShoppingCart } from "lucide-react";
 
 const roleOptions = ["ADMIN", "SUPER_ADMIN", "SUPPORT"];

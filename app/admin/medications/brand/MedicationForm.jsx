@@ -9,7 +9,7 @@ import { fetchManufacturers } from "../manufacturers/api";
 import { fetchActiveSubstances } from "../active-substances/api";
 import { fetchMedicationIngredients } from "../medication-ingredients/api";
 import { createMedication, updateMedication, searchManufacturers, searchActiveSubstances, searchMedicationIngredients } from "./api";
-import { AutocompleteInput } from "../../components/AutocompleteInput";
+import { AutocompleteInput } from "@/components/AutocompleteInput";
 
 // Constants
 const DOSAGE_FORMS = [

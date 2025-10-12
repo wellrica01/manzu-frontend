@@ -37,6 +37,8 @@ export function useLocationDetection() {
           };
           setUserLocation(location);
           setLocationStatus('granted');
+         console.log('userLocation:', userLocation);
+
           setError(null);
           resolve(location);
         },

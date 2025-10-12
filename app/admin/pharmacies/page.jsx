@@ -4,8 +4,8 @@ import { fetchPharmacies, deletePharmacy } from "./api";
 import { ShoppingCart, Loader2, AlertTriangle, Eye, Edit, Trash2, Plus, CheckCircle } from "lucide-react";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
-import DataTableView from "../components/DataTableView";
-import Dialog from "../components/Dialog";
+import DataTableView from "../../../components/DataTableView";
+import Dialog from "../../../components/Dialog";
 import PharmacyForm from "./PharmacyForm";
 
 const statusOptions = ["VERIFIED", "PENDING", "REJECTED"];

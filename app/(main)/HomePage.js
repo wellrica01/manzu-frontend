@@ -567,7 +567,7 @@ function HomePageContent() {
       )}
 
       {/* Final CTA Section */}
-      <section className="py-24 bg-white relative overflow-hidden">
+      <section className="py-24 bg-white relative">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,#1ABA7F05_0%,transparent_50%)]" />
         
         <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 text-center">

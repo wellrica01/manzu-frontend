@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from 'react';
-import Dialog from "../../components/Dialog";
+import Dialog from "../../../../components/Dialog";
 import IndicationForm from "./IndicationForm";
 import { fetchIndications, deleteIndication, createIndication } from './api';
 import { Card } from "@/components/ui/card";

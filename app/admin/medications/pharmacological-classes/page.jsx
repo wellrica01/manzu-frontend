@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import Dialog from "../../components/Dialog";
+import Dialog from "../../../../components/Dialog";
 import PharmacologicalClassForm from "./PharmacologicalClassForm";
 import {
   fetchPharmacologicalClasses,
