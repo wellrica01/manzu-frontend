@@ -4,16 +4,16 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { 
   Home, Package, ClipboardList, BarChart2, User, LogOut, 
-  ChevronLeft, X, Pill
+  ChevronLeft, X, Pill, Receipt, CreditCard
 } from 'lucide-react';
 
 const navItems = [
   { href: '/pharmacy/dashboard', label: 'Dashboard', icon: Home },
-  { href: '/pharmacy/pos/new-sale', label: 'Point of Sale', icon: Package },
+  { href: '/pharmacy/pos/new-sale', label: 'Point of Sale', icon: CreditCard },
   { href: '/pharmacy/inventory', label: 'Inventory', icon: Package },
   { href: '/pharmacy/orders', label: 'Orders', icon: ClipboardList },
-  { href: '/pharmacy/analytics', label: 'Analytics', icon: BarChart2 },
   { href: '/pharmacy/pos/sales-history/', label: 'Sales History', icon: Package },
+  { href: '/pharmacy/analytics', label: 'Analytics', icon: BarChart2 },
   { href: '/pharmacy/profile', label: 'Profile', icon: User },
 ];
 
