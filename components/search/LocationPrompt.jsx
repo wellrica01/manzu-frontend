@@ -46,9 +46,6 @@ const LocationProgress = ({ progress, isLoadingLocation }) => {
       </div>
       
       <div className="flex items-center gap-2 text-xs text-gray-600">
-        <span>
-          Sample {progress.current}/{progress.total}
-        </span>
         
         {progress.status === 'success' && progress.accuracy && (
           <span className="text-green-600">
@@ -108,10 +105,10 @@ const LocationPrompt = ({ onSelectLocation, onEnableLocation, locationStatus, pr
       </p>
 
 
-    <LocationProgress 
-      progress={progress} 
-      isLoadingLocation={isLoadingLocation} 
-    />
+      <LocationProgress 
+        progress={progress} 
+        isLoadingLocation={isLoadingLocation} 
+      />
 
       {/* Action Buttons with stagger */}
       <div className="flex flex-col sm:flex-row gap-3 mt-3 justify-center items-center">
@@ -122,17 +119,9 @@ const LocationPrompt = ({ onSelectLocation, onEnableLocation, locationStatus, pr
             style={{ animationDelay: '500ms', animationDuration: '500ms' }}
           >
             {isLoadingLocation ? (
-              <div className="flex flex-col gap-1">
                 <div className="flex items-center gap-2">
                   <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#1ABA7F] border-t-transparent" />
                   <span className="text-sm">Detecting location...</span>
-                </div>
-                {progress && (
-                  <span className="text-xs text-gray-500">
-                    Sample {progress.current}/{progress.total}
-                    {progress.accuracy && ` • ${Math.round(progress.accuracy)}m`}
-                  </span>
-                )}
               </div>
             ) : (
               <>

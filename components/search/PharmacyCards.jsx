@@ -235,14 +235,25 @@ const PharmacyCard = ({
         {/* Distance & Price with number animation */}
         <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-gradient-to-r from-gray-50 to-white border border-gray-200 hover:border-[#1ABA7F]/30 hover:shadow-md transition-all duration-300 animate-in fade-in slide-in-from-right-2" 
              style={{ animationDelay: `${index * 120 + 700}ms` }}>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 text-gray-700">
             <Navigation className="h-4 w-4 text-[#76D1F3]" />
-            <span className="text-sm font-semibold text-gray-700">
-              {typeof avail.distance_km === 'number' && !isNaN(avail.distance_km) 
-                ? `${avail.distance_km.toFixed(1)} km` 
-                : 'N/A'}
-            </span>
+
+            {avail.distance_km != null ? (
+              <span className="text-sm font-semibold">
+                {avail.distance_km < 1
+                  ? `${Math.round(avail.distance_km * 1000)} m`
+                  : `${avail.distance_km.toFixed(1)} km`}
+                {avail.distance_minutes != null && (
+                  <span className="text-gray-500 font-normal ml-1">
+                    • {avail.distance_minutes} min{avail.distance_minutes > 1 ? 's' : ''}
+                  </span>
+                )}
+              </span>
+            ) : (
+              <span className="text-sm font-semibold text-gray-400">N/A</span>
+            )}
           </div>
+
           <div className="text-right">
             {currentQty > 1 ? (
               <div className="space-y-0.5">
@@ -423,8 +434,8 @@ const PharmacyCards = ({
       sorted.sort((a, b) => a.price - b.price);
     } else if (sortOption === 'nearest') {
       sorted.sort((a, b) => {
-        const distA = typeof a.distance_km === 'number' ? a.distance_km : Infinity;
-        const distB = typeof b.distance_km === 'number' ? b.distance_km : Infinity;
+        const distA = typeof a.distance_meters === 'number' ? a.distance_meters : Infinity;
+        const distB = typeof b.distance_meters === 'number' ? b.distance_meters : Infinity;
         return distA - distB;
       });
     }
@@ -435,8 +446,8 @@ const PharmacyCards = ({
       cheapest.isCheapest = true;
 
       const nearest = sorted.reduce((min, avail) => {
-        const distA = typeof avail.distance_km === 'number' ? avail.distance_km : Infinity;
-        const distMin = typeof min.distance_km === 'number' ? min.distance_km : Infinity;
+        const distA = typeof avail.distance_meters === 'number' ? avail.distance_meters : Infinity;
+        const distMin = typeof min.distance_meters === 'number' ? min.distance_meters : Infinity;
         return distA < distMin ? avail : min;
       }, sorted[0]);
       nearest.isNearest = true;
