@@ -7,7 +7,7 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
-import { useGPSCapture } from '@/hooks/useGPSCapture';
+import { usePharmacyGPSCapture } from '@/hooks/usePharmacyGPSCapture';
 import { Input } from '@/components/ui/input';
 import { UserPlus, LogIn, MapPin, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import Select from 'react-select';
@@ -55,7 +55,7 @@ export default function PharmacyRegister() {
   const [gpsLocation, setGpsLocation] = useState(null);
   const [isCapturingLocation, setIsCapturingLocation] = useState(false);
   const [locationError, setLocationError] = useState(null);
-  const gpsCapture = useGPSCapture();
+  const gpsCapture = usePharmacyGPSCapture();
   
   const router = useRouter();
   const form = useForm({
@@ -99,7 +99,7 @@ export default function PharmacyRegister() {
   // Capture GPS location
   const handleCaptureLocation = async () => {
     try {
-      const location = await gpsCapture.capturePharmacyLocation();
+      const location = await gpsCapture.captureAccurateLocation();
       
       // Update form with captured location
       form.setValue('pharmacy.latitude', location.latitude);

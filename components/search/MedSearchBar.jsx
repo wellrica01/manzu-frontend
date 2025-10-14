@@ -17,7 +17,6 @@ import { useSearchSuggestions } from '@/hooks/useSearchSuggestions';
 import { useMedicationSearch } from '@/hooks/useMedicationSearch';
 import { useSearchHistory } from '@/hooks/useSearchHistory';
 import { useLocationDetection } from '@/hooks/useLocationDetection';
-import { useGPSCapture } from '@/hooks/useGPSCapture';
 import { useGeoData } from '@/hooks/useGeoData';
 import { useCartOperations } from '@/hooks/useCartOperations';
 import { useDuplicateDetection } from '@/hooks/useDuplicateDetection';
@@ -85,9 +84,6 @@ const SearchBar = () => {
     locationStatus,
     requestLocation,
   } = useLocationDetection();
-
-  const gpsCapture = useGPSCapture();
-
 
   // Items added callback
   const handleItemsAdded = useCallback((items) => {
@@ -189,42 +185,39 @@ const setFilterLgaWrapper = (val) => {
 };
 
 
-  // For initial search location
-  const handleEnableLocation = useCallback(async () => {
-    setIsLoadingLocation(true);
-    
-    try {
-      const location = await gpsCapture.captureUserLocation();
-      
-      toast.success(
-        `Location detected with ${location.accuracy}m accuracy`,
-        {
-          description: `Quality: ${location.quality} (${location.sampleCount} readings)`,
-          duration: 4000,
-        }
-      );
-      
-      // Use location for reverse geocoding
-      const match = reverseGeocode(location.lat, location.lng);
-      
-    } catch (error) {
-      toast.error(error.message);
-    } finally {
-      setIsLoadingLocation(false);
-    }
-  }, [gpsCapture.captureUserLocation]);
-
-  // For showing distances (use accurate mode)
-  const handleShowDistances = useCallback(async () => {
-    try {
-      const location = await gpsCapture.captureUserLocationAccurate();
-      // Calculate distances with better accuracy
-    } catch (error) {
-      toast.error('Unable to get accurate location');
-    }
-  }, [gpsCapture.captureUserLocationAccurate]);
-
+const handleEnableLocation = useCallback(async () => {
+  setIsLoadingLocation(true);
   
+  try {
+    // Use quick location for search
+    const location = await requestLocation();
+    
+    toast.success(
+      `Location detected with ${location.accuracy}m accuracy`,
+      {
+        description: `Quality: ${location.quality} (${location.sampleCount} readings)`,
+        duration: 4000,
+      }
+    );
+    
+  } catch (error) {
+    toast.error(error.message);
+  } finally {
+    setIsLoadingLocation(false);
+  }
+}, [requestLocation]);
+
+
+// For showing distance to pharmacies, use:
+const handleShowDistances = useCallback(async () => {
+  try {
+    const location = await requestAccurateLocation();
+    // Now calculate distances with better accuracy
+  } catch (error) {
+    toast.error('Unable to get accurate location for distance calculation');
+  }
+}, [requestAccurateLocation]);
+
 
   // Fetch suggestions on term change
   useEffect(() => {
