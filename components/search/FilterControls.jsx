@@ -79,11 +79,8 @@ const FilterControls = ({
   setFilterState,
   filterLga,
   setFilterLga,
-  filterWard,
-  setFilterWard,
   states,
   lgas,
-  wards,
   clearFilters,
   showFilters,     
   setShowFilters,
@@ -135,9 +132,8 @@ const FilterControls = ({
     let count = 0;
     if (filterState) count++;
     if (filterLga) count++;
-    if (filterWard) count++;
     setActiveFilters(count);
-  }, [filterState, filterLga, filterWard]);
+  }, [filterState, filterLga]);
 
   const formatLocationName = (state, lga, ward) => {
     if (!state && !lga && !ward) return "All Locations";
@@ -148,13 +144,12 @@ const FilterControls = ({
   };
 
   const saveCurrentFilter = () => {
-    const locationName = formatLocationName(filterState, filterLga, filterWard);
+    const locationName = formatLocationName(filterState, filterLga);
     const currentFilter = {
       id: Date.now(),
       name: locationName,
       filterState,
       filterLga,
-      filterWard,
       timestamp: new Date().toISOString(),
     };
     const newSaved = [...savedFilters, currentFilter].slice(-5);
@@ -165,7 +160,6 @@ const FilterControls = ({
   const applySavedFilter = (filter) => {
     setFilterState(filter.filterState);
     setFilterLga(filter.filterLga);
-    setFilterWard(filter.filterWard);
   };
 
   const deleteSavedFilter = (id) => {
@@ -175,10 +169,9 @@ const FilterControls = ({
   };
 
   const locationText = (() => {
-    if (!filterState && !filterLga && !filterWard) return null;
+    if (!filterState && !filterLga) return null;
     let text = `Showing Pharmacies in: ${filterState || ''}`;
     if (filterLga) text += `, ${filterLga}`;
-    if (filterWard) text += ` (Ward: ${filterWard})`;
     return text;
   })();
 
@@ -250,7 +243,7 @@ const FilterControls = ({
 
       {showFilters && (
         <div className="space-y-4 p-6 rounded-2xl bg-gradient-to-br from-white to-gray-50 border-2 border-[#1ABA7F]/20 shadow-xl animate-in fade-in slide-in-from-top-4 duration-500">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2 animate-in fade-in slide-in-from-left-2" style={{ animationDelay: '100ms', animationDuration: '500ms' }}>
               <label htmlFor="state-filter" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                 <MapPin className="h-3.5 w-3.5 text-[#1ABA7F]" />
@@ -266,7 +259,6 @@ const FilterControls = ({
                     const newState = selected.value;
                     setFilterState(newState);
                     setFilterLga("");
-                    setFilterWard("");
                   }
                 }}
                 value={states.find((o) => o.value === filterState) || null}
@@ -287,36 +279,14 @@ const FilterControls = ({
                 onChange={(selected) => {
                   if (!selected) {
                     setFilterLga("");
-                    setFilterWard("");
                   } else {
-                    const newLga = selected.value;
-                    setFilterLga(newLga);
-                    setFilterWard("");
+                    setFilterLga(selected.value);
                   }
                 }}
                 value={lgas.find((o) => o.value === filterLga) || null}
                 placeholder="Select LGA..."
                 isClearable
                 isDisabled={!filterState}
-                styles={customSelectStyles}
-              />
-            </div>
-
-            <div className="space-y-2 animate-in fade-in slide-in-from-left-2" style={{ animationDelay: '300ms', animationDuration: '500ms' }}>
-              <label htmlFor="ward-filter" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                <MapPin className="h-3.5 w-3.5 text-[#76D1F3]" />
-                Ward
-              </label>
-              <Select
-                inputId="ward-filter"
-                options={wards}
-                onChange={(selected) => {
-                  setFilterWard(selected?.value || "");
-                }}
-                value={wards.find((o) => o.value === filterWard) || null}
-                placeholder="Select ward..."
-                isClearable
-                isDisabled={!filterLga}
                 styles={customSelectStyles}
               />
             </div>

@@ -13,6 +13,10 @@ import Select from 'react-select';
 import Image from 'next/image';
 import { toast } from 'sonner';
 
+// ✅ Import the API client
+import { pharmacyAuthAPI, setPharmacyToken } from '@/lib/pharmacyApiClient';
+import { APIError } from '@/lib/apiClient';
+
 // Load state-LGA mapping
 import STATE_LGA_MAP from '@/public/data/stateLga.json';
 
@@ -162,7 +166,7 @@ export default function PharmacyRegister() {
     }
   };
 
-  // Handle form submission
+  // ✅ Updated submit handler using API client
   const onSubmit = async (values) => {
     // Validate GPS was captured
     if (!gpsLocation) {
@@ -174,28 +178,28 @@ export default function PharmacyRegister() {
       setError(null);
       setIsSubmitting(true);
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(values),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Registration failed');
-      }
+      // ✅ Use the API client instead of fetch
+      const data = await pharmacyAuthAPI.register(values);
 
       toast.success('Registration successful! Redirecting to dashboard...');
-      localStorage.setItem('pharmacyToken', data.token);
       
-      setTimeout(() => {
-        router.push('/pharmacy/dashboard');
-      }, 1000);
+      // ✅ Use the helper function to store token
+      setPharmacyToken(data.token);
+      
+      // ✅ Navigate immediately (Next.js handles the transition)
+      router.push('/pharmacy/dashboard');
 
     } catch (err) {
-      setError(err.message);
-      toast.error(err.message);
+      // ✅ Handle APIError and regular errors
+      const errorMessage = err instanceof APIError 
+        ? err.message 
+        : 'Registration failed. Please try again.';
+      
+      setError(errorMessage);
+      toast.error(errorMessage);
+      
+      // Log error for debugging (remove in production or use proper logging)
+      console.error('Registration error:', err);
     } finally {
       setIsSubmitting(false);
     }
@@ -242,15 +246,15 @@ export default function PharmacyRegister() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-green-50 to-white py-4 px-4 sm:py-8 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-b from-green-50 to-white py-4 px-1 sm:py-8 sm:px-6 lg:px-8">
       <div className="container mx-auto max-w-2xl">
         {/* Logo */}
         <div className="flex justify-center mb-4 sm:mb-6">
           <Image 
-            src="/logo_2.svg" 
+            src="/logo_1.png" 
             alt="Manzu Logo" 
-            width={56} 
-            height={56} 
+            width={32} 
+            height={32} 
             className="sm:w-16 sm:h-16"
             priority 
           />
@@ -544,30 +548,30 @@ export default function PharmacyRegister() {
                   />
 
                   {/* PIN */}
-                <FormField
-                  control={form.control}
-                  name="user.pin"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm font-semibold text-gray-700">
-                        6-Digit PIN <span className="text-red-500">*</span>
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          type="password"
-                          inputMode="numeric"
-                          pattern="[0-9]*"
-                          maxLength={6}
-                          placeholder="Enter 6-digit PIN"
-                          className="h-12 sm:h-14 text-base rounded-xl border-2 border-gray-200 focus:border-[#1ABA7F] focus:ring-0 transition-colors text-center tracking-widest"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormDescription className="text-xs text-gray-600">
-                        Use a 6-digit PIN for quick and secure access
-                      </FormDescription>
-                      <FormMessage className="text-xs sm:text-sm" />
-                    </FormItem>
+                  <FormField
+                    control={form.control}
+                    name="user.pin"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-semibold text-gray-700">
+                          6-Digit PIN <span className="text-red-500">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="password"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            maxLength={6}
+                            placeholder="Enter 6-digit PIN"
+                            className="h-12 sm:h-14 text-base rounded-xl border-2 border-gray-200 focus:border-[#1ABA7F] focus:ring-0 transition-colors text-center tracking-widest"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormDescription className="text-xs text-gray-600">
+                          Use a 6-digit PIN for quick and secure access
+                        </FormDescription>
+                        <FormMessage className="text-xs sm:text-sm" />
+                      </FormItem>
                     )}
                   />
                 </div>
@@ -592,7 +596,7 @@ export default function PharmacyRegister() {
                   <Button
                     type="button"
                     variant="ghost"
-                    onClick={() => router.push('/pharmacy/login')}
+                    onClick={() => router.push('/pharmacy-login')}
                     className="h-12 text-base font-medium text-[#225F91] hover:text-[#1ABA7F] hover:bg-green-50"
                   >
                     <LogIn className="h-5 w-5 mr-2" />

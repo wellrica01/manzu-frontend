@@ -12,6 +12,10 @@ import { LogIn, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import { toast } from 'sonner';
 
+// ✅ Import the API client
+import { pharmacyAuthAPI, setPharmacyToken } from '@/lib/pharmacyApiClient';
+import { APIError } from '@/lib/apiClient';
+
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
   pin: z.string()
@@ -31,31 +35,32 @@ export default function PharmacyLogin() {
     },
   });
 
+  // ✅ Updated submit handler using API client
   const onSubmit = async (values) => {
     try {
       setIsSubmitting(true);
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(values),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Login failed');
-      }
+      // ✅ Use the API client instead of fetch
+      const data = await pharmacyAuthAPI.login(values);
 
       toast.success('Login successful!');
-      localStorage.setItem('pharmacyToken', data.token);
       
-      setTimeout(() => {
-        router.push('/pharmacy/dashboard');
-      }, 500);
+      // ✅ Use the helper function to store token
+      setPharmacyToken(data.token);
+      
+      // ✅ Navigate immediately (Next.js handles the transition)
+      router.push('/pharmacy/dashboard');
 
     } catch (err) {
-      toast.error(err.message);
+      // ✅ Handle APIError and regular errors
+      const errorMessage = err instanceof APIError 
+        ? err.message 
+        : 'Login failed. Please try again.';
+      
+      toast.error(errorMessage);
+      
+      // Log error for debugging (remove in production or use proper logging)
+      console.error('Login error:', err);
     } finally {
       setIsSubmitting(false);
     }
@@ -65,7 +70,7 @@ export default function PharmacyLogin() {
     <div className="min-h-screen bg-gradient-to-b from-green-50 to-white flex items-center justify-center py-8 px-4">
       <div className="w-full max-w-md">
         <div className="flex justify-center mb-6">
-          <Image src="/logo_2.svg" alt="Manzu Logo" width={64} height={64} priority />
+          <Image src="/logo_1.png" alt="Manzu Logo" width={32} height={32} priority />
         </div>
 
         <h1 className="text-3xl sm:text-4xl font-bold text-[#225F91] text-center mb-8">
@@ -146,7 +151,7 @@ export default function PharmacyLogin() {
                 <Button
                   type="button"
                   variant="ghost"
-                  onClick={() => router.push('/pharmacy/register')}
+                  onClick={() => router.push('/pharmacy-register')}
                   className="w-full text-[#225F91] hover:text-[#1ABA7F]"
                 >
                   Don't have an account? Register

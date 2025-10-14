@@ -250,7 +250,7 @@ function MainLayoutContent({ children }) {
             asChild
             className="group relative h-14 sm:h-16 px-8 sm:px-12 text-lg font-bold rounded-xl bg-[#1ABA7F] hover:bg-[#16a876] text-white shadow-2xl hover:shadow-[#1ABA7F]/30 transition-all duration-300 overflow-hidden"
           >
-            <Link href="/pharmacy/register">
+            <Link href="/pharmacy-register">
               <span className="relative z-10 flex items-center gap-3">
                 Join Manzu Network
                 <ChevronUp className="w-5 h-5 rotate-90 group-hover:translate-x-1 transition-transform duration-300" strokeWidth={2.5} />

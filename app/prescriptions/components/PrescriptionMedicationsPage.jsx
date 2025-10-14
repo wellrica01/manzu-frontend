@@ -70,8 +70,7 @@ const PrescriptionMedicationsPage = () => {
   const { 
     geoData, 
     states, 
-    getLgas, 
-    getWards, 
+    getLgas,
     reverseGeocode 
   } = useGeoData();
   
@@ -86,10 +85,9 @@ const PrescriptionMedicationsPage = () => {
   const isInitialMount = useRef(true);
   const locationProcessingRef = useRef(false);
 
-  // Filter state
+  // Filter state - REMOVED ward
   const [filterState, setFilterState] = useState('');
   const [filterLga, setFilterLga] = useState('');
-  const [filterWard, setFilterWard] = useState('');
   const [sortBy, setSortBy] = useState('price');
   const [showFilters, setShowFilters] = useState(false);
   const [filtersCleared, setFiltersCleared] = useState(false);
@@ -102,19 +100,13 @@ const PrescriptionMedicationsPage = () => {
   const [lastAddedItems, setLastAddedItems] = useState([]);
   const [removeItemDialog, setRemoveItemDialog] = useState(null);
 
-
-  // Derived filter options
+  // Derived filter options - REMOVED wards
   const lgas = useMemo(() => 
     filterState ? getLgas(filterState) : [],
     [filterState, getLgas]
   );
 
-  const wards = useMemo(() => 
-    filterState && filterLga ? getWards(filterState, filterLga) : [],
-    [filterState, filterLga, getWards]
-  );
-
-  // Prescription data
+  // Prescription data - REMOVED filterWard
   const {
     medications,
     prescriptionMetadata,
@@ -128,7 +120,6 @@ const PrescriptionMedicationsPage = () => {
     userLocation,
     filterState,
     filterLga,
-    filterWard,
     isLocationProcessed,
   });
 
@@ -199,8 +190,7 @@ const PrescriptionMedicationsPage = () => {
 
   const debouncedRefetch = useDebounce(triggerRefetch, 300);
 
-
-// Auto-detect location
+  // ✅ UPDATED: Auto-detect location - sets both state and LGA
   useEffect(() => {
     if (!userLocation || !geoData?.length || isLocationProcessed || locationProcessingRef.current || filtersCleared) {
       return;
@@ -209,13 +199,36 @@ const PrescriptionMedicationsPage = () => {
     locationProcessingRef.current = true;
 
     try {
-      const match = reverseGeocode(userLocation.lat, userLocation.lng);
+      const match = reverseGeocode(userLocation.lat, userLocation.lng, {
+        includeNearby: true
+      });
+      
+      console.log('Reverse geocode match:', match);
       
       if (match) {
+        // ✅ Set both state and LGA
         setFilterState(match.state);
         setFilterLga(match.lga);
-        setFilterWard('');
         setIsLocationProcessed(true);
+        
+        // Show success toast with both state and LGA
+        if (match.confidence.level === 'high' || match.confidence.level === 'good') {
+          toast.success(
+            `Location detected: ${match.state}, ${match.lga}`,
+            { duration: 3000 }
+          );
+        } else {
+          toast.info(
+            `Approximate location: ${match.state}, ${match.lga} (${match.distance.toFixed(1)}km away). Please verify.`,
+            {
+              duration: 5000,
+              action: {
+                label: 'Adjust',
+                onClick: () => setShowFilters(true)
+              }
+            }
+          );
+        }
         
         setTimeout(() => {
           debouncedRefetch();
@@ -234,14 +247,14 @@ const PrescriptionMedicationsPage = () => {
     }
   }, [userLocation, geoData, reverseGeocode, isLocationProcessed, debouncedRefetch, filtersCleared]);
 
-  // Handle filter changes
+  // ✅ UPDATED: Handle filter changes - removed filterWard
   useEffect(() => {
     if (isInitialMount.current) return;
 
     if (!locationProcessingRef.current) {
       debouncedRefetch();
     }
-  }, [filterState, filterLga, filterWard, debouncedRefetch]);
+  }, [filterState, filterLga, debouncedRefetch]);
 
   // Analytics
   useEffect(() => {
@@ -263,10 +276,10 @@ const PrescriptionMedicationsPage = () => {
            medications?.some(med => med.availability?.length > 0);
   }, [pharmacyRecommendations, medications]);
 
+  // ✅ UPDATED: shouldShowLocationPrompt - removed filterWard
   const shouldShowLocationPrompt = !hasPharmacyData && 
                                    !filterState && 
-                                   !filterLga && 
-                                   !filterWard;
+                                   !filterLga;
 
   const handleAddToCart = useCallback(async (medicationId, pharmacyId, displayName) => {
     const hasDuplicate = checkForDuplicates(medicationId, pharmacyId, displayName);
@@ -328,10 +341,10 @@ const PrescriptionMedicationsPage = () => {
     }
   }, [checkBulkDuplicates, pharmacyRecommendations, medications, bulkAddToCart]);
 
+  // ✅ UPDATED: clearFilters - removed ward
   const clearFilters = useCallback(() => {
     setFilterState('');
     setFilterLga('');
-    setFilterWard('');
     setSortBy('price');
     setShowFilters(false);
     setIsLocationProcessed(false);
@@ -339,32 +352,32 @@ const PrescriptionMedicationsPage = () => {
     debouncedRefetch();
   }, [debouncedRefetch]);
 
+  // ✅ UPDATED: handleEnableLocation - removed ward
   const handleEnableLocation = useCallback(async () => {
-      setFilterState('');
-      setFilterLga('');
-      setFilterWard('');
-      setIsLocationProcessed(false);
-      setFiltersCleared(false);
-      setIsLoadingLocation(true);
-      locationProcessingRef.current = false;
+    setFilterState('');
+    setFilterLga('');
+    setIsLocationProcessed(false);
+    setFiltersCleared(false);
+    setIsLoadingLocation(true);
+    locationProcessingRef.current = false;
+    
+    try {
+      await requestLocation();
+      toast.success('Location detected successfully');
+    } catch (error) {
+      const errorMessage = error?.code === 1 
+        ? 'Location permission denied'
+        : 'Unable to get location';
       
-      try {
-        await requestLocation();
-        toast.success('Location detected successfully');
-      } catch (error) {
-        const errorMessage = error?.code === 1 
-          ? 'Location permission denied'
-          : 'Unable to get location';
-        
-        toast.error(errorMessage);
-        setIsLoadingLocation(false);
-      }
-    }, [requestLocation]);
+      toast.error(errorMessage);
+      setIsLoadingLocation(false);
+    }
+  }, [requestLocation]);
 
+  // ✅ UPDATED: handleSelectLocation - removed ward
   const handleSelectLocation = useCallback(() => {
     setFilterState('');
     setFilterLga('');
-    setFilterWard('');
     setShowFilters(true);
     setTimeout(() => {
       const filterElement = document.querySelector('[data-filters]');
@@ -410,6 +423,7 @@ const PrescriptionMedicationsPage = () => {
         {medications?.length > 0 && (
           <>
             <div className="mb-8" data-filters>
+              {/* ✅ UPDATED: FilterControls - removed ward props */}
               <FilterControls
                 sortBy={sortBy}
                 setSortBy={setSortBy}
@@ -419,11 +433,8 @@ const PrescriptionMedicationsPage = () => {
                 setFilterState={setFilterState}
                 filterLga={filterLga}
                 setFilterLga={setFilterLga}
-                filterWard={filterWard}
-                setFilterWard={setFilterWard}
                 states={states}
                 lgas={lgas}
-                wards={wards}
                 clearFilters={clearFilters}
               />
             </div>
@@ -450,10 +461,11 @@ const PrescriptionMedicationsPage = () => {
                 <p className="text-gray-600 mb-4">
                   No pharmacies in your selected location
                 </p>
-                {(filterState || filterLga || filterWard) && (
+                {/* ✅ UPDATED: Location display - removed ward */}
+                {(filterState || filterLga) && (
                   <div className="mt-4 p-3 rounded-xl bg-white border border-gray-200">
                     <p className="text-sm font-medium text-gray-700">
-                      Location: {filterState}{filterLga ? `, ${filterLga}` : ''}{filterWard ? `, ${filterWard}` : ''}
+                      Location: {filterState}{filterLga ? `, ${filterLga}` : ''}
                     </p>
                   </div>
                 )}

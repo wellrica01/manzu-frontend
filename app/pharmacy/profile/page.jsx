@@ -289,33 +289,44 @@ export default function PharmacyProfilePage() {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-2">
-        <div className="flex gap-2 overflow-x-auto">
-          {[
-            { id: 'info', label: 'General Info', icon: User },
-            { id: 'location', label: 'Location & Map', icon: MapPin },
-            { id: 'hours', label: 'Operating Hours', icon: Clock },
-            { id: 'security', label: 'Security', icon: Key }
-          ].map(tab => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all whitespace-nowrap ${
+    {/* Tabs */}
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-2">
+      <div
+        className="
+          flex sm:flex-wrap gap-2 sm:gap-3
+          overflow-x-auto scrollbar-hide
+          pb-2 sm:pb-0
+        "
+      >
+        {[
+          { id: 'info', label: 'General Info', icon: User },
+          { id: 'location', label: 'Location & Map', icon: MapPin },
+          { id: 'hours', label: 'Operating Hours', icon: Clock },
+          { id: 'security', label: 'Security', icon: Key },
+        ].map((tab) => {
+          const Icon = tab.icon;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`
+                flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all whitespace-nowrap
+                flex-shrink-0
+                ${
                   activeTab === tab.id
                     ? 'bg-[#1ABA7F] text-white shadow-md'
                     : 'text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                <Icon className="w-4 h-4" />
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
+                }
+              `}
+            >
+              <Icon className="w-4 h-4" />
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
+    </div>
+
 
       {/* Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

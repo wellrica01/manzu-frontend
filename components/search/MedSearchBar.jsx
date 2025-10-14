@@ -52,7 +52,7 @@ const SearchBar = () => {
 
   // State
   const [searchTerm, setSearchTerm] = useState('');
-  const [filters, setFilters] = useState({ state: '', lga: '', ward: '' });
+  const [filters, setFilters] = useState({ state: '', lga: '' });
   const [filtersWereSet, setFiltersWereSet] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState('cheapest');
@@ -156,42 +156,34 @@ const SearchBar = () => {
     setFilters(prev => ({ ...prev, ward: '' }));
   }, [getWards]);
 
-  const clearFilters = useCallback(() => {
-    setFilters({ state: '', lga: '', ward: '' });
-    setSortBy('cheapest');
-    setLgas([]);
-    setWards([]);
+const clearFilters = useCallback(() => {
+  setFilters({ state: '', lga: '' });
+  setSortBy('cheapest');
+  setLgas([]);
+  setFiltersWereSet(false);
+  search.restoreDefaults();
+  setSelectedMedicationId(null);
+}, [search]);
+
+
+const setFilterStateWrapper = (val) => {
+  setFilters(prev => ({ ...prev, state: val }));
+  if (val) {
+    setFiltersWereSet(true);
+    updateLgas(val);
+  } else {
     setFiltersWereSet(false);
-    search.restoreDefaults();
-    setSelectedMedicationId(null);
-  }, [search]);
+    setLgas([]);
+  }
+};
 
-  const setFilterStateWrapper = (val) => {
-    setFilters(prev => ({ ...prev, state: val }));
-    if (val) {
-      setFiltersWereSet(true);
-      updateLgas(val);
-    } else {
-      setFiltersWereSet(false);
-      setLgas([]);
-      setWards([]);
-    }
-  };
+const setFilterLgaWrapper = (val) => {
+  setFilters(prev => ({ ...prev, lga: val }));
+  if (val) {
+    setFiltersWereSet(true);
+  }
+};
 
-  const setFilterLgaWrapper = (val) => {
-    setFilters(prev => ({ ...prev, lga: val }));
-    if (val) {
-      setFiltersWereSet(true);
-      updateWards(filters.state, val);
-    } else {
-      setWards([]);
-    }
-  };
-
-  const setFilterWardWrapper = (val) => {
-    setFilters(prev => ({ ...prev, ward: val }));
-    if (val) setFiltersWereSet(true);
-  };
 
 const handleEnableLocation = useCallback(() => {
     setIsLoadingLocation(true);
@@ -274,46 +266,73 @@ const handleEnableLocation = useCallback(() => {
   }, [search, filters, userLocation, sortBy]);
 
   // Filter changes
-  useEffect(() => {
-    if (!currentMedicationIdRef.current) return;
+useEffect(() => {
+  if (!currentMedicationIdRef.current) return;
 
-    const hasFilters = filters.state || filters.lga || filters.ward;
-    
-    if (hasFilters) {
-      handleSearch(currentMedicationIdRef.current, {
-        onComplete: () => {
-          setTimeout(() => {
-            const section = document.querySelector('[data-location-text]');
-            smoothScrollTo(section, 100);
-          }, 300);
-        }
-      });
-    } else {
-      search.restoreDefaults();
-    }
-  }, [filters.state, filters.lga, filters.ward]);
+  const hasFilters = filters.state || filters.lga;
+  
+  if (hasFilters) {
+    handleSearch(currentMedicationIdRef.current, {
+      onComplete: () => {
+        setTimeout(() => {
+          const section = document.querySelector('[data-location-text]');
+          smoothScrollTo(section, 100);
+        }, 300);
+      }
+    });
+  } else {
+    search.restoreDefaults();
+  }
+}, [filters.state, filters.lga]);
 
 
 
 // Reverse geocode on location
-  useEffect(() => {
-    if (userLocation && geoData?.length) {
-      const match = reverseGeocode(userLocation.lat, userLocation.lng);
-      console.log(match);
-      if (match) {
-        setFilters(prev => ({
-          ...prev,
-          state: match.state,
-          lga: match.lga,
-        }));
-        setFiltersWereSet(true);
-        updateLgas(match.state);
-        setIsLoadingLocation(false);
+useEffect(() => {
+  if (userLocation && geoData?.length) {
+    const match = reverseGeocode(userLocation.lat, userLocation.lng, {
+      includeNearby: true
+    });
+    
+    console.log('Reverse geocode match:', match);
+    
+    if (match) {
+      if (match.confidence.level === 'high' || match.confidence.level === 'good') {
+        setFilterStateWrapper(match.state);
+        setTimeout(() => {
+          setFilterLgaWrapper(match.lga);
+        }, 50);
+        
+        toast.success(
+          `Location detected: ${match.state}, ${match.lga}`,
+          { duration: 3000 }
+        );
       } else {
-        setIsLoadingLocation(false);
+        toast.info(
+          `Approximate location: ${match.state}, ${match.lga} (${match.distance.toFixed(1)}km away). Please verify.`,
+          {
+            duration: 5000,
+            action: {
+              label: 'Adjust',
+              onClick: () => setShowFilters(true)
+            }
+          }
+        );
+        
+        setFilterStateWrapper(match.state);
+        setTimeout(() => {
+          setFilterLgaWrapper(match.lga);
+        }, 50);
       }
+      
+      setIsLoadingLocation(false);
+    } else {
+      toast.error('Could not determine your location. Please select manually.');
+      setIsLoadingLocation(false);
     }
-  }, [userLocation, geoData, reverseGeocode, updateLgas]);
+  }
+}, [userLocation, geoData, reverseGeocode]);
+
 
   // Select medication
   const handleSelectMedication = useCallback(async (suggestion) => {
@@ -632,7 +651,6 @@ const handleEnableLocation = useCallback(() => {
                 clearFilters={clearFilters}
                 setFilterState={setFilterStateWrapper}
                 setFilterLga={setFilterLgaWrapper}
-                setFilterWard={setFilterWardWrapper}
                 filtersWereSet={filtersWereSet}
                 showFilters={showFilters}
                 setShowFilters={setShowFilters}

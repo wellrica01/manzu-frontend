@@ -10,7 +10,7 @@ export default function Topbar({ onSidebarToggle, isMobile }) {
 
   const handleLogout = () => {
     localStorage.removeItem('pharmacyToken');
-    router.push('/pharmacy/login');
+    router.push('/pharmacy-login');
   };
 
   return (
@@ -79,13 +79,6 @@ export default function Topbar({ onSidebarToggle, isMobile }) {
           )}
         </div>
 
-        {/* Settings */}
-        <button 
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          aria-label="Settings"
-        >
-          <Settings className="w-5 h-5 text-gray-600" />
-        </button>
 
         {/* Profile dropdown */}
         <div className="relative">

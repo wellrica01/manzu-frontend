@@ -65,7 +65,6 @@ const MedicationCard = ({
   clearFilters,
   setFilterState,
   setFilterLga,
-  setFilterWard,
   showFilters,
   setShowFilters, 
   filtersWereSet,
@@ -332,7 +331,6 @@ const MedicationCard = ({
             filterLga={lga}
             setFilterLga={setFilterLga}
             filterWard={ward}
-            setFilterWard={setFilterWard}
             states={states}
             lgas={lgas}
             wards={wards}
