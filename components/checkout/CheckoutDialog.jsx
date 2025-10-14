@@ -114,11 +114,11 @@ const CheckoutDialog = ({
                             </span>
                           </div>
                           {item.medication.ingredients?.length > 0 && (
-                            <p className="text-xs sm:text-sm text-gray-500 truncate">
-                              {item.medication.ingredients
-                                .map(ing => `${ing.activeSubstance} ${ing.strengthValue}${ing.strengthUnit}`)
-                                .join(" + ")}
-                            </p>
+                        <p className="text-xs sm:text-sm text-gray-500 break-words whitespace-normal">
+                            {item.medication.ingredients
+                              .map(ing => `${ing.activeSubstance} ${ing.strengthValue}${ing.strengthUnit}`)
+                              .join(" + ")}
+                          </p>
                           )}
                         </div>
                         <div className="text-right ml-2 sm:ml-4 flex-shrink-0">

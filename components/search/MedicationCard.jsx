@@ -89,45 +89,142 @@ const MedicationCard = ({
 
   return (
     <div className="w-full space-y-6">
-{/* Medication Header */}
-{!isMultiMed && (
-  <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-white to-gray-50 border-2 border-[#1ABA7F]/20 shadow-xl py-6 px-3 sm:p-8 mb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-    {/* Animated decorative elements */}
-    <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[#1ABA7F]/5 to-transparent rounded-full blur-3xl animate-pulse" 
-         style={{ animationDuration: '3s' }} />
-    <div className="absolute bottom-0 left-0 w-64 h-64 bg-gradient-to-tr from-[#225F91]/5 to-transparent rounded-full blur-3xl animate-pulse" 
-         style={{ animationDuration: '4s', animationDelay: '1s' }} />
+  {/* Medication Header */}
+  {!isMultiMed && (
+    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-white to-gray-50 border-2 border-[#1ABA7F]/20 shadow-xl py-6 px-3 sm:p-8 mb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {/* Animated decorative elements */}
+      <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[#1ABA7F]/5 to-transparent rounded-full blur-3xl animate-pulse" 
+          style={{ animationDuration: '3s' }} />
+      <div className="absolute bottom-0 left-0 w-64 h-64 bg-gradient-to-tr from-[#225F91]/5 to-transparent rounded-full blur-3xl animate-pulse" 
+          style={{ animationDuration: '4s', animationDelay: '1s' }} />
 
-    {/* Rest of your header content with stagger delays */}
-    <div className="relative z-10 flex flex-col gap-6">
-      {/* Mobile Layout */}
-      <div className="flex flex-col sm:hidden gap-4">
-        {/* Title + Image with animation */}
-        <div className="flex items-start justify-between gap-4 animate-in fade-in slide-in-from-left-4 duration-500">
-          {/* Title */}
-          <div className="flex-1">
-            <h3 className="text-3xl font-black text-[#225F91] tracking-tight leading-tight mb-2">
-              {med.displayName || med.brandName || "Unnamed Medication"}
-            </h3>
-            <div className="h-1.5 w-32 rounded-full bg-gradient-to-r from-[#1ABA7F] via-[#225F91] to-transparent animate-in slide-in-from-left-2 duration-700" 
-                 style={{ animationDelay: '200ms' }} />
+      {/* Rest of your header content with stagger delays */}
+      <div className="relative z-10 flex flex-col gap-6">
+        {/* Mobile Layout */}
+        <div className="flex flex-col sm:hidden gap-4">
+          {/* Title + Image with animation */}
+          <div className="flex items-start justify-between gap-4 animate-in fade-in slide-in-from-left-4 duration-500">
+            {/* Title */}
+            <div className="flex-1">
+              <h3 className="text-3xl font-black text-[#225F91] tracking-tight leading-tight mb-2">
+                {med.displayName || med.brandName || "Unnamed Medication"}
+              </h3>
+              <div className="h-1.5 w-32 rounded-full bg-gradient-to-r from-[#1ABA7F] via-[#225F91] to-transparent animate-in slide-in-from-left-2 duration-700" 
+                  style={{ animationDelay: '200ms' }} />
+            </div>
+
+            {/* Image with hover effect */}
+            <div className="relative group flex-shrink-0 w-24 h-24 animate-in zoom-in-50 duration-500" 
+                style={{ animationDelay: '300ms' }}>
+              <div className="absolute inset-0 bg-gradient-to-br from-[#1ABA7F] to-[#225F91] rounded-2xl blur-lg opacity-0 group-hover:opacity-30 transition-all duration-500" />
+              <div className="relative w-full h-full rounded-2xl overflow-hidden border-4 border-white shadow-xl group-hover:scale-110 group-hover:rotate-2 transition-all duration-500">
+                {med.imageUrl ? (
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <img
+                        src={med.imageUrl}
+                        alt={med.displayName}
+                        className="w-full h-full object-cover cursor-pointer transition-transform duration-500 hover:scale-125"
+                      />
+                    </DialogTrigger>
+                    <DialogContent className="max-w-3xl p-0 border-0 rounded-3xl overflow-hidden animate-in zoom-in-95 fade-in duration-300">
+                      <VisuallyHidden>
+                        <DialogTitle>{med.displayName}</DialogTitle>
+                      </VisuallyHidden>
+                      <img src={med.imageUrl} alt={med.displayName} className="w-full h-auto" />
+                    </DialogContent>
+                  </Dialog>
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                    <Pill className="w-16 h-16 text-gray-400" aria-label="Medication" />
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
-          {/* Image with hover effect */}
-          <div className="relative group flex-shrink-0 w-24 h-24 animate-in zoom-in-50 duration-500" 
-               style={{ animationDelay: '300ms' }}>
-            <div className="absolute inset-0 bg-gradient-to-br from-[#1ABA7F] to-[#225F91] rounded-2xl blur-lg opacity-0 group-hover:opacity-30 transition-all duration-500" />
-            <div className="relative w-full h-full rounded-2xl overflow-hidden border-4 border-white shadow-xl group-hover:scale-110 group-hover:rotate-2 transition-all duration-500">
+          {/* Badges with stagger */}
+          {med.prescriptionRequired && (
+            <div className="flex flex-wrap animate-in fade-in slide-in-from-bottom-2 duration-500" 
+                style={{ animationDelay: '400ms' }}>
+              <Badge className="bg-gradient-to-r from-[#225F91] to-[#1a4a73] text-white border-0 px-3 py-1.5 text-sm font-semibold shadow-lg hover:scale-105 transition-transform duration-300">
+                <Clock className="h-3.5 w-3.5 mr-1.5" />
+                Prescription Required
+              </Badge>
+            </div>
+          )}
+
+          {/* Info Cards with stagger */}
+          <div className="grid grid-cols-2 gap-2">
+           {med.ingredients?.length > 0 && (
+              <div className="p-3 rounded-xl bg-white border border-gray-200 hover:border-[#1ABA7F]/50 transition-all duration-300">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Composition</span>
+                </div>
+                <div className="text-sm font-bold text-gray-900 space-y-1">
+                  {med.ingredients.map((i, idx) => (
+                    <div key={idx} className="flex items-start gap-1">
+                      <span className="text-[#1ABA7F] font-extrabold">•</span>
+                      <span>{i.activeSubstance} {i.strengthValue}{i.strengthUnit}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {med.manufacturerName && (
+              <div className="p-3 rounded-xl bg-white border border-gray-200 hover:border-[#1ABA7F]/50 hover:shadow-lg transition-all duration-300 animate-in fade-in zoom-in-95" 
+                  style={{ animationDelay: '600ms' }}>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Manufacturer</span>
+                </div>
+                <p className="text-sm font-bold text-gray-900">{med.manufacturerName}</p>
+                {med.manufacturerCountry && (
+                  <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-1">
+                    <Globe2 className="h-3 w-3" />
+                    {med.manufacturerCountry}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {med.nafdacCode && (
+              <div className="p-3 rounded-xl bg-white border border-gray-200 hover:border-[#1ABA7F]/50 hover:shadow-lg transition-all duration-300 animate-in fade-in zoom-in-95" 
+                  style={{ animationDelay: '700ms' }}>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">NAFDAC Code</span>
+                </div>
+                <p className="text-sm font-bold text-gray-900 font-mono">{med.nafdacCode}</p>
+              </div>
+            )}
+
+            {med.packSizeExpression && (
+              <div className="p-3 rounded-xl bg-white border border-gray-200 hover:border-[#1ABA7F]/50 hover:shadow-lg transition-all duration-300 animate-in fade-in zoom-in-95" 
+                  style={{ animationDelay: '800ms' }}>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Pack Size</span>
+                </div>
+                <p className="text-sm font-bold text-gray-900 font-mono">{med.packSizeExpression} {med.packSizeUnit}</p>
+              </div>
+            )}
+          </div>
+        </div>
+        {/* --------------------- DESKTOP LAYOUT --------------------- */}
+        <div className="hidden sm:flex flex-row items-start gap-6">
+          {/* Image */}
+          <div className="relative group flex-shrink-0 w-40 h-40">
+            <div className="absolute inset-0 bg-gradient-to-br from-[#1ABA7F] to-[#225F91] rounded-2xl blur-lg opacity-0 group-hover:opacity-30 transition-opacity duration-300" />
+            <div className="relative w-full h-full rounded-2xl overflow-hidden border-4 border-white shadow-xl group-hover:scale-105 transition-transform duration-300">
               {med.imageUrl ? (
                 <Dialog>
                   <DialogTrigger asChild>
                     <img
                       src={med.imageUrl}
                       alt={med.displayName}
-                      className="w-full h-full object-cover cursor-pointer transition-transform duration-500 hover:scale-125"
+                      className="w-full h-full object-cover cursor-pointer transition-transform duration-300 hover:scale-110"
                     />
                   </DialogTrigger>
-                  <DialogContent className="max-w-3xl p-0 border-0 rounded-3xl overflow-hidden animate-in zoom-in-95 fade-in duration-300">
+                  <DialogContent className="max-w-3xl p-0 border-0 rounded-3xl overflow-hidden">
                     <VisuallyHidden>
                       <DialogTitle>{med.displayName}</DialogTitle>
                     </VisuallyHidden>
@@ -141,137 +238,49 @@ const MedicationCard = ({
               )}
             </div>
           </div>
-        </div>
 
-        {/* Badges with stagger */}
-        {med.prescriptionRequired && (
-          <div className="flex flex-wrap animate-in fade-in slide-in-from-bottom-2 duration-500" 
-               style={{ animationDelay: '400ms' }}>
-            <Badge className="bg-gradient-to-r from-[#225F91] to-[#1a4a73] text-white border-0 px-3 py-1.5 text-sm font-semibold shadow-lg hover:scale-105 transition-transform duration-300">
-              <Clock className="h-3.5 w-3.5 mr-1.5" />
-              Prescription Required
-            </Badge>
-          </div>
-        )}
-
-        {/* Info Cards with stagger */}
-        <div className="grid grid-cols-2 gap-2">
-          {med.ingredients?.length > 0 && (
-            <div className="p-3 rounded-xl bg-white border border-gray-200 hover:border-[#1ABA7F]/50 hover:shadow-lg transition-all duration-300 animate-in fade-in zoom-in-95" 
-                 style={{ animationDelay: '500ms' }}>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Composition</span>
-              </div>
-              <p className="text-sm font-bold text-gray-900">
-                {med.ingredients.map(i => `${i.activeSubstance} ${i.strengthValue}${i.strengthUnit}`).join(", ")}
-              </p>
+          {/* Info */}
+          <div className="flex-1 space-y-4">
+            {/* Title with gradient underline */}
+            <div>
+              <h3 className="text-4xl font-black text-[#225F91] tracking-tight leading-tight mb-2">
+                {med.displayName || med.brandName || "Unnamed Medication"}
+              </h3>
+              <div className="h-1.5 w-32 rounded-full bg-gradient-to-r from-[#1ABA7F] via-[#225F91] to-transparent" />
             </div>
-          )}
 
-          {med.manufacturerName && (
-            <div className="p-3 rounded-xl bg-white border border-gray-200 hover:border-[#1ABA7F]/50 hover:shadow-lg transition-all duration-300 animate-in fade-in zoom-in-95" 
-                 style={{ animationDelay: '600ms' }}>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Manufacturer</span>
-              </div>
-              <p className="text-sm font-bold text-gray-900">{med.manufacturerName}</p>
-              {med.manufacturerCountry && (
-                <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-1">
-                  <Globe2 className="h-3 w-3" />
-                  {med.manufacturerCountry}
-                </p>
+            {/* Badges */}
+            <div className="flex flex-wrap gap-3">
+              {med.prescriptionRequired && (
+                <Badge className="bg-gradient-to-r from-[#225F91] to-[#1a4a73] text-white border-0 px-3 py-1.5 text-sm font-semibold shadow-lg">
+                  <Clock className="h-3.5 w-3.5 mr-1.5" />
+                  Prescription Required
+                </Badge>
               )}
+            
             </div>
-          )}
 
-          {med.nafdacCode && (
-            <div className="p-3 rounded-xl bg-white border border-gray-200 hover:border-[#1ABA7F]/50 hover:shadow-lg transition-all duration-300 animate-in fade-in zoom-in-95" 
-                 style={{ animationDelay: '700ms' }}>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">NAFDAC Code</span>
-              </div>
-              <p className="text-sm font-bold text-gray-900 font-mono">{med.nafdacCode}</p>
-            </div>
-          )}
-
-          {med.packSizeExpression && (
-            <div className="p-3 rounded-xl bg-white border border-gray-200 hover:border-[#1ABA7F]/50 hover:shadow-lg transition-all duration-300 animate-in fade-in zoom-in-95" 
-                 style={{ animationDelay: '800ms' }}>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Pack Size</span>
-              </div>
-              <p className="text-sm font-bold text-gray-900 font-mono">{med.packSizeExpression} {med.packSizeUnit}</p>
-            </div>
-          )}
-        </div>
-      </div>
-      {/* --------------------- DESKTOP LAYOUT --------------------- */}
-      <div className="hidden sm:flex flex-row items-start gap-6">
-        {/* Image */}
-        <div className="relative group flex-shrink-0 w-40 h-40">
-          <div className="absolute inset-0 bg-gradient-to-br from-[#1ABA7F] to-[#225F91] rounded-2xl blur-lg opacity-0 group-hover:opacity-30 transition-opacity duration-300" />
-          <div className="relative w-full h-full rounded-2xl overflow-hidden border-4 border-white shadow-xl group-hover:scale-105 transition-transform duration-300">
-            {med.imageUrl ? (
-              <Dialog>
-                <DialogTrigger asChild>
-                  <img
-                    src={med.imageUrl}
-                    alt={med.displayName}
-                    className="w-full h-full object-cover cursor-pointer transition-transform duration-300 hover:scale-110"
-                  />
-                </DialogTrigger>
-                <DialogContent className="max-w-3xl p-0 border-0 rounded-3xl overflow-hidden">
-                  <VisuallyHidden>
-                    <DialogTitle>{med.displayName}</DialogTitle>
-                  </VisuallyHidden>
-                  <img src={med.imageUrl} alt={med.displayName} className="w-full h-auto" />
-                </DialogContent>
-              </Dialog>
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-                <Pill className="w-16 h-16 text-gray-400" aria-label="Medication" />
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Info */}
-        <div className="flex-1 space-y-4">
-          {/* Title with gradient underline */}
-          <div>
-            <h3 className="text-4xl font-black text-[#225F91] tracking-tight leading-tight mb-2">
-              {med.displayName || med.brandName || "Unnamed Medication"}
-            </h3>
-            <div className="h-1.5 w-32 rounded-full bg-gradient-to-r from-[#1ABA7F] via-[#225F91] to-transparent" />
-          </div>
-
-          {/* Badges */}
-          <div className="flex flex-wrap gap-3">
-            {med.prescriptionRequired && (
-              <Badge className="bg-gradient-to-r from-[#225F91] to-[#1a4a73] text-white border-0 px-3 py-1.5 text-sm font-semibold shadow-lg">
-                <Clock className="h-3.5 w-3.5 mr-1.5" />
-                Prescription Required
-              </Badge>
-            )}
-          
-          </div>
-
-          {/* Info Cards Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {/* Brand Name */}
-               
+            {/* Info Cards Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {/* Brand Name */}
+                
                 {/* Composition */}
-                {med.ingredients?.length > 0 && (
-                  <div className="p-3 rounded-xl bg-white border border-gray-200 hover:border-[#1ABA7F]/50 transition-colors duration-200">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Info className="h-4 w-4 text-[#225F91]" />
-                      <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Composition</span>
+            {med.ingredients?.length > 0 && (
+              <div className="p-3 rounded-xl bg-white border border-gray-200 hover:border-[#1ABA7F]/50 transition-all duration-300">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Composition</span>
+                </div>
+                <div className="text-sm font-bold text-gray-900 space-y-1">
+                  {med.ingredients.map((i, idx) => (
+                    <div key={idx} className="flex items-start gap-1">
+                      <span className="text-[#1ABA7F] font-extrabold">•</span>
+                      <span>{i.activeSubstance} {i.strengthValue}{i.strengthUnit}</span>
                     </div>
-                    <p className="text-sm font-bold text-gray-900">
-                      {med.ingredients.map(i => `${i.activeSubstance} ${i.strengthValue}${i.strengthUnit}`).join(", ")}
-                    </p>
-                  </div>
-                )}
+                  ))}
+                </div>
+              </div>
+            )}
+
 
                 {/* Manufacturer */}
                 {med.manufacturerName && (

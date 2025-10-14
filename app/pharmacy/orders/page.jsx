@@ -30,19 +30,19 @@ function capitalizeWords(str) {
   return str.toLowerCase().replace(/\b\w/g, c => c.toUpperCase()).replace(/_/g, ' ');
 }
 
-// Helper Components
+// Helper Components - IMPROVED FOR MOBILE
 function StatCard({ icon: Icon, label, value, color, subtitle, trend }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
-      <div className="flex items-center gap-4">
-        <div className={`p-3 rounded-xl`} style={{ background: `${color}20` }}>
-          <Icon className="w-6 h-6" style={{ color }} />
+    <div className="bg-white border border-gray-200 rounded-lg md:rounded-xl shadow-sm p-3 md:p-6 hover:shadow-md transition-shadow">
+      <div className="flex items-center gap-2 md:gap-4">
+        <div className={`p-2 md:p-3 rounded-lg md:rounded-xl flex-shrink-0`} style={{ background: `${color}20` }}>
+          <Icon className="w-4 h-4 md:w-6 md:h-6" style={{ color }} />
         </div>
-        <div className="flex-1">
-          <div className="text-sm font-medium text-gray-600">{label}</div>
-          <div className="text-2xl font-bold text-gray-900 mt-1">{value}</div>
+        <div className="flex-1 min-w-0">
+          <div className="text-xs md:text-sm font-medium text-gray-600">{label}</div>
+          <div className="text-lg md:text-2xl font-bold text-gray-900 mt-0.5 md:mt-1">{value}</div>
           {subtitle && (
-            <div className="flex items-center gap-1 mt-1">
+            <div className="flex items-center gap-1 mt-0.5 md:mt-1">
               {trend > 0 ? (
                 <TrendingUp className="w-3 h-3 text-green-600" />
               ) : null}
@@ -75,6 +75,7 @@ export default function EnhancedOrdersPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const [refreshCounter, setRefreshCounter] = useState(0);
+  const [showFilters, setShowFilters] = useState(false);
 
   const [stats, setStats] = useState({
     totalOrders: 0,
@@ -182,7 +183,7 @@ export default function EnhancedOrdersPage() {
     setPagination((prev) => ({ ...prev, page: 1 }));
   };
 
-  // Helper to get status badge with icon
+  // Helper to get status badge with icon - IMPROVED FOR MOBILE
   const getStatusBadge = (status) => {
     let colorClass = '';
     let Icon = Clock;
@@ -218,18 +219,19 @@ export default function EnhancedOrdersPage() {
     }
     
     return (
-      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${colorClass}`}>
-        <Icon className="w-3.5 h-3.5" />
-        {capitalizeWords(status)}
+      <span className={`inline-flex items-center gap-1 md:gap-1.5 px-2 md:px-3 py-0.5 md:py-1 rounded-full text-xs font-semibold border ${colorClass}`}>
+        <Icon className="w-3 h-3 md:w-3.5 md:h-3.5" />
+        <span className="hidden sm:inline">{capitalizeWords(status)}</span>
+        <span className="sm:hidden">{capitalizeWords(status).split(' ')[0]}</span>
       </span>
     );
   };
 
-  // Get delivery badge
+  // Get delivery badge - IMPROVED FOR MOBILE
   const getDeliveryBadge = (method) => {
     const isPickup = method?.toLowerCase() === 'pickup';
     return (
-      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
+      <span className={`inline-flex items-center gap-1 md:gap-1.5 px-2 md:px-2.5 py-0.5 md:py-1 rounded-full text-xs font-medium ${
         isPickup 
           ? 'bg-blue-50 text-blue-700 border border-blue-200' 
           : 'bg-green-50 text-green-700 border border-green-200'
@@ -240,51 +242,51 @@ export default function EnhancedOrdersPage() {
     );
   };
 
-  // Mobile card component
+  // Mobile card component - IMPROVED FOR MOBILE
   const renderMobileCard = (order) => (
-    <div key={order.id} className="bg-white border border-gray-200 rounded-xl p-5 mb-3 shadow-sm hover:shadow-md transition-all">
-      <div className="flex justify-between items-start mb-4">
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-2">
-            <ShoppingCart className="w-4 h-4 text-[#225F91]" />
-            <h3 className="font-bold text-gray-900">Order #{order.sn}</h3>
+    <div key={order.id} className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm hover:shadow-md transition-all">
+      <div className="flex justify-between items-start mb-3">
+        <div className="flex-1 min-w-0 pr-2">
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <ShoppingCart className="w-3.5 h-3.5 text-[#225F91]" />
+            <h3 className="font-bold text-sm text-gray-900">Order #{order.sn}</h3>
           </div>
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <User className="w-3.5 h-3.5" />
-            <span>{order.name}</span>
+          <div className="flex items-center gap-1.5 text-xs text-gray-600">
+            <User className="w-3 h-3" />
+            <span className="truncate">{order.name}</span>
           </div>
         </div>
         <button
-          className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition-colors"
+          className="p-1.5 rounded-lg hover:bg-blue-50 text-blue-600 transition-colors flex-shrink-0"
           title="View details"
           onClick={() => handleViewDetails(order)}
         >
-          <Eye className="w-5 h-5" />
+          <Eye className="w-4 h-4" />
         </button>
       </div>
       
-      <div className="grid grid-cols-2 gap-3 mb-4">
-        <div className="flex items-center gap-2 text-sm">
-          <Calendar className="w-3.5 h-3.5 text-gray-500" />
-          <span className="text-gray-700">{new Date(order.createdAt).toLocaleDateString()}</span>
+      <div className="grid grid-cols-2 gap-2 mb-3">
+        <div className="flex items-center gap-1.5 text-xs">
+          <Calendar className="w-3 h-3 text-gray-500" />
+          <span className="text-gray-700">{new Date(order.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
         </div>
-        <div className="flex items-center gap-2 text-sm">
-          <DollarSign className="w-3.5 h-3.5 text-gray-500" />
+        <div className="flex items-center gap-1.5 text-xs">
+          <DollarSign className="w-3 h-3 text-gray-500" />
           <span className="font-semibold text-gray-900">₦{order.totalPrice.toLocaleString()}</span>
         </div>
       </div>
 
-      <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-        <div className="flex flex-col gap-2">
+      <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+        <div className="flex flex-wrap gap-1.5">
           {getStatusBadge(order.status)}
           {getDeliveryBadge(order.deliveryMethod)}
         </div>
       </div>
 
       {order.prescription && (
-        <div className="mt-3 pt-3 border-t border-gray-100">
-          <div className="flex items-center gap-2 text-xs text-orange-600 bg-orange-50 px-2 py-1.5 rounded-lg">
-            <FileText className="w-3.5 h-3.5" />
+        <div className="mt-2 pt-2 border-t border-gray-100">
+          <div className="flex items-center gap-1.5 text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded-lg">
+            <FileText className="w-3 h-3" />
             <span className="font-medium">Prescription Required</span>
           </div>
         </div>
@@ -430,19 +432,19 @@ export default function EnhancedOrdersPage() {
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-[#225F91] to-[#1ABA7F] bg-clip-text text-transparent">
+    <div className="space-y-4 md:space-y-6">
+      {/* Header - IMPROVED FOR MOBILE */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <h1 className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-[#225F91] to-[#1ABA7F] bg-clip-text text-transparent">
             Orders Management
           </h1>
-          <p className="text-gray-600 mt-2">Process and track online orders from customers</p>
+          <p className="text-sm md:text-base text-gray-600 mt-1 md:mt-2">Process and track online orders from customers</p>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Stats Cards - IMPROVED FOR MOBILE */}
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
         <StatCard
           icon={ShoppingCart}
           label="Total Orders"
@@ -473,30 +475,30 @@ export default function EnhancedOrdersPage() {
         />
       </div>
 
-      {/* Revenue Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-gradient-to-br from-green-50 to-blue-50 border-2 border-green-200 rounded-xl shadow-sm p-6">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-xl bg-white shadow-sm">
-              <DollarSign className="w-8 h-8 text-green-600" />
+      {/* Revenue Cards - IMPROVED FOR MOBILE */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+        <div className="bg-gradient-to-br from-green-50 to-blue-50 border-2 border-green-200 rounded-lg md:rounded-xl shadow-sm p-4 md:p-6">
+          <div className="flex items-center gap-3 md:gap-4">
+            <div className="p-2 md:p-3 rounded-lg md:rounded-xl bg-white shadow-sm flex-shrink-0">
+              <DollarSign className="w-6 h-6 md:w-8 md:h-8 text-green-600" />
             </div>
-            <div className="flex-1">
-              <div className="text-sm font-medium text-gray-600">Total Revenue</div>
-              <div className="text-3xl font-bold text-gray-900 mt-1">
+            <div className="flex-1 min-w-0">
+              <div className="text-xs md:text-sm font-medium text-gray-600">Total Revenue</div>
+              <div className="text-xl md:text-3xl font-bold text-gray-900 mt-0.5 md:mt-1">
                 ₦{stats.totalRevenue.toLocaleString()}
               </div>
             </div>
           </div>
         </div>
         
-        <div className="bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200 rounded-xl shadow-sm p-6">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-xl bg-white shadow-sm">
-              <TrendingUp className="w-8 h-8 text-purple-600" />
+        <div className="bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg md:rounded-xl shadow-sm p-4 md:p-6">
+          <div className="flex items-center gap-3 md:gap-4">
+            <div className="p-2 md:p-3 rounded-lg md:rounded-xl bg-white shadow-sm flex-shrink-0">
+              <TrendingUp className="w-6 h-6 md:w-8 md:h-8 text-purple-600" />
             </div>
-            <div className="flex-1">
-              <div className="text-sm font-medium text-gray-600">Avg Order Value</div>
-              <div className="text-3xl font-bold text-gray-900 mt-1">
+            <div className="flex-1 min-w-0">
+              <div className="text-xs md:text-sm font-medium text-gray-600">Avg Order Value</div>
+              <div className="text-xl md:text-3xl font-bold text-gray-900 mt-0.5 md:mt-1">
                 ₦{Math.round(stats.avgOrderValue).toLocaleString()}
               </div>
             </div>
@@ -504,69 +506,89 @@ export default function EnhancedOrdersPage() {
         </div>
       </div>
 
-      {/* Quick Filters */}
-      <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
-        <div className="flex items-center gap-3 mb-4">
+      {/* Quick Filters - IMPROVED FOR MOBILE */}
+      <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
+        {/* Mobile Filter Toggle */}
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          className="md:hidden w-full p-4 flex items-center justify-between text-left"
+        >
+          <div className="flex items-center gap-2">
+            <Filter className="w-4 h-4 text-[#225F91]" />
+            <span className="font-semibold text-gray-900">Quick Filters</span>
+          </div>
+          <span className="text-gray-500">{showFilters ? '−' : '+'}</span>
+        </button>
+
+        {/* Desktop Header */}
+        <div className="hidden md:flex items-center gap-3 p-6 pb-4">
           <Filter className="w-5 h-5 text-[#225F91]" />
           <h2 className="text-lg font-semibold text-gray-900">Quick Filters</h2>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => setQuickDateFilter('today')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              dateFilter === new Date().toISOString().split('T')[0]
-                ? 'bg-[#1ABA7F] text-white shadow-md'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            <Calendar className="w-4 h-4 inline mr-2" />
-            Today's Orders
-          </button>
-          <button
-            onClick={() => setQuickDateFilter('yesterday')}
-            className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
-          >
-            Yesterday
-          </button>
-          <button
-            onClick={() => {
-              setStatusFilter('CONFIRMED');
-              setPagination((prev) => ({ ...prev, page: 1 }));
-            }}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              statusFilter === 'CONFIRMED'
-                ? 'bg-yellow-100 text-yellow-800 border border-yellow-300'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            <Clock className="w-4 h-4 inline mr-2" />
-            Pending Action
-          </button>
-          <button
-            onClick={() => {
-              setStatusFilter('PROCESSING');
-              setPagination((prev) => ({ ...prev, page: 1 }));
-            }}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              statusFilter === 'PROCESSING'
-                ? 'bg-blue-100 text-blue-800 border border-blue-300'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            <Package className="w-4 h-4 inline mr-2" />
-            Processing
-          </button>
-          <button
-            onClick={() => {
-              setDateFilter("");
-              setStatusFilter("");
-              setDeliveryMethodFilter("");
-              setPagination((prev) => ({ ...prev, page: 1 }));
-            }}
-            className="px-4 py-2 rounded-lg text-sm font-medium bg-red-100 text-red-700 hover:bg-red-200 transition-colors"
-          >
-            Clear All Filters
-          </button>
+
+        {/* Filter Content */}
+        <div className={`${showFilters ? 'block' : 'hidden'} md:block px-4 pb-4 md:px-6 md:pb-6`}>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setQuickDateFilter('today')}
+              className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-colors ${
+                dateFilter === new Date().toISOString().split('T')[0]
+                  ? 'bg-[#1ABA7F] text-white shadow-md'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <Calendar className="w-3 h-3 md:w-4 md:h-4 inline mr-1 md:mr-2" />
+              <span className="hidden sm:inline">Today's Orders</span>
+              <span className="sm:hidden">Today</span>
+            </button>
+            <button
+              onClick={() => setQuickDateFilter('yesterday')}
+              className="px-3 md:px-4 py-1.5 md:py-2 rounded-lg text-xs md:text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+            >
+              Yesterday
+            </button>
+            <button
+              onClick={() => {
+                setStatusFilter('CONFIRMED');
+                setPagination((prev) => ({ ...prev, page: 1 }));
+              }}
+              className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-colors ${
+                statusFilter === 'CONFIRMED'
+                  ? 'bg-yellow-100 text-yellow-800 border border-yellow-300'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <Clock className="w-3 h-3 md:w-4 md:h-4 inline mr-1 md:mr-2" />
+              <span className="hidden sm:inline">Pending Action</span>
+              <span className="sm:hidden">Pending</span>
+            </button>
+            <button
+              onClick={() => {
+                setStatusFilter('PROCESSING');
+                setPagination((prev) => ({ ...prev, page: 1 }));
+              }}
+              className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-colors ${
+                statusFilter === 'PROCESSING'
+                  ? 'bg-blue-100 text-blue-800 border border-blue-300'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <Package className="w-3 h-3 md:w-4 md:h-4 inline mr-1 md:mr-2" />
+              Processing
+            </button>
+            <button
+              onClick={() => {
+                setDateFilter("");
+                setStatusFilter("");
+                setDeliveryMethodFilter("");
+                setPagination((prev) => ({ ...prev, page: 1 }));
+              }}
+              className="px-3 md:px-4 py-1.5 md:py-2 rounded-lg text-xs md:text-sm font-medium bg-red-100 text-red-700 hover:bg-red-200 transition-colors"
+            >
+              <span className="hidden sm:inline">Clear All Filters</span>
+              <span className="sm:hidden">Clear</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -610,17 +632,17 @@ export default function EnhancedOrdersPage() {
         className="p-3"
       />
 
-      {/* Toast Notification */}
+      {/* Toast Notification - IMPROVED FOR MOBILE */}
       {toast.visible && (
         <div className={`
-          fixed bottom-6 right-6 px-4 py-3 rounded-lg flex items-center gap-2 shadow-lg z-50
+          fixed bottom-4 md:bottom-6 right-4 md:right-6 left-4 md:left-auto px-3 md:px-4 py-2 md:py-3 rounded-lg flex items-center gap-2 shadow-lg z-50
           ${toast.type === "success" ? "bg-green-100 border border-green-300 text-green-800" : ""}
           ${toast.type === "error" ? "bg-red-100 border border-red-300 text-red-800" : ""}
           ${toast.type === "warning" ? "bg-yellow-100 border border-yellow-300 text-yellow-800" : ""}
           animate-in slide-in-from-right
         `}>
-          <CheckCircle className="w-5 h-5" />
-          <span className="font-medium">{toast.message}</span>
+          <CheckCircle className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" />
+          <span className="font-medium text-sm md:text-base">{toast.message}</span>
         </div>
       )}
     </div>

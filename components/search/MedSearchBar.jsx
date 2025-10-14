@@ -17,6 +17,7 @@ import { useSearchSuggestions } from '@/hooks/useSearchSuggestions';
 import { useMedicationSearch } from '@/hooks/useMedicationSearch';
 import { useSearchHistory } from '@/hooks/useSearchHistory';
 import { useLocationDetection } from '@/hooks/useLocationDetection';
+import { useGPSCapture } from '@/hooks/useGPSCapture';
 import { useGeoData } from '@/hooks/useGeoData';
 import { useCartOperations } from '@/hooks/useCartOperations';
 import { useDuplicateDetection } from '@/hooks/useDuplicateDetection';
@@ -84,6 +85,9 @@ const SearchBar = () => {
     locationStatus,
     requestLocation,
   } = useLocationDetection();
+
+  const gpsCapture = useGPSCapture();
+
 
   // Items added callback
   const handleItemsAdded = useCallback((items) => {
@@ -185,17 +189,42 @@ const setFilterLgaWrapper = (val) => {
 };
 
 
-const handleEnableLocation = useCallback(() => {
+  // For initial search location
+  const handleEnableLocation = useCallback(async () => {
     setIsLoadingLocation(true);
-    requestLocation()
-      .then(() => toast.success('Location detected successfully'))
-      .catch((error) => {
-        toast.error(error.code === 1 
-          ? 'Location permission denied' 
-          : 'Unable to get location');
-        setIsLoadingLocation(false);
-      });
-  }, [requestLocation]);
+    
+    try {
+      const location = await gpsCapture.captureUserLocation();
+      
+      toast.success(
+        `Location detected with ${location.accuracy}m accuracy`,
+        {
+          description: `Quality: ${location.quality} (${location.sampleCount} readings)`,
+          duration: 4000,
+        }
+      );
+      
+      // Use location for reverse geocoding
+      const match = reverseGeocode(location.lat, location.lng);
+      
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setIsLoadingLocation(false);
+    }
+  }, [gpsCapture.captureUserLocation]);
+
+  // For showing distances (use accurate mode)
+  const handleShowDistances = useCallback(async () => {
+    try {
+      const location = await gpsCapture.captureUserLocationAccurate();
+      // Calculate distances with better accuracy
+    } catch (error) {
+      toast.error('Unable to get accurate location');
+    }
+  }, [gpsCapture.captureUserLocationAccurate]);
+
+  
 
   // Fetch suggestions on term change
   useEffect(() => {

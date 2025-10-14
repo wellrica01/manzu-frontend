@@ -27,6 +27,7 @@ export function useMedicationSearch(apiUrl) {
     async (params) => {
       if (!params.medicationId) {
         console.error('Medication ID required');
+        toast.error('Please select a medication to search');
         return;
       }
 
@@ -52,9 +53,9 @@ export function useMedicationSearch(apiUrl) {
           await new Promise((resolve) => setTimeout(resolve, 500 - elapsed));
         }
 
-        // 🚦 Skip if aborted (not based on mount)
+        // 🚦 Skip if aborted
         if (controller.signal.aborted) {
-          console.warn('Search aborted — skipping state update.');
+          console.warn('Search aborted – skipping state update.');
           return;
         }
 
@@ -73,6 +74,12 @@ export function useMedicationSearch(apiUrl) {
         }
 
         setError(null);
+        
+        // Show success feedback if results found
+        if (cleanResults.length === 0) {
+          toast.info('No pharmacies found matching your criteria');
+        }
+        
         return cleanResults;
       } catch (err) {
         if (err.name === 'AbortError') return; // ignore canceled calls
@@ -80,8 +87,34 @@ export function useMedicationSearch(apiUrl) {
         console.error('Search error:', err);
 
         setResults([]);
-        setError(err.message || 'Search failed');
-        toast.error(err.message || 'Failed to search medications');
+        
+        // 🎯 Better error messaging
+        let errorMessage = 'Failed to search medications';
+        
+        if (err.message) {
+          errorMessage = err.message;
+        }
+        
+        // Specific error cases
+        if (err.message?.includes('Coordinates must be within Nigeria')) {
+          errorMessage = 'Your location is outside Nigeria. Please filter by State/LGA to search.';
+        } else if (err.message?.includes('Invalid')) {
+          errorMessage = `Invalid search: ${err.message}`;
+        } else if (err.status === 404) {
+          errorMessage = 'No results found. Try adjusting your filters.';
+        } else if (err.status >= 500) {
+          errorMessage = 'Server error. Please try again in a moment.';
+        } else if (err.code === 'NETWORK_ERROR') {
+          errorMessage = 'Network error. Please check your connection.';
+        }
+        
+        setError(errorMessage);
+        
+        // Show user-friendly toast
+        toast.error(errorMessage, {
+          duration: 5000,
+          description: err.status ? `Error code: ${err.status}` : undefined,
+        });
       } finally {
         // ⚙️ Always stop the loading spinner
         setIsSearching(false);

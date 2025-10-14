@@ -68,9 +68,10 @@ export default function Confirmation() {
   
   const handleTrackOrder = () => {
     if (confirmationData?.trackingCode) {
-      router.push(`/track-order?trackingCode=${encodeURIComponent(confirmationData.trackingCode)}`);
+      window.location.href = `/track-order?trackingCode=${encodeURIComponent(confirmationData.trackingCode)}`;
     }
   };
+
 
   const handlePrint = () => window.print();
 
