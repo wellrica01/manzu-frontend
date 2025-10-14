@@ -25,12 +25,26 @@ async function fetchOrders(params) {
   return res.json();
 }
 
+async function fetchSpecificOrder(orderId) {
+  const token = localStorage.getItem('pharmacyToken');
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/pharmacy/orders/${orderId}`, {
+    headers: { 'Authorization': `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    if (res.status === 404) {
+      throw new Error('ORDER_NOT_FOUND');
+    }
+    throw new Error('Failed to fetch order');
+  }
+  return res.json();
+}
+
 function capitalizeWords(str) {
   if (!str) return '';
   return str.toLowerCase().replace(/\b\w/g, c => c.toUpperCase()).replace(/_/g, ' ');
 }
 
-// Helper Components - IMPROVED FOR MOBILE
+// Helper Components
 function StatCard({ icon: Icon, label, value, color, subtitle, trend }) {
   return (
     <div className="bg-white border border-gray-200 rounded-lg md:rounded-xl shadow-sm p-3 md:p-6 hover:shadow-md transition-shadow">
@@ -77,6 +91,8 @@ export default function EnhancedOrdersPage() {
   const [refreshCounter, setRefreshCounter] = useState(0);
   const [showFilters, setShowFilters] = useState(false);
 
+  const [loadingSpecificOrder, setLoadingSpecificOrder] = useState(false);
+
   const [stats, setStats] = useState({
     totalOrders: 0,
     pendingOrders: 0,
@@ -98,6 +114,38 @@ export default function EnhancedOrdersPage() {
       setToast(prev => ({ ...prev, visible: false }));
     }, duration);
   };
+
+  // Handle deep linking to specific order
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const orderId = urlParams.get('orderId');
+    
+    if (orderId) {
+      handleDeepLinkOrder(orderId);
+      // Clean up URL after capturing the orderId
+      window.history.replaceState({}, '', window.location.pathname + window.location.search.replace(/[?&]orderId=[^&]+/, '').replace(/^&/, '?'));
+    }
+  }, []);
+
+  // Function to handle deep link order fetching
+  async function handleDeepLinkOrder(orderId) {
+    setLoadingSpecificOrder(true);
+    try {
+      const order = await fetchSpecificOrder(orderId);
+      setSelectedOrder(order);
+      setDialogOpen(true);
+      showToast(`Order #${order.sn} loaded successfully`, 'success');
+    } catch (err) {
+      if (err.message === 'ORDER_NOT_FOUND') {
+        showToast('Order not found. It may have been deleted or you don\'t have access to it.', 'error', 5000);
+      } else {
+        showToast('Failed to load order. Please try again.', 'error');
+      }
+      console.error('Deep link order error:', err);
+    } finally {
+      setLoadingSpecificOrder(false);
+    }
+  }
 
   // Load orders
   useEffect(() => {
@@ -183,7 +231,7 @@ export default function EnhancedOrdersPage() {
     setPagination((prev) => ({ ...prev, page: 1 }));
   };
 
-  // Helper to get status badge with icon - IMPROVED FOR MOBILE
+  // Helper to get status badge with icon
   const getStatusBadge = (status) => {
     let colorClass = '';
     let Icon = Clock;
@@ -227,7 +275,7 @@ export default function EnhancedOrdersPage() {
     );
   };
 
-  // Get delivery badge - IMPROVED FOR MOBILE
+  // Get delivery badge
   const getDeliveryBadge = (method) => {
     const isPickup = method?.toLowerCase() === 'pickup';
     return (
@@ -242,7 +290,7 @@ export default function EnhancedOrdersPage() {
     );
   };
 
-  // Mobile card component - IMPROVED FOR MOBILE
+  // Mobile card component
   const renderMobileCard = (order) => (
     <div key={order.id} className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm hover:shadow-md transition-all">
       <div className="flex justify-between items-start mb-3">
@@ -433,7 +481,17 @@ export default function EnhancedOrdersPage() {
 
   return (
     <div className="space-y-4 md:space-y-6">
-      {/* Header - IMPROVED FOR MOBILE */}
+      {/* Loading overlay for deep link */}
+      {loadingSpecificOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-2xl p-8 flex flex-col items-center gap-4">
+            <Loader2 className="w-12 h-12 text-[#1ABA7F] animate-spin" />
+            <p className="text-lg font-semibold text-gray-900">Loading order...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Header */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex-1 min-w-0">
           <h1 className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-[#225F91] to-[#1ABA7F] bg-clip-text text-transparent">
@@ -443,7 +501,7 @@ export default function EnhancedOrdersPage() {
         </div>
       </div>
 
-      {/* Stats Cards - IMPROVED FOR MOBILE */}
+      {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
         <StatCard
           icon={ShoppingCart}
@@ -475,7 +533,7 @@ export default function EnhancedOrdersPage() {
         />
       </div>
 
-      {/* Revenue Cards - IMPROVED FOR MOBILE */}
+      {/* Revenue Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
         <div className="bg-gradient-to-br from-green-50 to-blue-50 border-2 border-green-200 rounded-lg md:rounded-xl shadow-sm p-4 md:p-6">
           <div className="flex items-center gap-3 md:gap-4">
@@ -506,9 +564,8 @@ export default function EnhancedOrdersPage() {
         </div>
       </div>
 
-      {/* Quick Filters - IMPROVED FOR MOBILE */}
+      {/* Quick Filters */}
       <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
-        {/* Mobile Filter Toggle */}
         <button
           onClick={() => setShowFilters(!showFilters)}
           className="md:hidden w-full p-4 flex items-center justify-between text-left"
@@ -520,13 +577,11 @@ export default function EnhancedOrdersPage() {
           <span className="text-gray-500">{showFilters ? '−' : '+'}</span>
         </button>
 
-        {/* Desktop Header */}
         <div className="hidden md:flex items-center gap-3 p-6 pb-4">
           <Filter className="w-5 h-5 text-[#225F91]" />
           <h2 className="text-lg font-semibold text-gray-900">Quick Filters</h2>
         </div>
 
-        {/* Filter Content */}
         <div className={`${showFilters ? 'block' : 'hidden'} md:block px-4 pb-4 md:px-6 md:pb-6`}>
           <div className="flex flex-wrap gap-2">
             <button
@@ -632,7 +687,7 @@ export default function EnhancedOrdersPage() {
         className="p-3"
       />
 
-      {/* Toast Notification - IMPROVED FOR MOBILE */}
+      {/* Toast Notification */}
       {toast.visible && (
         <div className={`
           fixed bottom-4 md:bottom-6 right-4 md:right-6 left-4 md:left-auto px-3 md:px-4 py-2 md:py-3 rounded-lg flex items-center gap-2 shadow-lg z-50
@@ -641,7 +696,9 @@ export default function EnhancedOrdersPage() {
           ${toast.type === "warning" ? "bg-yellow-100 border border-yellow-300 text-yellow-800" : ""}
           animate-in slide-in-from-right
         `}>
-          <CheckCircle className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" />
+          {toast.type === "success" && <CheckCircle className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" />}
+          {toast.type === "error" && <AlertCircle className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" />}
+          {toast.type === "warning" && <AlertTriangle className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" />}
           <span className="font-medium text-sm md:text-base">{toast.message}</span>
         </div>
       )}

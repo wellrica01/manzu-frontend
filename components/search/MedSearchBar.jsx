@@ -83,6 +83,7 @@ const SearchBar = () => {
     userLocation,
     locationStatus,
     requestLocation,
+    requestAccurateLocation
   } = useLocationDetection();
 
   // Items added callback
@@ -207,7 +208,6 @@ const handleEnableLocation = useCallback(async () => {
   }
 }, [requestLocation]);
 
-
 // For showing distance to pharmacies, use:
 const handleShowDistances = useCallback(async () => {
   try {
@@ -217,7 +217,6 @@ const handleShowDistances = useCallback(async () => {
     toast.error('Unable to get accurate location for distance calculation');
   }
 }, [requestAccurateLocation]);
-
 
   // Fetch suggestions on term change
   useEffect(() => {

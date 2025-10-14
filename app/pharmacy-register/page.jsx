@@ -14,7 +14,7 @@ import Select from 'react-select';
 import Image from 'next/image';
 import { toast } from 'sonner';
 
-// ✅ Import the API client
+// âœ… Import the API client
 import { pharmacyAuthAPI, setPharmacyToken } from '@/lib/pharmacyApiClient';
 import { APIError } from '@/lib/apiClient';
 
@@ -28,12 +28,12 @@ const formSchema = z.object({
     state: z.string().min(1, 'State is required'),
     lga: z.string().min(1, 'LGA is required'),
     latitude: z.number()
-      .min(4, 'Latitude must be within Nigeria (4°N to 14°N)')
-      .max(14, 'Latitude must be within Nigeria (4°N to 14°N)'),
+      .min(4, 'Latitude must be within Nigeria (4Â°N to 14Â°N)')
+      .max(14, 'Latitude must be within Nigeria (4Â°N to 14Â°N)'),
     
     longitude: z.number()
-      .min(3, 'Longitude must be within Nigeria (3°E to 15°E)')
-      .max(15, 'Longitude must be within Nigeria (3°E to 15°E)'),
+      .min(3, 'Longitude must be within Nigeria (3Â°E to 15Â°E)')
+      .max(15, 'Longitude must be within Nigeria (3Â°E to 15Â°E)'),
     locationAccuracy: z.number().optional(),
     phone: z.string().regex(/^(\+234|0)[789]\d{9}$/, 'Invalid Nigerian phone number (e.g., 08012345678)'),
     licenseNumber: z.string().min(5, 'License number must be at least 5 characters'),
@@ -149,7 +149,7 @@ export default function PharmacyRegister() {
 
 
 
-  // ✅ Updated submit handler using API client
+  // âœ… Updated submit handler using API client
   const onSubmit = async (values) => {
     // Validate GPS was captured
     if (!gpsCapture.location) {
@@ -428,7 +428,7 @@ export default function PharmacyRegister() {
                           {gpsCapture.progress.status === 'starting' && 'Initializing GPS...'}
                           {gpsCapture.progress.status === 'error' && 'Reading failed, retrying...'}
                           {gpsCapture.progress.samplesCollected > 0 && 
-                            ` • ${gpsCapture.progress.samplesCollected} valid readings`}
+                            ` â€¢ ${gpsCapture.progress.samplesCollected} valid readings`}
                         </p>
                       </div>
                     )}
@@ -470,7 +470,7 @@ export default function PharmacyRegister() {
                           </div>
                           <div>
                             <span className="text-gray-600">Accuracy:</span>
-                            <p className="font-medium">±{gpsCapture.location.accuracy}m</p>
+                            <p className="font-medium">Â±{gpsCapture.location.accuracy}m</p>
                           </div>
                           <div>
                             <span className="text-gray-600">Samples:</span>
@@ -510,9 +510,9 @@ export default function PharmacyRegister() {
                 )}
 
                 <FormDescription className="text-xs text-gray-600">
-                  📍 High-precision GPS capture (5 readings with outlier filtering)
+                  ðŸ“ High-precision GPS capture (5 readings with outlier filtering)
                   <br />
-                  ⚡ For best results: Move outdoors with clear sky view
+                  âš¡ For best results: Move outdoors with clear sky view
                 </FormDescription>
               </div>
 
