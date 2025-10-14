@@ -79,11 +79,15 @@ const SearchBar = () => {
     reverseGeocode 
   } = useGeoData();
   
+
   const {
     userLocation,
     locationStatus,
+    accuracy,           
     requestLocation,
+    requestPreciseLocation, 
   } = useLocationDetection();
+
 
   // Items added callback
   const handleItemsAdded = useCallback((items) => {
@@ -186,16 +190,21 @@ const setFilterLgaWrapper = (val) => {
 
 
 const handleEnableLocation = useCallback(() => {
-    setIsLoadingLocation(true);
-    requestLocation()
-      .then(() => toast.success('Location detected successfully'))
-      .catch((error) => {
-        toast.error(error.code === 1 
-          ? 'Location permission denied' 
-          : 'Unable to get location');
-        setIsLoadingLocation(false);
-      });
-  }, [requestLocation]);
+  setIsLoadingLocation(true);
+  
+  // ✨ Use precise mode if sorting by nearest
+  const locationPromise = sortBy === 'nearest'
+    ? requestPreciseLocation()
+    : requestLocation({ maxRetries: 2 });
+    
+  locationPromise
+    .then(() => toast.success('Location detected successfully'))
+    .catch((error) => {
+      toast.error(error.message);
+      setIsLoadingLocation(false);
+    });
+}, [requestLocation, requestPreciseLocation, sortBy]);
+
 
   // Fetch suggestions on term change
   useEffect(() => {

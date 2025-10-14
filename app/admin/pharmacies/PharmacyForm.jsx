@@ -1,10 +1,11 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, AlertTriangle, CheckCircle } from "lucide-react";
+import { Loader2, AlertTriangle, CheckCircle, Plus, Trash2 } from "lucide-react";
 
-const statusOptions = ["pending", "verified", "rejected"];
+const statusOptions = ["PENDING", "VERIFIED", "REJECTED", "SUSPENDED", "CLOSED"];
 const pharmacyTypeOptions = ["COMMUNITY", "HOSPITAL", "SPECIALTY", "PMV"];
+const daysOfWeek = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
 
 export default function PharmacyForm({ pharmacy = {}, mode = "create" }) {
   const router = useRouter();
@@ -15,12 +16,12 @@ export default function PharmacyForm({ pharmacy = {}, mode = "create" }) {
     state: pharmacy.state || "",
     phone: pharmacy.phone || "",
     licenseNumber: pharmacy.licenseNumber || "",
-    status: pharmacy.status || "pending",
+    status: pharmacy.status || "PENDING",
     logoUrl: pharmacy.logoUrl || "",
     isActive: pharmacy.isActive ?? true,
     pharmacyType: pharmacy.pharmacyType || "COMMUNITY",
     ward: pharmacy.ward || "",
-    operatingHours: pharmacy.operatingHours || "",
+    operatingHours: pharmacy.operatingHours || [],
     deliveryAvailability: pharmacy.deliveryAvailability ?? false,
   });
   const [loading, setLoading] = useState(false);
@@ -35,12 +36,55 @@ export default function PharmacyForm({ pharmacy = {}, mode = "create" }) {
     }));
   }
 
+  function addOperatingHour() {
+    setForm((prev) => ({
+      ...prev,
+      operatingHours: [
+        ...prev.operatingHours,
+        { dayOfWeek: "MONDAY", openTime: "09:00", closeTime: "17:00" }
+      ]
+    }));
+  }
+
+  function removeOperatingHour(index) {
+    setForm((prev) => ({
+      ...prev,
+      operatingHours: prev.operatingHours.filter((_, i) => i !== index)
+    }));
+  }
+
+  function updateOperatingHour(index, field, value) {
+    setForm((prev) => ({
+      ...prev,
+      operatingHours: prev.operatingHours.map((hour, i) =>
+        i === index ? { ...hour, [field]: value } : hour
+      )
+    }));
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     setLoading(true);
     setError(null);
     setSuccess(false);
     try {
+      // Prepare payload according to backend schema
+      const payload = {
+        name: form.name,
+        address: form.address,
+        lga: form.lga,
+        state: form.state,
+        phone: form.phone,
+        licenseNumber: form.licenseNumber,
+        status: form.status,
+        logoUrl: form.logoUrl || undefined, // Convert empty string to undefined
+        isActive: form.isActive,
+        pharmacyType: form.pharmacyType || undefined,
+        ward: form.ward || undefined,
+        operatingHours: form.operatingHours.length > 0 ? form.operatingHours : undefined,
+        deliveryAvailability: form.deliveryAvailability || undefined,
+      };
+
       const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
       const token = typeof window !== "undefined" ? localStorage.getItem("adminToken") : null;
       const url =
@@ -48,6 +92,7 @@ export default function PharmacyForm({ pharmacy = {}, mode = "create" }) {
           ? `${API_BASE}/api/admin/pharmacies/${pharmacy.id}`
           : `${API_BASE}/api/admin/pharmacies`;
       const method = mode === "edit" ? "PATCH" : "POST";
+      
       const res = await fetch(url, {
         method,
         headers: {
@@ -55,12 +100,14 @@ export default function PharmacyForm({ pharmacy = {}, mode = "create" }) {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         credentials: "include",
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
+      
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.message || `Error: ${res.status}`);
       }
+      
       setSuccess(true);
       setTimeout(() => {
         router.push("/admin/pharmacies");
@@ -73,7 +120,7 @@ export default function PharmacyForm({ pharmacy = {}, mode = "create" }) {
   }
 
   return (
-    <form className="space-y-4" onSubmit={handleSubmit}>
+    <form className="space-y-6" onSubmit={handleSubmit}>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-[#225F91] mb-1">Name *</label>
@@ -122,6 +169,9 @@ export default function PharmacyForm({ pharmacy = {}, mode = "create" }) {
             value={form.phone}
             onChange={handleChange}
             required
+            placeholder="+2348012345678"
+            pattern="^\+?\d{10,15}$"
+            title="Phone must be 10-15 digits, optionally starting with +"
             className="w-full px-3 py-2 border border-[#1ABA7F]/20 rounded-lg focus:border-[#1ABA7F] focus:outline-none"
           />
         </div>
@@ -145,7 +195,7 @@ export default function PharmacyForm({ pharmacy = {}, mode = "create" }) {
             className="w-full px-3 py-2 border border-[#1ABA7F]/20 rounded-lg focus:border-[#1ABA7F] focus:outline-none"
           >
             {statusOptions.map((opt) => (
-              <option key={opt} value={opt}>{opt.charAt(0).toUpperCase() + opt.slice(1)}</option>
+              <option key={opt} value={opt}>{opt}</option>
             ))}
           </select>
         </div>
@@ -155,20 +205,21 @@ export default function PharmacyForm({ pharmacy = {}, mode = "create" }) {
             name="logoUrl"
             value={form.logoUrl}
             onChange={handleChange}
+            type="url"
+            placeholder="https://example.com/logo.png"
             className="w-full px-3 py-2 border border-[#1ABA7F]/20 rounded-lg focus:border-[#1ABA7F] focus:outline-none"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-[#225F91] mb-1">Pharmacy Type *</label>
+          <label className="block text-sm font-medium text-[#225F91] mb-1">Pharmacy Type</label>
           <select
             name="pharmacyType"
             value={form.pharmacyType}
             onChange={handleChange}
-            required
             className="w-full px-3 py-2 border border-[#1ABA7F]/20 rounded-lg focus:border-[#1ABA7F] focus:outline-none"
           >
             {pharmacyTypeOptions.map((opt) => (
-              <option key={opt} value={opt}>{opt.charAt(0) + opt.slice(1).toLowerCase()}</option>
+              <option key={opt} value={opt}>{opt}</option>
             ))}
           </select>
         </div>
@@ -177,15 +228,6 @@ export default function PharmacyForm({ pharmacy = {}, mode = "create" }) {
           <input
             name="ward"
             value={form.ward}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border border-[#1ABA7F]/20 rounded-lg focus:border-[#1ABA7F] focus:outline-none"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-[#225F91] mb-1">Operating Hours</label>
-          <input
-            name="operatingHours"
-            value={form.operatingHours}
             onChange={handleChange}
             className="w-full px-3 py-2 border border-[#1ABA7F]/20 rounded-lg focus:border-[#1ABA7F] focus:outline-none"
           />
@@ -213,6 +255,65 @@ export default function PharmacyForm({ pharmacy = {}, mode = "create" }) {
           <label htmlFor="isActive" className="text-sm text-[#225F91]">Active</label>
         </div>
       </div>
+
+      {/* Operating Hours Section */}
+      <div className="border-t pt-4">
+        <div className="flex justify-between items-center mb-3">
+          <label className="block text-sm font-medium text-[#225F91]">Operating Hours</label>
+          <button
+            type="button"
+            onClick={addOperatingHour}
+            className="flex items-center gap-1 px-3 py-1 text-sm bg-[#1ABA7F] text-white rounded-lg hover:bg-[#159968]"
+          >
+            <Plus className="w-4 h-4" />
+            Add Hours
+          </button>
+        </div>
+        
+        {form.operatingHours.length === 0 ? (
+          <p className="text-sm text-gray-500 italic">No operating hours set</p>
+        ) : (
+          <div className="space-y-3">
+            {form.operatingHours.map((hour, index) => (
+              <div key={index} className="flex gap-2 items-center bg-gray-50 p-3 rounded-lg">
+                <select
+                  value={hour.dayOfWeek}
+                  onChange={(e) => updateOperatingHour(index, "dayOfWeek", e.target.value)}
+                  className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm"
+                >
+                  {daysOfWeek.map((day) => (
+                    <option key={day} value={day}>{day}</option>
+                  ))}
+                </select>
+                <input
+                  type="time"
+                  value={hour.openTime}
+                  onChange={(e) => updateOperatingHour(index, "openTime", e.target.value)}
+                  className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm"
+                  required
+                />
+                <span className="text-gray-500">to</span>
+                <input
+                  type="time"
+                  value={hour.closeTime}
+                  onChange={(e) => updateOperatingHour(index, "closeTime", e.target.value)}
+                  className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => removeOperatingHour(index)}
+                  className="p-1 text-red-600 hover:bg-red-100 rounded"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Status Messages */}
       {loading ? (
         <div className="flex items-center gap-2 text-[#1ABA7F]">
           <Loader2 className="animate-spin w-5 h-5" />
@@ -229,6 +330,8 @@ export default function PharmacyForm({ pharmacy = {}, mode = "create" }) {
           Success!
         </div>
       ) : null}
+
+      {/* Submit Button */}
       <button
         type="submit"
         disabled={loading}
@@ -238,4 +341,4 @@ export default function PharmacyForm({ pharmacy = {}, mode = "create" }) {
       </button>
     </form>
   );
-} 
+}
