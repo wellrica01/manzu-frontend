@@ -83,7 +83,6 @@ const SearchBar = () => {
     userLocation,
     locationStatus,
     requestLocation,
-    requestAccurateLocation
   } = useLocationDetection();
 
   // Items added callback
@@ -186,37 +185,17 @@ const setFilterLgaWrapper = (val) => {
 };
 
 
-const handleEnableLocation = useCallback(async () => {
-  setIsLoadingLocation(true);
-  
-  try {
-    // Use quick location for search
-    const location = await requestLocation();
-    
-    toast.success(
-      `Location detected with ${location.accuracy}m accuracy`,
-      {
-        description: `Quality: ${location.quality} (${location.sampleCount} readings)`,
-        duration: 4000,
-      }
-    );
-    
-  } catch (error) {
-    toast.error(error.message);
-  } finally {
-    setIsLoadingLocation(false);
-  }
-}, [requestLocation]);
-
-// For showing distance to pharmacies, use:
-const handleShowDistances = useCallback(async () => {
-  try {
-    const location = await requestAccurateLocation();
-    // Now calculate distances with better accuracy
-  } catch (error) {
-    toast.error('Unable to get accurate location for distance calculation');
-  }
-}, [requestAccurateLocation]);
+const handleEnableLocation = useCallback(() => {
+    setIsLoadingLocation(true);
+    requestLocation()
+      .then(() => toast.success('Location detected successfully'))
+      .catch((error) => {
+        toast.error(error.code === 1 
+          ? 'Location permission denied' 
+          : 'Unable to get location');
+        setIsLoadingLocation(false);
+      });
+  }, [requestLocation]);
 
   // Fetch suggestions on term change
   useEffect(() => {
