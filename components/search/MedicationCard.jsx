@@ -52,6 +52,8 @@ const MedicationCard = ({
   lga, 
   ward, 
   locationStatus, 
+  progress,
+  accuracy,
   onSelectLocation,
   onEnableLocation,
   isLoadingLocation,
@@ -373,6 +375,8 @@ const MedicationCard = ({
     onSelectLocation={onSelectLocation}
     onEnableLocation={onEnableLocation}
     locationStatus={locationStatus}
+    progress={progress}
+    accuracy={accuracy}
     isLoadingLocation={isLoadingLocation}
   />
 ) : availabilityCount === 0 ? (

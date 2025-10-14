@@ -8,12 +8,21 @@ const NIGERIA_BOUNDS = {
   maxLng: 14.7,
 };
 
-// ✨ NEW: Accuracy thresholds
+// Accuracy thresholds
 const ACCURACY_CONFIG = {
-  EXCELLENT: 20,  // < 20m = excellent
-  GOOD: 50,       // < 50m = good
-  ACCEPTABLE: 100, // < 100m = acceptable
-  MAX: 200,       // > 200m = reject
+  EXCELLENT: 20,
+  GOOD: 50,
+  ACCEPTABLE: 100,
+  MAX: 200,
+};
+
+// Sample configuration
+const SAMPLE_CONFIG = {
+  STANDARD_SAMPLES: 3,      // Default for searches (good balance)
+  PRECISE_SAMPLES: 5,       // For "Nearest" or critical searches
+  SAMPLE_INTERVAL: 1000,    // 1 second between samples
+  MIN_REQUIRED: 2,          // Minimum valid samples needed
+  TIMEOUT: 10000,           // Per-sample timeout
 };
 
 function isInNigeria(lat, lng) {
@@ -23,9 +32,6 @@ function isInNigeria(lat, lng) {
          lng <= NIGERIA_BOUNDS.maxLng;
 }
 
-/**
- * ✨ ENHANCED: Get accuracy quality label
- */
 function getAccuracyQuality(accuracy) {
   if (accuracy < ACCURACY_CONFIG.EXCELLENT) return 'excellent';
   if (accuracy < ACCURACY_CONFIG.GOOD) return 'good';
@@ -34,22 +40,80 @@ function getAccuracyQuality(accuracy) {
 }
 
 /**
- * Hook for detecting user's geolocation (SEARCH functionality)
- * 
- * ✨ IMPROVEMENTS:
- * - No cached readings (maximumAge: 0)
- * - Accuracy validation and retry logic
- * - Quality reporting
- * - Optional multi-sample for better precision
+ * Calculate median (better than average for outliers)
+ */
+function median(numbers) {
+  const sorted = [...numbers].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+}
+
+/**
+ * Calculate standard deviation
+ */
+function standardDeviation(values, mean) {
+  const squareDiffs = values.map(value => Math.pow(value - mean, 2));
+  const avgSquareDiff = squareDiffs.reduce((a, b) => a + b, 0) / values.length;
+  return Math.sqrt(avgSquareDiff);
+}
+
+/**
+ * Haversine distance calculation
+ */
+function haversineDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371e3; // Earth radius in meters
+  const φ1 = lat1 * Math.PI / 180;
+  const φ2 = lat2 * Math.PI / 180;
+  const Δφ = (lat2 - lat1) * Math.PI / 180;
+  const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+  const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+            Math.cos(φ1) * Math.cos(φ2) *
+            Math.sin(Δλ/2) * Math.sin(Δλ/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+  return R * c;
+}
+
+/**
+ * Filter outliers using statistical methods
+ */
+function filterOutliers(samples) {
+  if (samples.length < 3) return samples;
+
+  const centerLat = samples.reduce((sum, s) => sum + s.lat, 0) / samples.length;
+  const centerLng = samples.reduce((sum, s) => sum + s.lng, 0) / samples.length;
+
+  const distances = samples.map(s => 
+    haversineDistance(s.lat, s.lng, centerLat, centerLng)
+  );
+
+  const meanDist = distances.reduce((a, b) => a + b, 0) / distances.length;
+  const stdDev = standardDeviation(distances, meanDist);
+  const threshold = meanDist + (2 * stdDev);
+
+  const filtered = samples.filter((_, i) => distances[i] <= threshold);
+
+  if (filtered.length > 0) {
+    console.log(`🧹 Filtered ${samples.length - filtered.length} outliers`);
+  }
+  
+  return filtered.length >= SAMPLE_CONFIG.MIN_REQUIRED ? filtered : samples;
+}
+
+/**
+ * Enhanced hook for detecting user's geolocation
+ * Now uses multi-sampling by default for better indoor accuracy
  */
 export function useLocationDetection() {
   const [userLocation, setUserLocation] = useState(null);
   const [locationStatus, setLocationStatus] = useState('pending');
   const [error, setError] = useState(null);
-  const [accuracy, setAccuracy] = useState(null); // ✨ NEW: Track accuracy
+  const [accuracy, setAccuracy] = useState(null);
+  const [progress, setProgress] = useState(null); // Track sampling progress
 
   /**
-   * ✨ ENHANCED: Get single reading with quality validation
+   * Get single GPS reading
    */
   const getSingleReading = useCallback((options = {}) => {
     return new Promise((resolve, reject) => {
@@ -59,111 +123,206 @@ export function useLocationDetection() {
       }
 
       const gpsOptions = {
-        timeout: 10000,
-        maximumAge: 0, // ✅ ALWAYS get fresh reading (was 60000)
+        timeout: SAMPLE_CONFIG.TIMEOUT,
+        maximumAge: 0, // Always fresh reading
         enableHighAccuracy: true,
         ...options,
       };
 
+      let settled = false; // ✅ Prevent double resolution
+
+      const timeoutId = setTimeout(() => {
+        if (!settled) {
+          settled = true;
+          reject(new Error('GPS reading timeout'));
+        }
+      }, gpsOptions.timeout);
+
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          resolve({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-            accuracy: position.coords.accuracy,
-            timestamp: position.timestamp,
-          });
+          if (!settled) {
+            settled = true;
+            clearTimeout(timeoutId);
+            resolve({
+              lat: position.coords.latitude,
+              lng: position.coords.longitude,
+              accuracy: position.coords.accuracy,
+              timestamp: position.timestamp,
+            });
+          }
         },
-        (err) => reject(err),
+        (err) => {
+          if (!settled) {
+            settled = true;
+            clearTimeout(timeoutId);
+            // ✅ Ensure error always has a message
+            const error = new Error(
+              err?.message || 
+              (err?.code ? `GPS error code ${err.code}` : 'GPS reading failed')
+            );
+            error.code = err?.code;
+            error.originalError = err;
+            reject(error);
+          }
+        },
         gpsOptions
       );
     });
   }, []);
 
   /**
-   * ✨ ENHANCED: Request location with quality validation
+   * Collect multiple GPS samples with progress tracking
+   */
+  const collectSamples = useCallback(async (sampleCount, onProgress) => {
+    const samples = [];
+
+    for (let i = 0; i < sampleCount; i++) {
+      try {
+        onProgress?.({
+          current: i + 1,
+          total: sampleCount,
+          status: 'collecting',
+        });
+
+        const reading = await getSingleReading();
+
+        // Validate Nigeria bounds
+        if (!isInNigeria(reading.lat, reading.lng)) {
+          console.warn(`Sample ${i + 1}: Outside Nigeria`);
+          onProgress?.({
+            current: i + 1,
+            total: sampleCount,
+            status: 'outside_bounds',
+          });
+          continue;
+        }
+
+        // Validate accuracy
+        if (reading.accuracy > ACCURACY_CONFIG.MAX) {
+          console.warn(`Sample ${i + 1}: Poor accuracy (${reading.accuracy}m)`);
+          onProgress?.({
+            current: i + 1,
+            total: sampleCount,
+            status: 'poor_accuracy',
+            accuracy: reading.accuracy,
+          });
+          continue;
+        }
+
+        samples.push(reading);
+        const quality = getAccuracyQuality(reading.accuracy);
+        
+        console.log(`📍 Sample ${i + 1}/${sampleCount}: ${reading.accuracy.toFixed(1)}m (${quality})`);
+        
+        onProgress?.({
+          current: i + 1,
+          total: sampleCount,
+          status: 'success',
+          accuracy: reading.accuracy,
+          quality,
+          samplesCollected: samples.length,
+        });
+
+        // Wait before next sample (except last one)
+        if (i < sampleCount - 1) {
+          await new Promise(resolve => setTimeout(resolve, SAMPLE_CONFIG.SAMPLE_INTERVAL));
+        }
+
+      } catch (err) {
+        console.error(`Sample ${i + 1} failed:`, err?.message || err || 'Unknown error');
+        onProgress?.({
+          current: i + 1,
+          total: sampleCount,
+          status: 'error',
+          error: err?.message || 'GPS reading failed',
+        });
+      }
+    }
+
+    return samples;
+  }, [getSingleReading]);
+
+  /**
+   * Calculate final location from samples
+   */
+  const calculateLocation = useCallback((samples) => {
+    if (samples.length === 0) {
+      throw new Error('No valid GPS readings obtained');
+    }
+
+    if (samples.length < SAMPLE_CONFIG.MIN_REQUIRED) {
+      throw new Error(
+        `Insufficient valid readings. Got ${samples.length}, need ${SAMPLE_CONFIG.MIN_REQUIRED}`
+      );
+    }
+
+    const latitudes = samples.map(s => s.lat);
+    const longitudes = samples.map(s => s.lng);
+    const accuracies = samples.map(s => s.accuracy);
+
+    const finalLat = median(latitudes);
+    const finalLng = median(longitudes);
+    const finalAccuracy = median(accuracies);
+
+    // Calculate consistency (max distance from center)
+    const distances = samples.map(s => 
+      haversineDistance(s.lat, s.lng, finalLat, finalLng)
+    );
+    const consistency = Math.max(...distances);
+
+    const quality = getAccuracyQuality(finalAccuracy);
+
+    return {
+      lat: finalLat,
+      lng: finalLng,
+      accuracy: Math.round(finalAccuracy),
+      quality,
+      sampleCount: samples.length,
+      consistency: Math.round(consistency),
+      timestamp: Date.now(),
+    };
+  }, []);
+
+  /**
+   * ✨ ENHANCED: Standard location request (3 samples)
+   * Best for most searches - good accuracy, reasonable wait time
    */
   const requestLocation = useCallback(async (options = {}) => {
-    const { 
-      allowPoorAccuracy = false, // ✨ NEW: Optionally allow poor accuracy
-      maxRetries = 2              // ✨ NEW: Retry if accuracy is poor
-    } = options;
+    const { samples = SAMPLE_CONFIG.STANDARD_SAMPLES } = options;
 
     try {
       setLocationStatus('requesting');
       setError(null);
+      setProgress({ current: 0, total: samples, status: 'starting' });
 
-      let bestReading = null;
-      let attempts = 0;
+      console.log(`📡 Collecting ${samples} GPS samples...`);
 
-      // ✨ Try to get a good reading (with retries)
-      while (attempts < maxRetries) {
-        attempts++;
-        console.log(`📍 GPS attempt ${attempts}/${maxRetries}...`);
+      // Collect samples
+      const rawSamples = await collectSamples(samples, setProgress);
 
-        try {
-          const reading = await getSingleReading();
-
-          // Validate Nigeria bounds
-          if (!isInNigeria(reading.lat, reading.lng)) {
-            throw new Error(
-              'Your location is outside Nigeria. Please use the State/LGA filter to search.'
-            );
-          }
-
-          // Check if this is the best reading so far
-          if (!bestReading || reading.accuracy < bestReading.accuracy) {
-            bestReading = reading;
-          }
-
-          const quality = getAccuracyQuality(reading.accuracy);
-          console.log(`📊 Reading ${attempts}: ${reading.accuracy.toFixed(1)}m (${quality})`);
-
-          // ✨ Accept if accuracy is good enough
-          if (reading.accuracy < ACCURACY_CONFIG.ACCEPTABLE) {
-            break; // Good enough, stop retrying
-          }
-
-          // ✨ Reject if accuracy is too poor
-          if (reading.accuracy > ACCURACY_CONFIG.MAX && !allowPoorAccuracy) {
-            if (attempts < maxRetries) {
-              console.log('⚠️ Poor accuracy, retrying...');
-              await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s
-              continue;
-            }
-          }
-
-        } catch (err) {
-          if (attempts >= maxRetries) throw err;
-          console.log('⚠️ Reading failed, retrying...');
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        }
-      }
-
-      if (!bestReading) {
-        throw new Error('Failed to get GPS location after retries');
-      }
-
-      // ✨ Reject if final accuracy is too poor and not allowed
-      if (bestReading.accuracy > ACCURACY_CONFIG.MAX && !allowPoorAccuracy) {
+      if (rawSamples.length === 0) {
         throw new Error(
-          `GPS accuracy too poor (${Math.round(bestReading.accuracy)}m). Please move to an area with better signal.`
+          'No valid GPS readings obtained. Please enable GPS and ensure you have a clear view of the sky.'
         );
       }
 
-      const quality = getAccuracyQuality(bestReading.accuracy);
-      const location = {
-        lat: bestReading.lat,
-        lng: bestReading.lng,
-        accuracy: Math.round(bestReading.accuracy),
-        quality,
-        timestamp: bestReading.timestamp,
-      };
+      // Filter outliers
+      const filtered = filterOutliers(rawSamples);
+
+      // Calculate final location
+      const location = calculateLocation(filtered);
+
+      // Validate final location
+      if (!isInNigeria(location.lat, location.lng)) {
+        throw new Error(
+          'Your location is outside Nigeria. Please use the State/LGA filter to search.'
+        );
+      }
 
       setUserLocation(location);
       setAccuracy(location.accuracy);
       setLocationStatus('granted');
-      setError(null);
+      setProgress(null);
 
       console.log('✅ Location detected:', location);
       return location;
@@ -173,11 +332,11 @@ export function useLocationDetection() {
 
       let errorMessage = 'Failed to get location';
       if (err.code === 1) {
-        errorMessage = 'Location permission denied';
+        errorMessage = 'Location permission denied. Please enable location access.';
       } else if (err.code === 2) {
         errorMessage = 'Location unavailable. Please enable GPS and try outdoors.';
       } else if (err.code === 3) {
-        errorMessage = 'Location request timed out';
+        errorMessage = 'Location request timed out. Please try again.';
       } else if (err.message) {
         errorMessage = err.message;
       }
@@ -188,80 +347,68 @@ export function useLocationDetection() {
       setLocationStatus('denied');
       setUserLocation(null);
       setAccuracy(null);
+      setProgress(null);
       setError(error);
+      
       throw error;
     }
-  }, [getSingleReading]);
+  }, [collectSamples, calculateLocation]);
 
   /**
-   * ✨ NEW: Get high-precision location (3 samples)
-   * Use this when accuracy is critical (e.g., "Nearest" sort)
+   * ✨ ENHANCED: Precise location request (5 samples)
+   * Best for "Nearest" sorting - maximum accuracy
    */
   const requestPreciseLocation = useCallback(async () => {
+    return requestLocation({ samples: SAMPLE_CONFIG.PRECISE_SAMPLES });
+  }, [requestLocation]);
+
+  /**
+   * Quick location (1 sample) - for fast, non-critical searches
+   * Falls back to old behavior if user needs immediate results
+   */
+  const requestQuickLocation = useCallback(async () => {
     try {
       setLocationStatus('requesting');
       setError(null);
 
-      console.log('📍 Collecting 3 GPS samples for high precision...');
+      const reading = await getSingleReading();
 
-      const samples = [];
-      for (let i = 0; i < 3; i++) {
-        const reading = await getSingleReading();
-        
-        if (!isInNigeria(reading.lat, reading.lng)) {
-          throw new Error('Your location is outside Nigeria');
-        }
-
-        if (reading.accuracy < ACCURACY_CONFIG.MAX) {
-          samples.push(reading);
-          console.log(`📊 Sample ${i + 1}: ${reading.accuracy.toFixed(1)}m`);
-        }
-
-        if (i < 2) await new Promise(resolve => setTimeout(resolve, 1000));
+      if (!isInNigeria(reading.lat, reading.lng)) {
+        throw new Error(
+          'Your location is outside Nigeria. Please use the State/LGA filter to search.'
+        );
       }
 
-      if (samples.length === 0) {
-        throw new Error('No valid GPS readings obtained');
-      }
-
-      // Calculate median position
-      const latitudes = samples.map(s => s.lat);
-      const longitudes = samples.map(s => s.lng);
-      const accuracies = samples.map(s => s.accuracy);
-
-      const sortedLats = [...latitudes].sort((a, b) => a - b);
-      const sortedLngs = [...longitudes].sort((a, b) => a - b);
-      const sortedAccs = [...accuracies].sort((a, b) => a - b);
-
-      const medianLat = sortedLats[Math.floor(sortedLats.length / 2)];
-      const medianLng = sortedLngs[Math.floor(sortedLngs.length / 2)];
-      const medianAcc = sortedAccs[Math.floor(sortedAccs.length / 2)];
-
-      const quality = getAccuracyQuality(medianAcc);
+      const quality = getAccuracyQuality(reading.accuracy);
       const location = {
-        lat: medianLat,
-        lng: medianLng,
-        accuracy: Math.round(medianAcc),
+        lat: reading.lat,
+        lng: reading.lng,
+        accuracy: Math.round(reading.accuracy),
         quality,
-        sampleCount: samples.length,
-        timestamp: Date.now(),
+        sampleCount: 1,
+        timestamp: reading.timestamp,
       };
 
       setUserLocation(location);
       setAccuracy(location.accuracy);
       setLocationStatus('granted');
-      setError(null);
 
-      console.log('✅ Precise location calculated:', location);
+      console.log('⚡ Quick location detected:', location);
       return location;
 
     } catch (err) {
-      console.error('Precise location error:', err);
+      console.error('Quick location error:', err);
+      
+      const errorMessage = err.message || 'Failed to get location';
+      const error = new Error(errorMessage);
+      error.code = err.code;
+
       setLocationStatus('denied');
       setUserLocation(null);
       setAccuracy(null);
-      setError(err);
-      throw err;
+      setError(error);
+      
+      throw error;
     }
   }, [getSingleReading]);
 
@@ -272,23 +419,30 @@ export function useLocationDetection() {
       locationStatus,
       accuracy: accuracy ? `${accuracy}m` : null,
       hasError: !!error,
+      progress,
     });
-  }, [userLocation, locationStatus, accuracy, error]);
+  }, [userLocation, locationStatus, accuracy, error, progress]);
 
   const clearLocation = useCallback(() => {
     setUserLocation(null);
     setAccuracy(null);
     setLocationStatus('prompt');
     setError(null);
+    setProgress(null);
   }, []);
 
   return {
+    // State
     userLocation,
     locationStatus,
-    accuracy,        // ✨ NEW: Expose accuracy
+    accuracy,
     error,
-    requestLocation,
-    requestPreciseLocation, // ✨ NEW: For critical searches
+    progress,        // ✨ NEW: Sampling progress for UI feedback
+    
+    // Methods
+    requestLocation,          // Standard (3 samples) - default for most searches
+    requestPreciseLocation,   // Precise (5 samples) - for "Nearest" sorting
+    requestQuickLocation,     // Quick (1 sample) - for fast, non-critical use
     clearLocation,
   };
 }
