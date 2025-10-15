@@ -39,6 +39,32 @@ const smoothScrollTo = (element, offset = 100) => {
   window.scrollTo({ top: targetPosition, behavior: 'smooth' });
 };
 
+// ✅ Check if browser supports geolocation
+const checkGeolocationSupport = () => {
+  if (!navigator.geolocation) {
+    toast.error('GPS not supported', {
+      description: 'Your browser does not support location services. Please select your location manually.',
+      duration: 6000,
+    });
+    return false;
+  }
+  return true;
+};
+
+// ✅ Check permission state
+const checkPermissionState = async () => {
+  if ('permissions' in navigator) {
+    try {
+      const result = await navigator.permissions.query({ name: 'geolocation' });
+      return result.state; // 'granted', 'denied', or 'prompt'
+    } catch (error) {
+      console.warn('Permission API not supported:', error);
+      return 'prompt';
+    }
+  }
+  return 'prompt';
+};
+
 const SearchBar = () => {
   const { t } = useTranslation();
   const apiUrl = getApiUrl();
@@ -63,12 +89,15 @@ const SearchBar = () => {
   const [lgas, setLgas] = useState([]);
   const [wards, setWards] = useState([]);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  const [permissionDenied, setPermissionDenied] = useState(false); // ✅ New state
 
   // Refs
   const dropdownRef = useRef(null);
   const inputRef = useRef(null);
   const suggestionRefs = useRef([]);
   const currentMedicationIdRef = useRef(null);
+  const lastProcessedLocation = useRef(null); // ✅ Track processed locations
+  const locationTimeoutRef = useRef(null); // ✅ Track timeout
 
   // Location & geo data
   const { 
@@ -79,7 +108,6 @@ const SearchBar = () => {
     reverseGeocode 
   } = useGeoData();
   
-
   const {
     userLocation,
     locationStatus,
@@ -87,9 +115,9 @@ const SearchBar = () => {
     progress,         
     requestLocation,
     requestQuickLocation,
-    requestPreciseLocation, 
+    requestPreciseLocation,
+    cancelLocationRequest, // ✅ Use this
   } = useLocationDetection();
-
 
   // Items added callback
   const handleItemsAdded = useCallback((items) => {
@@ -162,114 +190,285 @@ const SearchBar = () => {
     setFilters(prev => ({ ...prev, ward: '' }));
   }, [getWards]);
 
-const clearFilters = useCallback(() => {
-  setFilters({ state: '', lga: '' });
-  setSortBy('cheapest');
-  setLgas([]);
-  setFiltersWereSet(false);
-  search.restoreDefaults();
-  setSelectedMedicationId(null);
-}, [search]);
-
-
-const setFilterStateWrapper = useCallback((val) => {
-  setFilters(prev => ({ ...prev, state: val }));
-  if (val) {
-    setFiltersWereSet(true);
-    updateLgas(val);
-  } else {
-    setFiltersWereSet(false);
+  const clearFilters = useCallback(() => {
+    setFilters({ state: '', lga: '' });
+    setSortBy('cheapest');
     setLgas([]);
-  }
-}, [updateLgas]); // ✅ Now stable
+    setFiltersWereSet(false);
+    search.restoreDefaults();
+    setSelectedMedicationId(null);
+  }, [search]);
 
-const setFilterLgaWrapper = useCallback((val) => {
-  setFilters(prev => ({ ...prev, lga: val }));
-  if (val) {
-    setFiltersWereSet(true);
-  }
-}, []);
+  const setFilterStateWrapper = useCallback((val) => {
+    setFilters(prev => ({ ...prev, state: val }));
+    if (val) {
+      setFiltersWereSet(true);
+      updateLgas(val);
+    } else {
+      setFiltersWereSet(false);
+      setLgas([]);
+    }
+  }, [updateLgas]);
 
+  const setFilterLgaWrapper = useCallback((val) => {
+    setFilters(prev => ({ ...prev, lga: val }));
+    if (val) {
+      setFiltersWereSet(true);
+    }
+  }, []);
 
-const handleEnableLocation = useCallback(() => {
-  setIsLoadingLocation(true);
-  
-  const locationPromise = sortBy === 'nearest'
-    ? requestPreciseLocation()
-    : requestLocation();
+  // ✅ ENHANCED: Handle location enable with all edge cases
+  const handleEnableLocation = useCallback(async () => {
+    // Check browser support
+    if (!checkGeolocationSupport()) {
+      setShowFilters(true);
+      return;
+    }
+
+    // Check permission state
+    const permissionState = await checkPermissionState();
     
-  locationPromise
-    .then((location) => {
-      // ✅ Success handling with quality feedback
-      let message = 'Location detected successfully';
-      
-      // Show accuracy quality
-      if (location.quality) {
-        const qualityEmoji = {
-          excellent: '🎯',
-          good: '✅',
-          acceptable: '👍',
-          poor: '⚠️'
-        }[location.quality] || '📍';
-        
-        message = `${qualityEmoji} Location detected (${location.quality} accuracy)`;
-      }
-      
-      // ✅ Warn about partial success (some samples failed)
-      if (location.partialSuccess) {
-        toast.success(message, {
-          description: `Got ${location.sampleCount}/${location.samplesRequested} GPS samples. Accuracy may be reduced.`,
-          duration: 4000,
-        });
-      } else {
-        toast.success(message);
-      }
-    })
-    .catch((error) => {
-      // ✅ Smart error handling with actionable advice
-      const errorCode = error.code;
-      
-      if (errorCode === 3) {
-        // Timeout error
-        toast.error('GPS signal timeout', {
-          description: '📡 Move to an area with better sky visibility and try again.',
-          duration: 5000,
-          action: {
-            label: 'Retry',
-            onClick: handleEnableLocation,
+    if (permissionState === 'denied') {
+      setPermissionDenied(true);
+      toast.error('Location access blocked', {
+        description: '🔒 Please enable location in your browser settings, then refresh the page.',
+        duration: 8000,
+        action: {
+          label: 'How to enable',
+          onClick: () => {
+            window.open('https://support.google.com/chrome/answer/142065', '_blank');
           },
-        });
-      } else if (errorCode === 1) {
-        // Permission denied
-        toast.error('Location permission denied', {
-          description: '🔒 Please enable location access in your browser settings.',
-          duration: 6000,
-          action: {
-            label: 'Help',
-            onClick: () => {
-              // Open help modal or link
-              window.open('https://support.google.com/chrome/answer/142065', '_blank');
-            },
-          },
-        });
-      } else if (errorCode === 2) {
-        // Unavailable
-        toast.error('GPS unavailable', {
-          description: '📱 Please enable location services on your device.',
-          duration: 5000,
-        });
-      } else {
-        // Generic error
-        toast.error(error.message || 'Failed to get location', {
-          duration: 4000,
-        });
-      }
-    })
-    .finally(() => {
-      setIsLoadingLocation(false);
-    });
-}, [requestLocation, requestPreciseLocation, sortBy]);
+        },
+      });
+      return;
+    }
 
+    setIsLoadingLocation(true);
+    setPermissionDenied(false);
+
+    // ✅ Set maximum timeout (60 seconds)
+    locationTimeoutRef.current = setTimeout(() => {
+      setIsLoadingLocation(false);
+      toast.error('Location request timed out', {
+        description: 'This is taking too long. Please select your location manually.',
+        duration: 6000,
+        action: {
+          label: 'Select Manually',
+          onClick: () => setShowFilters(true),
+        },
+      });
+    }, 60000);
+
+    const locationPromise = sortBy === 'nearest'
+      ? requestPreciseLocation()
+      : requestLocation();
+      
+    locationPromise
+      .then((location) => {
+        // Clear timeout
+        if (locationTimeoutRef.current) {
+          clearTimeout(locationTimeoutRef.current);
+        }
+
+        // ✅ Check for partial success
+        const sampleCount = location.sampleCount || 1;
+        const samplesRequested = sortBy === 'nearest' ? 5 : 3;
+        const isPartialSuccess = sampleCount < samplesRequested;
+
+        let message = 'Location detected successfully';
+        let description = '';
+        
+        // Quality feedback
+        if (location.quality) {
+          const qualityEmoji = {
+            excellent: '🎯',
+            good: '✅',
+            acceptable: '👍',
+            poor: '⚠️'
+          }[location.quality] || '📍';
+          
+          message = `${qualityEmoji} Location detected (${location.quality} accuracy)`;
+        }
+        
+        // ✅ Warn about partial success
+        if (isPartialSuccess) {
+          description = `Got ${sampleCount}/${samplesRequested} GPS samples. Accuracy may be reduced.`;
+          toast.warning(message, {
+            description,
+            duration: 5000,
+          });
+        } else if (location.accuracy > 100) {
+          // ✅ Warn about poor accuracy
+          toast.warning('Location detected with low accuracy', {
+            description: `GPS accuracy: ${location.accuracy}m. Consider selecting location manually for better results.`,
+            duration: 5000,
+            action: {
+              label: 'Select Manually',
+              onClick: () => setShowFilters(true),
+            },
+          });
+        } else {
+          toast.success(message, {
+            description: description || `Accuracy: ${location.accuracy}m`,
+            duration: 3000,
+          });
+        }
+      })
+      .catch((error) => {
+        // Clear timeout
+        if (locationTimeoutRef.current) {
+          clearTimeout(locationTimeoutRef.current);
+        }
+
+        // ✅ DON'T reset loading state yet - let user see the error
+        
+        // ✅ Smart error handling with actionable advice
+        const errorCode = error.code;
+        const errorMessage = error.message || '';
+        
+        if (errorMessage === 'Location request cancelled') {
+          // Don't show error for user cancellation
+          toast.info('Location detection cancelled');
+          setIsLoadingLocation(false); // ✅ Reset on cancel
+          return;
+        }
+        
+        // ✅ Handle weak GPS signal (0 samples collected)
+        if (errorMessage.includes('GPS signal too weak')) {
+          toast.error('GPS signal too weak', {
+            description: '📡 No GPS samples could be collected. Please move outdoors with a clear view of the sky, or select your location manually.',
+            duration: 8000,
+            action: {
+              label: 'Select Manually',
+              onClick: () => {
+                setShowFilters(true);
+                setIsLoadingLocation(false);
+              },
+            },
+          });
+          // ✅ Don't reset immediately - give user time to read
+          setTimeout(() => {
+            setIsLoadingLocation(false);
+            setShowFilters(true); // Auto-open manual selection
+          }, 1500);
+          return;
+        }
+        
+        // ✅ Handle insufficient samples (got some but not enough)
+        if (errorMessage.includes('Insufficient valid readings')) {
+          const match = errorMessage.match(/Got (\d+)/);
+          const samplesGot = match ? match[1] : '0';
+          
+          toast.error('Insufficient GPS samples', {
+            description: `📡 Only ${samplesGot} valid GPS samples collected. Please try again outdoors, or select your location manually.`,
+            duration: 8000,
+            action: {
+              label: 'Select Manually',
+              onClick: () => {
+                setShowFilters(true);
+                setIsLoadingLocation(false);
+              },
+            },
+          });
+          setTimeout(() => {
+            setIsLoadingLocation(false);
+            setShowFilters(true);
+          }, 1500);
+          return;
+        }
+        
+        if (errorCode === 3) {
+          // Timeout error
+          toast.error('GPS signal timeout', {
+            description: '📡 Move outdoors with a clear view of the sky. Tall buildings and indoor areas block GPS signals.',
+            duration: 6000,
+            action: {
+              label: 'Retry',
+              onClick: () => {
+                setIsLoadingLocation(false);
+                setTimeout(() => handleEnableLocation(), 100);
+              },
+            },
+          });
+          setTimeout(() => setIsLoadingLocation(false), 1500);
+        } else if (errorCode === 1) {
+          // Permission denied
+          setPermissionDenied(true);
+          toast.error('Location permission denied', {
+            description: '🔒 Please enable location access in your browser settings.',
+            duration: 7000,
+            action: {
+              label: 'How to enable',
+              onClick: () => {
+                window.open('https://support.google.com/chrome/answer/142065', '_blank');
+              },
+            },
+          });
+          setIsLoadingLocation(false);
+        } else if (errorCode === 2) {
+          // Unavailable
+          toast.error('GPS unavailable', {
+            description: '📱 Please enable location services on your device and try again.',
+            duration: 6000,
+            action: {
+              label: 'Retry',
+              onClick: () => {
+                setIsLoadingLocation(false);
+                setTimeout(() => handleEnableLocation(), 100);
+              },
+            },
+          });
+          setTimeout(() => setIsLoadingLocation(false), 1500);
+        } else if (errorMessage?.includes('No valid GPS readings')) {
+          // ✅ All samples failed - suggest manual selection
+          toast.error('Unable to detect location', {
+            description: '📡 GPS signal too weak. Please select your location manually.',
+            duration: 6000,
+            action: {
+              label: 'Select Manually',
+              onClick: () => {
+                setShowFilters(true);
+                setIsLoadingLocation(false);
+              },
+            },
+          });
+          setTimeout(() => {
+            setIsLoadingLocation(false);
+            setShowFilters(true);
+          }, 1500);
+        } else {
+          // Generic error
+          toast.error(errorMessage || 'Failed to get location', {
+            description: 'Please try again or select your location manually.',
+            duration: 5000,
+            action: {
+              label: 'Select Manually',
+              onClick: () => {
+                setShowFilters(true);
+                setIsLoadingLocation(false);
+              },
+            },
+          });
+          setTimeout(() => setIsLoadingLocation(false), 1500);
+        }
+      })
+      .finally(() => {
+        // ✅ Don't clear timeout here - already handled in then/catch
+        // This was causing premature cleanup
+      });
+  }, [requestLocation, requestPreciseLocation, sortBy, setShowFilters]);
+
+  // ✅ Handle cancel location
+  const handleCancelLocation = useCallback(() => {
+    cancelLocationRequest();
+    setIsLoadingLocation(false);
+    
+    if (locationTimeoutRef.current) {
+      clearTimeout(locationTimeoutRef.current);
+    }
+    
+    toast.info('Location detection cancelled');
+  }, [cancelLocationRequest]);
 
   // Fetch suggestions on term change
   useEffect(() => {
@@ -340,104 +539,116 @@ const handleEnableLocation = useCallback(() => {
   }, [search, filters, userLocation, sortBy]);
 
   // Filter changes
-useEffect(() => {
-  if (!currentMedicationIdRef.current) return;
+  useEffect(() => {
+    if (!currentMedicationIdRef.current) return;
 
-  const hasFilters = filters.state || filters.lga;
-  
-  if (hasFilters) {
-    handleSearch(currentMedicationIdRef.current, {
-      onComplete: () => {
-        setTimeout(() => {
-          const section = document.querySelector('[data-location-text]');
-          smoothScrollTo(section, 100);
-        }, 300);
-      }
-    });
-  } else {
-    search.restoreDefaults();
-  }
-}, [filters.state, filters.lga]);
-
-
-
-// Reverse geocode on location
-useEffect(() => {
-  // Guard clause
-  if (!userLocation || !geoData?.length) {
-    return;
-  }
-  
-  // ✅ Prevent duplicate processing
-  const locationKey = `${userLocation.lat.toFixed(4)},${userLocation.lng.toFixed(4)}`;
-  const processedLocations = sessionStorage.getItem('processedLocations') || '[]';
-  const processed = JSON.parse(processedLocations);
-  
-  if (processed.includes(locationKey)) {
-    console.log('⏭️ Location already processed, skipping');
-    setIsLoadingLocation(false);
-    return;
-  }
-  
-  console.log('🔄 Processing new location:', locationKey);
-  
-  const match = reverseGeocode(userLocation.lat, userLocation.lng, {
-    includeNearby: true
-  });
-  
-  console.log('Reverse geocode match:', match);
-  
-  if (match) {
-    if (match.confidence.level === 'high' || match.confidence.level === 'good') {
-      setFilterStateWrapper(match.state);
-      setTimeout(() => {
-        setFilterLgaWrapper(match.lga);
-      }, 50);
-      
-      toast.success(
-        `Location detected: ${match.state}, ${match.lga}`,
-        { duration: 3000 }
-      );
-    } else {
-      toast.info(
-        `Approximate location: ${match.state}, ${match.lga} (${match.distance.toFixed(1)}km away). Please verify.`,
-        {
-          duration: 5000,
-          action: {
-            label: 'Adjust',
-            onClick: () => setShowFilters(true)
-          }
+    const hasFilters = filters.state || filters.lga;
+    
+    if (hasFilters) {
+      handleSearch(currentMedicationIdRef.current, {
+        onComplete: () => {
+          setTimeout(() => {
+            const section = document.querySelector('[data-location-text]');
+            smoothScrollTo(section, 100);
+          }, 300);
         }
-      );
-      
-      setFilterStateWrapper(match.state);
-      setTimeout(() => {
-        setFilterLgaWrapper(match.lga);
-      }, 50);
+      });
+    } else {
+      search.restoreDefaults();
+    }
+  }, [filters.state, filters.lga]);
+
+  // ✅ ENHANCED: Reverse geocode with duplicate prevention
+  useEffect(() => {
+    if (!userLocation || !geoData?.length) {
+      return;
     }
     
-    // ✅ Mark as processed
-    processed.push(locationKey);
-    // Keep only last 5 locations to prevent storage bloat
-    const recent = processed.slice(-5);
-    sessionStorage.setItem('processedLocations', JSON.stringify(recent));
+    // ✅ Prevent duplicate processing with ref
+    const locationKey = `${userLocation.latitude.toFixed(4)},${userLocation.longitude.toFixed(4)}`;
     
-    setIsLoadingLocation(false);
-  } else {
-    toast.error('Could not determine your location. Please select manually.');
-    setIsLoadingLocation(false);
-  }
-  
-}, [
-  userLocation, 
-  geoData, 
-  reverseGeocode, 
-  setFilterStateWrapper,  
-  setFilterLgaWrapper,   
-  setShowFilters,
-  setIsLoadingLocation
-]);
+    if (lastProcessedLocation.current === locationKey) {
+      console.log('⏭️ Location already processed, skipping');
+      setIsLoadingLocation(false);
+      return;
+    }
+    
+    console.log('🔄 Processing new location:', locationKey);
+    lastProcessedLocation.current = locationKey;
+    
+    const match = reverseGeocode(userLocation.latitude, userLocation.longitude, {
+      includeNearby: true
+    });
+    
+    console.log('Reverse geocode match:', match);
+    
+    if (match) {
+      if (match.confidence.level === 'high' || match.confidence.level === 'good') {
+        setFilterStateWrapper(match.state);
+        setTimeout(() => {
+          setFilterLgaWrapper(match.lga);
+        }, 50);
+        
+        toast.success(
+          `Location detected: ${match.state}, ${match.lga}`,
+          { 
+            description: `Confidence: ${match.confidence.level} (${match.confidence.score}% match)`,
+            duration: 3000 
+          }
+        );
+      } else {
+        // ✅ Low confidence - warn user
+        toast.warning(
+          `Approximate location: ${match.state}, ${match.lga}`,
+          {
+            description: `${match.distance.toFixed(1)}km from nearest known area. Please verify your location is correct.`,
+            duration: 6000,
+            action: {
+              label: 'Adjust Location',
+              onClick: () => setShowFilters(true)
+            }
+          }
+        );
+        
+        setFilterStateWrapper(match.state);
+        setTimeout(() => {
+          setFilterLgaWrapper(match.lga);
+        }, 50);
+      }
+      
+      setIsLoadingLocation(false);
+    } else {
+      // ✅ No match found
+      toast.error('Could not determine your location', {
+        description: 'Please select your state and local government area manually.',
+        duration: 6000,
+        action: {
+          label: 'Select Manually',
+          onClick: () => setShowFilters(true)
+        }
+      });
+      setIsLoadingLocation(false);
+      setShowFilters(true); // Auto-open filters
+    }
+    
+  }, [
+    userLocation, 
+    geoData, 
+    reverseGeocode, 
+    setFilterStateWrapper,  
+    setFilterLgaWrapper,   
+    setShowFilters,
+    setIsLoadingLocation
+  ]);
 
+  // ✅ Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (locationTimeoutRef.current) {
+        clearTimeout(locationTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Select medication
   const handleSelectMedication = useCallback(async (suggestion) => {
@@ -769,7 +980,9 @@ useEffect(() => {
                   }, 200);
                 }}
                 onEnableLocation={handleEnableLocation}
+                onCancelLocation={handleCancelLocation} // ✅ Pass cancel handler
                 isLoadingLocation={isLoadingLocation}
+                permissionDenied={permissionDenied} // ✅ Pass permission state
               />
             </div>
           </ErrorBoundary>
