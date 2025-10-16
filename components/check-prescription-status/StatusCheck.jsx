@@ -3,9 +3,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
+import { toast } from 'sonner';
+
 // Hooks
 import { useStatusCheck } from '@/hooks/useStatusCheck';
 import { useGuestId } from '@/hooks/useGuestId';
+import { useConsentCheck } from '@/hooks/useConsentCheck';
+
 
 // Components
 import StatusCheckForm from './StatusCheckForm';
@@ -14,6 +18,8 @@ import StatusSuccess from './StatusSuccess';
 import StatusUnderReview from './StatusUnderReview';
 import StatusNoMedications from './StatusNoMedications';
 import StatusError from './StatusError';
+import ConsentModal from '@/components/ConsentModal';
+
 
 export default function StatusCheck() {
   const router = useRouter();
@@ -33,15 +39,31 @@ export default function StatusCheck() {
     reset
   } = useStatusCheck(guestId);
 
+  const { isConsentOpen, checkConsent, handleConsentClose } = useConsentCheck();
+
   // Auto-check if userIdentifier is in URL
   useEffect(() => {
     const userIdentifier = searchParams.get('userIdentifier');
     if (userIdentifier && guestId) {
+      // Check consent before auto-checking
+      if (!checkConsent()) {
+        toast.error('Please accept our privacy policy to check prescription status', { duration: 4000 });
+        return;
+      }
+      
       checkStatus({ identifier: userIdentifier, isDirectFetch: true });
     }
-  }, [searchParams, guestId, checkStatus]);
+  }, [searchParams, guestId, checkStatus, checkConsent]);
+
 
   const handleSubmit = (formData) => {
+
+     // Check consent first
+    if (!checkConsent()) {
+      toast.error('Please accept our privacy policy to check prescription status', { duration: 4000 });
+      return;
+    }
+
     setIdentifier(formData.identifier);
     checkStatus({ identifier: formData.identifier, isDirectFetch: false });
   };
@@ -164,6 +186,7 @@ export default function StatusCheck() {
           <p className="text-sm opacity-90">&copy; {new Date().getFullYear()} Manzu. Powered by WellRica.</p>
         </div>
       </footer>
+      <ConsentModal isOpen={isConsentOpen} onClose={handleConsentClose} />
     </div>
   );
 }

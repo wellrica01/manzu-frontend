@@ -19,6 +19,7 @@ import {
 import { cn } from '@/lib/utils';
 
 // Components
+import ConsentModal from '@/components/ConsentModal';
 import ErrorMessage from '@/components/ErrorMessage';
 import EmptyCart from './EmptyCart';
 import UnifiedRemoveDialog from './UnifiedRemoveDialog';
@@ -40,6 +41,7 @@ import {
 import { getAvailableTabs } from '@/lib/cartConfig';
 
 // Custom Hooks
+import { useConsentCheck } from '@/hooks/useConsentCheck';
 import { useCartData } from '@/hooks/useCartData';
 import { useCartMutations } from '@/hooks/useCartMutations';
 import { useOfflineDetection } from '@/hooks/useOfflineDetection';
@@ -199,6 +201,9 @@ function CartComponent() {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   
   // Custom hooks
+
+  const { isConsentOpen, checkConsent, handleConsentClose } = useConsentCheck();
+
   const { cart, itemCount, isLoading, isError, error, refetch } = useCartData(guestId, apiUrl);
   const { 
     updateQuantity, 
@@ -427,6 +432,13 @@ function CartComponent() {
 
   // Prescription upload success handler
   const handlePrescriptionUploadSuccess = useCallback(async () => {
+
+    // Check consent before proceeding
+    if (!checkConsent()) {
+      toast.error('Please accept our privacy policy to upload prescriptions', { duration: 4000 });
+      return;
+    }
+
     try {
       await refetch();
       
@@ -944,6 +956,7 @@ function CartComponent() {
         totalItems={totalItemCount}
         isRemoving={isRemoving}
       />
+      <ConsentModal isOpen={isConsentOpen} onClose={handleConsentClose} />
     </div>
   );
 }

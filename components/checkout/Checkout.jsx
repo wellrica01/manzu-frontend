@@ -13,8 +13,10 @@ import CheckoutDialog from './CheckoutDialog';
 import CheckoutForm from './CheckoutForm';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import ConsentModal from '@/components/ConsentModal';
 
 // Hooks
+import { useConsentCheck } from '@/hooks/useConsentCheck';
 import { useCartData } from '@/hooks/useCartData';
 import { useCheckoutForm } from '@/hooks/useCheckoutForm';
 import { useCheckoutMutation } from '@/hooks/useCheckoutMutation';
@@ -292,6 +294,9 @@ function CheckoutComponent() {
     }
   });
   
+ const { isConsentOpen, checkConsent, handleConsentClose } = useConsentCheck();
+
+  
   // Local state
   const [showCheckoutDialog, setShowCheckoutDialog] = useState(false);
   const [cartLoaded, setCartLoaded] = useState(false);
@@ -304,6 +309,15 @@ function CheckoutComponent() {
   const uniquePharmacies = useMemo(() => getUniquePharmacies(segments.readyForCheckout), [segments.readyForCheckout]);
   const orderType = useMemo(() => getOrderType(segments), [segments, getOrderType]);
 
+  
+  // Check consent on mount
+  useEffect(() => {
+    if (!checkConsent()) {
+      toast.error('Please accept our privacy policy to proceed with checkout', { duration: 4000 });
+    }
+  }, [checkConsent]);
+
+
   // Track entry on checkout page
   useEffect(() => {
     sessionStorage.setItem('cart_referrer', '/checkout');
@@ -315,6 +329,8 @@ function CheckoutComponent() {
       setCartLoaded(true);
     }
   }, [isLoading, isError, cart]);
+
+
 
   // Redirect if no checkout-ready items
   useEffect(() => {
@@ -353,6 +369,12 @@ function CheckoutComponent() {
   const confirmCheckout = useCallback(() => {
     if (!canCheckout) {
       toast.error('No medications ready for checkout', { duration: 4000 });
+      return;
+    }
+
+ // Check consent before proceeding
+    if (!checkConsent()) {
+      toast.error('Please accept our privacy policy to complete checkout', { duration: 4000 });
       return;
     }
 
@@ -492,6 +514,7 @@ function CheckoutComponent() {
           />
         </div>
       </div>
+      <ConsentModal isOpen={isConsentOpen} onClose={handleConsentClose} />
     </div>
   );
 }

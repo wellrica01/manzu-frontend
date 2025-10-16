@@ -14,7 +14,7 @@ function haversineDistance(lat1, lon1, lat2, lon2) {
   return 2 * R * Math.asin(Math.sqrt(a));
 }
 
-// NEW: Find nearest LGA by checking all wards within it
+// Find nearest LGA by checking all wards within it
 function findNearestLGA(userLat, userLng, geoData) {
   if (!geoData?.length || !userLat || !userLng) return null;
   
@@ -68,7 +68,7 @@ function findNearestLGA(userLat, userLng, geoData) {
   return lgaDistances[0];
 }
 
-// NEW: Confidence scoring based on distance
+// Confidence scoring based on distance
 function getLocationConfidence(distanceKm) {
   if (distanceKm < 1) return { level: 'high', score: 95 };
   if (distanceKm < 3) return { level: 'good', score: 80 };
@@ -77,7 +77,7 @@ function getLocationConfidence(distanceKm) {
   return { level: 'very-low', score: 20 };
 }
 
-// NEW: Find all LGAs within radius
+// Find all LGAs within radius
 function findLGAsInRadius(userLat, userLng, geoData, radiusKm = 20) {
   const lgas = [];
   const seenLGAs = new Set();
@@ -162,7 +162,20 @@ export function useGeoData() {
     loadGeoData();
   }, []);
 
-  // IMPROVED: Finds nearest LGA based on closest ward within it
+  /**
+   * Reverse Geocode: Find nearest state and LGA
+   * 
+   * ⚠️ NOTE: Returns both state AND lga for informational purposes,
+   * but the consuming component (MedSearchBar) should ONLY auto-set
+   * the state filter, leaving LGA for manual user selection.
+   * 
+   * The LGA is included in the response to:
+   * 1. Show users which LGA is nearest (for informational context)
+   * 2. Calculate distance and confidence scores
+   * 3. Provide helpful toast messages
+   * 
+   * @returns {Object} { state, lga, distance, confidence, nearbyLGAs }
+   */
   const reverseGeocode = useCallback((userLat, userLng, options = {}) => {
     const nearest = findNearestLGA(userLat, userLng, geoData);
     
@@ -173,14 +186,14 @@ export function useGeoData() {
     return {
       ...nearest,
       confidence,
-      // Include nearby LGAs for better UX
+      // Include nearby LGAs for better UX (showing user options)
       nearbyLGAs: options.includeNearby 
         ? findLGAsInRadius(userLat, userLng, geoData, 20).slice(0, 5)
         : []
     };
   }, [geoData]);
 
-  // NEW: Search LGAs by radius (for finding pharmacies across multiple LGAs)
+  // Search LGAs by radius (for finding pharmacies across multiple LGAs)
   const findNearbyLGAs = useCallback((userLat, userLng, radiusKm = 20) => {
     return findLGAsInRadius(userLat, userLng, geoData, radiusKm);
   }, [geoData]);
@@ -207,7 +220,7 @@ export function useGeoData() {
     getLgas,
     getWards,
     reverseGeocode,
-    findNearbyLGAs, // NEW - for multi-LGA pharmacy search
+    findNearbyLGAs,
     loading,
     error,
   };

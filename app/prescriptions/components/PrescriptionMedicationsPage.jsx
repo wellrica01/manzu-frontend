@@ -78,12 +78,17 @@ const PrescriptionMedicationsPage = () => {
     userLocation,
     locationStatus,
     requestLocation,
+    requestQuickLocation
   } = useLocationDetection();
 
   // Refs
   const refetchRef = useRef(null);
   const isInitialMount = useRef(true);
   const locationProcessingRef = useRef(false);
+
+  const lastProcessedLocation = useRef(null);
+  const locationTimeoutRef = useRef(null);
+
 
   // Filter state - REMOVED ward
   const [filterState, setFilterState] = useState('');
@@ -190,62 +195,115 @@ const PrescriptionMedicationsPage = () => {
 
   const debouncedRefetch = useDebounce(triggerRefetch, 300);
 
-  // ✅ UPDATED: Auto-detect location - sets both state and LGA
-  useEffect(() => {
-    if (!userLocation || !geoData?.length || isLocationProcessed || locationProcessingRef.current || filtersCleared) {
+  // ✅ UPDATED: Auto-detect location - sets only state filter
+useEffect(() => {
+  if (!userLocation || !geoData?.length || isLocationProcessed || locationProcessingRef.current || filtersCleared) {
+    return;
+  }
+
+  // ✅ FIX 1: Prevent duplicate processing with proper coordinate names
+  const locationKey = `${userLocation.latitude?.toFixed(4) || userLocation.lat?.toFixed(4)},${userLocation.longitude?.toFixed(4) || userLocation.lng?.toFixed(4)}`;
+  
+  if (lastProcessedLocation.current === locationKey) {
+    console.log('⭐️ Location already processed, skipping');
+    setIsLoadingLocation(false);
+    return;
+  }
+  
+  console.log('🔄 Processing new location:', locationKey);
+  lastProcessedLocation.current = locationKey;
+  locationProcessingRef.current = true;
+
+  try {
+    // ✅ FIX 2: Handle both coordinate naming conventions
+    const lat = userLocation.latitude || userLocation.lat;
+    const lng = userLocation.longitude || userLocation.lng;
+    
+    if (!lat || !lng) {
+      console.error('Invalid location coordinates:', userLocation);
+      setIsLoadingLocation(false);
+      locationProcessingRef.current = false;
       return;
     }
 
-    locationProcessingRef.current = true;
-
-    try {
-      const match = reverseGeocode(userLocation.lat, userLocation.lng, {
-        includeNearby: true
-      });
+    const match = reverseGeocode(lat, lng, {
+      includeNearby: true
+    });
+    
+    console.log('Reverse geocode match:', match);
+    
+    if (match) {
+      // ✅ ONLY set state, leave LGA empty for manual selection
+      setFilterState(match.state);
+      setIsLocationProcessed(true);
       
-      console.log('Reverse geocode match:', match);
-      
-      if (match) {
-        // ✅ Set both state and LGA
-        setFilterState(match.state);
-        setFilterLga(match.lga);
-        setIsLocationProcessed(true);
-        
-        // Show success toast with both state and LGA
-        if (match.confidence.level === 'high' || match.confidence.level === 'good') {
-          toast.success(
-            `Location detected: ${match.state}, ${match.lga}`,
-            { duration: 3000 }
-          );
-        } else {
-          toast.info(
-            `Approximate location: ${match.state}, ${match.lga} (${match.distance.toFixed(1)}km away). Please verify.`,
-            {
-              duration: 5000,
-              action: {
-                label: 'Adjust',
-                onClick: () => setShowFilters(true)
-              }
+      // Show appropriate message based on confidence
+      if (match.confidence.level === 'high' || match.confidence.level === 'good') {
+        toast.success(
+          `📍 Location detected: ${match.state}`,
+          { 
+            description: `Nearest LGA: ${match.lga} (${match.distance.toFixed(1)}km away). Select your LGA from the filters if needed.`,
+            duration: 5000,
+            action: {
+              label: 'Select LGA',
+              onClick: () => setShowFilters(true)
             }
-          );
-        }
-        
-        setTimeout(() => {
-          debouncedRefetch();
-          setIsLoadingLocation(false);
-        }, 0);
+          }
+        );
       } else {
-        toast.error('Unable to determine your location. Please select manually.');
-        setIsLoadingLocation(false);
+        // Low confidence - encourage manual selection
+        toast.warning(
+          `📍 Approximate location: ${match.state}`,
+          {
+            description: `${match.distance.toFixed(1)}km from ${match.lga}. Please select your LGA manually for accurate results.`,
+            duration: 7000,
+            action: {
+              label: 'Select LGA',
+              onClick: () => setShowFilters(true)
+            }
+          }
+        );
+        
+        // Auto-open filters for low confidence
+        setTimeout(() => setShowFilters(true), 1000);
       }
-    } catch (err) {
-      console.error('Reverse geocoding error:', err);
-      toast.error('Error processing location. Please select manually.');
+      
+      // ✅ FIX 3: Only refetch after state is set
+      setTimeout(() => {
+        debouncedRefetch();
+        setIsLoadingLocation(false);
+      }, 0);
+    } else {
+      // ✅ No match found - guide user to manual selection
+      toast.error('Could not determine your location', {
+        description: 'Please select your state and local government area manually.',
+        duration: 6000,
+        action: {
+          label: 'Select Manually',
+          onClick: () => setShowFilters(true)
+        }
+      });
       setIsLoadingLocation(false);
-    } finally {
-      locationProcessingRef.current = false;
+      setShowFilters(true);
     }
-  }, [userLocation, geoData, reverseGeocode, isLocationProcessed, debouncedRefetch, filtersCleared]);
+  } catch (err) {
+    console.error('Reverse geocoding error:', err);
+    toast.error('Error processing location. Please select manually.', {
+      duration: 5000,
+      action: {
+        label: 'Select Location',
+        onClick: () => setShowFilters(true)
+      }
+    });
+    setIsLoadingLocation(false);
+    setShowFilters(true);
+  } finally {
+    locationProcessingRef.current = false;
+  }
+}, [userLocation, geoData, reverseGeocode, isLocationProcessed, debouncedRefetch, filtersCleared, setShowFilters]);
+
+
+
 
   // ✅ UPDATED: Handle filter changes - removed filterWard
   useEffect(() => {
@@ -353,26 +411,68 @@ const PrescriptionMedicationsPage = () => {
   }, [debouncedRefetch]);
 
   // ✅ UPDATED: handleEnableLocation - removed ward
-  const handleEnableLocation = useCallback(async () => {
-    setFilterState('');
-    setFilterLga('');
-    setIsLocationProcessed(false);
-    setFiltersCleared(false);
-    setIsLoadingLocation(true);
-    locationProcessingRef.current = false;
+ const handleEnableLocation = useCallback(async () => {
+  setFilterState('');
+  setFilterLga('');
+  setIsLocationProcessed(false);
+  setFiltersCleared(false);
+  setIsLoadingLocation(true);
+  locationProcessingRef.current = false;
+  lastProcessedLocation.current = null; // Reset processed location
+  
+  // ✅ FIX 4: Add timeout safety net
+  locationTimeoutRef.current = setTimeout(() => {
+    setIsLoadingLocation(false);
+    toast.error('Location detection timeout', {
+      description: 'Taking too long. Please select your location manually.',
+      duration: 5000,
+      action: {
+        label: 'Select Manually',
+        onClick: () => setShowFilters(true)
+      }
+    });
+  }, 30000); // 30 second timeout
+  
+  try {
+    await requestQuickLocation();
     
-    try {
-      await requestLocation();
-      toast.success('Location detected successfully');
-    } catch (error) {
-      const errorMessage = error?.code === 1 
-        ? 'Location permission denied'
-        : 'Unable to get location';
-      
-      toast.error(errorMessage);
-      setIsLoadingLocation(false);
+    // Clear timeout on success
+    if (locationTimeoutRef.current) {
+      clearTimeout(locationTimeoutRef.current);
     }
-  }, [requestLocation]);
+    
+    toast.success('📍 Location detected successfully');
+  } catch (error) {
+    // Clear timeout on error
+    if (locationTimeoutRef.current) {
+      clearTimeout(locationTimeoutRef.current);
+    }
+    
+    const errorMessage = error?.code === 1 
+      ? 'Location permission denied. Please allow location access in your browser.'
+      : 'Unable to get location. Please select manually.';
+    
+    toast.error(errorMessage, {
+      duration: 5000,
+      action: {
+        label: 'Select Manually',
+        onClick: () => setShowFilters(true)
+      }
+    });
+    setIsLoadingLocation(false);
+    setShowFilters(true);
+  }
+}, [requestQuickLocation, setShowFilters]);
+
+// ✅ FIX 5: Cleanup timeout on unmount
+useEffect(() => {
+  return () => {
+    if (locationTimeoutRef.current) {
+      clearTimeout(locationTimeoutRef.current);
+    }
+  };
+}, []);
+
 
   // ✅ UPDATED: handleSelectLocation - removed ward
   const handleSelectLocation = useCallback(() => {

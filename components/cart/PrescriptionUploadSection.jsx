@@ -21,6 +21,10 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+import { useConsentCheck } from '@/hooks/useConsentCheck';
+import ConsentModal from '@/components/ConsentModal';
+
 
 const PrescriptionUploadSection = ({ 
   items, 
@@ -95,6 +99,8 @@ const PrescriptionUploadSection = ({
     setErrors(prev => ({ ...prev, file: null }));
   };
 
+  const { isConsentOpen, checkConsent, handleConsentClose } = useConsentCheck();
+
   const handleFileUpload = async () => {
     if (!selectedFile) {
       alert('Please select a file first');
@@ -103,6 +109,13 @@ const PrescriptionUploadSection = ({
 
     if (!validateContact()) {
       alert('Please fix contact information errors');
+      return;
+    }
+
+  
+    // Check consent before uploading
+    if (!checkConsent()) {
+      toast.error('Please accept our privacy policy before uploading prescriptions');
       return;
     }
 
@@ -527,6 +540,8 @@ const PrescriptionUploadSection = ({
           </div>
         </div>
       </CardContent>
+
+      <ConsentModal isOpen={isConsentOpen} onClose={handleConsentClose} />
     </Card>
   );
 };

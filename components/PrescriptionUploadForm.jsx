@@ -17,6 +17,8 @@ import { getGuestId } from '@/lib/utils';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
+import ConsentModal from '@/components/ConsentModal';
+import { useConsentCheck } from '@/hooks/useConsentCheck';
 
 export default function PrescriptionUploadForm() {
   const { t } = useTranslation();
@@ -33,6 +35,8 @@ export default function PrescriptionUploadForm() {
   const [showFilePreview, setShowFilePreview] = useState(false);
   const [contactFocused, setContactFocused] = useState(false);
   const fileInputRef = useRef(null);
+
+  const { isConsentOpen, checkConsent, handleConsentClose } = useConsentCheck();
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -136,6 +140,13 @@ export default function PrescriptionUploadForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+   // Check consent before validation
+    if (!checkConsent()) {
+      toast.error('Please accept our privacy policy before uploading prescriptions');
+      return;
+    }
+
     setIsUploading(true);
 
     if (!validateForm()) {
@@ -531,6 +542,8 @@ export default function PrescriptionUploadForm() {
           )}
         </Button>
       </form>
+       {/* Add Consent Modal */}
+      <ConsentModal isOpen={isConsentOpen} onClose={handleConsentClose} />
     </div>
   );
 }
