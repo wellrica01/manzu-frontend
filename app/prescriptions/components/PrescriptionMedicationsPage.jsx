@@ -78,7 +78,7 @@ const PrescriptionMedicationsPage = () => {
     userLocation,
     locationStatus,
     requestLocation,
-    requestQuickLocation
+    requestPreciseLocation,
   } = useLocationDetection();
 
   // Refs
@@ -408,10 +408,11 @@ useEffect(() => {
     setIsLocationProcessed(false);
     setFiltersCleared(true);
     debouncedRefetch();
+    lastProcessedLocation.current = null;
   }, [debouncedRefetch]);
 
   // ✅ UPDATED: handleEnableLocation - removed ward
- const handleEnableLocation = useCallback(async () => {
+const handleEnableLocation = useCallback(async () => {
   setFilterState('');
   setFilterLga('');
   setIsLocationProcessed(false);
@@ -420,49 +421,131 @@ useEffect(() => {
   locationProcessingRef.current = false;
   lastProcessedLocation.current = null; // Reset processed location
   
-  // ✅ FIX 4: Add timeout safety net
+  // ⚡ Set safety timeout (30 seconds)
   locationTimeoutRef.current = setTimeout(() => {
     setIsLoadingLocation(false);
-    toast.error('Location detection timeout', {
-      description: 'Taking too long. Please select your location manually.',
+    toast.error('Taking too long', {
+      description: 'Let`s try selecting your area manually instead.',
       duration: 5000,
       action: {
         label: 'Select Manually',
         onClick: () => setShowFilters(true)
       }
     });
-  }, 30000); // 30 second timeout
+  }, 30000);
   
   try {
-    await requestQuickLocation();
+    // 🎯 USE STANDARD LOCATION for balanced speed & accuracy
+    const location = await requestLocation();
     
     // Clear timeout on success
     if (locationTimeoutRef.current) {
       clearTimeout(locationTimeoutRef.current);
     }
     
-    toast.success('📍 Location detected successfully');
+    // 🎯 Success message
+    toast.success('📍 Location found!', {
+      description: 'Showing pharmacies near you',
+      duration: 2000,
+    });
+    
+    // 🎯 If accuracy is moderate (>50m), offer PRECISE refinement
+    if (location.accuracy > 50) {
+      setTimeout(() => {
+        toast.info('💡 Want more accurate results?', {
+          description: `Current accuracy: ~${location.accuracy}m. We can pinpoint your exact location.`,
+          duration: 6000,
+          action: {
+            label: 'Refine',
+            onClick: async () => {
+              setIsLoadingLocation(true);
+              try {
+                const betterLocation = await requestPreciseLocation();
+                toast.success('✨ Pinpoint accuracy achieved!', {
+                  description: `Accuracy improved to ~${betterLocation.accuracy}m`,
+                  duration: 2000,
+                });
+              } catch (err) {
+                console.warn('Refinement failed:', err);
+                toast.error('Refinement failed', {
+                  description: 'Using your original location instead.',
+                  duration: 3000,
+                });
+              } finally {
+                setIsLoadingLocation(false);
+              }
+            },
+          },
+        });
+      }, 1000);
+    }
   } catch (error) {
     // Clear timeout on error
     if (locationTimeoutRef.current) {
       clearTimeout(locationTimeoutRef.current);
     }
     
-    const errorMessage = error?.code === 1 
-      ? 'Location permission denied. Please allow location access in your browser.'
-      : 'Unable to get location. Please select manually.';
+    const errorMessage = error?.message || '';
     
-    toast.error(errorMessage, {
-      duration: 5000,
-      action: {
-        label: 'Select Manually',
-        onClick: () => setShowFilters(true)
-      }
-    });
+    // Don't show error for user cancellation
+    if (errorMessage === 'Location request cancelled') {
+      toast.info('Cancelled');
+      setIsLoadingLocation(false);
+      return;
+    }
+    
+    // Handle specific error codes
+    if (error.code === 1) {
+      toast.error('Location blocked', {
+        description: '🔒 Please allow location access in your browser.',
+        duration: 7000,
+        action: {
+          label: 'How to fix',
+          onClick: () => {
+            window.open('https://support.google.com/chrome/answer/142065', '_blank');
+          },
+        },
+      });
+    } else if (error.code === 2 || error.code === 3) {
+      toast.error('Can\'t find location', {
+        description: '📱 Please choose your area manually.',
+        duration: 5000,
+        action: {
+          label: 'Select Area',
+          onClick: () => {
+            setShowFilters(true);
+            setIsLoadingLocation(false);
+          },
+        },
+      });
+      setTimeout(() => {
+        setIsLoadingLocation(false);
+        setShowFilters(true);
+      }, 1500);
+    } else {
+      toast.error('Couldn\'t detect location', {
+        description: 'No worries! You can select your area manually.',
+        duration: 5000,
+        action: {
+          label: 'Select Area',
+          onClick: () => {
+            setShowFilters(true);
+            setIsLoadingLocation(false);
+          },
+        },
+      });
+      setTimeout(() => {
+        setIsLoadingLocation(false);
+        setShowFilters(true);
+      }, 1500);
+    }
+    
     setIsLoadingLocation(false);
     setShowFilters(true);
   }
-}, [requestQuickLocation, setShowFilters]);
+}, [requestLocation, requestPreciseLocation, setShowFilters]);
+
+
 
 // ✅ FIX 5: Cleanup timeout on unmount
 useEffect(() => {

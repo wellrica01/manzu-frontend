@@ -197,6 +197,8 @@ const SearchBar = () => {
     setFiltersWereSet(false);
     search.restoreDefaults();
     setSelectedMedicationId(null);
+    lastProcessedLocation.current = null;
+    setPermissionDenied(false);
   }, [search]);
 
   const setFilterStateWrapper = useCallback((val) => {
@@ -217,7 +219,8 @@ const SearchBar = () => {
     }
   }, []);
 
-  // ✅ ENHANCED: Handle location enable with all edge cases
+
+// ✅ ENHANCED: Handle location enable with all edge cases
 const handleEnableLocation = useCallback(async () => {
   // Check browser support
   if (!checkGeolocationSupport()) {
@@ -246,7 +249,7 @@ const handleEnableLocation = useCallback(async () => {
   setIsLoadingLocation(true);
   setPermissionDenied(false);
 
-  // ⚡ Set safety timeout (30 seconds instead of 60)
+  // ⚡ Set safety timeout (30 seconds)
   locationTimeoutRef.current = setTimeout(() => {
     setIsLoadingLocation(false);
     toast.error('Taking too long', {
@@ -259,9 +262,9 @@ const handleEnableLocation = useCallback(async () => {
     });
   }, 30000);
 
-  // ⚡ USE QUICK LOCATION for speed!
-  // Falls back to standard if user needs more precision
-  const locationPromise = requestQuickLocation();
+  // 🎯 USE STANDARD LOCATION for balanced speed & accuracy
+  // Offers precise refinement if needed
+  const locationPromise = requestLocation();
       
   locationPromise
     .then((location) => {
@@ -270,31 +273,35 @@ const handleEnableLocation = useCallback(async () => {
         clearTimeout(locationTimeoutRef.current);
       }
 
-      // ⚡ Simple success message - no technical details
+      // 🎯 Success message
       toast.success('📍 Location found!', {
         description: 'Showing pharmacies near you',
         duration: 2000,
       });
 
-      // ⚡ If accuracy is poor, offer to refine
-      if (location.accuracy > 100) {
+      // 🎯 If accuracy is moderate (>50m), offer PRECISE refinement
+      if (location.accuracy > 50) {
         setTimeout(() => {
           toast.info('💡 Want more accurate results?', {
-            description: 'We can search more precisely if you\'d like.',
+            description: `Current accuracy: ~${location.accuracy}m. We can pinpoint your exact location.`,
             duration: 6000,
             action: {
               label: 'Refine',
               onClick: async () => {
                 setIsLoadingLocation(true);
                 try {
-                  const betterLocation = await requestLocation();
-                  toast.success('✨ Location refined!', {
-                    description: 'Now showing even closer pharmacies',
+                  const betterLocation = await requestPreciseLocation();
+                  toast.success('✨ Pinpoint accuracy achieved!', {
+                    description: `Accuracy improved to ~${betterLocation.accuracy}m`,
                     duration: 2000,
                   });
                 } catch (err) {
                   // Silently fall back to original location
                   console.warn('Refinement failed:', err);
+                  toast.error('Refinement failed', {
+                    description: 'Using your original location instead.',
+                    duration: 3000,
+                  });
                 } finally {
                   setIsLoadingLocation(false);
                 }
@@ -370,7 +377,8 @@ const handleEnableLocation = useCallback(async () => {
         }, 1500);
       }
     });
-}, [requestQuickLocation, requestLocation, setShowFilters]);
+}, [requestLocation, requestPreciseLocation, setShowFilters]);
+
 
   // ✅ Handle cancel location
   const handleCancelLocation = useCallback(() => {
@@ -380,6 +388,9 @@ const handleEnableLocation = useCallback(async () => {
     if (locationTimeoutRef.current) {
       clearTimeout(locationTimeoutRef.current);
     }
+
+   // ✅ Reset location tracking on cancel
+   lastProcessedLocation.current = null;
     
     toast.info('Location detection cancelled');
   }, [cancelLocationRequest]);
@@ -472,7 +483,7 @@ const handleEnableLocation = useCallback(async () => {
     }
   }, [filters.state, filters.lga]);
 
-  // ✅ ENHANCED: Reverse geocode with duplicate prevention
+// ✅ ENHANCED: Reverse geocode with duplicate prevention
 useEffect(() => {
   if (!userLocation || !geoData?.length) {
     return;
