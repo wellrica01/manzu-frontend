@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { usePharmacyGPSCapture } from '@/hooks/usePharmacyGPSCapture';
+import { PharmacyGPSCaptureUI } from './PharmacyGPSCaptureUI';
 import { Input } from '@/components/ui/input';
 import { UserPlus, LogIn, MapPin, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import Select from 'react-select';
@@ -52,9 +53,6 @@ export default function PharmacyRegister() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [states, setStates] = useState([]);
   const [lgas, setLgas] = useState([]);
-  const [gpsLocation, setGpsLocation] = useState(null);
-  const [isCapturingLocation, setIsCapturingLocation] = useState(false);
-  const [locationError, setLocationError] = useState(null);
   const gpsCapture = usePharmacyGPSCapture();
   
   const router = useRouter();
@@ -96,60 +94,61 @@ export default function PharmacyRegister() {
   };
 
 
-  // Capture GPS location
-  const handleCaptureLocation = async () => {
-    try {
-      const location = await gpsCapture.captureAccurateLocation();
-      
-      // Update form with captured location
-      form.setValue('pharmacy.latitude', location.latitude);
-      form.setValue('pharmacy.longitude', location.longitude);
-      form.setValue('pharmacy.locationAccuracy', location.accuracy);
-      
-      // Show quality-based feedback
-      if (location.quality === 'excellent') {
-        toast.success(
-          `Excellent GPS accuracy: ${location.accuracy}m`,
-          {
-            description: `Based on ${location.sampleCount} readings with ${location.consistency}m consistency`,
-            duration: 5000,
-          }
-        );
-      } else if (location.quality === 'good') {
-        toast.success(
-          `Good GPS accuracy: ${location.accuracy}m`,
-          {
-            description: 'Location captured successfully',
-            duration: 4000,
-          }
-        );
-      } else if (location.quality === 'acceptable') {
-        toast.warning(
-          `GPS accuracy: ${location.accuracy}m`,
-          {
-            description: 'Accuracy is acceptable. For best results, move outdoors.',
-            duration: 5000,
-          }
-        );
-      } else {
-        toast.warning(
-          `Low GPS accuracy: ${location.accuracy}m`,
-          {
-            description: 'Consider recapturing outdoors for better accuracy',
-            duration: 6000,
-          }
-        );
-      }
-
-    } catch (err) {
-      console.error('GPS capture error:', err);
-      // Error is already set in the hook
+// Capture GPS location
+const handleCaptureLocation = async () => {
+  try {
+    const location = await gpsCapture.captureAccurateLocation();
+    
+    // Update form with captured location
+    form.setValue('pharmacy.latitude', location.latitude);
+    form.setValue('pharmacy.longitude', location.longitude);
+    form.setValue('pharmacy.locationAccuracy', location.accuracy);
+    
+    // Success toast based on quality
+    if (location.quality === 'excellent') {
+      toast.success('🎯 Perfect Location Captured!', {
+        description: `Accuracy: ±${location.accuracy}m from ${location.sampleCount} samples.`,
+      });
+    } else if (location.quality === 'good') {
+      toast.success('✅ Excellent Location Captured!', {
+        description: `Accuracy: ±${location.accuracy}m. Very suitable for registration.`,
+      });
+    } else if (location.quality === 'acceptable') {
+      toast.success('✓ Good Location Captured', {
+        description: `Accuracy: ±${location.accuracy}m. Acceptable for registration.`,
+      });
+    } else if (location.quality === 'usable') {
+      toast.warning('⚠️ Low Accuracy', {
+        description: `Accuracy: ±${location.accuracy}m. Consider recapturing outdoors.`,
+      });
     }
-  };
+
+  } catch (err) {
+    console.error('GPS capture error:', err);
+    
+    // Error toast
+    if (err.code === 1) {
+      toast.error('Location Permission Denied', {
+        description: 'Please enable location access in your browser settings.',
+      });
+    } else if (err.code === 2) {
+      toast.error('Location Unavailable', {
+        description: 'Please check your GPS settings and try outdoors.',
+      });
+    } else if (err.code === 3) {
+      toast.error('Location Timeout', {
+        description: 'Please try outdoors with clear sky view.',
+      });
+    } else {
+      toast.error('Location Capture Failed', {
+        description: err.message || 'Unable to capture location.',
+      });
+    }
+  }
+};
 
 
-
-  // âœ… Updated submit handler using API client
+  // Updated submit handler using API client
   const onSubmit = async (values) => {
     // Validate GPS was captured
     if (!gpsCapture.location) {
@@ -157,9 +156,23 @@ export default function PharmacyRegister() {
       return;
     }
 
-    // Warn if accuracy is poor
     if (gpsCapture.location.quality === 'poor') {
-      toast.error('GPS accuracy is too low. Please recapture location outdoors.');
+      toast.error('GPS accuracy is too low. Please recapture location outdoors with clear sky view.');
+      return;
+    }
+
+    if (gpsCapture.location.quality === 'usable' && gpsCapture.location.accuracy > 300) {
+      toast.warning('Low accuracy detected', {
+        description: `Accuracy is ±${gpsCapture.location.accuracy}m. Consider recapturing for better precision.`,
+        duration: 5000,
+        action: {
+          label: 'Continue Anyway',
+          onClick: () => {
+            // Allow submission
+            form.handleSubmit(onSubmit)();
+          }
+        }
+      });
       return;
     }
 
@@ -368,153 +381,11 @@ export default function PharmacyRegister() {
                   </div>
 
                   {/* GPS Location Capture */}
-                <div className="space-y-3">
-                  <FormLabel className="text-sm font-semibold text-gray-700">
-                    Pharmacy Location (GPS) <span className="text-red-500">*</span>
-                  </FormLabel>
-                  
-                  {!gpsCapture.location ? (
-                    <>
-                      <Button
-                        type="button"
-                        onClick={handleCaptureLocation}
-                        disabled={gpsCapture.isCapturing}
-                        className="w-full h-12 sm:h-14 text-base font-semibold rounded-xl bg-[#1ABA7F] hover:bg-[#1ABA7F]/90 text-white transition-all"
-                      >
-                        {gpsCapture.isCapturing ? (
-                          <>
-                            <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                            Capturing Location...
-                          </>
-                        ) : (
-                          <>
-                            <MapPin className="h-5 w-5 mr-2" />
-                            Capture My Location
-                          </>
-                        )}
-                      </Button>
-
-                      {/* Progress Indicator */}
-                      {gpsCapture.isCapturing && gpsCapture.progress && (
-                        <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4 space-y-3">
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="font-medium text-blue-900">
-                              Collecting samples {gpsCapture.progress.current}/{gpsCapture.progress.total}
-                            </span>
-                            {gpsCapture.progress.accuracy && (
-                              <span className={`font-medium ${
-                                gpsCapture.progress.accuracy < 30 ? 'text-green-600' : 
-                                gpsCapture.progress.accuracy < 70 ? 'text-yellow-600' : 'text-red-600'
-                              }`}>
-                                {Math.round(gpsCapture.progress.accuracy)}m
-                              </span>
-                            )}
-                          </div>
-
-                          {/* Progress bar */}
-                          <div className="w-full bg-blue-200 rounded-full h-2 overflow-hidden">
-                            <div
-                              className="bg-blue-600 h-full transition-all duration-500 ease-out"
-                              style={{ 
-                                width: `${(gpsCapture.progress.current / gpsCapture.progress.total) * 100}%` 
-                              }}
-                            />
-                          </div>
-
-                          {/* Status message */}
-                          <p className="text-xs text-blue-700">
-                            {gpsCapture.progress.status === 'success' && 'Good signal quality'}
-                            {gpsCapture.progress.status === 'poor_signal' && 'Weak signal - move outdoors'}
-                            {gpsCapture.progress.status === 'starting' && 'Initializing GPS...'}
-                            {gpsCapture.progress.status === 'error' && 'Reading failed, retrying...'}
-                            {gpsCapture.progress.samplesCollected > 0 && 
-                              ` • ${gpsCapture.progress.samplesCollected} valid readings`}
-                          </p>
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <div className={`p-4 rounded-xl border-2 ${
-                      gpsCapture.location.quality === 'excellent' 
-                        ? 'bg-green-50 border-green-200' 
-                        : gpsCapture.location.quality === 'good'
-                        ? 'bg-blue-50 border-blue-200'
-                        : 'bg-yellow-50 border-yellow-200'
-                    }`}>
-                      <div className="flex items-start gap-3">
-                        <CheckCircle2 className={`h-5 w-5 mt-0.5 flex-shrink-0 ${
-                          gpsCapture.location.quality === 'excellent' 
-                            ? 'text-green-600' 
-                            : gpsCapture.location.quality === 'good'
-                            ? 'text-blue-600'
-                            : 'text-yellow-600'
-                        }`} />
-                        <div className="flex-1 min-w-0">
-                          <p className={`text-sm font-semibold mb-1 ${
-                            gpsCapture.location.quality === 'excellent' 
-                              ? 'text-green-800' 
-                              : gpsCapture.location.quality === 'good'
-                              ? 'text-blue-800'
-                              : 'text-yellow-800'
-                          }`}>
-                            Location Captured - {gpsCapture.location.quality.charAt(0).toUpperCase() + 
-                              gpsCapture.location.quality.slice(1)} Quality
-                          </p>
-                          
-                          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs mb-2">
-                            <div>
-                              <span className="text-gray-600">Coordinates:</span>
-                              <p className="font-mono">
-                                {gpsCapture.location.latitude.toFixed(6)}, {gpsCapture.location.longitude.toFixed(6)}
-                              </p>
-                            </div>
-                            <div>
-                              <span className="text-gray-600">Accuracy:</span>
-                              <p className="font-medium">±{gpsCapture.location.accuracy}m</p>
-                            </div>
-                            <div>
-                              <span className="text-gray-600">Samples:</span>
-                              <p className="font-medium">{gpsCapture.location.sampleCount}</p>
-                            </div>
-                            <div>
-                              <span className="text-gray-600">Consistency:</span>
-                              <p className="font-medium">{gpsCapture.location.consistency}m</p>
-                            </div>
-                          </div>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={gpsCapture.clearLocation}
-                          className={`flex-shrink-0 ${
-                            gpsCapture.location.quality === 'excellent' 
-                              ? 'text-green-700 hover:text-green-900 hover:bg-green-100' 
-                              : gpsCapture.location.quality === 'good'
-                              ? 'text-blue-700 hover:text-blue-900 hover:bg-blue-100'
-                              : 'text-yellow-700 hover:text-yellow-900 hover:bg-yellow-100'
-                          }`}
-                        >
-                          Recapture
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Error Display */}
-                  {gpsCapture.error && (
-                    <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-                      <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
-                      <p className="text-xs sm:text-sm text-red-700">{gpsCapture.error}</p>
-                    </div>
-                  )}
-
-                  <FormDescription className="text-xs text-gray-600">
-                    📍 High-precision GPS capture (5 readings with outlier filtering)
-                    <br />
-                    ⚡ For best results: Move outdoors with clear sky view
-                  </FormDescription>
-                </div>
+                  <PharmacyGPSCaptureUI 
+                    gpsCapture={gpsCapture}
+                    onCapture={handleCaptureLocation}
+                    onClear={gpsCapture.clearLocation}
+                  />
 
                   {/* Phone & License */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
