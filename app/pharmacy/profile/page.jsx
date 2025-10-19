@@ -7,10 +7,11 @@ import {
   XCircle, Calendar as CalendarIcon, Upload
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatOperatingHours, getOperatingHoursTextColor } from '../../../lib/pharmacyUtils';
 
 
 const DAYS_OF_WEEK = [
-  'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'
+  'SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'
 ];
 
 const brandGreen = "#1ABA7F";
@@ -43,22 +44,25 @@ async function updateProfile(data) {
   return res.json();
 }
 
-async function changePassword(data) {
+async function changePin(data) {
   const token = localStorage.getItem('pharmacyToken');
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/pharmacy/change-password`, {
-    method: 'POST',
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/change-password`, {
+    method: 'PATCH',
     headers: {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(data),
   });
+
+  const result = await res.json();
   if (!res.ok) {
-    const error = await res.json();
-    throw new Error(error.message || 'Failed to change password');
+    throw new Error(result.message || 'Failed to change PIN');
   }
-  return res.json();
+
+  return result;
 }
+
 
 // Components
 function InfoCard({ icon: Icon, label, value, color = brandBlue }) {
@@ -116,6 +120,12 @@ export default function PharmacyProfilePage() {
   const [activeTab, setActiveTab] = useState('info'); // 'info', 'hours', 'location', 'security'
   const [editMode, setEditMode] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [operatingHours, setOperatingHours] = useState([]);
+  const [editingHours, setEditingHours] = useState(false);
+  const [savingHours, setSavingHours] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [logoFile, setLogoFile] = useState(null);
+  const [logoPreview, setLogoPreview] = useState(null);
 
   const [formData, setFormData] = useState({
     user: { name: '', email: '' },
@@ -126,8 +136,8 @@ export default function PharmacyProfilePage() {
     }
   });
 
-  const [passwordData, setPasswordData] = useState({
-    currentPassword: '', newPassword: '', confirmPassword: ''
+  const [pinData, setPinData] = useState({
+    currentPin: '', newPin: '', confirmPin: ''
   });
 
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
@@ -137,9 +147,10 @@ export default function PharmacyProfilePage() {
     setTimeout(() => setToast({ visible: false, message: '', type: 'success' }), 3000);
   };
 
-  useEffect(() => {
-    loadProfile();
-  }, []);
+useEffect(() => {
+  loadProfile();
+  loadOperatingHours();
+}, []);
 
   const loadProfile = async () => {
     setLoading(true);
@@ -173,6 +184,57 @@ export default function PharmacyProfilePage() {
     }
   };
 
+const loadOperatingHours = async () => {
+  try {
+    const token = localStorage.getItem('pharmacyToken');
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/pharmacy/operating-hours`, {
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error('Failed to fetch operating hours');
+    const data = await res.json();
+    
+    // Initialize with all days if empty
+    if (data.operatingHours.length === 0) {
+      const defaultHours = DAYS_OF_WEEK.map((day, index) => ({
+        dayOfWeek: index,
+        openTime: '09:00',
+        closeTime: '17:00',
+        isClosed: false
+      }));
+      setOperatingHours(defaultHours);
+    } else {
+      // Create a map of existing hours
+      const hoursMap = new Map(
+        data.operatingHours.map(h => [h.dayOfWeek, h])
+      );
+      
+      // Ensure all 7 days are present
+      const formatted = DAYS_OF_WEEK.map((day, index) => {
+        const existingHour = hoursMap.get(index);
+        if (existingHour) {
+          return {
+            dayOfWeek: index,
+            openTime: existingHour.openTime || '09:00',
+            closeTime: existingHour.closeTime || '17:00',
+            isClosed: !existingHour.openTime || !existingHour.closeTime
+          };
+        }
+        // Day not found means it's closed
+        return {
+          dayOfWeek: index,
+          openTime: '09:00',
+          closeTime: '17:00',
+          isClosed: true
+        };
+      });
+      
+      setOperatingHours(formatted);
+    }
+  } catch (err) {
+    console.error('Failed to load operating hours:', err);
+  }
+};
+
   const handleSaveProfile = async () => {
     setSaving(true);
     try {
@@ -187,24 +249,72 @@ export default function PharmacyProfilePage() {
     }
   };
 
-  const handleChangePassword = async (e) => {
+
+  const handleSaveOperatingHours = async () => {
+  setSavingHours(true);
+  try {
+    const token = localStorage.getItem('pharmacyToken');
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/pharmacy/operating-hours`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ hours: operatingHours }),
+    });
+    
+    if (!res.ok) throw new Error('Failed to save operating hours');
+    
+    await loadOperatingHours();
+    setEditingHours(false);
+    showToast('Operating hours updated successfully', 'success');
+  } catch (err) {
+    showToast(err.message, 'error');
+  } finally {
+    setSavingHours(false);
+  }
+};
+
+const handleHourChange = (dayIndex, field, value) => {
+  setOperatingHours(prev => {
+    const updated = [...prev];
+    if (!updated[dayIndex]) {
+      updated[dayIndex] = {
+        dayOfWeek: dayIndex,
+        openTime: '09:00',
+        closeTime: '17:00',
+        isClosed: false
+      };
+    }
+    updated[dayIndex][field] = value;
+    return updated;
+  });
+};
+
+  const handleChangePin = async (e) => {
     e.preventDefault();
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      showToast('Passwords do not match', 'error');
+    if (pinData.newPin !== pinData.confirmPin) {
+      showToast('PINs do not match', 'error');
       return;
     }
-    
+
+    if (!/^\d{6}$/.test(pinData.newPin)) {
+      showToast('New PIN must be exactly 6 digits', 'error');
+      return;
+    }
+
     try {
-      await changePassword({
-        currentPassword: passwordData.currentPassword,
-        newPassword: passwordData.newPassword
+      await changePin({
+        currentPin: pinData.currentPin,
+        newPin: pinData.newPin,
       });
-      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-      showToast('Password changed successfully', 'success');
+      setPinData({ currentPin: '', newPin: '', confirmPin: '' });
+      showToast('PIN changed successfully', 'success');
     } catch (err) {
       showToast(err.message, 'error');
     }
   };
+
 
   const handleGetCurrentLocation = () => {
     if (navigator.geolocation) {
@@ -257,19 +367,145 @@ export default function PharmacyProfilePage() {
     );
   }
 
+
+
+  // Add logo upload handler (add after handleGetCurrentLocation function)
+const handleLogoSelect = (e) => {
+  const file = e.target.files?.[0];
+  if (file) {
+    if (!file.type.startsWith('image/')) {
+      showToast('Please select an image file', 'error');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      showToast('Image size must be less than 5MB', 'error');
+      return;
+    }
+    setLogoFile(file);
+    setLogoPreview(URL.createObjectURL(file));
+  }
+};
+
+const handleLogoUpload = async () => {
+  if (!logoFile) return;
+  
+  setUploadingLogo(true);
+  try {
+    const formData = new FormData();
+    formData.append('logo', logoFile);
+    
+    const token = localStorage.getItem('pharmacyToken');
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/pharmacy/profile/logo`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: formData,
+    });
+    
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.message || 'Failed to upload logo');
+    }
+    
+    const data = await res.json();
+    
+    // Update profile with new logo URL
+    setProfile(prev => ({
+      ...prev,
+      pharmacy: {
+        ...prev.pharmacy,
+        logoUrl: data.logoUrl
+      }
+    }));
+    
+    // Clear preview states
+    setLogoFile(null);
+    setLogoPreview(null);
+    
+    showToast('Logo updated successfully', 'success');
+    await loadProfile();
+  } catch (err) {
+    showToast(err.message, 'error');
+  } finally {
+    setUploadingLogo(false);
+  }
+};
+
+const cancelLogoUpload = () => {
+  setLogoFile(null);
+  setLogoPreview(null);
+};
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="bg-gradient-to-r from-[#225F91] to-[#1ABA7F] rounded-2xl shadow-lg p-8 text-white">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-6">
-            <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-lg">
-              {profile.pharmacy.logoUrl ? (
-                <img src={profile.pharmacy.logoUrl} alt="Logo" className="w-full h-full rounded-full object-cover" />
-              ) : (
-                <Building className="w-12 h-12 text-[#225F91]" />
-              )}
-            </div>
+<div className="relative group">
+  <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-lg overflow-hidden">
+    {logoPreview ? (
+      <img 
+        src={logoPreview} 
+        alt="Logo Preview" 
+        className="w-full h-full object-cover" 
+      />
+    ) : profile.pharmacy.logoUrl ? (
+      <img 
+        src={profile.pharmacy.logoUrl} 
+        alt="Logo" 
+        className="w-full h-full object-cover" 
+      />
+    ) : (
+      <Building className="w-12 h-12 text-[#225F91]" />
+    )}
+  </div>
+  
+  {/* Upload overlay */}
+  <div className="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+    <label htmlFor="logo-upload" className="cursor-pointer">
+      <input
+        id="logo-upload"
+        type="file"
+        accept="image/*"
+        onChange={handleLogoSelect}
+        className="hidden"
+      />
+      <Camera className="w-6 h-6 text-white" />
+    </label>
+  </div>
+  
+  {/* Upload controls for pending upload */}
+  {logoFile && (
+    <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2 flex gap-2 bg-white rounded-lg shadow-lg p-2 z-10">
+      <button
+        onClick={handleLogoUpload}
+        disabled={uploadingLogo}
+        className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700 disabled:opacity-50 flex items-center gap-1"
+      >
+        {uploadingLogo ? (
+          <>
+            <Loader2 className="w-3 h-3 animate-spin" />
+            Saving...
+          </>
+        ) : (
+          <>
+            <Upload className="w-3 h-3" />
+            Save
+          </>
+        )}
+      </button>
+      <button
+        onClick={cancelLogoUpload}
+        disabled={uploadingLogo}
+        className="px-3 py-1 bg-gray-600 text-white rounded text-sm hover:bg-gray-700 disabled:opacity-50"
+      >
+        Cancel
+      </button>
+    </div>
+  )}
+</div>
             <div>
               <h1 className="text-3xl font-bold">{profile.pharmacy.name}</h1>
               <p className="text-white/90 mt-1">{profile.pharmacy.address}</p>
@@ -592,69 +828,221 @@ export default function PharmacyProfilePage() {
             </div>
           )}
 
-          {activeTab === 'hours' && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                <Clock className="w-5 h-5 text-[#225F91]" />
-                Operating Hours
-              </h2>
-              <div className="text-center py-12 text-gray-500">
-                <CalendarIcon className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                <p className="text-lg font-medium">Operating Hours Setup</p>
-                <p className="text-sm mt-2">Configure your pharmacy's working hours for each day of the week</p>
-                <button className="mt-4 px-6 py-2 bg-[#1ABA7F] text-white rounded-lg hover:bg-[#159e6a] transition-colors">
-                  Set Operating Hours
-                </button>
+{activeTab === 'hours' && (
+  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div className="flex items-center justify-between mb-6">
+      <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+        <Clock className="w-5 h-5 text-[#225F91]" />
+        Operating Hours
+      </h2>
+      {!editingHours && (
+        <button
+          onClick={() => setEditingHours(true)}
+          className="px-4 py-2 bg-[#1ABA7F] text-white rounded-lg hover:bg-[#159e6a] transition-colors font-medium flex items-center gap-2"
+        >
+          <Edit className="w-4 h-4" />
+          Edit Hours
+        </button>
+      )}
+    </div>
+
+    {/* Current Status Summary */}
+    {!editingHours && operatingHours.length > 0 && (() => {
+      const formatted = formatOperatingHours(
+        operatingHours.filter(h => !h.isClosed).map(h => ({
+          dayOfWeek: h.dayOfWeek,
+          openTime: h.openTime,
+          closeTime: h.closeTime
+        }))
+      );
+      
+      if (formatted) {
+        return (
+          <div className={`mb-6 p-4 rounded-lg border-2 ${
+            formatted.status === 'open' 
+              ? 'bg-green-50 border-green-200' 
+              : 'bg-red-50 border-red-200'
+          }`}>
+            <div className="flex items-center gap-3">
+              <Clock className={`w-6 h-6 ${
+                formatted.status === 'open' ? 'text-green-600' : 'text-red-600'
+              }`} />
+              <div>
+                <div className={`text-lg font-bold ${
+                  formatted.status === 'open' ? 'text-green-700' : 'text-red-700'
+                }`}>
+                  {formatted.text}
+                </div>
+                <div className="text-sm text-gray-600 mt-0.5">
+                  Current pharmacy status
+                </div>
               </div>
             </div>
-          )}
+          </div>
+        );
+      }
+    })()}
 
-          {activeTab === 'security' && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                <Key className="w-5 h-5 text-[#225F91]" />
-                Change Password
-              </h2>
-              <form onSubmit={handleChangePassword} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Current Password</label>
-                  <input
-                    type="password"
-                    value={passwordData.currentPassword}
-                    onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1ABA7F] focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">New Password</label>
-                  <input
-                    type="password"
-                    value={passwordData.newPassword}
-                    onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1ABA7F] focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Confirm New Password</label>
-                  <input
-                    type="password"
-                    value={passwordData.confirmPassword}
-                    onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1ABA7F] focus:border-transparent"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="w-full px-6 py-3 bg-[#225F91] text-white rounded-lg hover:bg-[#1A4971] transition-colors font-semibold"
-                >
-                  Change Password
-                </button>
-              </form>
+    <div className="space-y-3">
+      {DAYS_OF_WEEK.map((day, index) => {
+        const hours = operatingHours.find(h => h.dayOfWeek === index) || {
+          dayOfWeek: index,
+          openTime: '09:00',
+          closeTime: '17:00',
+          isClosed: true
+        };
+
+        const formatTo12Hour = (timeStr) => {
+          if (!timeStr) return null;
+          const [hourStr, minuteStr] = timeStr.split(":");
+          let hour = parseInt(hourStr, 10);
+          const minute = parseInt(minuteStr, 10);
+          const ampm = hour >= 12 ? "PM" : "AM";
+          hour = hour % 12;
+          if (hour === 0) hour = 12;
+          return `${hour}:${minute.toString().padStart(2,"0")} ${ampm}`;
+        };
+
+        return (
+          <div key={day} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+            <div className="w-32 font-medium text-gray-900">
+              {day.charAt(0) + day.slice(1).toLowerCase()}
             </div>
+            
+            {editingHours ? (
+              <>
+                <div className="flex items-center gap-2 flex-1">
+                  <input
+                    type="checkbox"
+                    checked={!hours.isClosed}
+                    onChange={(e) => handleHourChange(index, 'isClosed', !e.target.checked)}
+                    className="w-4 h-4 text-[#1ABA7F] border-gray-300 rounded focus:ring-[#1ABA7F]"
+                  />
+                  <span className="text-sm text-gray-600">Open</span>
+                </div>
+                
+                {!hours.isClosed && (
+                  <>
+                    <input
+                      type="time"
+                      value={hours.openTime}
+                      onChange={(e) => handleHourChange(index, 'openTime', e.target.value)}
+                      className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1ABA7F] focus:border-transparent"
+                    />
+                    <span className="text-gray-500">to</span>
+                    <input
+                      type="time"
+                      value={hours.closeTime}
+                      onChange={(e) => handleHourChange(index, 'closeTime', e.target.value)}
+                      className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1ABA7F] focus:border-transparent"
+                    />
+                  </>
+                )}
+              </>
+            ) : (
+              <div className="flex-1">
+                {hours.isClosed ? (
+                  <span className="text-red-600 font-medium">Closed</span>
+                ) : (
+                  <span className="text-gray-700">
+                    {formatTo12Hour(hours.openTime)} - {formatTo12Hour(hours.closeTime)}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+
+    {editingHours && (
+      <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-200">
+        <button
+          onClick={() => {
+            setEditingHours(false);
+            loadOperatingHours();
+          }}
+          className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={handleSaveOperatingHours}
+          disabled={savingHours}
+          className="px-6 py-2 bg-[#1ABA7F] text-white rounded-lg hover:bg-[#159e6a] disabled:opacity-50 transition-colors font-medium flex items-center gap-2"
+        >
+          {savingHours ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            <>
+              <Save className="w-4 h-4" />
+              Save Hours
+            </>
           )}
+        </button>
+      </div>
+    )}
+  </div>
+)}
+      {activeTab === 'security' && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+            <Key className="w-5 h-5 text-[#225F91]" />
+            Change 6-Digit PIN
+          </h2>
+          <form onSubmit={handleChangePin} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Current PIN</label>
+              <input
+                type="password"
+                pattern="\d{6}"
+                maxLength={6}
+                value={pinData.currentPin}
+                onChange={(e) => setPinData(prev => ({ ...prev, currentPin: e.target.value }))}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1ABA7F] focus:border-transparent"
+                placeholder="Enter current 6-digit PIN"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">New PIN</label>
+              <input
+                type="password"
+                pattern="\d{6}"
+                maxLength={6}
+                value={pinData.newPin}
+                onChange={(e) => setPinData(prev => ({ ...prev, newPin: e.target.value }))}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1ABA7F] focus:border-transparent"
+                placeholder="Enter new 6-digit PIN"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Confirm New PIN</label>
+              <input
+                type="password"
+                pattern="\d{6}"
+                maxLength={6}
+                value={pinData.confirmPin}
+                onChange={(e) => setPinData(prev => ({ ...prev, confirmPin: e.target.value }))}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1ABA7F] focus:border-transparent"
+                placeholder="Re-enter new 6-digit PIN"
+              />
+            </div>
+            <button
+              type="submit"
+              className="w-full px-6 py-3 bg-[#225F91] text-white rounded-lg hover:bg-[#1A4971] transition-colors font-semibold"
+            >
+              Change PIN
+            </button>
+          </form>
+        </div>
+      )}
+
         </div>
 
         {/* Sidebar */}
