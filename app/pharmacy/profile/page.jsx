@@ -11,7 +11,7 @@ import { formatOperatingHours, getOperatingHoursTextColor } from '../../../lib/p
 
 
 const DAYS_OF_WEEK = [
-  'SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'
+  'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'
 ];
 
 const brandGreen = "#1ABA7F";
@@ -439,92 +439,104 @@ const cancelLogoUpload = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-[#225F91] to-[#1ABA7F] rounded-2xl shadow-lg p-8 text-white">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-6">
-<div className="relative group">
-  <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-lg overflow-hidden">
-    {logoPreview ? (
-      <img 
-        src={logoPreview} 
-        alt="Logo Preview" 
-        className="w-full h-full object-cover" 
-      />
-    ) : profile.pharmacy.logoUrl ? (
-      <img 
-        src={profile.pharmacy.logoUrl} 
-        alt="Logo" 
-        className="w-full h-full object-cover" 
-      />
-    ) : (
-      <Building className="w-12 h-12 text-[#225F91]" />
-    )}
-  </div>
-  
-  {/* Upload overlay */}
-  <div className="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-    <label htmlFor="logo-upload" className="cursor-pointer">
-      <input
-        id="logo-upload"
-        type="file"
-        accept="image/*"
-        onChange={handleLogoSelect}
-        className="hidden"
-      />
-      <Camera className="w-6 h-6 text-white" />
-    </label>
-  </div>
-  
-  {/* Upload controls for pending upload */}
-  {logoFile && (
-    <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2 flex gap-2 bg-white rounded-lg shadow-lg p-2 z-10">
-      <button
-        onClick={handleLogoUpload}
-        disabled={uploadingLogo}
-        className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700 disabled:opacity-50 flex items-center gap-1"
-      >
-        {uploadingLogo ? (
-          <>
-            <Loader2 className="w-3 h-3 animate-spin" />
-            Saving...
-          </>
-        ) : (
-          <>
-            <Upload className="w-3 h-3" />
-            Save
-          </>
-        )}
-      </button>
-      <button
-        onClick={cancelLogoUpload}
-        disabled={uploadingLogo}
-        className="px-3 py-1 bg-gray-600 text-white rounded text-sm hover:bg-gray-700 disabled:opacity-50"
-      >
-        Cancel
-      </button>
-    </div>
-  )}
-</div>
-            <div>
-              <h1 className="text-3xl font-bold">{profile.pharmacy.name}</h1>
-              <p className="text-white/90 mt-1">{profile.pharmacy.address}</p>
-              <div className="flex items-center gap-4 mt-3">
-                <StatusBadge status={profile.pharmacy.status} />
-                <span className="text-sm text-white/80">License: {profile.pharmacy.licenseNumber}</span>
-              </div>
-            </div>
-          </div>
-          <button
-            onClick={() => setEditMode(!editMode)}
-            className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors flex items-center gap-2 font-semibold"
-          >
-            <Edit className="w-4 h-4" />
-            {editMode ? 'Cancel Edit' : 'Edit Profile'}
-          </button>
+ {/* Header */}
+<div className="bg-gradient-to-r from-[#225F91] to-[#1ABA7F] rounded-2xl shadow-lg p-4 sm:p-6 lg:p-8 text-white">
+  <div className="flex flex-col sm:flex-row items-start sm:items-start justify-between gap-4">
+    {/* Left side - Logo and Info */}
+    <div className="flex items-start gap-3 sm:gap-6 w-full sm:w-auto">
+      {/* Logo */}
+      <div className="relative group flex-shrink-0">
+        <div className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 bg-white rounded-full flex items-center justify-center shadow-lg overflow-hidden">
+          {logoPreview ? (
+            <img 
+              src={logoPreview} 
+              alt="Logo Preview" 
+              className="w-full h-full object-cover" 
+            />
+          ) : profile.pharmacy.logoUrl ? (
+            <img 
+              src={profile.pharmacy.logoUrl} 
+              alt="Logo" 
+              className="w-full h-full object-cover" 
+            />
+          ) : (
+            <Building className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-[#225F91]" />
+          )}
         </div>
+        
+        {/* Upload overlay */}
+        <div className="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+          <label htmlFor="logo-upload" className="cursor-pointer">
+            <input
+              id="logo-upload"
+              type="file"
+              accept="image/*"
+              onChange={handleLogoSelect}
+              className="hidden"
+            />
+            <Camera className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+          </label>
+        </div>
+        
+        {/* Upload controls for pending upload */}
+        {logoFile && (
+          <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2 flex gap-2 bg-white rounded-lg shadow-lg p-2 z-10">
+            <button
+              onClick={handleLogoUpload}
+              disabled={uploadingLogo}
+              className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700 disabled:opacity-50 flex items-center gap-1"
+            >
+              {uploadingLogo ? (
+                <>
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  <span className="hidden sm:inline">Saving...</span>
+                </>
+              ) : (
+                <>
+                  <Upload className="w-3 h-3" />
+                  <span className="hidden sm:inline">Save</span>
+                </>
+              )}
+            </button>
+            <button
+              onClick={cancelLogoUpload}
+              disabled={uploadingLogo}
+              className="px-3 py-1 bg-gray-600 text-white rounded text-sm hover:bg-gray-700 disabled:opacity-50"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
       </div>
 
+      {/* Pharmacy Info */}
+      <div className="flex-1 min-w-0">
+        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold break-words">
+          {profile.pharmacy.name}
+        </h1>
+        <p className="text-white/90 mt-1 text-sm sm:text-base line-clamp-2">
+          {profile.pharmacy.address}
+        </p>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-3">
+          <StatusBadge status={profile.pharmacy.status} />
+          <span className="text-xs sm:text-sm text-white/80 break-all">
+            License: {profile.pharmacy.licenseNumber}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    {/* Right side - Edit Button */}
+    <button
+      onClick={() => setEditMode(!editMode)}
+      className="w-full sm:w-auto px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors flex items-center justify-center gap-2 font-semibold text-sm sm:text-base flex-shrink-0"
+    >
+      <Edit className="w-4 h-4" />
+      <span className="hidden sm:inline">{editMode ? 'Cancel Edit' : 'Edit Profile'}</span>
+      <span className="sm:hidden">{editMode ? 'Cancel' : 'Edit'}</span>
+    </button>
+  </div>
+</div>
     {/* Tabs */}
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-2">
       <div

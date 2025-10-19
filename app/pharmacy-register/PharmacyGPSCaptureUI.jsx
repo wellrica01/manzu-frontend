@@ -3,7 +3,7 @@ import { FormLabel, FormDescription } from '@/components/ui/form';
 import { MapPin, Loader2, AlertCircle, CheckCircle2, Wifi, Satellite, X } from 'lucide-react';
 
 /**
- * Enhanced GPS Capture UI for Pharmacy Registration
+ * Enhanced GPS Capture UI for Pharmacy Registration - RESPONSIVE VERSION
  */
 export function PharmacyGPSCaptureUI({ gpsCapture, onCapture, onClear }) {
   
@@ -17,16 +17,16 @@ export function PharmacyGPSCaptureUI({ gpsCapture, onCapture, onClear }) {
     const getPhaseInfo = () => {
       if (phase === 'network') {
         return {
-          icon: <Wifi className="h-5 w-5 text-blue-600" />,
+          icon: <Wifi className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />,
           title: 'Network Positioning',
-          description: 'Using Wi-Fi and cell towers for quick location...',
+          description: 'Using Wi-Fi and cell towers...',
           color: 'blue'
         };
       }
       return {
-        icon: <Satellite className="h-5 w-5 text-purple-600" />,
+        icon: <Satellite className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />,
         title: 'GPS Satellites',
-        description: 'Getting precise coordinates from GPS satellites...',
+        description: 'Getting precise coordinates...',
         color: 'purple'
       };
     };
@@ -34,33 +34,37 @@ export function PharmacyGPSCaptureUI({ gpsCapture, onCapture, onClear }) {
     const phaseInfo = getPhaseInfo();
 
     const getStatusMessage = () => {
-      if (status === 'starting') return 'Initializing location services...';
-      if (status === 'network_phase') return 'Quick network positioning...';
-      if (status === 'network_success') return 'Network location acquired!';
-      if (status === 'network_failed') return 'Switching to GPS satellites...';
-      if (status === 'gps_phase') return 'Acquiring GPS signal...';
+      if (status === 'starting') return 'Initializing...';
+      if (status === 'network_phase') return 'Quick positioning...';
+      if (status === 'network_success') return 'Network located!';
+      if (status === 'network_failed') return 'Switching to GPS...';
+      if (status === 'gps_phase') return 'Acquiring GPS...';
       if (status === 'collecting') return 'Collecting sample...';
       if (status === 'success') return accuracy ? `Good signal (±${accuracy}m)` : 'Sample collected';
       if (status === 'error') return 'Retrying...';
-      if (status === 'poor_signal') return 'Weak signal - move outdoors';
+      if (status === 'poor_signal') return 'Weak signal';
       return 'Processing...';
     };
 
     return (
-      <div className="bg-gradient-to-br from-blue-50 to-purple-50 border-2 border-blue-200 rounded-xl p-4 space-y-3 animate-in fade-in duration-300">
+      <div className="bg-gradient-to-br from-blue-50 to-purple-50 border-2 border-blue-200 rounded-xl p-3 sm:p-4 space-y-3 animate-in fade-in duration-300">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="relative">
+        <div className="flex items-start sm:items-center justify-between gap-2">
+          <div className="flex items-start sm:items-center gap-2 sm:gap-3 flex-1 min-w-0">
+            <div className="relative flex-shrink-0">
               {/* Pulsing animation */}
               <div className="absolute inset-0 rounded-full bg-blue-400 animate-ping opacity-20" />
-              <div className={`relative p-2 rounded-full bg-${phaseInfo.color}-100`}>
+              <div className={`relative p-1.5 sm:p-2 rounded-full bg-${phaseInfo.color}-100`}>
                 {phaseInfo.icon}
               </div>
             </div>
-            <div>
-              <p className="text-sm font-bold text-gray-900">{phaseInfo.title}</p>
-              <p className="text-xs text-gray-600">{phaseInfo.description}</p>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs sm:text-sm font-bold text-gray-900 truncate">
+                {phaseInfo.title}
+              </p>
+              <p className="text-xs text-gray-600 truncate hidden sm:block">
+                {phaseInfo.description}
+              </p>
             </div>
           </div>
           
@@ -69,7 +73,7 @@ export function PharmacyGPSCaptureUI({ gpsCapture, onCapture, onClear }) {
             variant="ghost"
             size="sm"
             onClick={gpsCapture.cancelCapture}
-            className="text-gray-500 hover:text-gray-700"
+            className="text-gray-500 hover:text-gray-700 flex-shrink-0 h-8 w-8 p-0"
           >
             <X className="h-4 w-4" />
           </Button>
@@ -78,10 +82,10 @@ export function PharmacyGPSCaptureUI({ gpsCapture, onCapture, onClear }) {
         {/* Progress bar */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-xs">
-            <span className="font-medium text-gray-700">
+            <span className="font-medium text-gray-700 truncate flex-1 mr-2">
               {getStatusMessage()}
             </span>
-            <span className="font-bold text-gray-900">
+            <span className="font-bold text-gray-900 flex-shrink-0">
               {current}/{total}
             </span>
           </div>
@@ -99,7 +103,7 @@ export function PharmacyGPSCaptureUI({ gpsCapture, onCapture, onClear }) {
         </div>
 
         {/* Status details */}
-        <div className="flex items-center justify-between text-xs">
+        <div className="flex items-center justify-between text-xs flex-wrap gap-1">
           <span className="text-gray-600">
             {samplesCollected !== undefined && `${samplesCollected} valid samples`}
           </span>
@@ -126,7 +130,7 @@ export function PharmacyGPSCaptureUI({ gpsCapture, onCapture, onClear }) {
     const qualityConfig = {
       excellent: {
         color: 'green',
-        icon: <CheckCircle2 className="h-5 w-5 text-green-600" />,
+        icon: <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />,
         bg: 'bg-green-50',
         border: 'border-green-200',
         text: 'text-green-800',
@@ -134,7 +138,7 @@ export function PharmacyGPSCaptureUI({ gpsCapture, onCapture, onClear }) {
       },
       good: {
         color: 'blue',
-        icon: <CheckCircle2 className="h-5 w-5 text-blue-600" />,
+        icon: <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />,
         bg: 'bg-blue-50',
         border: 'border-blue-200',
         text: 'text-blue-800',
@@ -142,7 +146,7 @@ export function PharmacyGPSCaptureUI({ gpsCapture, onCapture, onClear }) {
       },
       acceptable: {
         color: 'yellow',
-        icon: <CheckCircle2 className="h-5 w-5 text-yellow-600" />,
+        icon: <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-600" />,
         bg: 'bg-yellow-50',
         border: 'border-yellow-200',
         text: 'text-yellow-800',
@@ -150,7 +154,7 @@ export function PharmacyGPSCaptureUI({ gpsCapture, onCapture, onClear }) {
       },
       usable: {
         color: 'orange',
-        icon: <AlertCircle className="h-5 w-5 text-orange-600" />,
+        icon: <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-orange-600" />,
         bg: 'bg-orange-50',
         border: 'border-orange-200',
         text: 'text-orange-800',
@@ -158,7 +162,7 @@ export function PharmacyGPSCaptureUI({ gpsCapture, onCapture, onClear }) {
       },
       poor: {
         color: 'red',
-        icon: <AlertCircle className="h-5 w-5 text-red-600" />,
+        icon: <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-red-600" />,
         bg: 'bg-red-50',
         border: 'border-red-200',
         text: 'text-red-800',
@@ -169,70 +173,77 @@ export function PharmacyGPSCaptureUI({ gpsCapture, onCapture, onClear }) {
     const config = qualityConfig[quality] || qualityConfig.acceptable;
 
     return (
-      <div className={`p-4 rounded-xl border-2 ${config.bg} ${config.border} animate-in fade-in zoom-in-95 duration-300`}>
-        <div className="flex items-start gap-3">
-          {config.icon}
-          
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-2">
-              <p className={`text-sm font-bold ${config.text}`}>
-                Location Captured Successfully
-              </p>
-              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${config.badge}`}>
-                {quality.charAt(0).toUpperCase() + quality.slice(1)}
-              </span>
+      <div className={`p-3 sm:p-4 rounded-xl border-2 ${config.bg} ${config.border} animate-in fade-in zoom-in-95 duration-300`}>
+        <div className="flex flex-col sm:flex-row sm:items-start gap-3">
+          <div className="flex items-start gap-2 sm:gap-3 flex-1 min-w-0">
+            <div className="flex-shrink-0">
+              {config.icon}
             </div>
             
-            {/* Location details grid */}
-            <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs mb-3">
-              <div>
-                <span className="text-gray-600">Coordinates:</span>
-                <p className="font-mono font-medium text-gray-900">
-                  {latitude.toFixed(6)}, {longitude.toFixed(6)}
+            <div className="flex-1 min-w-0">
+              {/* Title and Badge */}
+              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-2">
+                <p className={`text-xs sm:text-sm font-bold ${config.text}`}>
+                  Location Captured
                 </p>
+                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${config.badge} inline-block w-fit`}>
+                  {quality.charAt(0).toUpperCase() + quality.slice(1)}
+                </span>
               </div>
-              <div>
-                <span className="text-gray-600">Accuracy:</span>
-                <p className="font-semibold text-gray-900">±{accuracy}m</p>
-              </div>
-              <div>
-                <span className="text-gray-600">Samples:</span>
-                <p className="font-semibold text-gray-900">{sampleCount}</p>
-              </div>
-              {consistency !== undefined && (
-                <div>
-                  <span className="text-gray-600">Consistency:</span>
-                  <p className="font-semibold text-gray-900">{consistency}m</p>
+              
+              {/* Location details grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs mb-3">
+                <div className="space-y-1">
+                  <span className="text-gray-600 block">Coordinates:</span>
+                  <p className="font-mono text-[10px] sm:text-xs font-medium text-gray-900 break-all">
+                    {latitude.toFixed(6)}, {longitude.toFixed(6)}
+                  </p>
                 </div>
-              )}
-            </div>
+                <div className="space-y-1">
+                  <span className="text-gray-600 block">Accuracy:</span>
+                  <p className="font-semibold text-gray-900">±{accuracy}m</p>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-gray-600 block">Samples:</span>
+                  <p className="font-semibold text-gray-900">{sampleCount}</p>
+                </div>
+                {consistency !== undefined && (
+                  <div className="space-y-1">
+                    <span className="text-gray-600 block">Consistency:</span>
+                    <p className="font-semibold text-gray-900">{consistency}m</p>
+                  </div>
+                )}
+              </div>
 
-            {/* Quality explanation */}
-            {quality === 'excellent' && (
-              <p className="text-xs text-green-700 bg-green-100 px-2 py-1 rounded">
-                🎯 Perfect accuracy for pharmacy registration
-              </p>
-            )}
-            {quality === 'good' && (
-              <p className="text-xs text-blue-700 bg-blue-100 px-2 py-1 rounded">
-                ✅ Very good accuracy - suitable for registration
-              </p>
-            )}
-            {quality === 'acceptable' && (
-              <p className="text-xs text-yellow-700 bg-yellow-100 px-2 py-1 rounded">
-                ⚠️ Acceptable accuracy - consider recapturing outdoors for better precision
-              </p>
-            )}
-            {quality === 'usable' && (
-              <p className="text-xs text-orange-700 bg-orange-100 px-2 py-1 rounded">
-                ⚠️ Low accuracy - strongly recommend recapturing outdoors
-              </p>
-            )}
-            {quality === 'poor' && (
-              <p className="text-xs text-red-700 bg-red-100 px-2 py-1 rounded">
-                ❌ Accuracy too low - please recapture outdoors with clear sky view
-              </p>
-            )}
+              {/* Quality explanation */}
+              <div className="text-[10px] sm:text-xs">
+                {quality === 'excellent' && (
+                  <p className="text-green-700 bg-green-100 px-2 py-1 rounded">
+                    🎯 Perfect accuracy
+                  </p>
+                )}
+                {quality === 'good' && (
+                  <p className="text-blue-700 bg-blue-100 px-2 py-1 rounded">
+                    ✅ Very good accuracy
+                  </p>
+                )}
+                {quality === 'acceptable' && (
+                  <p className="text-yellow-700 bg-yellow-100 px-2 py-1 rounded">
+                    ⚠️ Consider recapturing outdoors
+                  </p>
+                )}
+                {quality === 'usable' && (
+                  <p className="text-orange-700 bg-orange-100 px-2 py-1 rounded">
+                    ⚠️ Recapture outdoors recommended
+                  </p>
+                )}
+                {quality === 'poor' && (
+                  <p className="text-red-700 bg-red-100 px-2 py-1 rounded">
+                    ❌ Please recapture outdoors
+                  </p>
+                )}
+              </div>
+            </div>
           </div>
           
           <Button
@@ -240,7 +251,7 @@ export function PharmacyGPSCaptureUI({ gpsCapture, onCapture, onClear }) {
             variant="ghost"
             size="sm"
             onClick={onClear}
-            className={`flex-shrink-0 ${config.text} hover:bg-${config.color}-100`}
+            className={`flex-shrink-0 ${config.text} hover:bg-${config.color}-100 text-xs sm:text-sm w-full sm:w-auto`}
           >
             Recapture
           </Button>
@@ -257,8 +268,8 @@ export function PharmacyGPSCaptureUI({ gpsCapture, onCapture, onClear }) {
       <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg animate-in fade-in duration-300">
         <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-red-800 mb-1">Location Capture Failed</p>
-          <p className="text-xs text-red-700">{gpsCapture.error}</p>
+          <p className="text-xs sm:text-sm font-semibold text-red-800 mb-1">Location Capture Failed</p>
+          <p className="text-[10px] sm:text-xs text-red-700 break-words">{gpsCapture.error}</p>
         </div>
       </div>
     );
@@ -267,7 +278,7 @@ export function PharmacyGPSCaptureUI({ gpsCapture, onCapture, onClear }) {
   // Main render
   return (
     <div className="space-y-3">
-      <FormLabel className="text-sm font-semibold text-gray-700">
+      <FormLabel className="text-xs sm:text-sm font-semibold text-gray-700">
         Pharmacy Location (GPS) <span className="text-red-500">*</span>
       </FormLabel>
       
@@ -277,17 +288,19 @@ export function PharmacyGPSCaptureUI({ gpsCapture, onCapture, onClear }) {
             type="button"
             onClick={onCapture}
             disabled={gpsCapture.isCapturing}
-            className="w-full h-12 sm:h-14 text-base font-semibold rounded-xl bg-gradient-to-r from-[#1ABA7F] to-[#225F91] hover:opacity-90 text-white transition-all disabled:opacity-50"
+            className="w-full h-11 sm:h-12 lg:h-14 text-sm sm:text-base font-semibold rounded-xl bg-gradient-to-r from-[#1ABA7F] to-[#225F91] hover:opacity-90 text-white transition-all disabled:opacity-50"
           >
             {gpsCapture.isCapturing ? (
               <>
-                <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                Capturing Location...
+                <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 mr-2 animate-spin" />
+                <span className="hidden sm:inline">Capturing Location...</span>
+                <span className="sm:hidden">Capturing...</span>
               </>
             ) : (
               <>
-                <MapPin className="h-5 w-5 mr-2" />
-                Capture Pharmacy Location
+                <MapPin className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                <span className="hidden sm:inline">Capture Pharmacy Location</span>
+                <span className="sm:hidden">Capture Location</span>
               </>
             )}
           </Button>
@@ -302,10 +315,10 @@ export function PharmacyGPSCaptureUI({ gpsCapture, onCapture, onClear }) {
         </>
       )}
 
-      <FormDescription className="text-xs text-gray-600">
-        📍 High-precision GPS capture using network + satellite positioning
-        <br />
-        ⚡ For best results: Move outdoors with clear sky view (7 samples with outlier filtering)
+      <FormDescription className="text-[10px] sm:text-xs text-gray-600 space-y-1">
+        <span className="block">📍 High-precision GPS capture</span>
+        <span className="block hidden sm:inline">⚡ Best results: Move outdoors with clear sky view</span>
+        <span className="block sm:hidden">⚡ Move outdoors for best results</span>
       </FormDescription>
     </div>
   );
