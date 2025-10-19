@@ -8,23 +8,25 @@ const NIGERIA_BOUNDS = {
   maxLng: 14.7,
 };
 
-// ⚡ OPTIMIZED: Faster configuration for better UX
+// 🎯 IMPROVED: More lenient configuration for better coverage
 const SAMPLE_CONFIG = {
-  QUICK_SAMPLES: 1,      // ⚡ Single sample for initial detection
-  STANDARD_SAMPLES: 2,    // ⚡ Reduced from 3 to 2
-  PRECISE_SAMPLES: 3,     // ⚡ Reduced from 5 to 3
-  SAMPLE_INTERVAL: 800,   // ⚡ Reduced from 1000ms to 800ms
-  MIN_REQUIRED: 1,        // ⚡ Reduced from 2 to 1
-  TIMEOUT: 8000,          // ⚡ Reduced from 10000ms to 8000ms
-  MAX_RETRIES: 1,
+  QUICK_SAMPLES: 1,
+  STANDARD_SAMPLES: 2,
+  PRECISE_SAMPLES: 3,
+  SAMPLE_INTERVAL: 1000,
+  MIN_REQUIRED: 1,
+  TIMEOUT_NETWORK: 8000,      // Network positioning timeout
+  TIMEOUT_GPS: 15000,          // GPS timeout (more time for satellites)
+  MAX_RETRIES: 2,
 };
 
-// ⚡ OPTIMIZED: Relaxed accuracy for faster results
+// 🎯 IMPROVED: Much more lenient accuracy tiers
 const ACCURACY_CONFIG = {
-  EXCELLENT: 30,   // Relaxed from 20m
-  GOOD: 80,        // Relaxed from 50m
-  ACCEPTABLE: 150, // Relaxed from 100m
-  MAX: 300,        // Relaxed from 200m - accept more readings
+  EXCELLENT: 50,    // 0-50m
+  GOOD: 150,        // 50-150m
+  ACCEPTABLE: 500,  // 150-500m
+  USABLE: 2000,     // 500m-2km (still useful for city-level)
+  MAX: 5000,        // Accept up to 5km in desperate situations
 };
 
 function isInNigeria(lat, lng) {
@@ -38,6 +40,7 @@ function getAccuracyQuality(accuracy) {
   if (accuracy < ACCURACY_CONFIG.EXCELLENT) return 'excellent';
   if (accuracy < ACCURACY_CONFIG.GOOD) return 'good';
   if (accuracy < ACCURACY_CONFIG.ACCEPTABLE) return 'acceptable';
+  if (accuracy < ACCURACY_CONFIG.USABLE) return 'usable';
   return 'poor';
 }
 
@@ -53,9 +56,13 @@ export function useLocationDetection() {
   const [error, setError] = useState(null);
   const [accuracy, setAccuracy] = useState(null);
   const [progress, setProgress] = useState(null);
+  const [detectionMethod, setDetectionMethod] = useState(null); // 'network' or 'gps'
   
   const abortControllerRef = useRef(null);
 
+  /**
+   * 🎯 IMPROVED: Try network positioning first (fast), then GPS (accurate)
+   */
   const getSingleReading = useCallback((options = {}) => {
     return new Promise((resolve, reject) => {
       if (!navigator.geolocation) {
@@ -63,19 +70,31 @@ export function useLocationDetection() {
         return;
       }
 
-      // ⚡ OPTIMIZED: Use less strict options for faster initial reading
+      const {
+        enableHighAccuracy = false,
+        timeout = enableHighAccuracy ? SAMPLE_CONFIG.TIMEOUT_GPS : SAMPLE_CONFIG.TIMEOUT_NETWORK,
+        maximumAge = 0,
+        ...rest
+      } = options;
+
       const gpsOptions = {
-        timeout: SAMPLE_CONFIG.TIMEOUT,
-        maximumAge: 5000,  // ⚡ Allow cached readings up to 5 seconds old
-        enableHighAccuracy: false, // ⚡ Start with low accuracy for speed
-        ...options,
+        timeout,
+        maximumAge,
+        enableHighAccuracy,
+        ...rest,
       };
 
       let settled = false;
+      let timeoutId;
 
-      const timeoutId = setTimeout(() => {
+      const cleanup = () => {
+        if (timeoutId) clearTimeout(timeoutId);
+      };
+
+      timeoutId = setTimeout(() => {
         if (!settled) {
           settled = true;
+          cleanup();
           reject(new Error('GPS reading timeout'));
         }
       }, gpsOptions.timeout);
@@ -84,24 +103,24 @@ export function useLocationDetection() {
         (position) => {
           if (!settled) {
             settled = true;
-            clearTimeout(timeoutId);
+            cleanup();
             resolve({
               latitude: position.coords.latitude,
               longitude: position.coords.longitude,
               accuracy: position.coords.accuracy,
               timestamp: position.timestamp,
+              method: enableHighAccuracy ? 'gps' : 'network',
             });
           }
         },
         (err) => {
           if (!settled) {
             settled = true;
-            clearTimeout(timeoutId);
+            cleanup();
             
-            const error = err instanceof Error 
-              ? err 
-              : new Error(err?.message || `GPS error code ${err?.code || 'unknown'}`);
-            
+            const error = new Error(
+              err?.message || `Location error (code ${err?.code || 'unknown'})`
+            );
             error.code = err?.code;
             error.originalError = err;
             reject(error);
@@ -113,103 +132,113 @@ export function useLocationDetection() {
   }, []);
 
   /**
-   * ⚡ OPTIMIZED: Collect samples with progressive enhancement
-   * - Start with quick, low-accuracy reading
-   * - Optionally get more samples in background for refinement
+   * 🎯 IMPROVED: Progressive location strategy with multiple fallbacks
    */
-  const collectSamples = useCallback(async (sampleCount, onProgress) => {
-    const samples = [];
-    let retryCount = 0;
+  const getLocationWithFallback = useCallback(async (onProgress) => {
+    const attempts = [];
+    let bestReading = null;
 
-    for (let i = 0; i < sampleCount; i++) {
-      if (abortControllerRef.current?.signal.aborted) {
-        throw new Error('Location request cancelled');
-      }
+    // Strategy 1: Try network positioning (fast, ~100-500m accuracy)
+    onProgress?.({
+      status: 'trying_network',
+      message: 'Getting approximate location...',
+    });
 
-      try {
-        onProgress?.({
-          current: i + 1,
-          total: sampleCount,
-          status: 'collecting',
-          samplesCollected: samples.length,
-        });
+    try {
+      const networkReading = await getSingleReading({
+        enableHighAccuracy: false,
+        maximumAge: 10000, // Accept cached network position
+        timeout: SAMPLE_CONFIG.TIMEOUT_NETWORK,
+      });
 
-        // ⚡ Use high accuracy only after first reading
-        const reading = await getSingleReading({
-          enableHighAccuracy: i > 0, // First reading is fast, others are accurate
-        });
+      console.log('📡 Network reading:', networkReading);
 
-        if (abortControllerRef.current?.signal.aborted) {
-          throw new Error('Location request cancelled');
-        }
+      // Validate bounds
+      if (isInNigeria(networkReading.latitude, networkReading.longitude)) {
+        // Accept network reading if it's reasonable
+        if (networkReading.accuracy <= ACCURACY_CONFIG.USABLE) {
+          attempts.push(networkReading);
+          bestReading = networkReading;
+          setDetectionMethod('network');
 
-        // Validate Nigeria bounds
-        if (!isInNigeria(reading.latitude, reading.longitude)) {
-          if (retryCount < SAMPLE_CONFIG.MAX_RETRIES) {
-            retryCount++;
-            i--;
-            await new Promise(resolve => setTimeout(resolve, 500));
-            continue;
+          onProgress?.({
+            status: 'network_success',
+            message: 'Location found via network',
+            accuracy: networkReading.accuracy,
+            quality: getAccuracyQuality(networkReading.accuracy),
+          });
+
+          // If network accuracy is good enough, return early
+          if (networkReading.accuracy <= ACCURACY_CONFIG.ACCEPTABLE) {
+            return [networkReading];
           }
-          continue;
         }
-
-        // ⚡ Accept wider accuracy range
-        if (reading.accuracy > ACCURACY_CONFIG.MAX) {
-          if (retryCount < SAMPLE_CONFIG.MAX_RETRIES) {
-            retryCount++;
-            i--;
-            await new Promise(resolve => setTimeout(resolve, 500));
-            continue;
-          }
-          continue;
-        }
-
-        samples.push(reading);
-        retryCount = 0;
-        
-        const quality = getAccuracyQuality(reading.accuracy);
-        
-        onProgress?.({
-          current: i + 1,
-          total: sampleCount,
-          status: 'success',
-          accuracy: reading.accuracy,
-          quality,
-          samplesCollected: samples.length,
-        });
-
-        // ⚡ Shorter wait between samples
-        if (i < sampleCount - 1) {
-          await new Promise(resolve => setTimeout(resolve, SAMPLE_CONFIG.SAMPLE_INTERVAL));
-        }
-
-      } catch (err) {
-        if (err.message === 'Location request cancelled') {
-          throw err;
-        }
-
-        if (err.code === 1) {
-          throw new Error('Location permission denied. Please enable location access.');
-        }
-
-        // ⚡ Be more lenient with errors - continue if we have at least 1 sample
-        if (samples.length >= SAMPLE_CONFIG.MIN_REQUIRED) {
-          console.warn(`Sample ${i + 1} failed but continuing with ${samples.length} samples`);
-          break;
-        }
-
-        onProgress?.({
-          current: i + 1,
-          total: sampleCount,
-          status: 'error',
-          error: err.message,
-          samplesCollected: samples.length,
-        });
+      } else {
+        console.warn('Network reading outside Nigeria bounds');
       }
+    } catch (err) {
+      console.warn('Network positioning failed:', err.message);
+      onProgress?.({
+        status: 'network_failed',
+        message: 'Network positioning unavailable, trying GPS...',
+      });
     }
 
-    return samples;
+    // Strategy 2: Try GPS positioning (slower, but more accurate)
+    onProgress?.({
+      status: 'trying_gps',
+      message: 'Getting precise location via GPS...',
+    });
+
+    try {
+      const gpsReading = await getSingleReading({
+        enableHighAccuracy: true,
+        maximumAge: 0, // Force fresh GPS reading
+        timeout: SAMPLE_CONFIG.TIMEOUT_GPS,
+      });
+
+      console.log('🛰️ GPS reading:', gpsReading);
+
+      // Validate bounds
+      if (isInNigeria(gpsReading.latitude, gpsReading.longitude)) {
+        // Accept GPS reading if it's within our max threshold
+        if (gpsReading.accuracy <= ACCURACY_CONFIG.MAX) {
+          attempts.push(gpsReading);
+          setDetectionMethod('gps');
+
+          // Use GPS if it's better than network reading
+          if (!bestReading || gpsReading.accuracy < bestReading.accuracy) {
+            bestReading = gpsReading;
+          }
+
+          onProgress?.({
+            status: 'gps_success',
+            message: 'GPS location acquired',
+            accuracy: gpsReading.accuracy,
+            quality: getAccuracyQuality(gpsReading.accuracy),
+          });
+
+          return attempts;
+        }
+      } else {
+        console.warn('GPS reading outside Nigeria bounds');
+      }
+    } catch (err) {
+      console.warn('GPS positioning failed:', err.message);
+      onProgress?.({
+        status: 'gps_failed',
+        message: 'GPS unavailable',
+      });
+    }
+
+    // Strategy 3: Last resort - accept any valid reading within Nigeria
+    if (bestReading) {
+      console.log('✅ Using best available reading:', bestReading);
+      return [bestReading];
+    }
+
+    // All strategies failed
+    throw new Error('Unable to determine your location. Please select manually.');
   }, [getSingleReading]);
 
   const calculateLocation = useCallback((samples) => {
@@ -217,7 +246,6 @@ export function useLocationDetection() {
       throw new Error('No valid GPS readings obtained');
     }
 
-    // ⚡ Accept even single sample
     const latitudes = samples.map(s => s.latitude);
     const longitudes = samples.map(s => s.longitude);
     const accuracies = samples.map(s => s.accuracy);
@@ -239,7 +267,7 @@ export function useLocationDetection() {
   }, []);
 
   /**
-   * ⚡ OPTIMIZED: Quick location with progressive enhancement
+   * 🎯 IMPROVED: Smart location detection with fallback strategies
    */
   const requestLocation = useCallback(async (options = {}) => {
     const { samples = SAMPLE_CONFIG.STANDARD_SAMPLES } = options;
@@ -247,11 +275,16 @@ export function useLocationDetection() {
     try {
       setLocationStatus('requesting');
       setError(null);
-      setProgress({ current: 0, total: samples, status: 'starting' });
+      setProgress({ status: 'starting', message: 'Detecting your location...' });
       
       abortControllerRef.current = new AbortController();
 
-      const rawSamples = await collectSamples(samples, setProgress);
+      // Use progressive fallback strategy
+      const rawSamples = await getLocationWithFallback(setProgress);
+
+      if (abortControllerRef.current?.signal.aborted) {
+        throw new Error('Location request cancelled');
+      }
 
       if (rawSamples.length === 0) {
         throw new Error(
@@ -261,6 +294,7 @@ export function useLocationDetection() {
 
       const location = calculateLocation(rawSamples);
 
+      // Final validation
       if (!isInNigeria(location.latitude, location.longitude)) {
         throw new Error(
           'Location detected outside Nigeria. Please select your area manually.'
@@ -280,21 +314,27 @@ export function useLocationDetection() {
       }
 
       let errorMessage = 'Unable to detect location';
+      let errorDetails = null;
       
       if (err.message === 'Location request cancelled') {
         errorMessage = 'Location request cancelled';
       } else if (err.code === 1) {
-        errorMessage = 'Location access denied. Please enable location in your browser.';
+        errorMessage = 'Location access denied';
+        errorDetails = 'Please enable location access in your browser settings';
       } else if (err.code === 2) {
-        errorMessage = 'Location unavailable. Please try again or select manually.';
+        errorMessage = 'Location unavailable';
+        errorDetails = 'Your device cannot determine your location. This may be due to poor GPS signal or disabled location services.';
       } else if (err.code === 3) {
-        errorMessage = 'Location request timed out. Please try again.';
+        errorMessage = 'Location request timed out';
+        errorDetails = 'Finding your location is taking too long. This often happens indoors or in areas with poor GPS signal.';
       } else if (err.message) {
         errorMessage = err.message;
+        errorDetails = 'You can still use the app by selecting your location manually.';
       }
 
       const error = new Error(errorMessage);
       error.code = err.code;
+      error.details = errorDetails;
       error.originalError = err;
 
       setLocationStatus(err.message === 'Location request cancelled' ? 'pending' : 'denied');
@@ -307,78 +347,15 @@ export function useLocationDetection() {
     } finally {
       abortControllerRef.current = null;
     }
-  }, [collectSamples, calculateLocation]);
+  }, [getLocationWithFallback, calculateLocation]);
+
+  const requestQuickLocation = useCallback(async () => {
+    return requestLocation({ samples: SAMPLE_CONFIG.QUICK_SAMPLES });
+  }, [requestLocation]);
 
   const requestPreciseLocation = useCallback(async () => {
     return requestLocation({ samples: SAMPLE_CONFIG.PRECISE_SAMPLES });
   }, [requestLocation]);
-
-  /**
-   * ⚡ OPTIMIZED: Ultra-fast single reading
-   */
-  const requestQuickLocation = useCallback(async () => {
-    try {
-      setLocationStatus('requesting');
-      setError(null);
-      setProgress({ current: 1, total: 1, status: 'collecting' });
-
-      // ⚡ Single reading with relaxed accuracy
-      const reading = await getSingleReading({
-        enableHighAccuracy: false,
-        maximumAge: 10000, // Accept cached readings up to 10 seconds
-      });
-
-      if (!isInNigeria(reading.latitude, reading.longitude)) {
-        throw new Error(
-          'Location detected outside Nigeria. Please select your area manually.'
-        );
-      }
-
-      const quality = getAccuracyQuality(reading.accuracy);
-      const location = {
-        latitude: reading.latitude,
-        longitude: reading.longitude,
-        accuracy: Math.round(reading.accuracy),
-        quality,
-        sampleCount: 1,
-        timestamp: reading.timestamp,
-      };
-
-      setUserLocation(location);
-      setAccuracy(location.accuracy);
-      setLocationStatus('granted');
-      setProgress(null);
-      
-      return location;
-
-    } catch (err) {
-      console.error('Quick location error:', err);
-      
-      let errorMessage = 'Unable to detect location';
-      
-      if (err.code === 1) {
-        errorMessage = 'Location access denied. Please enable location in your browser.';
-      } else if (err.code === 2) {
-        errorMessage = 'Location unavailable. Please try again or select manually.';
-      } else if (err.code === 3) {
-        errorMessage = 'Location request timed out. Please try again.';
-      } else if (err.message) {
-        errorMessage = err.message;
-      }
-
-      const error = new Error(errorMessage);
-      error.code = err.code;
-      error.originalError = err;
-
-      setLocationStatus('denied');
-      setUserLocation(null);
-      setAccuracy(null);
-      setProgress(null);
-      setError(error);
-      
-      throw error;
-    }
-  }, [getSingleReading]);
 
   const cancelLocationRequest = useCallback(() => {
     if (abortControllerRef.current) {
@@ -395,6 +372,7 @@ export function useLocationDetection() {
     setLocationStatus('pending');
     setError(null);
     setProgress(null);
+    setDetectionMethod(null);
   }, []);
 
   return {
@@ -403,6 +381,7 @@ export function useLocationDetection() {
     accuracy,
     error,
     progress,
+    detectionMethod,
     
     requestLocation,
     requestPreciseLocation,

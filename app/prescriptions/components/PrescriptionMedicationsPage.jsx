@@ -74,12 +74,15 @@ const PrescriptionMedicationsPage = () => {
     reverseGeocode 
   } = useGeoData();
   
-  const {
-    userLocation,
-    locationStatus,
-    requestLocation,
-    requestPreciseLocation,
-  } = useLocationDetection();
+const {
+  userLocation,
+  locationStatus,
+  progress,        
+  error: locationError, 
+  requestLocation,
+  requestPreciseLocation,
+  cancelLocationRequest, 
+} = useLocationDetection();
 
   // Refs
   const refetchRef = useRef(null);
@@ -90,7 +93,8 @@ const PrescriptionMedicationsPage = () => {
   const locationTimeoutRef = useRef(null);
 
 
-  // Filter state - REMOVED ward
+
+  // Filter state 
   const [filterState, setFilterState] = useState('');
   const [filterLga, setFilterLga] = useState('');
   const [sortBy, setSortBy] = useState('price');
@@ -98,6 +102,8 @@ const PrescriptionMedicationsPage = () => {
   const [filtersCleared, setFiltersCleared] = useState(false);
   const [isLocationProcessed, setIsLocationProcessed] = useState(false);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  const [permissionDenied, setPermissionDenied] = useState(false);
+
 
   // UI state
   const [mounted, setMounted] = useState(false);
@@ -105,13 +111,13 @@ const PrescriptionMedicationsPage = () => {
   const [lastAddedItems, setLastAddedItems] = useState([]);
   const [removeItemDialog, setRemoveItemDialog] = useState(null);
 
-  // Derived filter options - REMOVED wards
+  // Derived filter options 
   const lgas = useMemo(() => 
     filterState ? getLgas(filterState) : [],
     [filterState, getLgas]
   );
 
-  // Prescription data - REMOVED filterWard
+  // Prescription data
   const {
     medications,
     prescriptionMetadata,
@@ -195,6 +201,7 @@ const PrescriptionMedicationsPage = () => {
 
   const debouncedRefetch = useDebounce(triggerRefetch, 300);
 
+
   // ✅ UPDATED: Auto-detect location - sets only state filter
 useEffect(() => {
   if (!userLocation || !geoData?.length || isLocationProcessed || locationProcessingRef.current || filtersCleared) {
@@ -202,7 +209,7 @@ useEffect(() => {
   }
 
   // ✅ FIX 1: Prevent duplicate processing with proper coordinate names
-  const locationKey = `${userLocation.latitude?.toFixed(4) || userLocation.lat?.toFixed(4)},${userLocation.longitude?.toFixed(4) || userLocation.lng?.toFixed(4)}`;
+const locationKey = `${userLocation.latitude?.toFixed(4) || userLocation.lat?.toFixed(4)},${userLocation.longitude?.toFixed(4) || userLocation.lng?.toFixed(4)}`;
   
   if (lastProcessedLocation.current === locationKey) {
     console.log('⭐️ Location already processed, skipping');
@@ -216,19 +223,19 @@ useEffect(() => {
 
   try {
     // ✅ FIX 2: Handle both coordinate naming conventions
-    const lat = userLocation.latitude || userLocation.lat;
-    const lng = userLocation.longitude || userLocation.lng;
-    
-    if (!lat || !lng) {
-      console.error('Invalid location coordinates:', userLocation);
-      setIsLoadingLocation(false);
-      locationProcessingRef.current = false;
-      return;
-    }
+      const lat = userLocation.latitude || userLocation.lat;
+      const lng = userLocation.longitude || userLocation.lng;
 
-    const match = reverseGeocode(lat, lng, {
-      includeNearby: true
-    });
+      if (!lat || !lng) {
+        console.error('Invalid location coordinates:', userLocation);
+        setIsLoadingLocation(false);
+        locationProcessingRef.current = false;
+        return;
+      }
+
+      const match = reverseGeocode(lat, lng, {
+        includeNearby: true
+      });
     
     console.log('Reverse geocode match:', match);
     
@@ -399,7 +406,7 @@ useEffect(() => {
     }
   }, [checkBulkDuplicates, pharmacyRecommendations, medications, bulkAddToCart]);
 
-  // ✅ UPDATED: clearFilters - removed ward
+  // ✅ UPDATED: clearFilters 
   const clearFilters = useCallback(() => {
     setFilterState('');
     setFilterLga('');
@@ -411,31 +418,73 @@ useEffect(() => {
     lastProcessedLocation.current = null;
   }, [debouncedRefetch]);
 
-  // ✅ UPDATED: handleEnableLocation - removed ward
+  // ✅ UPDATED: handleEnableLocation 
 const handleEnableLocation = useCallback(async () => {
+  // Check browser support
+  if (!navigator.geolocation) {
+    toast.error('GPS not supported', {
+      description: 'Your browser does not support location services. Please select your location manually.',
+      duration: 6000,
+    });
+    setShowFilters(true);
+    return;
+  }
+
+  // Check permission state upfront
+  const checkPermissionState = async () => {
+    if ('permissions' in navigator) {
+      try {
+        const result = await navigator.permissions.query({ name: 'geolocation' });
+        return result.state;
+      } catch (error) {
+        console.warn('Permission API not supported:', error);
+        return 'prompt';
+      }
+    }
+    return 'prompt';
+  };
+
+  const permissionState = await checkPermissionState();
+  
+  if (permissionState === 'denied') {
+    setPermissionDenied(true);
+    toast.error('Location access blocked', {
+      description: '🔒 Please enable location in your browser settings.',
+      duration: 8000,
+      action: {
+        label: 'How to enable',
+        onClick: () => {
+          window.open('https://support.google.com/chrome/answer/142065', '_blank');
+        },
+      },
+    });
+    return;
+  }
+
+  // Reset states
   setFilterState('');
   setFilterLga('');
   setIsLocationProcessed(false);
   setFiltersCleared(false);
   setIsLoadingLocation(true);
+  setPermissionDenied(false);
   locationProcessingRef.current = false;
-  lastProcessedLocation.current = null; // Reset processed location
+  lastProcessedLocation.current = null;
   
-  // ⚡ Set safety timeout (30 seconds)
+  // ⚡ Set safety timeout (45 seconds - more generous)
   locationTimeoutRef.current = setTimeout(() => {
     setIsLoadingLocation(false);
-    toast.error('Taking too long', {
-      description: 'Let`s try selecting your area manually instead.',
-      duration: 5000,
+    toast.error('Location Detection Timeout', {
+      description: 'This is taking longer than expected. You can select your area manually instead.',
+      duration: 6000,
       action: {
         label: 'Select Manually',
-        onClick: () => setShowFilters(true)
-      }
+        onClick: () => setShowFilters(true),
+      },
     });
-  }, 30000);
+  }, 45000);
   
   try {
-    // 🎯 USE STANDARD LOCATION for balanced speed & accuracy
     const location = await requestLocation();
     
     // Clear timeout on success
@@ -443,73 +492,87 @@ const handleEnableLocation = useCallback(async () => {
       clearTimeout(locationTimeoutRef.current);
     }
     
-    // 🎯 Success message
-    toast.success('📍 Location found!', {
-      description: 'Showing pharmacies near you',
-      duration: 2000,
-    });
+    console.log('✅ Location success:', location);
     
-    // 🎯 If accuracy is moderate (>50m), offer PRECISE refinement
-    if (location.accuracy > 50) {
-      setTimeout(() => {
-        toast.info('💡 Want more accurate results?', {
-          description: `Current accuracy: ~${location.accuracy}m. We can pinpoint your exact location.`,
-          duration: 6000,
-          action: {
-            label: 'Refine',
-            onClick: async () => {
-              setIsLoadingLocation(true);
-              try {
-                const betterLocation = await requestPreciseLocation();
-                toast.success('✨ Pinpoint accuracy achieved!', {
-                  description: `Accuracy improved to ~${betterLocation.accuracy}m`,
-                  duration: 2000,
-                });
-              } catch (err) {
-                console.warn('Refinement failed:', err);
-                toast.error('Refinement failed', {
-                  description: 'Using your original location instead.',
-                  duration: 3000,
-                });
-              } finally {
-                setIsLoadingLocation(false);
-              }
-            },
+    // 🎯 Success feedback based on accuracy
+    if (location.accuracy <= 100) {
+      toast.success('📍 Precise Location Found!', {
+        description: `Accuracy: ~${location.accuracy}m - Showing pharmacies near you`,
+        duration: 3000,
+      });
+    } else if (location.accuracy <= 500) {
+      toast.success('📍 Location Found!', {
+        description: `Accuracy: ~${location.accuracy}m - Showing nearby pharmacies`,
+        duration: 3000,
+      });
+    } else {
+      toast.success('📍 Approximate Location Found', {
+        description: `Accuracy: ~${location.accuracy}m - Showing pharmacies in your area`,
+        duration: 4000,
+        action: {
+          label: 'Refine',
+          onClick: async () => {
+            setIsLoadingLocation(true);
+            try {
+              const betterLocation = await requestPreciseLocation();
+              toast.success('✨ Location Refined!', {
+                description: `Improved to ~${betterLocation.accuracy}m accuracy`,
+                duration: 2000,
+              });
+            } catch (err) {
+              console.warn('Refinement failed:', err);
+              toast.error('Refinement Failed', {
+                description: 'Using your original location instead.',
+                duration: 3000,
+              });
+            } finally {
+              setIsLoadingLocation(false);
+            }
           },
-        });
-      }, 1000);
+        },
+      });
     }
+    
   } catch (error) {
     // Clear timeout on error
     if (locationTimeoutRef.current) {
       clearTimeout(locationTimeoutRef.current);
     }
     
+    console.error('❌ Location error:', error);
+    
     const errorMessage = error?.message || '';
     
     // Don't show error for user cancellation
     if (errorMessage === 'Location request cancelled') {
-      toast.info('Cancelled');
+      toast.info('Location Request Cancelled', {
+        duration: 2000,
+      });
       setIsLoadingLocation(false);
       return;
     }
     
-    // Handle specific error codes
+    // 🎯 User-friendly error handling
     if (error.code === 1) {
-      toast.error('Location blocked', {
-        description: '🔒 Please allow location access in your browser.',
-        duration: 7000,
+      // Permission denied
+      setPermissionDenied(true);
+      toast.error('Location Access Blocked', {
+        description: error.details || '🔒 Please allow location access in your browser to see nearby pharmacies.',
+        duration: 8000,
         action: {
-          label: 'How to fix',
+          label: 'How to Fix',
           onClick: () => {
             window.open('https://support.google.com/chrome/answer/142065', '_blank');
           },
         },
       });
-    } else if (error.code === 2 || error.code === 3) {
-      toast.error('Can\'t find location', {
-        description: '📱 Please choose your area manually.',
-        duration: 5000,
+      setIsLoadingLocation(false);
+      
+    } else if (error.code === 2) {
+      // Position unavailable
+      toast.error('Location Unavailable', {
+        description: error.details || 'Your device cannot determine your location. This may be due to poor GPS signal or disabled location services.',
+        duration: 7000,
         action: {
           label: 'Select Area',
           onClick: () => {
@@ -518,14 +581,38 @@ const handleEnableLocation = useCallback(async () => {
           },
         },
       });
+      
+      // Auto-open filters after a delay
       setTimeout(() => {
         setIsLoadingLocation(false);
         setShowFilters(true);
-      }, 1500);
+      }, 2000);
+      
+    } else if (error.code === 3) {
+      // Timeout
+      toast.error('Location Timeout', {
+        description: error.details || 'Finding your location took too long. This often happens indoors or in areas with poor GPS signal.',
+        duration: 7000,
+        action: {
+          label: 'Select Area',
+          onClick: () => {
+            setShowFilters(true);
+            setIsLoadingLocation(false);
+          },
+        },
+      });
+      
+      // Auto-open filters after a delay
+      setTimeout(() => {
+        setIsLoadingLocation(false);
+        setShowFilters(true);
+      }, 2000);
+      
     } else {
-      toast.error('Couldn\'t detect location', {
-        description: 'No worries! You can select your area manually.',
-        duration: 5000,
+      // Generic error
+      toast.error('Couldn\'t Detect Location', {
+        description: error.details || 'No worries! You can select your area manually to find nearby pharmacies.',
+        duration: 6000,
         action: {
           label: 'Select Area',
           onClick: () => {
@@ -534,16 +621,38 @@ const handleEnableLocation = useCallback(async () => {
           },
         },
       });
+      
+      // Auto-open filters after a delay
       setTimeout(() => {
         setIsLoadingLocation(false);
         setShowFilters(true);
-      }, 1500);
+      }, 2000);
     }
-    
-    setIsLoadingLocation(false);
-    setShowFilters(true);
   }
 }, [requestLocation, requestPreciseLocation, setShowFilters]);
+
+
+
+const handleCancelLocation = useCallback(() => {
+  cancelLocationRequest();
+  setIsLoadingLocation(false);
+  
+  if (locationTimeoutRef.current) {
+    clearTimeout(locationTimeoutRef.current);
+  }
+
+  // Reset location tracking on cancel
+  lastProcessedLocation.current = null;
+  
+  toast.info('Location Detection Cancelled', {
+    description: 'You can try again or select your area manually.',
+    duration: 3000,
+    action: {
+      label: 'Select Manually',
+      onClick: () => setShowFilters(true),
+    },
+  });
+}, [cancelLocationRequest, setShowFilters]);
 
 
 
@@ -629,8 +738,12 @@ useEffect(() => {
                 <LocationPrompt
                   onSelectLocation={handleSelectLocation}
                   onEnableLocation={handleEnableLocation}
+                  onCancelLocation={handleCancelLocation}
                   locationStatus={locationStatus}
                   isLoadingLocation={isLoadingLocation}
+                  permissionDenied={permissionDenied}     
+                  progress={progress}                    
+                  error={locationError}         
                 />
               </div>
             ) : !hasPharmacyData ? (

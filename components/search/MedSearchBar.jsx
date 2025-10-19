@@ -112,7 +112,8 @@ const SearchBar = () => {
     userLocation,
     locationStatus,
     accuracy,  
-    progress,         
+    progress, 
+    error,        
     requestLocation,
     requestQuickLocation,
     requestPreciseLocation,
@@ -228,13 +229,13 @@ const handleEnableLocation = useCallback(async () => {
     return;
   }
 
-  // Check permission state
+  // Check permission state upfront
   const permissionState = await checkPermissionState();
   
   if (permissionState === 'denied') {
     setPermissionDenied(true);
-    toast.error('Location access blocked', {
-      description: '🔒 Please enable location in your browser settings.',
+    toast.error('Location Access Blocked', {
+      description: '🔒 Please enable location in your browser settings to see nearby pharmacies.',
       duration: 8000,
       action: {
         label: 'How to enable',
@@ -249,151 +250,191 @@ const handleEnableLocation = useCallback(async () => {
   setIsLoadingLocation(true);
   setPermissionDenied(false);
 
-  // ⚡ Set safety timeout (30 seconds)
+  // ⚡ Set safety timeout (45 seconds - more generous)
   locationTimeoutRef.current = setTimeout(() => {
     setIsLoadingLocation(false);
-    toast.error('Taking too long', {
-      description: 'Let`s try selecting your area manually instead.',
-      duration: 5000,
+    toast.error('Location Detection Timeout', {
+      description: 'This is taking longer than expected. You can select your area manually instead.',
+      duration: 6000,
       action: {
         label: 'Select Manually',
         onClick: () => setShowFilters(true),
       },
     });
-  }, 30000);
+  }, 45000);
 
-  // 🎯 USE STANDARD LOCATION for balanced speed & accuracy
-  // Offers precise refinement if needed
-  const locationPromise = requestLocation();
-      
-  locationPromise
-    .then((location) => {
-      // Clear timeout
-      if (locationTimeoutRef.current) {
-        clearTimeout(locationTimeoutRef.current);
-      }
-
-      // 🎯 Success message
-      toast.success('📍 Location found!', {
-        description: 'Showing pharmacies near you',
-        duration: 2000,
-      });
-
-      // 🎯 If accuracy is moderate (>50m), offer PRECISE refinement
-      if (location.accuracy > 50) {
-        setTimeout(() => {
-          toast.info('💡 Want more accurate results?', {
-            description: `Current accuracy: ~${location.accuracy}m. We can pinpoint your exact location.`,
-            duration: 6000,
-            action: {
-              label: 'Refine',
-              onClick: async () => {
-                setIsLoadingLocation(true);
-                try {
-                  const betterLocation = await requestPreciseLocation();
-                  toast.success('✨ Pinpoint accuracy achieved!', {
-                    description: `Accuracy improved to ~${betterLocation.accuracy}m`,
-                    duration: 2000,
-                  });
-                } catch (err) {
-                  // Silently fall back to original location
-                  console.warn('Refinement failed:', err);
-                  toast.error('Refinement failed', {
-                    description: 'Using your original location instead.',
-                    duration: 3000,
-                  });
-                } finally {
-                  setIsLoadingLocation(false);
-                }
-              },
-            },
-          });
-        }, 1000);
-      }
-    })
-    .catch((error) => {
-      // Clear timeout
-      if (locationTimeoutRef.current) {
-        clearTimeout(locationTimeoutRef.current);
-      }
-
-      const errorMessage = error.message || '';
-      
-      // Don't show error for user cancellation
-      if (errorMessage === 'Location request cancelled') {
-        toast.info('Cancelled');
-        setIsLoadingLocation(false);
-        return;
-      }
-      
-      // ⚡ SIMPLIFIED ERROR MESSAGES - Less technical
-      if (error.code === 1) {
-        // Permission denied
-        setPermissionDenied(true);
-        toast.error('Location blocked', {
-          description: '🔒 Please allow location access in your browser.',
-          duration: 7000,
-          action: {
-            label: 'How to fix',
-            onClick: () => {
-              window.open('https://support.google.com/chrome/answer/142065', '_blank');
-            },
-          },
-        });
-        setIsLoadingLocation(false);
-      } else if (error.code === 2 || error.code === 3) {
-        // Unavailable or timeout
-        toast.error('Can\'t find location', {
-          description: '📱 Please choose your area manually.',
-          duration: 5000,
-          action: {
-            label: 'Select Area',
-            onClick: () => {
-              setShowFilters(true);
-              setIsLoadingLocation(false);
-            },
-          },
-        });
-        setTimeout(() => {
-          setIsLoadingLocation(false);
-          setShowFilters(true);
-        }, 1500);
-      } else {
-        // Generic error - always friendly
-        toast.error('Couldn\'t detect location', {
-          description: 'No worries! You can select your area manually.',
-          duration: 5000,
-          action: {
-            label: 'Select Area',
-            onClick: () => {
-              setShowFilters(true);
-              setIsLoadingLocation(false);
-            },
-          },
-        });
-        setTimeout(() => {
-          setIsLoadingLocation(false);
-          setShowFilters(true);
-        }, 1500);
-      }
-    });
-}, [requestLocation, requestPreciseLocation, setShowFilters]);
-
-
-  // ✅ Handle cancel location
-  const handleCancelLocation = useCallback(() => {
-    cancelLocationRequest();
-    setIsLoadingLocation(false);
+  // 🎯 Request location with progressive fallback
+  try {
+    const location = await requestLocation();
     
+    // Clear timeout on success
     if (locationTimeoutRef.current) {
       clearTimeout(locationTimeoutRef.current);
     }
 
-   // ✅ Reset location tracking on cancel
-   lastProcessedLocation.current = null;
+    console.log('✅ Location success:', location);
+
+    // 🎯 Success feedback based on accuracy
+    if (location.accuracy <= 100) {
+      toast.success('📍 Precise Location Found!', {
+        description: `Accuracy: ~${location.accuracy}m - Showing pharmacies near you`,
+        duration: 3000,
+      });
+    } else if (location.accuracy <= 500) {
+      toast.success('📍 Location Found!', {
+        description: `Accuracy: ~${location.accuracy}m - Showing nearby pharmacies`,
+        duration: 3000,
+      });
+    } else {
+      toast.success('📍 Approximate Location Found', {
+        description: `Accuracy: ~${location.accuracy}m - Showing pharmacies in your area`,
+        duration: 4000,
+        action: {
+          label: 'Refine',
+          onClick: async () => {
+            setIsLoadingLocation(true);
+            try {
+              const betterLocation = await requestPreciseLocation();
+              toast.success('✨ Location Refined!', {
+                description: `Improved to ~${betterLocation.accuracy}m accuracy`,
+                duration: 2000,
+              });
+            } catch (err) {
+              console.warn('Refinement failed:', err);
+              toast.error('Refinement Failed', {
+                description: 'Using your original location instead.',
+                duration: 3000,
+              });
+            } finally {
+              setIsLoadingLocation(false);
+            }
+          },
+        },
+      });
+    }
+
+  } catch (error) {
+    console.error('❌ Location error:', error);
     
-    toast.info('Location detection cancelled');
-  }, [cancelLocationRequest]);
+    // Clear timeout on error
+    if (locationTimeoutRef.current) {
+      clearTimeout(locationTimeoutRef.current);
+    }
+
+    const errorMessage = error.message || '';
+    
+    // Don't show error for user cancellation
+    if (errorMessage === 'Location request cancelled') {
+      toast.info('Location Request Cancelled', {
+        duration: 2000,
+      });
+      setIsLoadingLocation(false);
+      return;
+    }
+    
+    // 🎯 User-friendly error handling
+    if (error.code === 1) {
+      // Permission denied
+      setPermissionDenied(true);
+      toast.error('Location Access Blocked', {
+        description: error.details || '🔒 Please allow location access in your browser to see nearby pharmacies.',
+        duration: 8000,
+        action: {
+          label: 'How to Fix',
+          onClick: () => {
+            window.open('https://support.google.com/chrome/answer/142065', '_blank');
+          },
+        },
+      });
+      setIsLoadingLocation(false);
+      
+    } else if (error.code === 2) {
+      // Position unavailable
+      toast.error('Location Unavailable', {
+        description: error.details || 'Your device cannot determine your location. This may be due to poor GPS signal or disabled location services.',
+        duration: 7000,
+        action: {
+          label: 'Select Area',
+          onClick: () => {
+            setShowFilters(true);
+            setIsLoadingLocation(false);
+          },
+        },
+      });
+      
+      // Auto-open filters after a delay
+      setTimeout(() => {
+        setIsLoadingLocation(false);
+        setShowFilters(true);
+      }, 2000);
+      
+    } else if (error.code === 3) {
+      // Timeout
+      toast.error('Location Timeout', {
+        description: error.details || 'Finding your location took too long. This often happens indoors or in areas with poor GPS signal.',
+        duration: 7000,
+        action: {
+          label: 'Select Area',
+          onClick: () => {
+            setShowFilters(true);
+            setIsLoadingLocation(false);
+          },
+        },
+      });
+      
+      // Auto-open filters after a delay
+      setTimeout(() => {
+        setIsLoadingLocation(false);
+        setShowFilters(true);
+      }, 2000);
+      
+    } else {
+      // Generic error - always friendly and actionable
+      toast.error('Couldn\'t Detect Location', {
+        description: error.details || 'No worries! You can select your area manually to find nearby pharmacies.',
+        duration: 6000,
+        action: {
+          label: 'Select Area',
+          onClick: () => {
+            setShowFilters(true);
+            setIsLoadingLocation(false);
+          },
+        },
+      });
+      
+      // Auto-open filters after a delay
+      setTimeout(() => {
+        setIsLoadingLocation(false);
+        setShowFilters(true);
+      }, 2000);
+    }
+  }
+}, [requestLocation, requestPreciseLocation, setShowFilters]);
+
+
+// ✅ Handle cancel location - improved
+const handleCancelLocation = useCallback(() => {
+  cancelLocationRequest();
+  setIsLoadingLocation(false);
+  
+  if (locationTimeoutRef.current) {
+    clearTimeout(locationTimeoutRef.current);
+  }
+
+  // Reset location tracking on cancel
+  lastProcessedLocation.current = null;
+  
+  toast.info('Location Detection Cancelled', {
+    description: 'You can try again or select your area manually.',
+    duration: 3000,
+    action: {
+      label: 'Select Manually',
+      onClick: () => setShowFilters(true),
+    },
+  });
+}, [cancelLocationRequest, setShowFilters]);
+
+
 
   // Fetch suggestions on term change
   useEffect(() => {
@@ -483,13 +524,14 @@ const handleEnableLocation = useCallback(async () => {
     }
   }, [filters.state, filters.lga]);
 
+
 // ✅ ENHANCED: Reverse geocode with duplicate prevention
 useEffect(() => {
   if (!userLocation || !geoData?.length) {
     return;
   }
   
-  // ✅ Prevent duplicate processing with ref
+  // Prevent duplicate processing
   const locationKey = `${userLocation.latitude.toFixed(4)},${userLocation.longitude.toFixed(4)}`;
   
   if (lastProcessedLocation.current === locationKey) {
@@ -505,31 +547,30 @@ useEffect(() => {
     includeNearby: true
   });
   
-  console.log('Reverse geocode match:', match);
+  console.log('📍 Reverse geocode match:', match);
   
   if (match) {
-    // ✅ ONLY SET STATE - Let user manually select LGA
+    // Set state automatically
     setFilterStateWrapper(match.state);
     
-    // Show appropriate message based on confidence
-    if (match.confidence.level === 'high' || match.confidence.level === 'good') {
+    // Provide feedback based on confidence
+    if (match.confidence.level === 'high') {
       toast.success(
-        `📍 Location detected: ${match.state}`,
+        `📍 ${match.state} Detected`,
         { 
-          description: `Nearest LGA: ${match.lga} (${match.distance.toFixed(1)}km away). Select your LGA from the filters if needed.`,
-          duration: 5000,
+          description: `Near ${match.lga} (${match.distance.toFixed(1)}km away). Select your LGA from filters for precise results.`,
+          duration: 6000,
           action: {
             label: 'Select LGA',
             onClick: () => setShowFilters(true)
           }
         }
       );
-    } else {
-      // Low confidence - encourage manual selection
-      toast.warning(
-        `📍 Approximate location: ${match.state}`,
-        {
-          description: `${match.distance.toFixed(1)}km from ${match.lga}. Please select your LGA manually for accurate results.`,
+    } else if (match.confidence.level === 'good') {
+      toast.success(
+        `📍 ${match.state} Detected`,
+        { 
+          description: `Approximately ${match.distance.toFixed(1)}km from ${match.lga}. Please select your exact LGA from filters.`,
           duration: 7000,
           action: {
             label: 'Select LGA',
@@ -537,24 +578,38 @@ useEffect(() => {
           }
         }
       );
-      
+      // Auto-open filters for good confidence
+      setTimeout(() => setShowFilters(true), 1500);
+    } else {
+      // Low confidence
+      toast.warning(
+        `📍 Approximate: ${match.state}`,
+        {
+          description: `${match.distance.toFixed(1)}km from ${match.lga}. Please manually select your LGA for accurate results.`,
+          duration: 8000,
+          action: {
+            label: 'Select LGA',
+            onClick: () => setShowFilters(true)
+          }
+        }
+      );
       // Auto-open filters for low confidence
       setTimeout(() => setShowFilters(true), 1000);
     }
     
     setIsLoadingLocation(false);
   } else {
-    // ✅ No match found
-    toast.error('Could not determine your location', {
-      description: 'Please select your state and local government area manually.',
-      duration: 6000,
+    // No match found - very clear guidance
+    toast.error('Could Not Determine Location', {
+      description: 'Please select your state and local government area manually to find nearby pharmacies.',
+      duration: 7000,
       action: {
-        label: 'Select Manually',
+        label: 'Select Location',
         onClick: () => setShowFilters(true)
       }
     });
     setIsLoadingLocation(false);
-    setShowFilters(true); // Auto-open filters
+    setShowFilters(true);
   }
   
 }, [
@@ -565,6 +620,8 @@ useEffect(() => {
   setShowFilters,
   setIsLoadingLocation
 ]);
+
+
 
   // ✅ Cleanup timeout on unmount
   useEffect(() => {
@@ -885,6 +942,7 @@ useEffect(() => {
                 locationStatus={locationStatus}
                 progress={progress}
                 accuracy={accuracy}
+                error={error}
                 states={states}
                 lgas={lgas}
                 wards={wards}

@@ -54,6 +54,7 @@ const MedicationCard = ({
   locationStatus, 
   progress,
   accuracy,
+  error,
   onSelectLocation,
   onEnableLocation,
   isLoadingLocation,
@@ -380,6 +381,7 @@ const MedicationCard = ({
     locationStatus={locationStatus}
     progress={progress}
     accuracy={accuracy}
+    error={error}
     isLoadingLocation={isLoadingLocation}
     permissionDenied={permissionDenied} 
   />
