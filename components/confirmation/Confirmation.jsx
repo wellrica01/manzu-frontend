@@ -159,7 +159,7 @@ export default function Confirmation() {
             <Button
               onClick={handleTrackOrder}
               disabled={!confirmationData.trackingCode}
-              className="h-14 bg-gradient-to-r from-[#225F91] to-[#1a4a73] hover:from-[#1a4a73] hover:to-[#225F91] text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 group relative overflow-hidden"
+              className="h-14 bg-gradient-to-r from-[#225F91] to-[#1a4a73] hover:from-[#1a4a73] hover:to-[#225F91] text-white font-bold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 group relative overflow-hidden"
             >
               <span className="relative z-10 flex items-center justify-center gap-2">
                 <MapPin className="h-5 w-5 group-hover:scale-110 transition-transform duration-300" />
@@ -171,7 +171,7 @@ export default function Confirmation() {
             <Button
               onClick={handlePrint}
               variant="outline"
-              className="h-14 border-2 border-[#225F91] text-[#225F91] hover:bg-[#225F91]/10 font-bold rounded-xl transition-all duration-300 print:hidden"
+              className="h-14 border-2 border-[#225F91] text-[#225F91] hover:bg-[#225F91]/10 font-bold rounded-lg transition-all duration-300 print:hidden"
             >
               <Printer className="h-5 w-5 mr-2" />
               Print Receipt
@@ -180,7 +180,7 @@ export default function Confirmation() {
             <Button
               onClick={handleBackToHome}
               variant="outline"
-              className="h-14 border-2 border-[#1ABA7F] text-[#1ABA7F] hover:bg-[#1ABA7F]/10 font-bold rounded-xl transition-all duration-300"
+              className="h-14 border-2 border-[#1ABA7F] text-[#1ABA7F] hover:bg-[#1ABA7F]/10 font-bold rounded-lg transition-all duration-300"
             >
               <Home className="h-5 w-5 mr-2" />
               Back to Home

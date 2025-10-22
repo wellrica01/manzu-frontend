@@ -151,7 +151,7 @@ function PaymentMethodButton({ method, icon: Icon, label, selected, onClick }) {
   return (
     <button
       onClick={() => onClick(method)}
-      className={`flex-1 flex flex-col items-center gap-1.5 md:gap-2 p-3 md:p-4 rounded-lg md:rounded-xl border-2 transition-all ${
+      className={`flex-1 flex flex-col items-center gap-1.5 md:gap-2 p-3 md:p-4 rounded-lg md:rounded-lg border-2 transition-all ${
         selected
           ? 'border-[#1ABA7F] bg-[#1ABA7F]/10 shadow-md'
           : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
@@ -168,7 +168,7 @@ function PaymentMethodButton({ method, icon: Icon, label, selected, onClick }) {
 function ReceiptModal({ sale, onClose }) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3 md:p-4">
-      <div className="bg-white rounded-xl md:rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg md:rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="bg-gradient-to-r from-[#225F91] to-[#1ABA7F] text-white p-4 md:p-6">
           <div className="flex items-center justify-between mb-3 md:mb-4">
@@ -320,28 +320,66 @@ export default function PharmacyPOSPage() {
     setCart(cart.filter(item => item.medicationId !== medicationId));
   };
 
-  const handleCompleteSale = async () => {
-    if (cart.length === 0) {
-      setError("Cart is empty");
-      return;
-    }
+const handleCompleteSale = async () => {
+  if (cart.length === 0) {
+    setError("Cart is empty");
+    return;
+  }
 
-    setProcessing(true);
-    setError(null);
+  setProcessing(true);
+  setError(null);
 
-    // Simulate API call
-    setTimeout(() => {
-      setCompletedSale({
-        id: Math.floor(Math.random() * 10000),
-        items: cart,
+  try {
+    const token = localStorage.getItem('pharmacyToken');
+    
+    // Format items for the API
+    const formattedItems = cart.map(item => ({
+      medicationId: item.medicationId,
+      quantity: item.quantity,
+      price: item.price,
+      name: item.name,
+    }));
+
+    // Make the API call
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/pharmacy/sales`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        items: formattedItems,
         total: calculateTotal(),
         paymentMethod: paymentMethod,
-      });
-      setCart([]);
-      setPaymentMethod("CASH");
-      setProcessing(false);
-    }, 1000);
-  };
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to complete sale');
+    }
+
+    const data = await response.json();
+
+    // Show receipt with the sale data
+    setCompletedSale({
+      id: data.sale.id,
+      items: cart,
+      total: calculateTotal(),
+      paymentMethod: paymentMethod,
+    });
+
+    // Clear cart and reset
+    setCart([]);
+    setPaymentMethod("CASH");
+  } catch (err) {
+    console.error('Sale error:', err);
+    setError(err.message || 'Failed to complete sale. Please try again.');
+  } finally {
+    setProcessing(false);
+  }
+};
+
 
   const total = calculateTotal();
 
@@ -361,7 +399,7 @@ export default function PharmacyPOSPage() {
         {/* Left Side - Product Search & Cart */}
         <div className="lg:col-span-2 space-y-4 md:space-y-6">
           {/* Search */}
-          <div className="bg-white border border-gray-200 rounded-xl md:rounded-2xl shadow-sm p-4 md:p-6">
+          <div className="bg-white border border-gray-200 rounded-lg md:rounded-2xl shadow-sm p-4 md:p-6">
             <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4">
               <Search className="w-4 h-4 md:w-5 md:h-5 text-[#225F91]" />
               <h2 className="text-base md:text-lg font-semibold text-gray-900">Search Medications</h2>
@@ -378,7 +416,7 @@ export default function PharmacyPOSPage() {
           </div>
 
           {/* Cart */}
-          <div className="bg-white border border-gray-200 rounded-xl md:rounded-2xl shadow-sm p-3 md:p-4">
+          <div className="bg-white border border-gray-200 rounded-lg md:rounded-2xl shadow-sm p-3 md:p-4">
             <div className="flex items-center justify-between mb-3 md:mb-4">
               <div className="flex items-center gap-2 md:gap-3">
                 <ShoppingCart className="w-4 h-4 md:w-5 md:h-5 text-[#225F91]" />
@@ -420,7 +458,7 @@ export default function PharmacyPOSPage() {
         {/* Right Side - Payment & Checkout */}
         <div className="space-y-4 md:space-y-6">
           {/* Order Summary */}
-          <div className="bg-gradient-to-br from-blue-50 to-green-50 border-2 border-[#1ABA7F]/30 rounded-xl md:rounded-2xl shadow-lg p-4 md:p-6">
+          <div className="bg-gradient-to-br from-blue-50 to-green-50 border-2 border-[#1ABA7F]/30 rounded-lg md:rounded-2xl shadow-lg p-4 md:p-6">
             <div className="flex items-center gap-2 mb-3 md:mb-4">
               <Calculator className="w-4 h-4 md:w-5 md:h-5 text-[#225F91]" />
               <h2 className="text-base md:text-lg font-semibold text-gray-900">Order Summary</h2>
@@ -444,7 +482,7 @@ export default function PharmacyPOSPage() {
           </div>
 
           {/* Payment Method */}
-          <div className="bg-white border border-gray-200 rounded-xl md:rounded-2xl shadow-sm p-4 md:p-6">
+          <div className="bg-white border border-gray-200 rounded-lg md:rounded-2xl shadow-sm p-4 md:p-6">
             <div className="flex items-center gap-2 mb-3 md:mb-4">
               <DollarSign className="w-4 h-4 md:w-5 md:h-5 text-[#225F91]" />
               <h2 className="text-base md:text-lg font-semibold text-gray-900">Payment Method</h2>
@@ -483,7 +521,7 @@ export default function PharmacyPOSPage() {
           <button
             onClick={handleCompleteSale}
             disabled={cart.length === 0 || processing}
-            className="w-full py-3 md:py-4 bg-gradient-to-r from-[#225F91] to-[#1ABA7F] text-white font-bold text-base md:text-lg rounded-xl hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+            className="w-full py-3 md:py-4 bg-gradient-to-r from-[#225F91] to-[#1ABA7F] text-white font-bold text-base md:text-lg rounded-lg hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
           >
             {processing ? (
               <>

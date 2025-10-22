@@ -41,9 +41,9 @@ function MetricCard({ icon: Icon, label, value, color, trend, trendValue, subtit
   const trendColor = trend === 'up' ? '#10B981' : trend === 'down' ? '#EF4444' : '#6B7280';
 
   return (
-    <Card className="p-4 md:p-6 rounded-xl md:rounded-2xl shadow-lg bg-gradient-to-br from-white to-gray-50 border border-gray-200/50 hover:shadow-xl transition-all duration-300 group">
+    <Card className="p-4 md:p-6 rounded-lg md:rounded-2xl shadow-lg bg-gradient-to-br from-white to-gray-50 border border-gray-200/50 hover:shadow-xl transition-all duration-300 group">
       <div className="flex items-start justify-between mb-3 md:mb-4">
-        <div className={`p-2 md:p-3 rounded-xl md:rounded-2xl group-hover:scale-110 transition-transform duration-300`} 
+        <div className={`p-2 md:p-3 rounded-lg md:rounded-2xl group-hover:scale-110 transition-transform duration-300`} 
              style={{ background: `linear-gradient(135deg, ${color}15, ${color}25)` }}>
           <Icon className="w-5 h-5 md:w-6 md:h-6" style={{ color }} />
         </div>
@@ -67,7 +67,7 @@ function MetricCard({ icon: Icon, label, value, color, trend, trendValue, subtit
 
 function AlertCard({ icon: Icon, title, count, color, description, onClick }) {
   return (
-    <Card className={`p-3 md:p-4 rounded-lg md:rounded-xl border-l-4 bg-gradient-to-r from-white to-gray-50 cursor-pointer hover:shadow-md transition-all`} 
+    <Card className={`p-3 md:p-4 rounded-lg md:rounded-lg border-l-4 bg-gradient-to-r from-white to-gray-50 cursor-pointer hover:shadow-md transition-all`} 
           style={{ borderLeftColor: color }}
           onClick={onClick}>
       <div className="flex items-center space-x-2 md:space-x-3">
@@ -88,14 +88,14 @@ function AlertCard({ icon: Icon, title, count, color, description, onClick }) {
 
 function TopSellingCard({ medications }) {
   return (
-    <Card className="p-4 md:p-6 rounded-xl md:rounded-2xl shadow-lg bg-white border border-gray-200/50">
+    <Card className="p-4 md:p-6 rounded-lg md:rounded-2xl shadow-lg bg-white border border-gray-200/50">
       <h3 className="text-base md:text-lg font-semibold mb-3 md:mb-4 flex items-center gap-2" style={{ color: brandBlue }}>
         <BarChart3 className="w-4 h-4 md:w-5 md:h-5" />
         Top Selling (Last 7 Days)
       </h3>
       <div className="space-y-2 md:space-y-3">
         {medications.map((med, idx) => (
-          <div key={idx} className="flex items-center justify-between p-2.5 md:p-3 rounded-lg md:rounded-xl bg-gray-50/70 hover:bg-gray-100/70 transition-colors">
+          <div key={idx} className="flex items-center justify-between p-2.5 md:p-3 rounded-lg md:rounded-lg bg-gray-50/70 hover:bg-gray-100/70 transition-colors">
             <div className="flex-1 min-w-0 pr-2">
               <div className="font-semibold text-sm md:text-base text-gray-900 truncate">{med.name}</div>
               <div className="text-xs text-gray-500">{med.orders} orders • {med.quantity} units</div>
@@ -115,14 +115,14 @@ function TopSellingCard({ medications }) {
 
 function LowStockCard({ medications }) {
   return (
-    <Card className="p-4 md:p-6 rounded-xl md:rounded-2xl shadow-lg bg-white border border-gray-200/50">
+    <Card className="p-4 md:p-6 rounded-lg md:rounded-2xl shadow-lg bg-white border border-gray-200/50">
       <h3 className="text-base md:text-lg font-semibold mb-3 md:mb-4 flex items-center gap-2" style={{ color: brandRed }}>
         <AlertTriangle className="w-4 h-4 md:w-5 md:h-5" />
         Low Stock Alert
       </h3>
       <div className="space-y-2 md:space-y-3">
         {medications.map((med, idx) => (
-          <div key={idx} className="flex items-center justify-between p-2.5 md:p-3 rounded-lg md:rounded-xl bg-red-50/50 border border-red-100">
+          <div key={idx} className="flex items-center justify-between p-2.5 md:p-3 rounded-lg md:rounded-lg bg-red-50/50 border border-red-100">
             <div className="flex-1 min-w-0 pr-2">
               <div className="font-semibold text-sm md:text-base text-gray-900 truncate">{med.name}</div>
               <div className="text-xs text-gray-500 truncate">{med.form}</div>
@@ -251,7 +251,7 @@ export default function PharmacyDashboard() {
 
       {/* Combined Summary */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6">
-        <Card className="p-4 md:p-6 rounded-xl md:rounded-2xl shadow-lg bg-gradient-to-br from-blue-50 to-green-50 border border-blue-200/50">
+        <Card className="p-4 md:p-6 rounded-lg md:rounded-2xl shadow-lg bg-gradient-to-br from-blue-50 to-green-50 border border-blue-200/50">
           <div className="flex items-center justify-between mb-3 md:mb-4">
             <h3 className="text-base md:text-lg font-semibold text-gray-800">Total Today</h3>
             <Activity className="w-5 h-5 md:w-6 md:h-6 text-blue-600" />
@@ -268,7 +268,7 @@ export default function PharmacyDashboard() {
           </div>
         </Card>
 
-        <Card className="p-4 md:p-6 rounded-xl md:rounded-2xl shadow-lg bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200/50">
+        <Card className="p-4 md:p-6 rounded-lg md:rounded-2xl shadow-lg bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200/50">
           <div className="flex items-center justify-between mb-3 md:mb-4">
             <h3 className="text-base md:text-lg font-semibold text-gray-800">Inventory Status</h3>
             <Package className="w-5 h-5 md:w-6 md:h-6 text-purple-600" />
@@ -321,7 +321,7 @@ export default function PharmacyDashboard() {
       </div>
 
 {/* Recent Activity */}
-<Card className="p-3 md:p-4 rounded-xl md:rounded-2xl shadow-lg bg-white border border-gray-200/50">
+<Card className="p-3 md:p-4 rounded-lg md:rounded-2xl shadow-lg bg-white border border-gray-200/50">
   {/* Header */}
   <div className="flex items-center justify-between mb-4 md:mb-6">
     <h2 className="text-xl md:text-2xl font-bold text-gray-800">Recent Activity</h2>

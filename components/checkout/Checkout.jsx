@@ -52,7 +52,7 @@ const PaymentError = ({ error, onBackToCart, onRetry }) => (
       </CardHeader>
 
       <CardContent className="space-y-6">
-        <div className="p-4 bg-gradient-to-br from-red-50 to-orange-50 rounded-xl border-2 border-red-200/50">
+        <div className="p-4 bg-gradient-to-br from-red-50 to-orange-50 rounded-lg border-2 border-red-200/50">
           <p className="text-red-800 text-sm sm:text-base leading-relaxed font-medium">
             {error}
           </p>
@@ -62,7 +62,7 @@ const PaymentError = ({ error, onBackToCart, onRetry }) => (
           <Button 
             onClick={onBackToCart}
             variant="outline"
-            className="flex-1 h-14 border-2 border-gray-300 hover:border-gray-400 text-gray-700 hover:bg-gray-50 rounded-xl font-bold transition-all duration-300"
+            className="flex-1 h-14 border-2 border-gray-300 hover:border-gray-400 text-gray-700 hover:bg-gray-50 rounded-lg font-bold transition-all duration-300"
           >
             <ArrowLeft className="h-5 w-5 mr-2" />
             Back to Cart
@@ -70,7 +70,7 @@ const PaymentError = ({ error, onBackToCart, onRetry }) => (
           
           <Button 
             onClick={onRetry} 
-            className="flex-1 h-14 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl shadow-lg hover:shadow-xl font-bold transition-all duration-300 group relative overflow-hidden"
+            className="flex-1 h-14 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-lg shadow-lg hover:shadow-xl font-bold transition-all duration-300 group relative overflow-hidden"
           >
             <span className="relative z-10 flex items-center justify-center gap-2">
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -121,7 +121,7 @@ const NoCheckoutAvailable = ({ onBackToCart }) => (
         </CardHeader>
 
         <CardContent className="space-y-6">
-          <div className="p-5 bg-gradient-to-br from-orange-50 to-yellow-50 rounded-xl border-2 border-orange-200/50">
+          <div className="p-5 bg-gradient-to-br from-orange-50 to-yellow-50 rounded-lg border-2 border-orange-200/50">
             <p className="text-orange-800 text-sm sm:text-base leading-relaxed font-medium">
               All medications in your cart require prescription verification. 
               Please complete prescription requirements in your cart before proceeding to checkout.
@@ -148,7 +148,7 @@ const NoCheckoutAvailable = ({ onBackToCart }) => (
 
           <Button 
             onClick={onBackToCart} 
-            className="w-full h-14 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white rounded-xl shadow-lg hover:shadow-xl font-bold transition-all duration-300 group relative overflow-hidden"
+            className="w-full h-14 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white rounded-lg shadow-lg hover:shadow-xl font-bold transition-all duration-300 group relative overflow-hidden"
           >
             <span className="relative z-10 flex items-center justify-center gap-2">
               <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform duration-300" />
@@ -239,7 +239,7 @@ const ProcessingPayment = () => (
         </div>
       </div>
 
-      <div className="flex items-center gap-2 px-4 py-2 bg-green-50 rounded-xl border border-green-200">
+      <div className="flex items-center gap-2 px-4 py-2 bg-green-50 rounded-lg border border-green-200">
         <svg className="h-5 w-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
           <path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
         </svg>
@@ -441,7 +441,7 @@ function CheckoutComponent() {
           <Button
             variant="ghost"
             onClick={handleBackToCart}
-            className="group h-12 px-4 border-2 border-[#1ABA7F]/20 hover:border-[#1ABA7F]/40 text-[#225F91] hover:bg-[#1ABA7F]/10 rounded-xl transition-all duration-300 shadow-sm hover:shadow-md"
+            className="group h-12 px-4 border-2 border-[#1ABA7F]/20 hover:border-[#1ABA7F]/40 text-[#225F91] hover:bg-[#1ABA7F]/10 rounded-lg transition-all duration-300 shadow-sm hover:shadow-md"
             aria-label="Back to Cart"
           >
             <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform duration-300" />
@@ -449,7 +449,7 @@ function CheckoutComponent() {
           </Button>
 
           <div className="flex items-center gap-3 flex-1 justify-center">
-            <div className="hidden sm:flex p-2 bg-gradient-to-br from-[#1ABA7F]/20 to-[#225F91]/20 rounded-xl">
+            <div className="hidden sm:flex p-2 bg-gradient-to-br from-[#1ABA7F]/20 to-[#225F91]/20 rounded-lg">
               <svg className="h-6 w-6 text-[#225F91]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
@@ -459,7 +459,7 @@ function CheckoutComponent() {
             </h2>
           </div>
 
-          <div className="hidden sm:flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-green-50 to-green-100 rounded-xl border border-green-200">
+          <div className="hidden sm:flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-green-50 to-green-100 rounded-lg border border-green-200">
             <svg className="h-5 w-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
             </svg>

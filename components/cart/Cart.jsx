@@ -101,7 +101,7 @@ class CartErrorBoundary extends React.Component {
                 We encountered an issue while loading your cart. This might be a temporary glitch.
               </p>
 
-              <div className="p-4 bg-red-50 rounded-xl border-2 border-red-200/50 text-left">
+              <div className="p-4 bg-red-50 rounded-lg border-2 border-red-200/50 text-left">
                 <p className="text-sm text-gray-700 font-mono">
                   {this.state.error?.message || 'Unknown error occurred'}
                 </p>
@@ -109,7 +109,7 @@ class CartErrorBoundary extends React.Component {
 
               <Button
                 onClick={() => window.location.reload()}
-                className="w-full h-14 mt-6 bg-gradient-to-r from-[#1ABA7F] to-[#225F91] hover:from-[#225F91] hover:to-[#1ABA7F] text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 group relative overflow-hidden"
+                className="w-full h-14 mt-6 bg-gradient-to-r from-[#1ABA7F] to-[#225F91] hover:from-[#225F91] hover:to-[#1ABA7F] text-white font-bold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 group relative overflow-hidden"
               >
                 <span className="relative z-10 flex items-center justify-center gap-2">
                   <RefreshCw className="h-5 w-5 group-hover:rotate-180 transition-transform duration-500" />
@@ -142,7 +142,7 @@ const BulkRemoveActionBar = ({
   return (
     <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-4 duration-300 w-[90%] sm:w-auto">
       <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border-2 border-[#1ABA7F]/30 p-4 flex flex-wrap items-center gap-3 justify-center sm:justify-start">
-        <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-[#1ABA7F]/10 to-[#225F91]/10 rounded-xl text-sm">
+        <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-[#1ABA7F]/10 to-[#225F91]/10 rounded-lg text-sm">
           <CheckCircle className="h-5 w-5 text-[#1ABA7F]" />
           <span className="font-bold text-[#225F91]">{selectedCount} selected</span>
         </div>
@@ -170,7 +170,7 @@ const BulkRemoveActionBar = ({
         <Button
           onClick={onRemove}
           disabled={isRemoving}
-          className="h-12 px-4 sm:px-6 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl shadow-lg hover:shadow-xl font-bold transition-all duration-300 group relative overflow-hidden text-sm sm:text-base"
+          className="h-12 px-4 sm:px-6 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-lg shadow-lg hover:shadow-xl font-bold transition-all duration-300 group relative overflow-hidden text-sm sm:text-base"
         >
           <span className="relative z-10 flex items-center gap-2">
             {isRemoving ? (
@@ -629,7 +629,7 @@ function CartComponent() {
           <Button
             variant="ghost"
             onClick={handleGoBack}
-            className="group h-12 px-4 border-2 border-[#1ABA7F]/20 hover:border-[#1ABA7F]/40 text-[#225F91] hover:bg-[#1ABA7F]/10 rounded-xl transition-all duration-300 shadow-sm hover:shadow-md"
+            className="group h-12 px-4 border-2 border-[#1ABA7F]/20 hover:border-[#1ABA7F]/40 text-[#225F91] hover:bg-[#1ABA7F]/10 rounded-lg transition-all duration-300 shadow-sm hover:shadow-md"
             aria-label="Go back"
           >
             <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform duration-300" />
@@ -637,7 +637,7 @@ function CartComponent() {
           </Button>
 
           <div className="flex items-center gap-3 flex-1 justify-center">
-            <div className="hidden sm:flex p-2 bg-gradient-to-br from-[#1ABA7F]/20 to-[#225F91]/20 rounded-xl">
+            <div className="hidden sm:flex p-2 bg-gradient-to-br from-[#1ABA7F]/20 to-[#225F91]/20 rounded-lg">
               <ShoppingCart className="h-6 w-6 text-[#225F91]" />
             </div>
             <h2 className="text-base sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#225F91] to-[#1ABA7F]">
@@ -649,7 +649,7 @@ function CartComponent() {
             <button
               onClick={handleRefreshCart}
               disabled={isRefreshing || !isOnline}
-              className="group relative h-12 w-12 rounded-xl bg-gradient-to-br from-gray-50 to-white hover:from-[#1ABA7F]/10 hover:to-[#225F91]/10 border-2 border-gray-200 hover:border-[#1ABA7F]/40 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#1ABA7F] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
+              className="group relative h-12 w-12 rounded-lg bg-gradient-to-br from-gray-50 to-white hover:from-[#1ABA7F]/10 hover:to-[#225F91]/10 border-2 border-gray-200 hover:border-[#1ABA7F]/40 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#1ABA7F] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
               aria-label="Refresh cart"
             >
               {isRefreshing ? (
@@ -666,7 +666,7 @@ function CartComponent() {
                   clearSelection();
                 }}
                 className={cn(
-                  "group relative h-12 px-4 rounded-xl font-semibold transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#1ABA7F] focus:ring-offset-2 shadow-sm hover:shadow-md",
+                  "group relative h-12 px-4 rounded-lg font-semibold transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#1ABA7F] focus:ring-offset-2 shadow-sm hover:shadow-md",
                   selectionMode 
                     ? "bg-gradient-to-br from-red-50 to-orange-50 border-2 border-red-300 text-red-700 hover:border-red-400"
                     : "bg-gradient-to-br from-gray-50 to-white border-2 border-gray-200 text-gray-700 hover:border-gray-300"
@@ -689,7 +689,7 @@ function CartComponent() {
             )}
 
             <div className="relative">
-              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#1ABA7F]/10 to-[#225F91]/10 border-2 border-[#1ABA7F]/30 flex items-center justify-center shadow-md">
+              <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-[#1ABA7F]/10 to-[#225F91]/10 border-2 border-[#1ABA7F]/30 flex items-center justify-center shadow-md">
                 <ShoppingCart className="h-6 w-6 text-[#225F91]" aria-label="Shopping cart" />
               </div>
               {totalItemCount > 0 && (
@@ -741,7 +741,7 @@ function CartComponent() {
                           role="tab"
                           aria-selected={activeTab === tab.id}
                           aria-controls={`${tab.id}-panel`}
-                          className={`group relative flex flex-col sm:flex-row items-center justify-center gap-2 py-2 sm:py-4 px-2 sm:p-4 rounded-xl font-bold transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#1ABA7F] focus:ring-offset-2 ${
+                          className={`group relative flex flex-col sm:flex-row items-center justify-center gap-2 py-2 sm:py-4 px-2 sm:p-4 rounded-lg font-bold transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#1ABA7F] focus:ring-offset-2 ${
                             activeTab === tab.id
                               ? 'bg-white shadow-xl scale-105 border-2 border-[#1ABA7F]/40'
                               : 'hover:bg-white/60 hover:shadow-md border-2 border-transparent'
@@ -784,7 +784,7 @@ function CartComponent() {
                   </div>
                 </div>
 
-                <div className="mt-4 p-6 rounded-xl bg-gradient-to-r from-blue-50 to-gray-50 border border-blue-200/80">
+                <div className="mt-4 p-6 rounded-lg bg-gradient-to-r from-blue-50 to-gray-50 border border-blue-200/80">
                   <p className="text-base text-gray-700 text-center font-medium">
                     {tabSummary.message}
                   </p>

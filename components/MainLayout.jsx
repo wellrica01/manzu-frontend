@@ -53,7 +53,7 @@ const NavigationItems = ({ items, onClick, isMobile = false }) => {
           href={href}
           className={
             isMobile
-              ? 'group flex items-center gap-3 px-4 py-3.5 text-sm font-semibold text-gray-700 hover:text-[#225F91] hover:bg-gray-50 rounded-xl transition-all duration-200'
+              ? 'group flex items-center gap-3 px-4 py-3.5 text-sm font-semibold text-gray-700 hover:text-[#225F91] hover:bg-gray-50 rounded-lg transition-all duration-200'
               : 'group relative flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-[#225F91] px-4 py-2 rounded-lg transition-all duration-200'
           }
           onClick={onClick}
@@ -248,7 +248,7 @@ function MainLayoutContent({ children }) {
 
           <Button
             asChild
-            className="group relative h-14 sm:h-16 px-8 sm:px-12 text-lg font-bold rounded-xl bg-[#1ABA7F] hover:bg-[#16a876] text-white shadow-2xl hover:shadow-[#1ABA7F]/30 transition-all duration-300 overflow-hidden"
+            className="group relative h-14 sm:h-16 px-8 sm:px-12 text-lg font-bold rounded-lg bg-[#1ABA7F] hover:bg-[#16a876] text-white shadow-2xl hover:shadow-[#1ABA7F]/30 transition-all duration-300 overflow-hidden"
           >
             <Link href="/pharmacy-register">
               <span className="relative z-10 flex items-center gap-3">
@@ -288,7 +288,7 @@ function MainLayoutContent({ children }) {
                     href={social.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group p-3 rounded-xl bg-white border-2 border-gray-200 hover:border-[#1ABA7F] hover:bg-[#1ABA7F] text-gray-600 hover:text-white transition-all duration-300 shadow-sm hover:shadow-md"
+                    className="group p-3 rounded-lg bg-white border-2 border-gray-200 hover:border-[#1ABA7F] hover:bg-[#1ABA7F] text-gray-600 hover:text-white transition-all duration-300 shadow-sm hover:shadow-md"
                     aria-label={social.name}
                   >
                     <social.icon className="h-5 w-5" strokeWidth={2} />

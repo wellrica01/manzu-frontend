@@ -179,7 +179,7 @@ const LocationError = ({ error, onRetry, onSelectManually, permissionDenied }) =
 
       {/* Permission help for code 1 */}
       {error?.code === 1 && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
           <p className="text-sm font-bold text-red-800 mb-2">
             🔒 How to enable location access:
           </p>
@@ -193,7 +193,7 @@ const LocationError = ({ error, onRetry, onSelectManually, permissionDenied }) =
 
       {/* Tips for other errors */}
       {(error?.code === 2 || error?.code === 3) && (
-        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <p className="text-sm font-bold text-blue-800 mb-2 flex items-center gap-2">
             <Info className="h-4 w-4" />
             Troubleshooting tips:
@@ -211,7 +211,7 @@ const LocationError = ({ error, onRetry, onSelectManually, permissionDenied }) =
       <div className="flex flex-col gap-3">
         <Button
           onClick={onRetry}
-          className="bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 w-full"
+          className="bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 text-white px-6 py-3 rounded-lg font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 w-full"
         >
           <Navigation className="h-5 w-5 mr-2" />
           Try Again
@@ -220,7 +220,7 @@ const LocationError = ({ error, onRetry, onSelectManually, permissionDenied }) =
         <Button
           onClick={onSelectManually}
           variant="outline"
-          className="border-2 border-teal-600 text-teal-700 hover:bg-teal-50 px-6 py-3 rounded-xl font-bold shadow-md hover:shadow-lg hover:scale-105 transition-all duration-300 w-full"
+          className="border-2 border-teal-600 text-teal-700 hover:bg-teal-50 px-6 py-3 rounded-lg font-bold shadow-md hover:shadow-lg hover:scale-105 transition-all duration-300 w-full"
         >
           <MapPin className="h-5 w-5 mr-2" />
           Select Manually Instead
@@ -292,7 +292,7 @@ const LocationPrompt = ({
 
       {/* Permission info (non-blocking) */}
       {permissionDenied && (
-        <div className="mb-6 p-4 bg-amber-50 border-2 border-amber-200 rounded-xl animate-in fade-in duration-300">
+        <div className="mb-6 p-4 bg-amber-50 border-2 border-amber-200 rounded-lg animate-in fade-in duration-300">
           <p className="text-sm font-bold text-amber-800 mb-2">
             🔐 Location Access Needed
           </p>
@@ -313,7 +313,7 @@ const LocationPrompt = ({
         <Button
           onClick={onEnableLocation}
           disabled={isLoadingLocation}
-          className="bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 text-white px-8 py-6 rounded-xl font-bold shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 w-full sm:w-auto animate-in slide-in-from-left-4 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 group" 
+          className="bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 text-white px-8 py-6 rounded-lg font-bold shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 w-full sm:w-auto animate-in slide-in-from-left-4 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 group" 
           style={{ animationDelay: '500ms', animationDuration: '500ms' }}
         >
           <Navigation className="h-5 w-5 mr-2 group-hover:rotate-12 transition-transform duration-300" />
@@ -324,7 +324,7 @@ const LocationPrompt = ({
           onClick={onSelectLocation}
           variant="outline"
           disabled={isLoadingLocation}
-          className="border-2 border-teal-600 text-teal-700 hover:bg-teal-50 px-8 py-6 rounded-xl font-bold shadow-md hover:shadow-xl hover:scale-105 transition-all duration-300 w-full sm:w-auto animate-in slide-in-from-right-4 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 group" 
+          className="border-2 border-teal-600 text-teal-700 hover:bg-teal-50 px-8 py-6 rounded-lg font-bold shadow-md hover:shadow-xl hover:scale-105 transition-all duration-300 w-full sm:w-auto animate-in slide-in-from-right-4 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 group" 
           style={{ animationDelay: '600ms', animationDuration: '500ms' }}
         >
           <MapPin className="h-5 w-5 mr-2 group-hover:bounce transition-transform duration-300" />

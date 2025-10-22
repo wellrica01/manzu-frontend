@@ -30,7 +30,7 @@ export default function SidebarNav({ isCollapsed, onToggle, isMobile, isOpen, on
     <Link
       href={href}
       onClick={onClick}
-      className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 group relative ${
+      className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all duration-200 group relative ${
         pathname.startsWith(href)
           ? 'bg-gradient-to-r from-[#1ABA7F]/20 to-[#1ABA7F]/10 text-[#225F91] shadow-sm border-l-4 border-[#1ABA7F]'
           : 'text-gray-600 hover:bg-gradient-to-r hover:from-[#1ABA7F]/10 hover:to-transparent hover:text-[#1ABA7F] hover:shadow-sm'
@@ -129,7 +129,7 @@ export default function SidebarNav({ isCollapsed, onToggle, isMobile, isOpen, on
         <div className="p-4 border-t border-gray-200/60">
           <button
             onClick={handleLogout}
-            className={`flex items-center gap-3 px-4 py-3 w-full rounded-xl bg-gradient-to-r from-[#225F91] to-[#1A4971] text-white font-semibold hover:from-[#1A4971] hover:to-[#225F91] transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105 ${
+            className={`flex items-center gap-3 px-4 py-3 w-full rounded-lg bg-gradient-to-r from-[#225F91] to-[#1A4971] text-white font-semibold hover:from-[#1A4971] hover:to-[#225F91] transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105 ${
               isCollapsed ? 'justify-center' : ''
             }`}
             title={isCollapsed ? 'Logout' : undefined}

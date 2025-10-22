@@ -888,7 +888,7 @@ useEffect(() => {
 
       {/* Loading State - Refined */}
       {search.isSearching && search.results.length > 0 && (
-        <div className="flex items-center justify-center gap-3 p-4 rounded-xl bg-[#1ABA7F]/5 border border-[#1ABA7F]/20">
+        <div className="flex items-center justify-center gap-3 p-4 rounded-lg bg-[#1ABA7F]/5 border border-[#1ABA7F]/20">
           <div className="animate-spin rounded-full h-5 w-5 border-2 border-[#1ABA7F] border-t-transparent" />
           <span className="text-sm font-medium text-gray-700">Updating results...</span>
         </div>
@@ -919,7 +919,7 @@ useEffect(() => {
           <ErrorBoundary 
             key={med.id} 
             fallback={
-              <div className="p-6 bg-red-50 border-2 border-red-100 rounded-xl">
+              <div className="p-6 bg-red-50 border-2 border-red-100 rounded-lg">
                 <p className="text-red-600 font-medium text-sm">
                   Unable to display this medication. Please try again.
                 </p>

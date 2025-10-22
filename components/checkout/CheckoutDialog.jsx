@@ -86,7 +86,7 @@ const CheckoutDialog = ({
                   {/* Pharmacy Header */}
                   <div className="flex items-center justify-between mb-3 sm:mb-4">
                     <div className="flex items-center gap-2 sm:gap-3">
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-[#1ABA7F]/20 to-[#1ABA7F]/10 flex items-center justify-center">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-[#1ABA7F]/20 to-[#1ABA7F]/10 flex items-center justify-center">
                         <Store className="h-4 w-4 sm:h-5 sm:w-5 text-[#1ABA7F]" />
                       </div>
                       <div>
@@ -103,7 +103,7 @@ const CheckoutDialog = ({
                     {group.items.map((item) => (
                       <div 
                         key={item.id} 
-                        className="flex items-center justify-between p-2 sm:p-3 rounded-xl bg-white border border-gray-200 hover:border-[#1ABA7F]/30 transition-colors duration-200"
+                        className="flex items-center justify-between p-2 sm:p-3 rounded-lg bg-white border border-gray-200 hover:border-[#1ABA7F]/30 transition-colors duration-200"
                         role="listitem"
                         aria-label={`Medication: ${item.medication.displayName}`}
                       >
@@ -171,7 +171,7 @@ const CheckoutDialog = ({
             {/* Security Notice */}
             <div className="p-3 sm:p-4 rounded-2xl bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200">
               <div className="flex items-start gap-2 sm:gap-3">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
                   <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
                 </div>
                 <div className="text-sm text-green-800">
@@ -186,7 +186,7 @@ const CheckoutDialog = ({
               <Button
                 onClick={onConfirm}
                 disabled={loading}
-                className="group w-full sm:flex-1 h-12 px-4 sm:px-6 text-base font-bold rounded-xl bg-gradient-to-r from-[#225F91] to-[#1a4a73] text-white hover:from-[#1a4a73] hover:to-[#225F91] shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 relative overflow-hidden"
+                className="group w-full sm:flex-1 h-12 px-4 sm:px-6 text-base font-bold rounded-lg bg-gradient-to-r from-[#225F91] to-[#1a4a73] text-white hover:from-[#1a4a73] hover:to-[#225F91] shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 relative overflow-hidden"
                 aria-label={`Pay ₦${segments.totalPrice.toLocaleString()}`}
               >
                 {loading ? (
@@ -208,7 +208,7 @@ const CheckoutDialog = ({
               <Button
                 variant="outline"
                 onClick={onClose}
-                className="w-full sm:w-auto h-12 px-4 sm:px-6 text-sm sm:text-base font-bold rounded-xl border-2 border-[#1ABA7F] text-[#225F91] hover:bg-[#1ABA7F]/10 transition-all duration-300 hover:scale-105"
+                className="w-full sm:w-auto h-12 px-4 sm:px-6 text-sm sm:text-base font-bold rounded-lg border-2 border-[#1ABA7F] text-[#225F91] hover:bg-[#1ABA7F]/10 transition-all duration-300 hover:scale-105"
                 disabled={loading}
                 aria-label="Cancel order confirmation"
               >

@@ -47,7 +47,7 @@ export function PharmacyGPSCaptureUI({ gpsCapture, onCapture, onClear }) {
     };
 
     return (
-      <div className="bg-gradient-to-br from-blue-50 to-purple-50 border-2 border-blue-200 rounded-xl p-3 sm:p-4 space-y-3 animate-in fade-in duration-300">
+      <div className="bg-gradient-to-br from-blue-50 to-purple-50 border-2 border-blue-200 rounded-lg p-3 sm:p-4 space-y-3 animate-in fade-in duration-300">
         {/* Header */}
         <div className="flex items-start sm:items-center justify-between gap-2">
           <div className="flex items-start sm:items-center gap-2 sm:gap-3 flex-1 min-w-0">
@@ -173,7 +173,7 @@ export function PharmacyGPSCaptureUI({ gpsCapture, onCapture, onClear }) {
     const config = qualityConfig[quality] || qualityConfig.acceptable;
 
     return (
-      <div className={`p-3 sm:p-4 rounded-xl border-2 ${config.bg} ${config.border} animate-in fade-in zoom-in-95 duration-300`}>
+      <div className={`p-3 sm:p-4 rounded-lg border-2 ${config.bg} ${config.border} animate-in fade-in zoom-in-95 duration-300`}>
         <div className="flex flex-col sm:flex-row sm:items-start gap-3">
           <div className="flex items-start gap-2 sm:gap-3 flex-1 min-w-0">
             <div className="flex-shrink-0">

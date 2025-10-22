@@ -162,7 +162,7 @@ const MedicationCard = ({
           {/* Info Cards with stagger */}
           <div className="grid grid-cols-2 gap-2">
            {med.ingredients?.length > 0 && (
-              <div className="p-3 rounded-xl bg-white border border-gray-200 hover:border-[#1ABA7F]/50 transition-all duration-300">
+              <div className="p-3 rounded-lg bg-white border border-gray-200 hover:border-[#1ABA7F]/50 transition-all duration-300">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Composition</span>
                 </div>
@@ -178,7 +178,7 @@ const MedicationCard = ({
             )}
 
             {med.manufacturerName && (
-              <div className="p-3 rounded-xl bg-white border border-gray-200 hover:border-[#1ABA7F]/50 hover:shadow-lg transition-all duration-300 animate-in fade-in zoom-in-95" 
+              <div className="p-3 rounded-lg bg-white border border-gray-200 hover:border-[#1ABA7F]/50 hover:shadow-lg transition-all duration-300 animate-in fade-in zoom-in-95" 
                   style={{ animationDelay: '600ms' }}>
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Manufacturer</span>
@@ -194,7 +194,7 @@ const MedicationCard = ({
             )}
 
             {med.nafdacCode && (
-              <div className="p-3 rounded-xl bg-white border border-gray-200 hover:border-[#1ABA7F]/50 hover:shadow-lg transition-all duration-300 animate-in fade-in zoom-in-95" 
+              <div className="p-3 rounded-lg bg-white border border-gray-200 hover:border-[#1ABA7F]/50 hover:shadow-lg transition-all duration-300 animate-in fade-in zoom-in-95" 
                   style={{ animationDelay: '700ms' }}>
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">NAFDAC Code</span>
@@ -204,7 +204,7 @@ const MedicationCard = ({
             )}
 
             {med.packSizeExpression && (
-              <div className="p-3 rounded-xl bg-white border border-gray-200 hover:border-[#1ABA7F]/50 hover:shadow-lg transition-all duration-300 animate-in fade-in zoom-in-95" 
+              <div className="p-3 rounded-lg bg-white border border-gray-200 hover:border-[#1ABA7F]/50 hover:shadow-lg transition-all duration-300 animate-in fade-in zoom-in-95" 
                   style={{ animationDelay: '800ms' }}>
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Pack Size</span>
@@ -271,7 +271,7 @@ const MedicationCard = ({
                 
                 {/* Composition */}
             {med.ingredients?.length > 0 && (
-              <div className="p-3 rounded-xl bg-white border border-gray-200 hover:border-[#1ABA7F]/50 transition-all duration-300">
+              <div className="p-3 rounded-lg bg-white border border-gray-200 hover:border-[#1ABA7F]/50 transition-all duration-300">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Composition</span>
                 </div>
@@ -289,7 +289,7 @@ const MedicationCard = ({
 
                 {/* Manufacturer */}
                 {med.manufacturerName && (
-                  <div className="p-3 rounded-xl bg-white border border-gray-200 hover:border-[#1ABA7F]/50 transition-colors duration-200">
+                  <div className="p-3 rounded-lg bg-white border border-gray-200 hover:border-[#1ABA7F]/50 transition-colors duration-200">
                     <div className="flex items-center gap-2 mb-1">
                       <Building2 className="h-4 w-4 text-[#76D1F3]" />
                       <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Manufacturer</span>
@@ -308,7 +308,7 @@ const MedicationCard = ({
 
                 {/* NAFDAC Code */}
                 {med.nafdacCode && (
-                  <div className="p-3 rounded-xl bg-white border border-gray-200 hover:border-[#1ABA7F]/50 transition-colors duration-200">
+                  <div className="p-3 rounded-lg bg-white border border-gray-200 hover:border-[#1ABA7F]/50 transition-colors duration-200">
                     <div className="flex items-center gap-2 mb-1">
                       <FileCheck className="h-4 w-4 text-[#FF6B6B]" />
                       <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">NAFDAC Code</span>
@@ -319,7 +319,7 @@ const MedicationCard = ({
  
                  {/*  Pack Size */}
                  {med.packSizeExpression && (
-                  <div className="p-3 rounded-xl bg-white border border-gray-200 hover:border-[#1ABA7F]/50 transition-colors duration-200">
+                  <div className="p-3 rounded-lg bg-white border border-gray-200 hover:border-[#1ABA7F]/50 transition-colors duration-200">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Pack Size</span>
                     </div>
@@ -359,7 +359,7 @@ const MedicationCard = ({
 
         <div className="flex items-center justify-between px-2">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-gradient-to-br from-[#1ABA7F]/10 to-[#225F91]/10">
+            <div className="p-2 rounded-lg bg-gradient-to-br from-[#1ABA7F]/10 to-[#225F91]/10">
               <MapPin className="h-5 w-5 text-[#225F91]" />
             </div>
             <h3 className="text-xl font-black text-[#225F91]">Compare Pharmacies</h3>
@@ -413,7 +413,7 @@ const MedicationCard = ({
         {/* Location Used */}
 
         {(state || lga || ward) && (
-          <div className="mt-4 p-3 rounded-xl bg-gray-100">
+          <div className="mt-4 p-3 rounded-lg bg-gray-100">
             <p className="text-gray-600 text-sm font-bold">
               Chosen Location: {state}{lga ? `, ${lga}` : ''}{ward ? `, ${ward}` : ''}
             </p>

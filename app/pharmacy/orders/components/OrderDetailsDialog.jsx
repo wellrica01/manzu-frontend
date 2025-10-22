@@ -112,7 +112,7 @@ export default function OrderDetailsDialog({ open, onClose, order, onStatusUpdat
         <div className="overflow-y-auto px-4 py-4 flex-1 min-h-0 space-y-4">
           
           {/* Status Section */}
-          <div className="bg-gradient-to-r from-blue-50 to-green-50 border-2 border-blue-200 rounded-xl p-4">
+          <div className="bg-gradient-to-r from-blue-50 to-green-50 border-2 border-blue-200 rounded-lg p-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 {currentStatus && <currentStatus.icon className="w-5 h-5" style={{ color: currentStatus.color }} />}
@@ -176,7 +176,7 @@ export default function OrderDetailsDialog({ open, onClose, order, onStatusUpdat
           {/* Customer & Delivery Info */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Customer Information */}
-            <div className="bg-white border-2 border-gray-200 rounded-xl p-4">
+            <div className="bg-white border-2 border-gray-200 rounded-lg p-4">
               <div className="flex items-center gap-2 mb-3">
                 <User className="w-4 h-4 text-[#225F91]" />
                 <h3 className="font-semibold text-sm text-gray-900">Customer Information</h3>
@@ -211,7 +211,7 @@ export default function OrderDetailsDialog({ open, onClose, order, onStatusUpdat
             </div>
 
             {/* Delivery Information */}
-            <div className="bg-white border-2 border-gray-200 rounded-xl p-4">
+            <div className="bg-white border-2 border-gray-200 rounded-lg p-4">
               <div className="flex items-center gap-2 mb-3">
                 {deliveryMethod === 'pickup' ? (
                   <Home className="w-4 h-4 text-[#225F91]" />
@@ -254,7 +254,7 @@ export default function OrderDetailsDialog({ open, onClose, order, onStatusUpdat
 
           {/* Prescription Section */}
           {order.prescription && order.prescription.fileUrl && (
-            <div className="bg-orange-50 border-2 border-orange-200 rounded-xl p-4">
+            <div className="bg-orange-50 border-2 border-orange-200 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="p-1.5 bg-orange-100 rounded-lg">
@@ -313,7 +313,7 @@ export default function OrderDetailsDialog({ open, onClose, order, onStatusUpdat
           )}
 
           {/* Order Items */}
-          <div className="bg-white border-2 border-gray-200 rounded-xl p-4">
+          <div className="bg-white border-2 border-gray-200 rounded-lg p-4">
             <div className="flex items-center gap-2 mb-3">
               <Package className="w-4 h-4 text-[#225F91]" />
               <h3 className="font-semibold text-sm text-gray-900">Order Items</h3>
@@ -347,7 +347,7 @@ export default function OrderDetailsDialog({ open, onClose, order, onStatusUpdat
           </div>
 
           {/* Order Summary */}
-          <div className="bg-gradient-to-br from-green-50 to-blue-50 border-2 border-green-300 rounded-xl p-4">
+          <div className="bg-gradient-to-br from-green-50 to-blue-50 border-2 border-green-300 rounded-lg p-4">
             <div className="flex items-center gap-2 mb-3">
               <DollarSign className="w-4 h-4 text-green-600" />
               <h3 className="font-semibold text-sm text-gray-900">Order Summary</h3>
@@ -377,19 +377,19 @@ export default function OrderDetailsDialog({ open, onClose, order, onStatusUpdat
 
           {/* Quick Stats */}
           <div className="grid grid-cols-3 gap-3">
-            <div className="text-center p-3 bg-blue-50 rounded-xl border border-blue-200">
+            <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-200">
               <div className="text-xs text-gray-600 mb-0.5">Total Items</div>
               <div className="text-xl font-bold text-blue-600">
                 {order.items?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0}
               </div>
             </div>
-            <div className="text-center p-3 bg-purple-50 rounded-xl border border-purple-200">
+            <div className="text-center p-3 bg-purple-50 rounded-lg border border-purple-200">
               <div className="text-xs text-gray-600 mb-0.5">Products</div>
               <div className="text-xl font-bold text-purple-600">
                 {order.items?.length || 0}
               </div>
             </div>
-            <div className="text-center p-3 bg-green-50 rounded-xl border border-green-200">
+            <div className="text-center p-3 bg-green-50 rounded-lg border border-green-200">
               <div className="text-xs text-gray-600 mb-0.5">Revenue</div>
               <div className="text-lg font-bold text-green-600">
                 ₦{order.totalPrice?.toLocaleString()}

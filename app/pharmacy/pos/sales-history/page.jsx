@@ -33,9 +33,9 @@ async function exportSales(params) {
 // Helper Components
 function StatCard({ icon: Icon, label, value, color, subtitle }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-lg md:rounded-xl shadow-sm p-3 md:p-6 hover:shadow-md transition-shadow">
+    <div className="bg-white border border-gray-200 rounded-lg md:rounded-lg shadow-sm p-3 md:p-6 hover:shadow-md transition-shadow">
       <div className="flex items-center gap-3 md:gap-4">
-        <div className={`p-2 md:p-3 rounded-lg md:rounded-xl`} style={{ background: `${color}20` }}>
+        <div className={`p-2 md:p-3 rounded-lg md:rounded-lg`} style={{ background: `${color}20` }}>
           <Icon className="w-4 h-4 md:w-6 md:h-6" style={{ color }} />
         </div>
         <div className="flex-1 min-w-0">
@@ -53,7 +53,7 @@ function SaleDetailsModal({ sale, onClose }) {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3 md:p-4">
-      <div className="bg-white rounded-xl md:rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg md:rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="bg-gradient-to-r from-[#225F91] to-[#1ABA7F] text-white p-4 md:p-6 sticky top-0">
           <div className="flex items-center justify-between">
@@ -466,7 +466,7 @@ export default function PharmacySalesPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
+      <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
         {/* Mobile Filter Toggle */}
         <button
           onClick={() => setShowFilters(!showFilters)}
@@ -605,7 +605,7 @@ export default function PharmacySalesPage() {
       </div>
 
       {/* Sales List */}
-      <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
+      <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
         <div className="p-4 md:p-6 border-b border-gray-200 flex items-center justify-between">
           <div>
             <h2 className="text-lg md:text-xl font-semibold text-gray-900">Sales History</h2>

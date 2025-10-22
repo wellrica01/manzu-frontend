@@ -461,7 +461,7 @@ export default function PharmacyInventoryPage() {
 
       {/* Stats Cards - IMPROVED FOR MOBILE */}
       <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
-        <div className="bg-white border-2 border-blue-200 rounded-lg md:rounded-xl p-3 md:p-5 shadow-sm hover:shadow-md transition-shadow">
+        <div className="bg-white border-2 border-blue-200 rounded-lg md:rounded-lg p-3 md:p-5 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center gap-2 md:gap-3">
             <div className="p-2 md:p-3 bg-blue-100 rounded-lg flex-shrink-0">
               <Package className="w-4 h-4 md:w-6 md:h-6 text-blue-600" />
@@ -474,7 +474,7 @@ export default function PharmacyInventoryPage() {
           </div>
         </div>
 
-        <div className="bg-white border-2 border-yellow-200 rounded-lg md:rounded-xl p-3 md:p-5 shadow-sm hover:shadow-md transition-shadow">
+        <div className="bg-white border-2 border-yellow-200 rounded-lg md:rounded-lg p-3 md:p-5 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center gap-2 md:gap-3">
             <div className="p-2 md:p-3 bg-yellow-100 rounded-lg flex-shrink-0">
               <AlertCircle className="w-4 h-4 md:w-6 md:h-6 text-yellow-600" />
@@ -487,7 +487,7 @@ export default function PharmacyInventoryPage() {
           </div>
         </div>
 
-        <div className="bg-white border-2 border-red-200 rounded-lg md:rounded-xl p-3 md:p-5 shadow-sm hover:shadow-md transition-shadow">
+        <div className="bg-white border-2 border-red-200 rounded-lg md:rounded-lg p-3 md:p-5 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center gap-2 md:gap-3">
             <div className="p-2 md:p-3 bg-red-100 rounded-lg flex-shrink-0">
               <AlertTriangle className="w-4 h-4 md:w-6 md:h-6 text-red-600" />
@@ -500,7 +500,7 @@ export default function PharmacyInventoryPage() {
           </div>
         </div>
 
-        <div className="bg-white border-2 border-green-200 rounded-lg md:rounded-xl p-3 md:p-5 shadow-sm hover:shadow-md transition-shadow">
+        <div className="bg-white border-2 border-green-200 rounded-lg md:rounded-lg p-3 md:p-5 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center gap-2 md:gap-3">
             <div className="p-2 md:p-3 bg-green-100 rounded-lg flex-shrink-0">
               <DollarSign className="w-4 h-4 md:w-6 md:h-6 text-green-600" />
@@ -518,7 +518,7 @@ export default function PharmacyInventoryPage() {
 
       {/* Expiring Soon Alert - IMPROVED FOR MOBILE */}
       {summary.expiringSoonCount > 0 && (
-        <div className="bg-orange-50 border-2 border-orange-300 rounded-lg md:rounded-xl p-3 md:p-4 flex items-center gap-2 md:gap-3">
+        <div className="bg-orange-50 border-2 border-orange-300 rounded-lg md:rounded-lg p-3 md:p-4 flex items-center gap-2 md:gap-3">
           <AlertTriangle className="w-5 h-5 md:w-6 md:h-6 text-orange-600 flex-shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-orange-900 text-sm md:text-base">

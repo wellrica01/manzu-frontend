@@ -254,7 +254,7 @@ const PrescriptionUploadSection = ({
     <Card className="relative bg-white border-2 border-gray-100 rounded-3xl shadow-lg overflow-hidden">
       <CardHeader className="bg-gradient-to-br from-gray-50 to-white p-6 border-b border-gray-100">
         <CardTitle className="text-xl font-bold text-[#225F91] flex items-center gap-3">
-          <div className="p-3 bg-gradient-to-br from-[#1ABA7F] to-[#16a876] rounded-xl shadow-md">
+          <div className="p-3 bg-gradient-to-br from-[#1ABA7F] to-[#16a876] rounded-lg shadow-md">
             <FileText className="h-6 w-6 text-white" strokeWidth={2} />
           </div>
           Prescription Upload
@@ -340,7 +340,7 @@ const PrescriptionUploadSection = ({
                   
                   <Button
                     onClick={() => fileInputRef.current?.click()}
-                    className="h-12 px-8 bg-gradient-to-r from-[#1ABA7F] to-[#16a876] hover:from-[#16a876] hover:to-[#1ABA7F] text-white font-bold rounded-xl shadow-lg"
+                    className="h-12 px-8 bg-gradient-to-r from-[#1ABA7F] to-[#16a876] hover:from-[#16a876] hover:to-[#1ABA7F] text-white font-bold rounded-lg shadow-lg"
                   >
                     <Upload className="h-5 w-5 mr-2" strokeWidth={2} />
                     Choose File
@@ -356,7 +356,7 @@ const PrescriptionUploadSection = ({
                 </>
               ) : (
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-green-50 rounded-xl border border-green-200">
+                  <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
                     <div className="flex items-center gap-3">
                       <CheckCircle className="h-5 w-5 text-green-600" strokeWidth={2} />
                       <span className="text-sm font-semibold text-green-900">
@@ -389,7 +389,7 @@ const PrescriptionUploadSection = ({
                           <img 
                             src={filePreview} 
                             alt="Prescription preview" 
-                            className="rounded-xl border-2 border-gray-200 shadow-md" 
+                            className="rounded-lg border-2 border-gray-200 shadow-md" 
                           />
                         </div>
                       )}
@@ -463,7 +463,7 @@ const PrescriptionUploadSection = ({
                   <Button
                     onClick={handleFileUpload}
                     disabled={uploading}
-                    className="w-full h-12 bg-gradient-to-r from-[#1ABA7F] to-[#16a876] hover:from-[#16a876] hover:to-[#1ABA7F] text-white font-bold rounded-xl shadow-lg disabled:opacity-50"
+                    className="w-full h-12 bg-gradient-to-r from-[#1ABA7F] to-[#16a876] hover:from-[#16a876] hover:to-[#1ABA7F] text-white font-bold rounded-lg shadow-lg disabled:opacity-50"
                   >
                     {uploading ? (
                       <>
@@ -489,7 +489,7 @@ const PrescriptionUploadSection = ({
                   Uploaded Files
                 </h4>
                 {Object.entries(uploadedFiles).map(([filename, status]) => (
-                  <div key={filename} className="flex items-center justify-between p-4 bg-green-50 rounded-xl border border-green-200">
+                  <div key={filename} className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
                     <span className="text-sm font-medium text-green-900">{filename}</span>
                     <Badge className="bg-green-600 text-white">
                       {status === 'uploaded' ? 'Uploaded' : 'Processing'}

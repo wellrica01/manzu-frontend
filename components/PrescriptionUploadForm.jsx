@@ -250,7 +250,7 @@ export default function PrescriptionUploadForm() {
             {/* Confirmation Details */}
             <div className="p-5 bg-gradient-to-br from-gray-50 to-white rounded-2xl border border-gray-200">
               <div className="flex items-start gap-4">
-                <div className="p-2.5 bg-[#1ABA7F]/10 rounded-xl flex-shrink-0">
+                <div className="p-2.5 bg-[#1ABA7F]/10 rounded-lg flex-shrink-0">
                   <Mail className="h-5 w-5 text-[#1ABA7F]" strokeWidth={2} />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -289,7 +289,7 @@ export default function PrescriptionUploadForm() {
             <div className="space-y-3 pt-4">
               <Button
                 asChild
-                className="w-full h-14 text-base font-bold rounded-xl bg-gradient-to-r from-[#225F91] to-[#1a4a73] hover:from-[#1a4a73] hover:to-[#225F91] text-white shadow-lg transition-all duration-300"
+                className="w-full h-14 text-base font-bold rounded-lg bg-gradient-to-r from-[#225F91] to-[#1a4a73] hover:from-[#1a4a73] hover:to-[#225F91] text-white shadow-lg transition-all duration-300"
               >
                 <Link href="/check-prescription-status">
                   <Clock className="h-5 w-5 mr-2" strokeWidth={2} />
@@ -301,7 +301,7 @@ export default function PrescriptionUploadForm() {
               <Button
                 variant="outline"
                 onClick={handleUploadAnother}
-                className="w-full h-12 text-base font-semibold rounded-xl border-2 border-gray-200 text-gray-700 hover:bg-gray-50 transition-all duration-300"
+                className="w-full h-12 text-base font-semibold rounded-lg border-2 border-gray-200 text-gray-700 hover:bg-gray-50 transition-all duration-300"
               >
                 Close
               </Button>
@@ -339,7 +339,7 @@ export default function PrescriptionUploadForm() {
             <div className="p-5 border-2 border-gray-200 rounded-2xl bg-white shadow-sm">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4 flex-1 min-w-0">
-                  <div className="p-2.5 rounded-xl bg-gray-50 border border-gray-200">
+                  <div className="p-2.5 rounded-lg bg-gray-50 border border-gray-200">
                     {getFileIcon(file.type)}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -376,7 +376,7 @@ export default function PrescriptionUploadForm() {
               </div>
               
               {showFilePreview && filePreview && (
-                <div className="mt-4 p-3 border border-gray-200 rounded-xl bg-gray-50">
+                <div className="mt-4 p-3 border border-gray-200 rounded-lg bg-gray-50">
                   <img 
                     src={filePreview} 
                     alt="File preview" 
@@ -505,7 +505,7 @@ export default function PrescriptionUploadForm() {
               onBlur={() => setContactFocused(false)}
               placeholder="Email or phone number"
               className={cn(
-                "h-14 pl-12 pr-4 text-base font-medium rounded-xl border-2 transition-all duration-300",
+                "h-14 pl-12 pr-4 text-base font-medium rounded-lg border-2 transition-all duration-300",
                 errors.contact
                   ? "border-red-300 focus:border-red-500"
                   : contactFocused
@@ -527,7 +527,7 @@ export default function PrescriptionUploadForm() {
         <Button
           type="submit"
           disabled={isUploading || !file || !contact}
-          className="group w-full h-14 px-6 text-base font-bold rounded-xl bg-gradient-to-r from-[#225F91] to-[#1a4a73] hover:from-[#1a4a73] hover:to-[#225F91] text-white disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transition-all duration-300"
+          className="group w-full h-14 px-6 text-base font-bold rounded-lg bg-gradient-to-r from-[#225F91] to-[#1a4a73] hover:from-[#1a4a73] hover:to-[#225F91] text-white disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transition-all duration-300"
         >
           {isUploading ? (
             <>

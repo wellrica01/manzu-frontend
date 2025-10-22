@@ -170,7 +170,7 @@ export default function PharmacyLogin() {
                               onChange={(e) => handlePinChange(index, e.target.value)}
                               onKeyDown={(e) => handlePinKeyDown(index, e)}
                               onPaste={handlePinPaste}
-                              className="w-10 h-12 sm:w-12 sm:h-14 p-0 text-center text-xl sm:text-2xl font-bold rounded-lg sm:rounded-xl border-2 border-gray-200 focus:border-[#1ABA7F] focus:ring-2 focus:ring-[#1ABA7F]/20 focus:outline-none transition-all"                            />
+                              className="w-10 h-12 sm:w-12 sm:h-14 p-0 text-center text-xl sm:text-2xl font-bold rounded-lg sm:rounded-lg border-2 border-gray-200 focus:border-[#1ABA7F] focus:ring-2 focus:ring-[#1ABA7F]/20 focus:outline-none transition-all"                            />
                           ))}
                         </div>
                       </FormControl>

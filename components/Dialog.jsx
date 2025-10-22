@@ -55,7 +55,7 @@ export default function Dialog({
     >
       <div
         className={`
-          bg-white rounded-xl shadow-2xl w-full border border-gray-200 relative
+          bg-white rounded-lg shadow-2xl w-full border border-gray-200 relative
           transform transition-all duration-200 scale-100
           ${sizeClasses[size]}
           ${className}

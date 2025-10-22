@@ -181,7 +181,7 @@ const FilterControls = ({
         <Button
           variant="outline"
           onClick={() => setShowFilters(!showFilters)}
-          className="group h-12 px-6 text-sm font-semibold rounded-xl border-2 border-[#1ABA7F]/30 text-[#225F91] hover:bg-gradient-to-r hover:from-[#1ABA7F]/10 hover:to-transparent transition-all duration-300 hover:shadow-lg hover:scale-105 relative overflow-hidden"
+          className="group h-12 px-6 text-sm font-semibold rounded-lg border-2 border-[#1ABA7F]/30 text-[#225F91] hover:bg-gradient-to-r hover:from-[#1ABA7F]/10 hover:to-transparent transition-all duration-300 hover:shadow-lg hover:scale-105 relative overflow-hidden"
         >
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
           
@@ -212,7 +212,7 @@ const FilterControls = ({
       </div>
 
       {savedFilters.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2 p-4 rounded-xl bg-gradient-to-r from-gray-50 to-white border border-gray-200 animate-in fade-in slide-in-from-bottom-2 duration-500" style={{ animationDelay: '100ms' }}>
+        <div className="flex flex-wrap items-center gap-2 p-4 rounded-lg bg-gradient-to-r from-gray-50 to-white border border-gray-200 animate-in fade-in slide-in-from-bottom-2 duration-500" style={{ animationDelay: '100ms' }}>
           <Bookmark className="h-4 w-4 text-[#225F91]" />
           <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Saved:</span>
           {savedFilters.map((filter, index) => (
@@ -299,7 +299,7 @@ const FilterControls = ({
                   variant="outline"
                   size="sm"
                   onClick={clearFilters}
-                  className="h-10 px-4 text-sm font-semibold border-2 border-gray-300 text-gray-700 hover:bg-gray-100 hover:border-gray-400 rounded-xl transition-all duration-300 hover:scale-105 active:scale-95"
+                  className="h-10 px-4 text-sm font-semibold border-2 border-gray-300 text-gray-700 hover:bg-gray-100 hover:border-gray-400 rounded-lg transition-all duration-300 hover:scale-105 active:scale-95"
                 >
                   Clear All
                 </Button>
@@ -307,7 +307,7 @@ const FilterControls = ({
                   variant="outline"
                   size="sm"
                   onClick={saveCurrentFilter}
-                  className="h-10 px-4 text-sm font-semibold border-2 border-[#1ABA7F] text-[#1ABA7F] hover:bg-[#1ABA7F]/10 hover:border-[#16a876] rounded-xl transition-all duration-300 hover:scale-105 active:scale-95"
+                  className="h-10 px-4 text-sm font-semibold border-2 border-[#1ABA7F] text-[#1ABA7F] hover:bg-[#1ABA7F]/10 hover:border-[#16a876] rounded-lg transition-all duration-300 hover:scale-105 active:scale-95"
                 >
                   <Save className="h-4 w-4 mr-2" />
                   Save Filter
@@ -326,7 +326,7 @@ const FilterControls = ({
       )}
 
       {locationText && (
-        <div className="flex items-center gap-2 p-4 rounded-xl bg-gradient-to-r from-[#1ABA7F]/5 to-[#225F91]/5 border border-[#1ABA7F]/20 animate-in fade-in slide-in-from-bottom-2 duration-500" data-location-text>
+        <div className="flex items-center gap-2 p-4 rounded-lg bg-gradient-to-r from-[#1ABA7F]/5 to-[#225F91]/5 border border-[#1ABA7F]/20 animate-in fade-in slide-in-from-bottom-2 duration-500" data-location-text>
           <MapPin className="h-4 w-4 text-[#1ABA7F] flex-shrink-0 animate-pulse" />
           <p className="text-sm text-gray-700 font-medium italic">
             {locationText}

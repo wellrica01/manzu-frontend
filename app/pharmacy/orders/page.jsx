@@ -6,7 +6,6 @@ import {
   Calendar, DollarSign, FileText, AlertCircle, TrendingUp,
   CheckSquare, XCircle, Filter
 } from "lucide-react";
-import Dialog from "@/components/Dialog";
 import OrderDetailsDialog from "./components/OrderDetailsDialog";
 import DataTableView from "@/components/DataTableView";
 
@@ -47,9 +46,9 @@ function capitalizeWords(str) {
 // Helper Components
 function StatCard({ icon: Icon, label, value, color, subtitle, trend }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-lg md:rounded-xl shadow-sm p-3 md:p-6 hover:shadow-md transition-shadow">
+    <div className="bg-white border border-gray-200 rounded-lg md:rounded-lg shadow-sm p-3 md:p-6 hover:shadow-md transition-shadow">
       <div className="flex items-center gap-2 md:gap-4">
-        <div className={`p-2 md:p-3 rounded-lg md:rounded-xl flex-shrink-0`} style={{ background: `${color}20` }}>
+        <div className={`p-2 md:p-3 rounded-lg md:rounded-lg flex-shrink-0`} style={{ background: `${color}20` }}>
           <Icon className="w-4 h-4 md:w-6 md:h-6" style={{ color }} />
         </div>
         <div className="flex-1 min-w-0">
@@ -484,7 +483,7 @@ export default function EnhancedOrdersPage() {
       {/* Loading overlay for deep link */}
       {loadingSpecificOrder && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-          <div className="bg-white rounded-xl shadow-2xl p-8 flex flex-col items-center gap-4">
+          <div className="bg-white rounded-lg shadow-2xl p-8 flex flex-col items-center gap-4">
             <Loader2 className="w-12 h-12 text-[#1ABA7F] animate-spin" />
             <p className="text-lg font-semibold text-gray-900">Loading order...</p>
           </div>
@@ -535,9 +534,9 @@ export default function EnhancedOrdersPage() {
 
       {/* Revenue Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-        <div className="bg-gradient-to-br from-green-50 to-blue-50 border-2 border-green-200 rounded-lg md:rounded-xl shadow-sm p-4 md:p-6">
+        <div className="bg-gradient-to-br from-green-50 to-blue-50 border-2 border-green-200 rounded-lg md:rounded-lg shadow-sm p-4 md:p-6">
           <div className="flex items-center gap-3 md:gap-4">
-            <div className="p-2 md:p-3 rounded-lg md:rounded-xl bg-white shadow-sm flex-shrink-0">
+            <div className="p-2 md:p-3 rounded-lg md:rounded-lg bg-white shadow-sm flex-shrink-0">
               <DollarSign className="w-6 h-6 md:w-8 md:h-8 text-green-600" />
             </div>
             <div className="flex-1 min-w-0">
@@ -549,9 +548,9 @@ export default function EnhancedOrdersPage() {
           </div>
         </div>
         
-        <div className="bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg md:rounded-xl shadow-sm p-4 md:p-6">
+        <div className="bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg md:rounded-lg shadow-sm p-4 md:p-6">
           <div className="flex items-center gap-3 md:gap-4">
-            <div className="p-2 md:p-3 rounded-lg md:rounded-xl bg-white shadow-sm flex-shrink-0">
+            <div className="p-2 md:p-3 rounded-lg md:rounded-lg bg-white shadow-sm flex-shrink-0">
               <TrendingUp className="w-6 h-6 md:w-8 md:h-8 text-purple-600" />
             </div>
             <div className="flex-1 min-w-0">
@@ -565,7 +564,7 @@ export default function EnhancedOrdersPage() {
       </div>
 
       {/* Quick Filters */}
-      <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
+      <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
         <button
           onClick={() => setShowFilters(!showFilters)}
           className="md:hidden w-full p-4 flex items-center justify-between text-left"

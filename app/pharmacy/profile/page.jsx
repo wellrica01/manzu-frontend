@@ -538,7 +538,7 @@ const cancelLogoUpload = () => {
   </div>
 </div>
     {/* Tabs */}
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-2">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2">
       <div
         className="
           flex sm:flex-wrap gap-2 sm:gap-3
@@ -581,7 +581,7 @@ const cancelLogoUpload = () => {
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
           {activeTab === 'info' && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
                 <User className="w-5 h-5 text-[#225F91]" />
                 General Information
@@ -752,7 +752,7 @@ const cancelLogoUpload = () => {
           )}
 
           {activeTab === 'location' && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
                 <MapPin className="w-5 h-5 text-[#225F91]" />
                 Location & GPS Coordinates
@@ -841,7 +841,7 @@ const cancelLogoUpload = () => {
           )}
 
 {activeTab === 'hours' && (
-  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
     <div className="flex items-center justify-between mb-6">
       <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
         <Clock className="w-5 h-5 text-[#225F91]" />
@@ -1000,7 +1000,7 @@ const cancelLogoUpload = () => {
   </div>
 )}
       {activeTab === 'security' && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
             <Key className="w-5 h-5 text-[#225F91]" />
             Change 6-Digit PIN
@@ -1060,7 +1060,7 @@ const cancelLogoUpload = () => {
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Quick Stats */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <h3 className="font-semibold text-gray-900 mb-4">Account Status</h3>
             <div className="space-y-3">
               <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
@@ -1077,7 +1077,7 @@ const cancelLogoUpload = () => {
           </div>
 
           {/* Quick Actions */}
-          <div className="bg-gradient-to-br from-blue-50 to-green-50 rounded-xl border-2 border-blue-200 p-6">
+          <div className="bg-gradient-to-br from-blue-50 to-green-50 rounded-lg border-2 border-blue-200 p-6">
             <h3 className="font-semibold text-gray-900 mb-4">Need Help?</h3>
             <p className="text-sm text-gray-600 mb-4">
               Contact support if you need assistance with your profile or account settings.

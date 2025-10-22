@@ -107,7 +107,7 @@ const NoOpenPharmaciesState = ({ onShowAll }) => (
     </p>
     <Button
       onClick={onShowAll}
-      className="bg-gradient-to-r from-[#225F91] to-[#1a4a73] text-white rounded-xl px-6 py-2 font-bold hover:shadow-lg hover:scale-105 transition-all duration-300 animate-in zoom-in-95" 
+      className="bg-gradient-to-r from-[#225F91] to-[#1a4a73] text-white rounded-lg px-6 py-2 font-bold hover:shadow-lg hover:scale-105 transition-all duration-300 animate-in zoom-in-95" 
       style={{ animationDelay: '500ms' }}
     >
       Show All Pharmacies
@@ -233,7 +233,7 @@ const PharmacyCard = ({
         })()}
 
         {/* Distance & Price with number animation */}
-        <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-gradient-to-r from-gray-50 to-white border border-gray-200 hover:border-[#1ABA7F]/30 hover:shadow-md transition-all duration-300 animate-in fade-in slide-in-from-right-2" 
+        <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-gradient-to-r from-gray-50 to-white border border-gray-200 hover:border-[#1ABA7F]/30 hover:shadow-md transition-all duration-300 animate-in fade-in slide-in-from-right-2" 
              style={{ animationDelay: `${index * 120 + 700}ms` }}>
           <div className="flex items-center gap-2 text-gray-700">
             <Navigation className="h-4 w-4 text-[#76D1F3]" />
@@ -274,7 +274,7 @@ const PharmacyCard = ({
         </div>
 
         {/* Enhanced Quantity Controls */}
-        <div className="flex items-center justify-between px-2 py-2 rounded-xl border-2 border-gray-200 hover:border-[#1ABA7F]/50 transition-all duration-300 animate-in fade-in zoom-in-95" 
+        <div className="flex items-center justify-between px-2 py-2 rounded-lg border-2 border-gray-200 hover:border-[#1ABA7F]/50 transition-all duration-300 animate-in fade-in zoom-in-95" 
              style={{ animationDelay: `${index * 120 + 800}ms` }}>
           <label htmlFor={`qty-${avail.pharmacyId}`} className="text-sm font-semibold text-gray-700">
             Quantity:
@@ -323,7 +323,7 @@ const PharmacyCard = ({
             <>
               <Button
                 disabled
-                className="flex-1 h-12 rounded-xl font-bold text-sm bg-gray-100 text-gray-600 border-2 border-gray-300 cursor-not-allowed"
+                className="flex-1 h-12 rounded-lg font-bold text-sm bg-gray-100 text-gray-600 border-2 border-gray-300 cursor-not-allowed"
               >
                 Already in Cart
               </Button>
@@ -343,7 +343,7 @@ const PharmacyCard = ({
                   }
                 }}
                 variant="outline"
-                className="h-12 px-4 rounded-xl font-bold text-sm border-2 border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400 hover:scale-110 transition-all duration-300 group"
+                className="h-12 px-4 rounded-lg font-bold text-sm border-2 border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400 hover:scale-110 transition-all duration-300 group"
               >
                 <Trash2 className="h-4 w-4 group-hover:scale-125 transition-transform duration-300" />
               </Button>
@@ -359,7 +359,7 @@ const PharmacyCard = ({
               )}
               disabled={adding}
               className={cn(
-                "w-full h-12 rounded-xl font-bold text-sm transition-all duration-300 shadow-lg hover:shadow-2xl relative overflow-hidden",
+                "w-full h-12 rounded-lg font-bold text-sm transition-all duration-300 shadow-lg hover:shadow-2xl relative overflow-hidden",
                 "bg-gradient-to-r from-[#1ABA7F] to-[#225F91] text-white hover:from-[#1a4a73] hover:to-[#225F91] active:scale-95 hover:scale-105"
               )}
             >
@@ -501,7 +501,7 @@ const PharmacyCards = ({
       {showSeeMore && !noOpenPharmacies && (
         <Button
           variant="outline"
-          className="w-full h-12 rounded-xl border-2 border-[#1ABA7F] text-[#225F91] font-bold hover:bg-[#1ABA7F]/10 transition-all duration-300 hover:scale-105"
+          className="w-full h-12 rounded-lg border-2 border-[#1ABA7F] text-[#225F91] font-bold hover:bg-[#1ABA7F]/10 transition-all duration-300 hover:scale-105"
         >
           See All Pharmacies
           <ChevronDown className="h-4 w-4 ml-2" />

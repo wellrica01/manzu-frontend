@@ -98,7 +98,7 @@ function StatCard({ icon: Icon, label, value, trend, trendValue, color = brandBl
   const trendColor = trend === 'up' ? '#10B981' : trend === 'down' ? '#EF4444' : '#6B7280';
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 hover:shadow-md transition-all">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-all">
       <div className="flex items-start justify-between mb-3">
         <div className="p-2 rounded-lg" style={{ backgroundColor: `${color}20` }}>
           <Icon className="w-5 h-5" style={{ color }} />
@@ -308,7 +308,7 @@ export default function EnhancedPharmacyAnalyticsPage() {
       </div>
 
       {/* Time Range Filter */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
         <div className="flex items-center gap-2 mb-3">
           <Filter className="w-4 h-4 text-[#225F91]" />
           <h2 className="text-base font-semibold text-gray-900">Time Period</h2>
@@ -387,7 +387,7 @@ export default function EnhancedPharmacyAnalyticsPage() {
       {/* Charts Row 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Sales Over Time */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <h3 className="text-base font-semibold text-gray-900 mb-3 flex items-center gap-2">
             <LineChart className="w-4 h-4 text-[#225F91]" />
             Revenue Trend
@@ -426,7 +426,7 @@ export default function EnhancedPharmacyAnalyticsPage() {
         </div>
 
         {/* Order Status */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <h3 className="text-base font-semibold text-gray-900 mb-3 flex items-center gap-2">
             <PieChart className="w-4 h-4 text-[#225F91]" />
             Order Status Distribution
@@ -455,7 +455,7 @@ export default function EnhancedPharmacyAnalyticsPage() {
       {/* Charts Row 2 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Top Medications */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <h3 className="text-base font-semibold text-gray-900 mb-3 flex items-center gap-2">
             <Pill className="w-4 h-4 text-[#225F91]" />
             Top Selling Medications
@@ -488,7 +488,7 @@ export default function EnhancedPharmacyAnalyticsPage() {
         </div>
 
         {/* Customer Insights */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <h3 className="text-base font-semibold text-gray-900 mb-3 flex items-center gap-2">
             <Users className="w-4 h-4 text-[#225F91]" />
             Customer Insights
@@ -524,7 +524,7 @@ export default function EnhancedPharmacyAnalyticsPage() {
       </div>
 
       {/* Inventory Health */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
         <h3 className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
           <Package className="w-4 h-4 text-[#225F91]" />
           Inventory Health
@@ -550,7 +550,7 @@ export default function EnhancedPharmacyAnalyticsPage() {
       </div>
 
       {/* Top Medications Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
             <Star className="w-4 h-4 text-[#225F91]" />
