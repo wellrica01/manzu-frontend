@@ -34,7 +34,6 @@ export default function OrderDetailsDialog({ open, onClose, order, onStatusUpdat
     }
   }, [order]);
 
-  // Prevent background scroll when dialog is open
   useEffect(() => {
     if (open) {
       document.body.classList.add('overflow-hidden');
@@ -87,43 +86,43 @@ export default function OrderDetailsDialog({ open, onClose, order, onStatusUpdat
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm transition-all p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[95vh] flex flex-col animate-in fade-in duration-200">
         {/* Header */}
-        <div className="sticky top-0 z-10 bg-gradient-to-r from-[#225F91] to-[#1ABA7F] text-white rounded-t-2xl px-6 py-5">
+        <div className="sticky top-0 z-10 bg-gradient-to-r from-[#225F91] to-[#1ABA7F] text-white rounded-t-2xl px-4 py-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-white/20 rounded-lg">
-                <Package className="w-6 h-6" />
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 bg-white/20 rounded-lg">
+                <Package className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold">Order Details</h2>
-                <p className="text-white/80 text-sm">#{order.sn}</p>
+                <h2 className="text-lg font-bold">Order Details</h2>
+                <p className="text-white/80 text-xs">#{order.sn}</p>
               </div>
             </div>
             <button
               type="button"
-              className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+              className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
               onClick={onClose}
               disabled={submitting}
             >
-              <X className="w-6 h-6" />
+              <X className="w-5 h-5" />
             </button>
           </div>
         </div>
 
         {/* Scrollable Content */}
-        <div className="overflow-y-auto px-6 py-6 flex-1 min-h-0 space-y-6">
+        <div className="overflow-y-auto px-4 py-4 flex-1 min-h-0 space-y-4">
           
           {/* Status Section */}
-          <div className="bg-gradient-to-r from-blue-50 to-green-50 border-2 border-blue-200 rounded-xl p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                {currentStatus && <currentStatus.icon className="w-6 h-6" style={{ color: currentStatus.color }} />}
+          <div className="bg-gradient-to-r from-blue-50 to-green-50 border-2 border-blue-200 rounded-xl p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                {currentStatus && <currentStatus.icon className="w-5 h-5" style={{ color: currentStatus.color }} />}
                 <div>
-                  <h3 className="font-semibold text-gray-900">Current Status</h3>
-                  <p className="text-sm text-gray-600">Track order progress</p>
+                  <h3 className="font-semibold text-sm text-gray-900">Current Status</h3>
+                  <p className="text-xs text-gray-600">Track order progress</p>
                 </div>
               </div>
               <span 
-                className="px-4 py-2 rounded-full text-sm font-bold text-white shadow-md"
+                className="px-3 py-1 rounded-full text-xs font-bold text-white shadow-md"
                 style={{ backgroundColor: currentStatus?.color || '#6B7280' }}
               >
                 {capitalizeWords(order.status)}
@@ -131,16 +130,16 @@ export default function OrderDetailsDialog({ open, onClose, order, onStatusUpdat
             </div>
 
             {/* Status Update Form */}
-            <form onSubmit={handleUpdateStatus} className="space-y-4">
+            <form onSubmit={handleUpdateStatus} className="space-y-3">
               <div>
-                <label className="block mb-2 font-medium text-gray-700" htmlFor="order-status-select">
+                <label className="block mb-1.5 font-medium text-sm text-gray-700" htmlFor="order-status-select">
                   Update Order Status
                 </label>
                 <select
                   id="order-status-select"
                   value={status}
                   onChange={handleStatusChange}
-                  className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-[#1ABA7F] focus:border-[#1ABA7F] transition-all"
+                  className="w-full border-2 border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#1ABA7F] focus:border-[#1ABA7F] transition-all"
                   required
                 >
                   {statusOptions.map(opt => (
@@ -149,24 +148,24 @@ export default function OrderDetailsDialog({ open, onClose, order, onStatusUpdat
                 </select>
               </div>
               {submitError && (
-                <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700">
+                <div className="flex items-center gap-2 p-2 bg-red-50 border border-red-200 rounded-lg text-red-700">
                   <AlertCircle className="w-4 h-4" />
-                  <p className="text-sm">{submitError}</p>
+                  <p className="text-xs">{submitError}</p>
                 </div>
               )}
               <button
                 type="submit"
-                className="w-full px-6 py-3 bg-[#1ABA7F] text-white rounded-lg hover:bg-[#159e6a] focus:ring-2 focus:ring-[#1ABA7F] transition-all font-semibold disabled:opacity-60 flex items-center justify-center gap-2 shadow-md"
+                className="w-full px-4 py-2 bg-[#1ABA7F] text-white text-sm rounded-lg hover:bg-[#159e6a] focus:ring-2 focus:ring-[#1ABA7F] transition-all font-semibold disabled:opacity-60 flex items-center justify-center gap-2 shadow-md"
                 disabled={submitting || status === order.status}
               >
                 {submitting ? (
                   <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <Loader2 className="w-4 h-4 animate-spin" />
                     Updating Status...
                   </>
                 ) : (
                   <>
-                    <CheckCircle className="w-5 h-5" />
+                    <CheckCircle className="w-4 h-4" />
                     Update Order Status
                   </>
                 )}
@@ -175,36 +174,36 @@ export default function OrderDetailsDialog({ open, onClose, order, onStatusUpdat
           </div>
 
           {/* Customer & Delivery Info */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Customer Information */}
-            <div className="bg-white border-2 border-gray-200 rounded-xl p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <User className="w-5 h-5 text-[#225F91]" />
-                <h3 className="font-semibold text-gray-900">Customer Information</h3>
+            <div className="bg-white border-2 border-gray-200 rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <User className="w-4 h-4 text-[#225F91]" />
+                <h3 className="font-semibold text-sm text-gray-900">Customer Information</h3>
               </div>
-              <div className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <User className="w-4 h-4 text-gray-500 mt-0.5" />
+              <div className="space-y-2">
+                <div className="flex items-start gap-2">
+                  <User className="w-3.5 h-3.5 text-gray-500 mt-0.5" />
                   <div>
                     <div className="text-xs text-gray-500">Name</div>
-                    <div className="font-medium text-gray-900">{order.name || 'N/A'}</div>
+                    <div className="font-medium text-sm text-gray-900">{order.name || 'N/A'}</div>
                   </div>
                 </div>
                 {order.phone && (
-                  <div className="flex items-start gap-3">
-                    <Phone className="w-4 h-4 text-gray-500 mt-0.5" />
+                  <div className="flex items-start gap-2">
+                    <Phone className="w-3.5 h-3.5 text-gray-500 mt-0.5" />
                     <div>
                       <div className="text-xs text-gray-500">Phone</div>
-                      <div className="font-medium text-gray-900">{order.phone}</div>
+                      <div className="font-medium text-sm text-gray-900">{order.phone}</div>
                     </div>
                   </div>
                 )}
                 {order.email && (
-                  <div className="flex items-start gap-3">
-                    <Mail className="w-4 h-4 text-gray-500 mt-0.5" />
+                  <div className="flex items-start gap-2">
+                    <Mail className="w-3.5 h-3.5 text-gray-500 mt-0.5" />
                     <div>
                       <div className="text-xs text-gray-500">Email</div>
-                      <div className="font-medium text-gray-900">{order.email}</div>
+                      <div className="font-medium text-sm text-gray-900">{order.email}</div>
                     </div>
                   </div>
                 )}
@@ -212,39 +211,39 @@ export default function OrderDetailsDialog({ open, onClose, order, onStatusUpdat
             </div>
 
             {/* Delivery Information */}
-            <div className="bg-white border-2 border-gray-200 rounded-xl p-6">
-              <div className="flex items-center gap-2 mb-4">
+            <div className="bg-white border-2 border-gray-200 rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-3">
                 {deliveryMethod === 'pickup' ? (
-                  <Home className="w-5 h-5 text-[#225F91]" />
+                  <Home className="w-4 h-4 text-[#225F91]" />
                 ) : (
-                  <Truck className="w-5 h-5 text-[#225F91]" />
+                  <Truck className="w-4 h-4 text-[#225F91]" />
                 )}
-                <h3 className="font-semibold text-gray-900">Delivery Information</h3>
+                <h3 className="font-semibold text-sm text-gray-900">Delivery Information</h3>
               </div>
-              <div className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <MapPin className="w-4 h-4 text-gray-500 mt-0.5" />
+              <div className="space-y-2">
+                <div className="flex items-start gap-2">
+                  <MapPin className="w-3.5 h-3.5 text-gray-500 mt-0.5" />
                   <div>
                     <div className="text-xs text-gray-500">Method</div>
-                    <div className="font-medium text-gray-900">
+                    <div className="font-medium text-sm text-gray-900">
                       {capitalizeWords(order.deliveryMethod)}
                     </div>
                   </div>
                 </div>
                 {deliveryMethod !== 'pickup' && order.address && (
-                  <div className="flex items-start gap-3">
-                    <MapPin className="w-4 h-4 text-gray-500 mt-0.5" />
+                  <div className="flex items-start gap-2">
+                    <MapPin className="w-3.5 h-3.5 text-gray-500 mt-0.5" />
                     <div>
                       <div className="text-xs text-gray-500">Delivery Address</div>
-                      <div className="font-medium text-gray-900">{order.address}</div>
+                      <div className="font-medium text-sm text-gray-900">{order.address}</div>
                     </div>
                   </div>
                 )}
-                <div className="flex items-start gap-3">
-                  <Calendar className="w-4 h-4 text-gray-500 mt-0.5" />
+                <div className="flex items-start gap-2">
+                  <Calendar className="w-3.5 h-3.5 text-gray-500 mt-0.5" />
                   <div>
                     <div className="text-xs text-gray-500">Order Date</div>
-                    <div className="font-medium text-gray-900">
+                    <div className="font-medium text-sm text-gray-900">
                       {new Date(order.createdAt).toLocaleString()}
                     </div>
                   </div>
@@ -255,23 +254,23 @@ export default function OrderDetailsDialog({ open, onClose, order, onStatusUpdat
 
           {/* Prescription Section */}
           {order.prescription && order.prescription.fileUrl && (
-            <div className="bg-orange-50 border-2 border-orange-200 rounded-xl p-6">
+            <div className="bg-orange-50 border-2 border-orange-200 rounded-xl p-4">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-orange-100 rounded-lg">
-                    <FileText className="w-6 h-6 text-orange-600" />
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 bg-orange-100 rounded-lg">
+                    <FileText className="w-5 h-5 text-orange-600" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900">Prescription Attached</h3>
-                    <p className="text-sm text-gray-600">View prescription document</p>
+                    <h3 className="font-semibold text-sm text-gray-900">Prescription Attached</h3>
+                    <p className="text-xs text-gray-600">View prescription document</p>
                   </div>
                 </div>
                 <button
                   type="button"
-                  className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-semibold flex items-center gap-2 shadow-md"
+                  className="px-3 py-1.5 bg-orange-600 text-white text-sm rounded-lg hover:bg-orange-700 transition-colors font-semibold flex items-center gap-1.5 shadow-md"
                   onClick={() => setShowPrescription(true)}
                 >
-                  <Eye className="w-4 h-4" />
+                  <Eye className="w-3.5 h-3.5" />
                   View
                 </button>
               </div>
@@ -279,15 +278,15 @@ export default function OrderDetailsDialog({ open, onClose, order, onStatusUpdat
               {/* Prescription Modal */}
               {showPrescription && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-                  <div className="relative bg-white rounded-2xl shadow-2xl p-6 max-w-3xl w-full max-h-[90vh] overflow-auto">
+                  <div className="relative bg-white rounded-2xl shadow-2xl p-4 max-w-3xl w-full max-h-[90vh] overflow-auto">
                     <button
                       type="button"
-                      className="absolute top-4 right-4 p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors z-10"
+                      className="absolute top-3 right-3 p-1.5 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors z-10"
                       onClick={() => setShowPrescription(false)}
                     >
-                      <X className="w-5 h-5 text-gray-700" />
+                      <X className="w-4 h-4 text-gray-700" />
                     </button>
-                    <h3 className="text-xl font-bold text-gray-900 mb-4">Prescription Document</h3>
+                    <h3 className="text-lg font-bold text-gray-900 mb-3">Prescription Document</h3>
                     {isImageFile(order.prescription.fileUrl) ? (
                       <img
                         src={order.prescription.fileUrl}
@@ -295,18 +294,16 @@ export default function OrderDetailsDialog({ open, onClose, order, onStatusUpdat
                         className="w-full max-h-[70vh] object-contain rounded-lg shadow-lg border-2 border-gray-200"
                       />
                     ) : (
-                      <div className="text-center py-12">
-                        <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                        <p className="text-gray-600 mb-4">This prescription is not an image file</p>
-                        <a
+                      <div className="text-center py-8">
+                        <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                        <p className="text-sm text-gray-600 mb-3">This prescription is not an image file</p>
+                        
                           href={order.prescription.fileUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 px-6 py-3 bg-[#225F91] text-white rounded-lg hover:bg-[#1A4971] transition-colors font-semibold shadow-md"
-                        >
-                          <Download className="w-5 h-5" />
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-[#225F91] text-white text-sm rounded-lg hover:bg-[#1A4971] transition-colors font-semibold shadow-md"
+                          <Download className="w-4 h-4" />
                           Download Prescription
-                        </a>
                       </div>
                     )}
                   </div>
@@ -316,30 +313,30 @@ export default function OrderDetailsDialog({ open, onClose, order, onStatusUpdat
           )}
 
           {/* Order Items */}
-          <div className="bg-white border-2 border-gray-200 rounded-xl p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Package className="w-5 h-5 text-[#225F91]" />
-              <h3 className="font-semibold text-gray-900">Order Items</h3>
-              <span className="ml-auto px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold">
+          <div className="bg-white border-2 border-gray-200 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Package className="w-4 h-4 text-[#225F91]" />
+              <h3 className="font-semibold text-sm text-gray-900">Order Items</h3>
+              <span className="ml-auto px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">
                 {order.items?.length || 0} Products
               </span>
             </div>
             
-            <div className="space-y-3">
+            <div className="space-y-2">
               {order.items?.map((item, idx) => (
-                <div key={item.id || idx} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                <div key={item.id || idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                   <div className="flex-1">
-                    <div className="font-medium text-gray-900">
+                    <div className="font-medium text-sm text-gray-900">
                       {item.medication?.displayName || item.medication?.brandName || 'Unknown Medication'}
                     </div>
-                    <div className="text-sm text-gray-600 mt-1">
+                    <div className="text-xs text-gray-600 mt-0.5">
                       Quantity: <span className="font-semibold">{item.quantity}</span>
                       {' • '}
                       Price: <span className="font-semibold">₦{item.price?.toLocaleString()}</span>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-lg font-bold text-[#1ABA7F]">
+                    <div className="text-base font-bold text-[#1ABA7F]">
                       ₦{((item.quantity || 0) * (item.price || 0)).toLocaleString()}
                     </div>
                     <div className="text-xs text-gray-500">Subtotal</div>
@@ -350,27 +347,27 @@ export default function OrderDetailsDialog({ open, onClose, order, onStatusUpdat
           </div>
 
           {/* Order Summary */}
-          <div className="bg-gradient-to-br from-green-50 to-blue-50 border-2 border-green-300 rounded-xl p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <DollarSign className="w-5 h-5 text-green-600" />
-              <h3 className="font-semibold text-gray-900">Order Summary</h3>
+          <div className="bg-gradient-to-br from-green-50 to-blue-50 border-2 border-green-300 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <DollarSign className="w-4 h-4 text-green-600" />
+              <h3 className="font-semibold text-sm text-gray-900">Order Summary</h3>
             </div>
             
-            <div className="space-y-3">
-              <div className="flex justify-between items-center py-2">
-                <span className="text-gray-600">Subtotal</span>
-                <span className="font-semibold text-gray-900">
+            <div className="space-y-2">
+              <div className="flex justify-between items-center py-1.5">
+                <span className="text-sm text-gray-600">Subtotal</span>
+                <span className="font-semibold text-sm text-gray-900">
                   ₦{order.totalPrice?.toLocaleString()}
                 </span>
               </div>
-              <div className="flex justify-between items-center py-2">
-                <span className="text-gray-600">Delivery Fee</span>
-                <span className="font-semibold text-gray-900">₦0</span>
+              <div className="flex justify-between items-center py-1.5">
+                <span className="text-sm text-gray-600">Delivery Fee</span>
+                <span className="font-semibold text-sm text-gray-900">₦0</span>
               </div>
-              <div className="pt-3 border-t-2 border-gray-300">
+              <div className="pt-2 border-t-2 border-gray-300">
                 <div className="flex justify-between items-center">
-                  <span className="text-lg font-semibold text-gray-900">Total</span>
-                  <span className="text-3xl font-bold text-green-600">
+                  <span className="text-base font-semibold text-gray-900">Total</span>
+                  <span className="text-2xl font-bold text-green-600">
                     ₦{order.totalPrice?.toLocaleString()}
                   </span>
                 </div>
@@ -379,22 +376,22 @@ export default function OrderDetailsDialog({ open, onClose, order, onStatusUpdat
           </div>
 
           {/* Quick Stats */}
-          <div className="grid grid-cols-3 gap-4">
-            <div className="text-center p-4 bg-blue-50 rounded-xl border border-blue-200">
-              <div className="text-sm text-gray-600 mb-1">Total Items</div>
-              <div className="text-2xl font-bold text-blue-600">
+          <div className="grid grid-cols-3 gap-3">
+            <div className="text-center p-3 bg-blue-50 rounded-xl border border-blue-200">
+              <div className="text-xs text-gray-600 mb-0.5">Total Items</div>
+              <div className="text-xl font-bold text-blue-600">
                 {order.items?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0}
               </div>
             </div>
-            <div className="text-center p-4 bg-purple-50 rounded-xl border border-purple-200">
-              <div className="text-sm text-gray-600 mb-1">Products</div>
-              <div className="text-2xl font-bold text-purple-600">
+            <div className="text-center p-3 bg-purple-50 rounded-xl border border-purple-200">
+              <div className="text-xs text-gray-600 mb-0.5">Products</div>
+              <div className="text-xl font-bold text-purple-600">
                 {order.items?.length || 0}
               </div>
             </div>
-            <div className="text-center p-4 bg-green-50 rounded-xl border border-green-200">
-              <div className="text-sm text-gray-600 mb-1">Revenue</div>
-              <div className="text-xl font-bold text-green-600">
+            <div className="text-center p-3 bg-green-50 rounded-xl border border-green-200">
+              <div className="text-xs text-gray-600 mb-0.5">Revenue</div>
+              <div className="text-lg font-bold text-green-600">
                 ₦{order.totalPrice?.toLocaleString()}
               </div>
             </div>

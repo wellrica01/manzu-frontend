@@ -288,7 +288,7 @@ export function PharmacyGPSCaptureUI({ gpsCapture, onCapture, onClear }) {
             type="button"
             onClick={onCapture}
             disabled={gpsCapture.isCapturing}
-            className="w-full h-11 sm:h-12 lg:h-14 text-sm sm:text-base font-semibold rounded-xl bg-gradient-to-r from-[#1ABA7F] to-[#225F91] hover:opacity-90 text-white transition-all disabled:opacity-50"
+            className="w-full h-11 sm:h-12 lg:h-14 text-sm sm:text-base font-semibold rounded-lg bg-gradient-to-r from-[#1ABA7F] to-[#225F91] hover:opacity-90 text-white transition-all disabled:opacity-50"
           >
             {gpsCapture.isCapturing ? (
               <>

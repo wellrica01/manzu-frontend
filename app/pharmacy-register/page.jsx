@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -53,6 +53,8 @@ export default function PharmacyRegister() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [states, setStates] = useState([]);
   const [lgas, setLgas] = useState([]);
+  const [pinValues, setPinValues] = useState(['', '', '', '', '', '']);
+  const pinInputRefs = useRef([]);
   const gpsCapture = usePharmacyGPSCapture();
   
   const router = useRouter();
@@ -145,6 +147,48 @@ const handleCaptureLocation = async () => {
       });
     }
   }
+};
+
+
+// Handle PIN input changes
+const handlePinChange = (index, value) => {
+  if (value && !/^\d$/.test(value)) return;
+
+  const newPinValues = [...pinValues];
+  newPinValues[index] = value;
+  setPinValues(newPinValues);
+
+  form.setValue('user.pin', newPinValues.join(''));
+
+  if (value && index < 5) {
+    pinInputRefs.current[index + 1]?.focus();
+  }
+};
+
+// Handle backspace
+const handlePinKeyDown = (index, e) => {
+  if (e.key === 'Backspace' && !pinValues[index] && index > 0) {
+    pinInputRefs.current[index - 1]?.focus();
+  }
+};
+
+// Handle paste
+const handlePinPaste = (e) => {
+  e.preventDefault();
+  const pastedData = e.clipboardData.getData('text').slice(0, 6);
+  
+  if (!/^\d+$/.test(pastedData)) return;
+
+  const newPinValues = pastedData.split('');
+  while (newPinValues.length < 6) {
+    newPinValues.push('');
+  }
+  
+  setPinValues(newPinValues.slice(0, 6));
+  form.setValue('user.pin', pastedData);
+  
+  const nextIndex = Math.min(pastedData.length, 5);
+  pinInputRefs.current[nextIndex]?.focus();
 };
 
 
@@ -276,7 +320,7 @@ const handleCaptureLocation = async () => {
             )}
 
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 sm:space-y-8">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-7 sm:space-y-8">
                 {/* Pharmacy Details */}
                 <div className="space-y-4 sm:space-y-6">
                   <h3 className="text-lg sm:text-xl font-bold text-[#225F91]">Pharmacy Details</h3>
@@ -292,8 +336,7 @@ const handleCaptureLocation = async () => {
                         </FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="e.g., HealthPlus Pharmacy"
-                            className="h-12 sm:h-14 text-base rounded-xl border-2 border-gray-200 focus:border-[#1ABA7F] focus:ring-0 transition-colors"
+                            className="h-12 sm:h-14 text-base rounded-lg border-2 border-gray-200 focus:border-[#1ABA7F] focus:ring-0 transition-colors"
                             {...field}
                           />
                         </FormControl>
@@ -313,8 +356,7 @@ const handleCaptureLocation = async () => {
                         </FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="e.g., 123 Market Road, Near First Bank"
-                            className="h-12 sm:h-14 text-base rounded-xl border-2 border-gray-200 focus:border-[#1ABA7F] focus:ring-0 transition-colors"
+                            className="h-12 sm:h-14 text-base rounded-lg border-2 border-gray-200 focus:border-[#1ABA7F] focus:ring-0 transition-colors"
                             {...field}
                           />
                         </FormControl>
@@ -400,8 +442,7 @@ const handleCaptureLocation = async () => {
                           </FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="08012345678"
-                              className="h-12 sm:h-14 text-base rounded-xl border-2 border-gray-200 focus:border-[#1ABA7F] focus:ring-0 transition-colors"
+                              className="h-12 sm:h-14 text-base rounded-lg border-2 border-gray-200 focus:border-[#1ABA7F] focus:ring-0 transition-colors"
                               {...field}
                             />
                           </FormControl>
@@ -421,8 +462,7 @@ const handleCaptureLocation = async () => {
                           </FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="PCN12345"
-                              className="h-12 sm:h-14 text-base rounded-xl border-2 border-gray-200 focus:border-[#1ABA7F] focus:ring-0 transition-colors"
+                              className="h-12 sm:h-14 text-base rounded-lg border-2 border-gray-200 focus:border-[#1ABA7F] focus:ring-0 transition-colors"
                               {...field}
                             />
                           </FormControl>
@@ -448,8 +488,7 @@ const handleCaptureLocation = async () => {
                         </FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="John Doe"
-                            className="h-12 sm:h-14 text-base rounded-xl border-2 border-gray-200 focus:border-[#1ABA7F] focus:ring-0 transition-colors"
+                            className="h-12 sm:h-14 text-base rounded-lg border-2 border-gray-200 focus:border-[#1ABA7F] focus:ring-0 transition-colors"
                             {...field}
                           />
                         </FormControl>
@@ -470,8 +509,8 @@ const handleCaptureLocation = async () => {
                         <FormControl>
                           <Input
                             type="email"
-                            placeholder="john@pharmacy.com"
-                            className="h-12 sm:h-14 text-base rounded-xl border-2 border-gray-200 focus:border-[#1ABA7F] focus:ring-0 transition-colors"
+                            placeholder="Enter your email address here"
+                            className="h-12 sm:h-14 text-base rounded-lg border-2 border-gray-200 focus:border-[#1ABA7F] focus:ring-0 transition-colors"
                             {...field}
                           />
                         </FormControl>
@@ -490,17 +529,24 @@ const handleCaptureLocation = async () => {
                           6-Digit PIN <span className="text-red-500">*</span>
                         </FormLabel>
                         <FormControl>
-                          <Input
-                            type="password"
-                            inputMode="numeric"
-                            pattern="[0-9]*"
-                            maxLength={6}
-                            placeholder="Enter 6-digit PIN"
-                            className="h-12 sm:h-14 text-base rounded-xl border-2 border-gray-200 focus:border-[#1ABA7F] focus:ring-0 transition-colors text-center tracking-widest"
-                            {...field}
-                          />
+                          <div className="flex gap-2 sm:gap-2 justify-center px-1">
+                            {pinValues.map((value, index) => (
+                              <input
+                                key={index}
+                                ref={(el) => (pinInputRefs.current[index] = el)}
+                                type="password"
+                                inputMode="numeric"
+                                maxLength={1}
+                                value={value}
+                                onChange={(e) => handlePinChange(index, e.target.value)}
+                                onKeyDown={(e) => handlePinKeyDown(index, e)}
+                                onPaste={handlePinPaste}
+                                className="w-10 h-12 sm:w-12 sm:h-14 p-0 text-center text-xl sm:text-2xl font-bold rounded-lg sm:rounded-lg border-2 border-gray-200 focus:border-[#1ABA7F] focus:ring-2 focus:ring-[#1ABA7F]/20 focus:outline-none transition-all"
+                              />
+                            ))}
+                          </div>
                         </FormControl>
-                        <FormDescription className="text-xs text-gray-600">
+                        <FormDescription className="text-xs text-gray-600 text-center">
                           Use a 6-digit PIN for quick and secure access
                         </FormDescription>
                         <FormMessage className="text-xs sm:text-sm" />
@@ -514,7 +560,7 @@ const handleCaptureLocation = async () => {
                 <Button
                   type="submit"
                   disabled={isSubmitting || !gpsCapture.location || gpsCapture.location.quality === 'poor'}
-                  className="h-12 sm:h-14 text-base font-bold rounded-xl bg-gradient-to-r from-[#1ABA7F] to-[#225F91] text-white hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="h-12 sm:h-14 text-base font-bold rounded-lg bg-gradient-to-r from-[#1ABA7F] to-[#225F91] text-white hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? (
                     <>

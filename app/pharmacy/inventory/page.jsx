@@ -578,7 +578,6 @@ export default function PharmacyInventoryPage() {
           loading: loading,
           onClick: () => setRefreshCounter(prev => prev + 1)
         }}
-        className="p-3"
       />
 
       {/* Toast Notification - IMPROVED FOR MOBILE */}
