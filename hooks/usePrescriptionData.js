@@ -119,7 +119,7 @@ export function usePrescriptionData({
       setLoading(true);
       fetchPrescriptionData();
     }
-  }, [userIdentifier, guestId, fetchPrescriptionData]);
+  }, [userIdentifier, guestId, filterLga, filterState, filterWard, isLocationProcessed, userLocation, fetchPrescriptionData]);
 
   return {
     medications,
