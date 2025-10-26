@@ -1,5 +1,4 @@
-'use client';
-
+import { Suspense } from 'react';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -29,7 +28,13 @@ export default function RootLayout({ children }) {
           <NetworkErrorBoundary>
             <QueryClientProvider client={queryClient}>
               <I18nextProvider i18n={i18n}>
-                {children}
+                <Suspense fallback={
+                  <div className="min-h-screen flex items-center justify-center">
+                    Loading...
+                  </div>
+                }>
+                  {children}
+                </Suspense>
               </I18nextProvider>
             </QueryClientProvider>
           </NetworkErrorBoundary>
