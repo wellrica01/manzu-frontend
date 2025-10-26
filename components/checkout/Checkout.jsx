@@ -11,6 +11,7 @@ import { Loader2, ArrowLeft, AlertCircle } from 'lucide-react';
 import ErrorMessage from '@/components/ErrorMessage';
 import CheckoutDialog from './CheckoutDialog';
 import CheckoutForm from './CheckoutForm';
+import StockValidationDialog from './StockValidationDialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import ConsentModal from '@/components/ConsentModal';
@@ -195,7 +196,7 @@ const CheckoutLoading = () => (
 );
 
 // Processing Payment Overlay 
-const ProcessingPayment = () => (
+const ProcessingPayment = ({ onCancel }) => (
   <div 
     className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-gradient-to-br from-white/95 via-gray-50/95 to-white/95 backdrop-blur-lg"
     role="alert"
@@ -246,6 +247,13 @@ const ProcessingPayment = () => (
         <span className="text-sm font-bold text-green-800">Secure Payment Gateway</span>
       </div>
     </div>
+    {/* Add after 15 seconds */}
+      <button
+        onClick={onCancel}
+        className="mt-6 text-sm text-gray-600 underline"
+      >
+        Taking too long? Cancel and try again
+      </button>
   </div>
 );
 
@@ -302,7 +310,10 @@ function CheckoutComponent() {
   const [cartLoaded, setCartLoaded] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
   const hasRedirectedRef = useRef(false);
-
+  const [paymentAttemptId, setPaymentAttemptId] = useState(null);
+  const [stockValidation, setStockValidation] = useState(null);
+  const [isValidatingStock, setIsValidatingStock] = useState(false);
+ 
   // Memoized calculations
   const segments = useMemo(() => getCartSegments(cart), [cart]);
   const canCheckout = useMemo(() => canProceedToCheckout(segments), [segments]);
@@ -365,14 +376,49 @@ function CheckoutComponent() {
     }
   }, [validateForm]);
 
+
+    // Stock validation function
+  const validateStockBeforePayment = useCallback(async () => {
+    setIsValidatingStock(true);
+    
+    try {
+      const response = await fetch(`${apiUrl}/api/cart/validate-stock`, {
+        headers: { 
+          'x-guest-id': guestId,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to validate stock');
+      }
+
+      const data = await response.json();
+      
+      if (!data.allAvailable) {
+        setStockValidation(data);
+        return false;
+      }
+      
+      return true;
+    } catch (err) {
+      console.error('Stock validation error:', err);
+      toast.error('Unable to verify stock availability. Please try again.');
+      return false;
+    } finally {
+      setIsValidatingStock(false);
+    }
+  }, [apiUrl, guestId]);
+
+
   // Confirm checkout
-  const confirmCheckout = useCallback(() => {
+  const confirmCheckout = useCallback(async () => {
     if (!canCheckout) {
       toast.error('No medications ready for checkout', { duration: 4000 });
       return;
     }
 
- // Check consent before proceeding
+    // Check consent before proceeding
     if (!checkConsent()) {
       toast.error('Please accept our privacy policy to complete checkout', { duration: 4000 });
       return;
@@ -380,16 +426,42 @@ function CheckoutComponent() {
 
     setShowCheckoutDialog(false);
     
+    // Validate stock before proceeding
+    toast.info('Verifying stock availability...', { duration: 2000 });
+    
+    const stockAvailable = await validateStockBeforePayment();
+    
+    if (!stockAvailable) {
+      toast.error('Some items are no longer available. Please review your cart.', { 
+        duration: 5000 
+      });
+      return;
+    }
+
+    // Generate unique attempt ID
+    const attemptId = `${guestId}-${Date.now()}`;
+    setPaymentAttemptId(attemptId);
+
     const orderData = {
       name: form.name.trim(),
       email: form.email.trim(),
       phone: form.phone.trim(),
       address: form.address.trim(),
       deliveryMethod: form.deliveryMethod,
+      callbackUrl: `${window.location.origin}/payment/verify`,
+      attemptId,
     };
 
     checkout(orderData);
-  }, [canCheckout, form, checkout]);
+  }, [canCheckout, form, checkout, guestId, checkConsent, validateStockBeforePayment]);
+
+
+   // Handle stock validation dialog close
+    const handleStockValidationClose = useCallback(() => {
+      setStockValidation(null);
+      router.push('/cart');
+    }, [router]);
+
 
   // Retry payment
   const retryPayment = useCallback(() => {
@@ -475,8 +547,27 @@ function CheckoutComponent() {
         strategy="beforeInteractive" 
       />
 
+      {/* Stock Validation Dialog */}
+      {stockValidation && !stockValidation.allAvailable && (
+        <StockValidationDialog
+          validation={stockValidation}
+          onClose={handleStockValidationClose}
+          onReviewCart={handleStockValidationClose}
+        />
+      )}
+
+      
       {/* Processing overlay */}
-      {(isCheckoutPending || isRedirecting) && <ProcessingPayment />}
+      {(isCheckoutPending || isRedirecting || isValidatingStock) && (
+        <ProcessingPayment 
+          onCancel={() => {
+            resetCheckout();
+            setIsRedirecting(false);
+            setIsValidatingStock(false);
+            toast.error('Payment cancelled. Please try again.');
+          }}
+        />
+      )}
 
       {/* Main Content */}
       <div className="py-8 px-2 sm:px-4">

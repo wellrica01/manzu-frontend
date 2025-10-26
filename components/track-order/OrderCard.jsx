@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Store, ChevronDown, ChevronUp } from 'lucide-react';
+import { Store, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react';
 import OrderProgressTracker from './OrderProgressTracker';
 import OrderDetails from './OrderDetails';
 
@@ -65,7 +65,67 @@ const OrderCard = ({
 
         {/* Progress Tracker */}
         <OrderProgressTracker order={order} />
+
+        {/* 🔽 ADD REFUND DISPLAY HERE */}
+        {order.status === 'CANCELLED' && order.refundStatus && (
+          <div className="mt-4 p-4 bg-yellow-50 border-2 border-yellow-200 rounded-lg">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h4 className="font-bold text-yellow-900 mb-1">Order Cancelled - Refund Processing</h4>
+
+                {order.rejectionReason && (
+                  <p className="text-sm text-yellow-800 mb-3">
+                    <strong>Reason:</strong> {order.rejectionReason}
+                  </p>
+                )}
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-yellow-700">Refund Status:</span>
+                    <span className="font-semibold text-yellow-900">
+                      {order.refundStatus === 'PENDING' && '⏳ Processing'}
+                      {order.refundStatus === 'APPROVED' && '✅ Approved'}
+                      {order.refundStatus === 'COMPLETED' && '✅ Completed'}
+                    </span>
+                  </div>
+
+                  {order.refundAmount && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-yellow-700">Refund Amount:</span>
+                      <span className="font-bold text-yellow-900">
+                        ₦{order.refundAmount.toLocaleString()}
+                      </span>
+                    </div>
+                  )}
+
+                  {order.refundStatus === 'PENDING' && (
+                    <p className="text-xs text-yellow-700 mt-2">
+                      Refunds typically take 5–7 business days to reflect in your account.
+                    </p>
+                  )}
+
+                  {order.refundStatus === 'COMPLETED' && order.refundDate && (
+                    <p className="text-xs text-green-700 mt-2">
+                      Refund completed on {new Date(order.refundDate).toLocaleDateString()}
+                    </p>
+                  )}
+                </div>
+
+                <div className="mt-3 pt-3 border-t border-yellow-200">
+                  <a
+                    href={`mailto:support@manzu.com?subject=Refund Inquiry - Order ${order.trackingCode}`}
+                    className="text-sm text-yellow-800 font-semibold underline hover:text-yellow-900"
+                  >
+                    Questions about your refund? Contact Support
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </CardHeader>
+
 
       {isExpanded && (
         <CardContent className="p-4">

@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogTrigger, DialogTitle } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import { Plus, Minus, Trash2, Clock, CheckCircle, AlertCircle, FileText, Package, AlertTriangle, Pill, Shield, Building, Info, ChevronDown, Box } from 'lucide-react';
+import { Plus, Minus, Trash2, Clock, CheckCircle, AlertCircle, XCircle, FileText, Package, AlertTriangle, Pill, Shield, Building, Info, ChevronDown, Box } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const CartItem = ({ 
@@ -38,7 +38,8 @@ const CartItem = ({
             color: 'text-green-700', 
             bgColor: 'bg-green-50', 
             borderColor: 'border-green-200', 
-            text: 'Verified' 
+            text: 'Verified',
+            helpText: 'Ready for checkout'
           };
         case 'PENDING':
           return { 
@@ -47,7 +48,8 @@ const CartItem = ({
             color: 'text-orange-600', 
             bgColor: 'bg-orange-50', 
             borderColor: 'border-orange-200', 
-            text: 'Under Review' 
+            text: 'Under Review',
+            helpText: 'Being verified by pharmacy team'
           };
         case 'REJECTED':
           return { 
@@ -56,7 +58,18 @@ const CartItem = ({
             color: 'text-red-600', 
             bgColor: 'bg-red-50', 
             borderColor: 'border-red-200', 
-            text: 'Rejected' 
+            text: 'Rejected',
+            helpText: 'Please upload a clearer prescription'
+          };
+       case 'EXPIRED': 
+          return { 
+            status: 'expired', 
+            icon: XCircle, 
+            color: 'text-purple-700', 
+            bgColor: 'bg-purple-50', 
+            borderColor: 'border-purple-200', 
+            text: 'Expired',
+            helpText: 'Prescription expired - re-upload needed'
           };
         default:
           return { 
@@ -65,7 +78,8 @@ const CartItem = ({
             color: 'text-orange-600', 
             bgColor: 'bg-orange-50', 
             borderColor: 'border-orange-200', 
-            text: 'Rx Required' 
+            text: 'Rx Required',
+            helpText: 'Upload prescription to proceed'
           };
       }
     }
@@ -75,7 +89,8 @@ const CartItem = ({
       color: 'text-[#225F91]', 
       bgColor: 'bg-[#225F91]/5', 
       borderColor: 'border-[#225F91]/20', 
-      text: 'Ready' 
+      text: 'Ready',
+      helpText: 'Ready for checkout'
     };
   }, [item.medication?.prescriptionRequired, item.prescriptionStatus]);
 
@@ -188,6 +203,20 @@ const CartItem = ({
                 {itemStatus.text}
               </Badge>
             </div>
+            
+            {/* Status Help Text */}
+            {itemStatus.helpText && ['rejected', 'expired', 'needs_prescription', 'pending'].includes(itemStatus.status) && (
+              <p className={cn(
+                "text-xs mt-2 flex items-center gap-1 font-medium",
+                itemStatus.status === 'rejected' && "text-red-700",
+                itemStatus.status === 'expired' && "text-purple-700",
+                itemStatus.status === 'needs_prescription' && "text-orange-700",
+                itemStatus.status === 'pending' && "text-blue-700"
+              )}>
+                <Info className="h-3 w-3 flex-shrink-0" strokeWidth={2} />
+                {itemStatus.helpText}
+              </p>
+            )}
           </div>
         </div>
 

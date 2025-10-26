@@ -47,7 +47,8 @@ const PrescriptionUploadSection = ({
   // Check if any items need prescriptions
   const needsPrescription = items.some(item => 
     prescriptionStatuses[item.medication.id] === 'NONE' ||
-    prescriptionStatuses[item.medication.id] === 'REJECTED'
+    prescriptionStatuses[item.medication.id] === 'REJECTED' ||
+    prescriptionStatuses[item.medication.id] === 'EXPIRED'
   );
 
   const validateContact = () => {
@@ -127,7 +128,8 @@ const PrescriptionUploadSection = ({
     
     const medicationsNeedingPrescription = items.filter(item => 
       prescriptionStatuses[item.medication.id] === 'NONE' ||
-      prescriptionStatuses[item.medication.id] === 'REJECTED'
+      prescriptionStatuses[item.medication.id] === 'REJECTED' ||
+      prescriptionStatuses[item.medication.id] === 'EXPIRED'
     );
     
     formData.append('medicationIds', medicationsNeedingPrescription.map(item => item.medication.id).join(','));
@@ -206,6 +208,8 @@ const PrescriptionUploadSection = ({
         return <Clock className="h-5 w-5 text-orange-600" strokeWidth={2} />;
       case 'REJECTED':
         return <X className="h-5 w-5 text-red-600" strokeWidth={2} />;
+      case 'EXPIRED': 
+        return <AlertCircle className="h-5 w-5 text-purple-600" strokeWidth={2} />;
       default:
         return <AlertCircle className="h-5 w-5 text-gray-500" strokeWidth={2} />;
     }
@@ -219,6 +223,8 @@ const PrescriptionUploadSection = ({
         return <Badge className="bg-orange-600 text-white border-0 px-3 py-1 text-xs font-bold">Pending</Badge>;
       case 'REJECTED':
         return <Badge className="bg-red-600 text-white border-0 px-3 py-1 text-xs font-bold">Rejected</Badge>;
+      case 'EXPIRED': 
+        return <Badge className="bg-purple-600 text-white border-0 px-3 py-1 text-xs font-bold">Expired</Badge>;
       default:
         return <Badge className="bg-gray-600 text-white border-0 px-3 py-1 text-xs font-bold">Required</Badge>;
     }
@@ -232,6 +238,8 @@ const PrescriptionUploadSection = ({
         return 'Under review by pharmacy team';
       case 'REJECTED':
         return 'Please upload a new prescription';
+      case 'EXPIRED': 
+        return 'Prescription expired - please upload a new one';
       default:
         return 'Prescription upload required';
     }
@@ -245,6 +253,8 @@ const PrescriptionUploadSection = ({
         return 'border-orange-200 bg-orange-50';
       case 'REJECTED':
         return 'border-red-200 bg-red-50';
+      case 'EXPIRED': 
+        return 'border-purple-200 bg-purple-50';
       default:
         return 'border-gray-200 bg-gray-50';
     }
@@ -298,6 +308,31 @@ const PrescriptionUploadSection = ({
         {/* Upload Section - Only show if needed */}
         {needsPrescription && showUploadArea && (
           <div className="space-y-6">
+            {/* Context-Aware Header */}
+            <div className="p-5 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 rounded-2xl border-2 border-blue-200">
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-lg bg-blue-100">
+                  <FileText className="h-6 w-6 text-blue-600" strokeWidth={2} />
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-lg font-black text-gray-900 mb-2">
+                    {items.some(item => getItemStatus(item) === 'REJECTED') 
+                      ? 'Re-upload Your Prescription'
+                      : items.some(item => getItemStatus(item) === 'EXPIRED')
+                      ? 'Upload Fresh Prescription'
+                      : 'Upload Prescription to Continue'}
+                  </h4>
+                  <p className="text-sm text-gray-700 leading-relaxed">
+                    {items.some(item => getItemStatus(item) === 'REJECTED') 
+                      ? 'Please upload a clearer image of your prescription. Make sure all text is readable and the document is well-lit.'
+                      : items.some(item => getItemStatus(item) === 'EXPIRED')
+                      ? 'Your prescription verification has expired. You can upload the same prescription again for quick re-verification.'
+                      : 'Upload your prescription to proceed with checkout. Our pharmacy team will verify it within 15-30 minutes.'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* File Upload Area */}
             <div
               className={cn(
@@ -336,6 +371,12 @@ const PrescriptionUploadSection = ({
                       <CheckCircle className="h-4 w-4 text-green-600" strokeWidth={2} />
                       <span>Maximum 5MB per file</span>
                     </div>
+                    {items.some(item => getItemStatus(item) === 'REJECTED') && (
+                      <div className="flex items-center justify-center gap-2">
+                        <AlertCircle className="h-4 w-4 text-orange-600" strokeWidth={2} />
+                        <span className="font-semibold text-orange-700">Ensure image is clear and well-lit</span>
+                      </div>
+                    )}
                   </div>
                   
                   <Button
@@ -521,20 +562,44 @@ const PrescriptionUploadSection = ({
           <div className="flex items-start gap-3">
             <Shield className="h-6 w-6 text-blue-600 flex-shrink-0 mt-0.5" strokeWidth={2} />
             <div>
-              <h4 className="text-base font-bold text-gray-900 mb-3">Verification Process</h4>
+              <h4 className="text-base font-bold text-gray-900 mb-3">
+                {items.some(item => getItemStatus(item) === 'REJECTED')
+                  ? 'Re-Verification Process'
+                  : items.some(item => getItemStatus(item) === 'EXPIRED')
+                  ? 'Quick Re-Verification'
+                  : 'Verification Process'}
+              </h4>
               <div className="space-y-2 text-sm text-gray-700">
                 <div className="flex items-start gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-blue-600 mt-2 flex-shrink-0" />
-                  <span>Licensed pharmacists review each prescription</span>
+                  <span>
+                    {items.some(item => getItemStatus(item) === 'REJECTED')
+                      ? 'Licensed pharmacists will carefully review your updated prescription'
+                      : items.some(item => getItemStatus(item) === 'EXPIRED')
+                      ? 'Same prescription can be re-uploaded - no new doctor visit needed'
+                      : 'Licensed pharmacists review each prescription'}
+                  </span>
                 </div>
                 <div className="flex items-start gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-blue-600 mt-2 flex-shrink-0" />
-                  <span>Verification typically takes 24-48 hours</span>
+                  <span>
+                    {items.some(item => ['REJECTED', 'EXPIRED'].includes(getItemStatus(item)))
+                      ? 'Re-verification typically takes 15-30 minutes during business hours'
+                      : 'Verification typically takes 24-48 hours'}
+                  </span>
                 </div>
                 <div className="flex items-start gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-blue-600 mt-2 flex-shrink-0" />
                   <span>You'll receive notification when verified</span>
                 </div>
+                {items.some(item => getItemStatus(item) === 'EXPIRED') && (
+                  <div className="flex items-start gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-purple-600 mt-2 flex-shrink-0" />
+                    <span className="font-semibold text-purple-700">
+                      Prescriptions are valid for 48 hours after verification
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           </div>

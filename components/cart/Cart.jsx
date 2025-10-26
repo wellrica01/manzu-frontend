@@ -408,7 +408,8 @@ function CartComponent() {
       ...segments.readyForCheckout,
       ...segments.needsPrescription,
       ...segments.pendingPrescription,
-      ...segments.rejectedPrescription
+      ...segments.rejectedPrescription,
+      ...segments.expiredPrescription 
     ].map(item => item.id);
     selectAll(allItemIds);
   }, [segments, selectAll]);
@@ -490,7 +491,8 @@ function CartComponent() {
     () => groupItemsByPharmacy([
       ...segments.needsPrescription,
       ...segments.pendingPrescription,
-      ...segments.rejectedPrescription
+      ...segments.rejectedPrescription,
+      ...segments.expiredPrescription
     ]),
     [segments]
   );
@@ -500,7 +502,8 @@ function CartComponent() {
     const prescriptionTypes = [
       segments.needsPrescription.length > 0,
       segments.pendingPrescription.length > 0,
-      segments.rejectedPrescription.length > 0
+      segments.rejectedPrescription.length > 0,
+      segments.expiredPrescription.length > 0
     ].filter(Boolean).length;
     
     return (segments.readyForCheckout.length > 0 && prescriptionTypes > 0) || prescriptionTypes > 1;
@@ -513,7 +516,7 @@ function CartComponent() {
   useEffect(() => {
     if (availableTabs.length === 0) return;
     
-    const priorityOrder = ['ready', 'rejected', 'pending', 'needs_prescription'];
+    const priorityOrder = ['ready', 'expired', 'rejected', 'pending', 'needs_prescription'];
     const currentTab = availableTabs.find(tab => tab.id === activeTab);
     
     if (!currentTab) {
@@ -528,7 +531,7 @@ function CartComponent() {
   }, [availableTabs, activeTab]);
 
   const totalItemCount = useMemo(
-    () => segments.readyItemsCount + segments.prescriptionItemsCount + segments.pendingItemsCount + segments.rejectedItemsCount,
+    () => segments.readyItemsCount + segments.prescriptionItemsCount + segments.pendingItemsCount + segments.rejectedItemsCount + segments.expiredItemsCount,
     [segments]
   );
 
@@ -859,8 +862,61 @@ function CartComponent() {
                     </div>
                   )}
 
-                  {activeTab === 'rejected' && segments.rejectedPrescription.length > 0 && (
+{activeTab === 'rejected' && segments.rejectedPrescription.length > 0 && (
                     <div role="tabpanel" id="rejected-panel" className="space-y-6">
+                      {/* Rejected Prescription Alert */}
+                      <div className="p-6 bg-gradient-to-br from-red-50 to-orange-50 border-2 border-red-200 rounded-2xl shadow-lg animate-in fade-in slide-in-from-top-4 duration-500">
+                        <div className="flex items-start gap-4">
+                          <div className="p-3 rounded-xl bg-red-100 border-2 border-red-200">
+                            <AlertTriangle className="w-7 h-7 text-red-600" strokeWidth={2.5} />
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="text-xl font-black text-red-900 mb-2">
+                              Prescription Review Required
+                            </h3>
+                            <p className="text-base text-red-800 leading-relaxed mb-4">
+                              Our pharmacy team couldn't verify your prescription. This usually happens when the prescription image is unclear, information is missing, or the prescription doesn't match the medication.
+                            </p>
+                            
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                              <div className="p-3 bg-white rounded-lg border border-red-200">
+                                <h4 className="font-bold text-gray-900 text-sm mb-2 flex items-center gap-2">
+                                  <CheckCircle className="h-4 w-4 text-green-600" strokeWidth={2} />
+                                  Common Issues:
+                                </h4>
+                                <ul className="text-sm text-gray-700 space-y-1">
+                                  <li>• Blurry or unclear image</li>
+                                  <li>• Missing doctor's signature</li>
+                                  <li>• Expired prescription date</li>
+                                  <li>• Wrong medication name</li>
+                                </ul>
+                              </div>
+                              
+                              <div className="p-3 bg-white rounded-lg border border-green-200">
+                                <h4 className="font-bold text-gray-900 text-sm mb-2 flex items-center gap-2">
+                                  <Shield className="h-4 w-4 text-green-600" strokeWidth={2} />
+                                  What to Do:
+                                </h4>
+                                <ul className="text-sm text-gray-700 space-y-1">
+                                  <li>• Take a clear, well-lit photo</li>
+                                  <li>• Ensure all text is readable</li>
+                                  <li>• Check medication matches order</li>
+                                  <li>• Upload below</li>
+                                </ul>
+                              </div>
+                            </div>
+                            
+                            <div className="flex flex-col sm:flex-row gap-3">
+                              <div className="flex-1 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                <p className="text-sm font-semibold text-blue-900">
+                                  💡 Tip: You can upload the same prescription again if you believe it was clear
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
                       {groupItemsByPharmacy(segments.rejectedPrescription).map((pharmacy) => (
                         <PharmacyCartCard
                           key={pharmacy.pharmacy.id}
@@ -883,6 +939,100 @@ function CartComponent() {
                       />
                     </div>
                   )}
+
+                {activeTab === 'expired' && segments.expiredPrescription && segments.expiredPrescription.length > 0 && (
+                  <div role="tabpanel" id="expired-panel" className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-500">
+                    {/* Expired Prescription Alert */}
+                    <div className="p-6 bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200 rounded-2xl shadow-lg">
+                      <div className="flex items-start gap-4">
+                        <div className="p-3 rounded-xl bg-purple-100 border-2 border-purple-200">
+                          <Clock className="w-7 h-7 text-purple-600" strokeWidth={2.5} />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-xl font-black text-purple-900 mb-2">
+                            Prescription Has Expired
+                          </h3>
+                          <p className="text-base text-purple-800 leading-relaxed mb-4">
+                            Your prescription verification has expired. For your safety and legal compliance, prescriptions are only valid for a limited time after verification.
+                          </p>
+                          
+                          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-4">
+                            <div className="p-4 bg-white rounded-lg border border-purple-200">
+                              <div className="flex items-center gap-2 mb-2">
+                                <div className="p-1.5 rounded-lg bg-purple-100">
+                                  <Clock className="h-4 w-4 text-purple-600" strokeWidth={2} />
+                                </div>
+                                <h4 className="font-bold text-gray-900 text-sm">Why Expired?</h4>
+                              </div>
+                              <p className="text-sm text-gray-700">
+                                Prescriptions expire 48 hours after pharmacy verification to ensure medication safety and compliance
+                              </p>
+                            </div>
+                            
+                            <div className="p-4 bg-white rounded-lg border border-green-200">
+                              <div className="flex items-center gap-2 mb-2">
+                                <div className="p-1.5 rounded-lg bg-green-100">
+                                  <CheckCircle className="h-4 w-4 text-green-600" strokeWidth={2} />
+                                </div>
+                                <h4 className="font-bold text-gray-900 text-sm">Quick Solution</h4>
+                              </div>
+                              <p className="text-sm text-gray-700">
+                                Upload the same prescription again - verification typically takes 15-30 minutes
+                              </p>
+                            </div>
+                            
+                            <div className="p-4 bg-white rounded-lg border border-blue-200">
+                              <div className="flex items-center gap-2 mb-2">
+                                <div className="p-1.5 rounded-lg bg-blue-100">
+                                  <Shield className="h-4 w-4 text-blue-600" strokeWidth={2} />
+                                </div>
+                                <h4 className="font-bold text-gray-900 text-sm">Next Steps</h4>
+                              </div>
+                              <p className="text-sm text-gray-700">
+                                Re-upload below and we'll verify quickly so you can complete your order
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <div className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border-2 border-yellow-200">
+                            <div className="flex items-start gap-3">
+                              <AlertCircle className="h-5 w-5 text-yellow-700 flex-shrink-0 mt-0.5" strokeWidth={2} />
+                              <div>
+                                <p className="text-sm font-bold text-yellow-900 mb-1">Important Notes:</p>
+                                <ul className="text-sm text-yellow-800 space-y-1">
+                                  <li>• You can use the same prescription - no need for a new doctor visit</li>
+                                  <li>• Make sure the photo is clear and all details are visible</li>
+                                  <li>• Fast-track: Upload during business hours for quicker verification</li>
+                                </ul>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {groupItemsByPharmacy(segments.expiredPrescription).map((pharmacy) => (
+                      <PharmacyCartCard
+                        key={pharmacy.pharmacy.id}
+                        pharmacy={pharmacy}
+                        handleQuantityChange={handleQuantityChange}
+                        setRemoveItem={setRemoveItem}
+                        isUpdating={isUpdating}
+                        calculateItemPrice={calculateItemPrice}
+                        segment="expired"
+                        selectionMode={selectionMode}
+                        isSelected={(itemId) => selectedItems.has(itemId)}
+                        onToggleSelect={toggleSelect}
+                      />
+                    ))}
+                    <PrescriptionUploadSection
+                      items={segments.expiredPrescription}
+                      guestId={guestId}
+                      onUploadSuccess={handlePrescriptionUploadSuccess}
+                      prescriptionStatuses={prescriptionStatuses}
+                    />
+                  </div>
+                )}
                 </>
               ) : (
                 <>
@@ -922,7 +1072,7 @@ function CartComponent() {
                         />
                       ))}
                       <PrescriptionUploadSection
-                        items={[...segments.needsPrescription, ...segments.rejectedPrescription]}
+                        items={[...segments.needsPrescription, ...segments.rejectedPrescription, ...segments.expiredPrescription]}
                         guestId={guestId}
                         onUploadSuccess={handlePrescriptionUploadSuccess}
                         prescriptionStatuses={prescriptionStatuses}

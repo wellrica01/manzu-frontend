@@ -47,7 +47,7 @@ async function createInventoryItem(formData) {
 async function updateInventoryItem(medicationId, formData) {
   const token = localStorage.getItem('pharmacyToken');
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/pharmacy/medications/${medicationId}`, {
-    method: 'PUT',
+    method: 'PATCH',
     headers: {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',

@@ -11,6 +11,8 @@ const statusOptions = [
   { value: 'SHIPPED', label: 'Shipped', color: '#06B6D4', icon: Truck },
   { value: 'READY_FOR_PICKUP', label: 'Ready for Pickup', color: '#8B5CF6', icon: CheckCircle },
   { value: 'DELIVERED', label: 'Delivered', color: '#10B981', icon: CheckCircle },
+  { value: 'CANCELLED', label: 'Cancelled', color: '#F59E0B', icon: AlertCircle },
+
 ];
 
 function isImageFile(url) {
