@@ -4,7 +4,7 @@ import {
   Loader2, AlertTriangle, Eye, CheckCircle, Package, RefreshCw,
   ShoppingCart, Clock, Truck, MapPin, User, Phone, Mail,
   Calendar, DollarSign, FileText, AlertCircle, TrendingUp,
-  CheckSquare, XCircle, Filter
+  CheckSquare, XCircle, Filter, X, List
 } from "lucide-react";
 import OrderDetailsDialog from "./components/OrderDetailsDialog";
 import DataTableView from "@/components/DataTableView";
@@ -12,6 +12,17 @@ import DataTableView from "@/components/DataTableView";
 const brandGreen = "#1ABA7F";
 const brandBlue = "#225F91";
 const brandOrange = "#FF6B35";
+
+// Cancellation reasons
+const CANCEL_REASONS = [
+  "Out of stock",
+  "Medication unavailable",
+  "Expired prescription",
+  "Customer request",
+  "Pricing error",
+  "Unable to verify prescription",
+  "Other"
+];
 
 // API functions
 async function fetchOrders(params) {
@@ -21,6 +32,20 @@ async function fetchOrders(params) {
     headers: { 'Authorization': `Bearer ${token}` },
   });
   if (!res.ok) throw new Error('Failed to fetch orders');
+  return res.json();
+}
+
+async function bulkUpdateOrders(orderIds, status, cancelReason = null) {
+  const token = localStorage.getItem('pharmacyToken');
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/pharmacy/orders/bulk`, {
+    method: 'PATCH',
+    headers: { 
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ orderIds, status, cancelReason })
+  });
+  if (!res.ok) throw new Error('Failed to bulk update orders');
   return res.json();
 }
 
@@ -41,6 +66,199 @@ async function fetchSpecificOrder(orderId) {
 function capitalizeWords(str) {
   if (!str) return '';
   return str.toLowerCase().replace(/\b\w/g, c => c.toUpperCase()).replace(/_/g, ' ');
+}
+
+// Confirmation Dialog Component
+function ConfirmationDialog({ open, onClose, onConfirm, title, message, status, showReasonInput, isLoading }) {
+  const [reason, setReason] = useState(CANCEL_REASONS[0]);
+  const [customReason, setCustomReason] = useState("");
+
+  const handleConfirm = () => {
+    const finalReason = reason === "Other" ? customReason : reason;
+    onConfirm(finalReason);
+  };
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md">
+        <div className="p-6">
+          <h3 className="text-lg font-bold text-gray-900 mb-2">{title}</h3>
+          <p className="text-gray-600 mb-4">{message}</p>
+          
+          {showReasonInput && (
+            <div className="space-y-3 mb-4">
+              <label className="block text-sm font-medium text-gray-700">
+                Cancellation Reason *
+              </label>
+              <select
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500"
+              >
+                {CANCEL_REASONS.map(r => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
+              </select>
+              
+              {reason === "Other" && (
+                <input
+                  type="text"
+                  value={customReason}
+                  onChange={(e) => setCustomReason(e.target.value)}
+                  placeholder="Enter custom reason..."
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                  required
+                />
+              )}
+            </div>
+          )}
+
+          <div className="flex gap-3">
+            <button
+              onClick={onClose}
+              disabled={isLoading}
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleConfirm}
+              disabled={isLoading || (showReasonInput && reason === "Other" && !customReason.trim())}
+              className={`flex-1 px-4 py-2 rounded-lg text-white font-semibold transition-colors disabled:opacity-50 flex items-center justify-center gap-2 ${
+                status === 'CANCELLED' 
+                  ? 'bg-red-600 hover:bg-red-700' 
+                  : 'bg-[#1ABA7F] hover:bg-[#159e6a]'
+              }`}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                'Confirm'
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Bulk Action Bar Component
+function BulkActionBar({ selectedCount, onAction, onClear, selectedOrders }) {
+  const [showActions, setShowActions] = useState(false);
+  
+  // Determine available actions based on selected orders
+  const deliveryMethods = [...new Set(selectedOrders.map(o => o.deliveryMethod?.toLowerCase()))];
+  const isMixedDelivery = deliveryMethods.length > 1;
+  const isAllPickup = deliveryMethods.length === 1 && deliveryMethods[0] === 'pickup';
+  const isAllCourier = deliveryMethods.length === 1 && deliveryMethods[0] === 'courier';
+
+  const actions = [
+    { 
+      value: 'PROCESSING', 
+      label: 'Mark as Processing', 
+      icon: Package, 
+      color: 'bg-blue-600 hover:bg-blue-700',
+      available: true 
+    },
+    { 
+      value: 'SHIPPED', 
+      label: 'Mark as Shipped', 
+      icon: Truck, 
+      color: 'bg-cyan-600 hover:bg-cyan-700',
+      available: isAllCourier 
+    },
+    { 
+      value: 'READY_FOR_PICKUP', 
+      label: 'Mark as Ready for Pickup', 
+      icon: CheckSquare, 
+      color: 'bg-purple-600 hover:bg-purple-700',
+      available: isAllPickup  
+    },
+    { 
+      value: 'DELIVERED', 
+      label: 'Mark as Delivered', 
+      icon: CheckCircle, 
+      color: 'bg-green-600 hover:bg-green-700',
+      available: isAllCourier 
+    },
+    { 
+      value: 'COMPLETED', 
+      label: 'Mark as Completed', 
+      icon: CheckCircle, 
+      color: 'bg-green-600 hover:bg-green-700',
+      available: true 
+    },
+    { 
+      value: 'CANCELLED', 
+      label: 'Cancel Orders', 
+      icon: XCircle, 
+      color: 'bg-red-600 hover:bg-red-700',
+      available: true 
+    },
+  ];
+
+  const availableActions = actions.filter(a => a.available);
+
+  if (selectedCount === 0) return null;
+
+  return (
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 animate-in slide-in-from-bottom">
+      <div className="bg-[#225F91] text-white rounded-xl shadow-2xl px-4 py-3 flex items-center gap-4">
+        <div className="flex items-center gap-2">
+          <CheckSquare className="w-5 h-5" />
+          <span className="font-semibold">{selectedCount} selected</span>
+        </div>
+
+        {isMixedDelivery && (
+          <div className="px-3 py-1 bg-yellow-500 text-white text-xs rounded-full font-medium">
+            Mixed delivery methods
+          </div>
+        )}
+
+        <div className="relative">
+          <button
+            onClick={() => setShowActions(!showActions)}
+            className="px-4 py-2 bg-white text-[#225F91] rounded-lg font-semibold hover:bg-gray-100 transition-colors flex items-center gap-2"
+          >
+            <List className="w-4 h-4" />
+            Bulk Actions
+          </button>
+
+          {showActions && (
+            <div className="absolute bottom-full mb-2 right-0 bg-white rounded-lg shadow-xl border border-gray-200 py-2 min-w-[240px]">
+              {availableActions.map(action => (
+                <button
+                  key={action.value}
+                  onClick={() => {
+                    onAction(action.value);
+                    setShowActions(false);
+                  }}
+                  className="w-full px-4 py-2 text-left hover:bg-gray-50 transition-colors flex items-center gap-3 text-gray-700"
+                >
+                  <action.icon className="w-4 h-4" />
+                  <span className="text-sm font-medium">{action.label}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <button
+          onClick={onClear}
+          className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+          title="Clear selection"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      </div>
+    </div>
+  );
 }
 
 // Helper Components
@@ -92,6 +310,16 @@ export default function EnhancedOrdersPage() {
 
   const [loadingSpecificOrder, setLoadingSpecificOrder] = useState(false);
 
+  // Bulk selection
+  const [selectedOrderIds, setSelectedOrderIds] = useState([]);
+  const [confirmDialog, setConfirmDialog] = useState({
+    open: false,
+    status: null,
+    title: '',
+    message: ''
+  });
+  const [bulkLoading, setBulkLoading] = useState(false);
+
   const [stats, setStats] = useState({
     totalOrders: 0,
     pendingOrders: 0,
@@ -121,12 +349,10 @@ export default function EnhancedOrdersPage() {
     
     if (orderId) {
       handleDeepLinkOrder(orderId);
-      // Clean up URL after capturing the orderId
       window.history.replaceState({}, '', window.location.pathname + window.location.search.replace(/[?&]orderId=[^&]+/, '').replace(/^&/, '?'));
     }
   }, []);
 
-  // Function to handle deep link order fetching
   async function handleDeepLinkOrder(orderId) {
     setLoadingSpecificOrder(true);
     try {
@@ -167,9 +393,8 @@ export default function EnhancedOrdersPage() {
         setOrders(ordersData);
         setPagination(data.pagination || pagination);
 
-        // Calculate stats
         const total = ordersData.length;
-        const pending = ordersData.filter(o => o.status === 'CONFIRMED' || o.status === 'PENDING').length;
+        const pending = ordersData.filter(o => o.status === 'CONFIRMED').length;
         const processing = ordersData.filter(o => o.status === 'PROCESSING').length;
         const ready = ordersData.filter(o => o.status === 'READY_FOR_PICKUP').length;
         const revenue = ordersData.reduce((sum, o) => sum + (o.totalPrice || 0), 0);
@@ -207,7 +432,73 @@ export default function EnhancedOrdersPage() {
     setRefreshCounter(prev => prev + 1);
   };
 
-  // Quick date filters
+  // Bulk selection handlers
+  const handleSelectOrder = (orderId) => {
+    setSelectedOrderIds(prev => 
+      prev.includes(orderId) 
+        ? prev.filter(id => id !== orderId)
+        : [...prev, orderId]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (selectedOrderIds.length === orders.length) {
+      setSelectedOrderIds([]);
+    } else {
+      setSelectedOrderIds(orders.map(o => o.id));
+    }
+  };
+
+  const handleBulkAction = (status) => {
+    const statusLabels = {
+      'PROCESSING': 'Processing',
+      'SHIPPED': 'Shipped',
+      'READY_FOR_PICKUP': 'Ready for Pickup',
+      'DELIVERED': 'Delivered',
+      'COMPLETED': 'Completed',
+      'CANCELLED': 'Cancelled'
+    };
+
+    setConfirmDialog({
+      open: true,
+      status,
+      title: `${status === 'CANCELLED' ? 'Cancel' : 'Update'} ${selectedOrderIds.length} Order${selectedOrderIds.length > 1 ? 's' : ''}`,
+      message: status === 'CANCELLED' 
+        ? `Are you sure you want to cancel ${selectedOrderIds.length} order${selectedOrderIds.length > 1 ? 's' : ''}? This action cannot be undone. Paid orders will be automatically refunded.`
+        : `Update ${selectedOrderIds.length} order${selectedOrderIds.length > 1 ? 's' : ''} to "${statusLabels[status]}" status?`
+    });
+  };
+
+  const handleConfirmBulkAction = async (cancelReason) => {
+    setBulkLoading(true);
+    try {
+      const result = await bulkUpdateOrders(
+        selectedOrderIds, 
+        confirmDialog.status,
+        confirmDialog.status === 'CANCELLED' ? cancelReason : null
+      );
+
+      const { successful, failed } = result.results;
+      
+      if (failed.length === 0) {
+        showToast(`Successfully updated ${successful.length} order${successful.length > 1 ? 's' : ''}`, 'success');
+      } else if (successful.length === 0) {
+        showToast(`Failed to update all orders`, 'error', 5000);
+      } else {
+        showToast(`Updated ${successful.length} order${successful.length > 1 ? 's' : ''}, ${failed.length} failed`, 'warning', 5000);
+      }
+
+      setSelectedOrderIds([]);
+      setRefreshCounter(prev => prev + 1);
+    } catch (err) {
+      showToast('Failed to perform bulk action', 'error');
+      console.error('Bulk action error:', err);
+    } finally {
+      setBulkLoading(false);
+      setConfirmDialog({ open: false, status: null, title: '', message: '' });
+    }
+  };
+
   const setQuickDateFilter = (type) => {
     const today = new Date();
     let date = '';
@@ -230,7 +521,6 @@ export default function EnhancedOrdersPage() {
     setPagination((prev) => ({ ...prev, page: 1 }));
   };
 
-  // Helper to get status badge with icon
   const getStatusBadge = (status) => {
     let colorClass = '';
     let Icon = Clock;
@@ -261,6 +551,10 @@ export default function EnhancedOrdersPage() {
         colorClass = 'bg-red-100 text-red-800 border-red-300';
         Icon = XCircle;
         break;
+      case 'completed':
+        colorClass = 'bg-green-100 text-green-800 border-green-300';
+        Icon = CheckCircle;
+        break;
       default:
         colorClass = 'bg-gray-100 text-gray-800 border-gray-300';
     }
@@ -274,7 +568,6 @@ export default function EnhancedOrdersPage() {
     );
   };
 
-  // Get delivery badge
   const getDeliveryBadge = (method) => {
     const isPickup = method?.toLowerCase() === 'pickup';
     return (
@@ -289,18 +582,25 @@ export default function EnhancedOrdersPage() {
     );
   };
 
-  // Mobile card component
   const renderMobileCard = (order) => (
     <div key={order.id} className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm hover:shadow-md transition-all">
       <div className="flex justify-between items-start mb-3">
-        <div className="flex-1 min-w-0 pr-2">
-          <div className="flex items-center gap-1.5 mb-1.5">
-            <ShoppingCart className="w-3.5 h-3.5 text-[#225F91]" />
-            <h3 className="font-bold text-sm text-gray-900">Order #{order.sn}</h3>
-          </div>
-          <div className="flex items-center gap-1.5 text-xs text-gray-600">
-            <User className="w-3 h-3" />
-            <span className="truncate">{order.name}</span>
+        <div className="flex items-center gap-2 flex-1 min-w-0 pr-2">
+          <input
+            type="checkbox"
+            checked={selectedOrderIds.includes(order.id)}
+            onChange={() => handleSelectOrder(order.id)}
+            className="w-4 h-4 text-[#1ABA7F] border-gray-300 rounded focus:ring-[#1ABA7F]"
+          />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <ShoppingCart className="w-3.5 h-3.5 text-[#225F91]" />
+              <h3 className="font-bold text-sm text-gray-900">Order #{order.sn}</h3>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-gray-600">
+              <User className="w-3 h-3" />
+              <span className="truncate">{order.name}</span>
+            </div>
           </div>
         </div>
         <button
@@ -341,8 +641,27 @@ export default function EnhancedOrdersPage() {
     </div>
   );
 
-  // Table columns
   const columns = [
+    {
+      key: 'select',
+      label: (
+        <input
+          type="checkbox"
+          checked={selectedOrderIds.length === orders.length && orders.length > 0}
+          onChange={handleSelectAll}
+          className="w-4 h-4 text-[#1ABA7F] border-gray-300 rounded focus:ring-[#1ABA7F]"
+        />
+      ),
+      render: (order) => (
+        <input
+          type="checkbox"
+          checked={selectedOrderIds.includes(order.id)}
+          onChange={() => handleSelectOrder(order.id)}
+          className="w-4 h-4 text-[#1ABA7F] border-gray-300 rounded focus:ring-[#1ABA7F]"
+        />
+      ),
+      cellClassName: 'whitespace-nowrap'
+    },
     {
       key: 'sn',
       label: 'Order #',
@@ -443,7 +762,6 @@ export default function EnhancedOrdersPage() {
     }
   ];
 
-  // Filter configurations
   const filters = [
     {
       value: statusFilter,
@@ -452,13 +770,13 @@ export default function EnhancedOrdersPage() {
         setStatusFilter(value);
       },
       options: [
-        { value: "PENDING", label: "Pending" },
-        { value: "CONFIRMED", label: "Confirmed" },
+        { value: "CONFIRMED", label: "Pending" },
         { value: "PROCESSING", label: "Processing" },
         { value: "SHIPPED", label: "Shipped" },
         { value: "DELIVERED", label: "Delivered" },
         { value: "READY_FOR_PICKUP", label: "Ready for Pickup" },
-        { value: "CANCELLED", label: "Cancelled" }
+        { value: "COMPLETED", label: "Completed" },
+        { value: "CANCELLED", label: "Cancelled" },
       ],
       placeholder: "All Statuses",
       className: "sm:w-48"
@@ -478,6 +796,8 @@ export default function EnhancedOrdersPage() {
     }
   ];
 
+  const selectedOrders = orders.filter(o => selectedOrderIds.includes(o.id));
+
   return (
     <div className="space-y-4 md:space-y-6">
       {/* Loading overlay for deep link */}
@@ -489,6 +809,26 @@ export default function EnhancedOrdersPage() {
           </div>
         </div>
       )}
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialog
+        open={confirmDialog.open}
+        onClose={() => setConfirmDialog({ open: false, status: null, title: '', message: '' })}
+        onConfirm={handleConfirmBulkAction}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        status={confirmDialog.status}
+        showReasonInput={confirmDialog.status === 'CANCELLED'}
+        isLoading={bulkLoading}
+      />
+
+      {/* Bulk Action Bar */}
+      <BulkActionBar
+        selectedCount={selectedOrderIds.length}
+        onAction={handleBulkAction}
+        onClear={() => setSelectedOrderIds([])}
+        selectedOrders={selectedOrders}
+      />
 
       {/* Header */}
       <div className="flex items-center justify-between gap-3">
@@ -657,7 +997,7 @@ export default function EnhancedOrdersPage() {
       {/* Main Data Table View */}
       <DataTableView
         title="All Orders"
-        description={`Showing ${orders.length} order${orders.length !== 1 ? 's' : ''}`}
+        description={`Showing ${orders.length} order${orders.length !== 1 ? 's' : ''}${selectedOrderIds.length > 0 ? ` · ${selectedOrderIds.length} selected` : ''}`}
         data={orders}
         loading={loading}
         error={error}

@@ -250,7 +250,7 @@ const handleEnableLocation = useCallback(async () => {
   setIsLoadingLocation(true);
   setPermissionDenied(false);
 
-  // ⚡ Set safety timeout (45 seconds - more generous)
+  // ⚡ Set safety timeout (60 seconds)
   locationTimeoutRef.current = setTimeout(() => {
     setIsLoadingLocation(false);
     toast.error('Location Detection Timeout', {
@@ -261,7 +261,7 @@ const handleEnableLocation = useCallback(async () => {
         onClick: () => setShowFilters(true),
       },
     });
-  }, 45000);
+  }, 60000);
 
   // 🎯 Request location with progressive fallback
   try {
