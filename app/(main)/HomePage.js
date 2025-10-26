@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -476,18 +477,35 @@ function HomePageContent() {
   const uploadRef = useRef(null);
   const [isConsentOpen, setIsConsentOpen] = useState(false);
   const [isPageLoaded, setIsPageLoaded] = useState(false);
+  const searchParams = useSearchParams();
 
-
-
-      useEffect(() => {
-      const hasConsent = localStorage.getItem('manzu_consent');
-      if (!hasConsent) {
-        setIsConsentOpen(true);
-      }
-      
-      const timer = setTimeout(() => setIsPageLoaded(true), 100);
-      return () => clearTimeout(timer);
-    }, []);
+  // Check for URL parameters on mount and auto-show search section
+  useEffect(() => {
+    const hasConsent = localStorage.getItem('manzu_consent');
+    if (!hasConsent) {
+      setIsConsentOpen(true);
+    }
+    
+    // Check if there are search parameters in the URL
+    const urlSearchTerm = searchParams.get('q');
+    const urlMedicationId = searchParams.get('medId');
+    const urlState = searchParams.get('state');
+    const urlLga = searchParams.get('lga');
+    
+    // If any search-related parameters exist, automatically show the search section
+    if (urlSearchTerm || urlMedicationId || urlState || urlLga) {
+      setVisibleSection('search');
+      // Scroll to search section after a short delay to ensure it's rendered
+      setTimeout(() => {
+        if (searchRef.current) {
+          smoothScrollTo(searchRef.current, 120);
+        }
+      }, 300);
+    }
+    
+    const timer = setTimeout(() => setIsPageLoaded(true), 100);
+    return () => clearTimeout(timer);
+  }, [searchParams]);
 
 
   useEffect(() => {
