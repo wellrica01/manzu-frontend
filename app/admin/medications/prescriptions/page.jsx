@@ -98,11 +98,11 @@ export default function PrescriptionsPage() {
   const renderMobileCard = (prescription) => (
     <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition">
       <div className="flex justify-between mb-2">
-        <div className="font-semibold">{prescription.userIdentifier}</div>
+        <div className="font-semibold">Prescription ID: {prescription.id}</div>
         <StatusBadge status={prescription.status} />
       </div>
       <div className="flex justify-between text-sm text-gray-600 mb-2">
-        <div>Verified: {prescription.verified ? "Yes" : "No"}</div>
+        <div>Verified: {prescription.status === "VERIFIED" ? "Yes" : "No"}</div>
         <div>Created: {new Date(prescription.createdAt).toLocaleDateString()}</div>
       </div>
       <Link
@@ -117,7 +117,7 @@ export default function PrescriptionsPage() {
   const columns = [
     { key: "user", label: "User", render: p => p.userIdentifier },
     { key: "status", label: "Status", render: p => <StatusBadge status={p.status} /> },
-    { key: "verified", label: "Verified", render: p => p.verified ? <span className="text-green-600 font-semibold">Yes</span> : <span className="text-gray-400">No</span> },
+    { key: "verified", label: "Verified", render: p => p.status === "VERIFIED" ? <span className="text-green-600 font-semibold">Yes</span> : <span className="text-gray-400">No</span> },
     { key: "createdAt", label: "Created", render: p => new Date(p.createdAt).toLocaleDateString() },
     { key: "actions", label: "Actions", render: p => (
       <Link

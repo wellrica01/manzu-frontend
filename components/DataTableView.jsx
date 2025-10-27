@@ -190,9 +190,14 @@ export default function DataTableView({
               </p>
             </div>
           )}
-          <div className="space-y-3">
-            {data.map((item, index) => mobileCardRender(item, index))}
+      <div className="space-y-3">
+        {data.map((item, index) => (
+          <div key={item.id || item._id || item.userIdentifier || index}>
+            {mobileCardRender(item, index)}
           </div>
+        ))}
+      </div>
+
           
           {/* Mobile Pagination */}
           {pagination.pages > 1 && (
