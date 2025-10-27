@@ -126,7 +126,7 @@ export default function PrescriptionDetailsPage() {
         setNewStatus(prescriptionData?.status || "");
 
       } catch (e) {
-        setError("Failed to load prescription details.");
+        setError("Failed to load prescription details...");
       } finally {
         setLoading(false);
       }
