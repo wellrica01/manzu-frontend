@@ -43,12 +43,27 @@ export default function PrescriptionTranslator() {
   const [deleting, setDeleting] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [detailsExpanded, setDetailsExpanded] = useState(false);
+  const [rejectionDialogOpen, setRejectionDialogOpen] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState("");
+  const [rejectingSaving, setRejectingSaving] = useState(false);
 
   const [confirmDialog, setConfirmDialog] = useState({
   open: false,
   mode: null, // 'single' | 'bulk'
   medicationId: null,
 });
+
+// Rejection reason options
+const rejectionReasons = [
+  "Illegible handwriting",
+  "Missing patient information",
+  "Missing prescriber information",
+  "Invalid prescription format",
+  "Expired prescription",
+  "Unclear medication details",
+  "Suspected fraud",
+  "Other"
+];
   
   const [medications, setMedications] = useState([
     { 
@@ -121,31 +136,82 @@ export default function PrescriptionTranslator() {
     }));
   };
 
-  const handleQuickVerify = async (newStatus) => {
-    setSaving(true);
-    setSaveError(null);
-    try {
-      const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
-      const token = typeof window !== "undefined" ? localStorage.getItem("adminToken") : null;
-      const res = await fetch(`${API_BASE}/api/prescription/${prescriptionId}/verify`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        credentials: "include",
-        body: JSON.stringify({ status: newStatus }),
-      });
-      if (!res.ok) throw new Error("Failed to update status");
-      setPrescription(prev => ({ ...prev, status: newStatus }));
-      setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 2000);
-    } catch (e) {
-      setSaveError(e.message);
-    } finally {
-      setSaving(false);
-    }
-  };
+
+// Update handleQuickVerify to set a loading flag specific to rejection dialog
+const handleQuickVerify = async (newStatus) => {
+  // If rejecting, open dialog instead of directly updating
+  if (newStatus === "REJECTED") {
+    setRejectionDialogOpen(true);
+    setSaveError(null); // Clear any previous errors
+    return; // Don't set saving to true here
+  }
+  
+  setSaving(true);
+  setSaveError(null);
+  try {
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
+    const token = typeof window !== "undefined" ? localStorage.getItem("adminToken") : null;
+    const res = await fetch(`${API_BASE}/api/prescription/${prescriptionId}/verify`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      credentials: "include",
+      body: JSON.stringify({ status: newStatus }),
+    });
+    if (!res.ok) throw new Error("Failed to update status");
+    setPrescription(prev => ({ ...prev, status: newStatus }));
+    setSaveSuccess(true);
+    setTimeout(() => setSaveSuccess(false), 2000);
+  } catch (e) {
+    setSaveError(e.message);
+  } finally {
+    setSaving(false);
+  }
+};
+
+
+const handleReject = async () => {
+  if (!rejectionReason) {
+    setSaveError("Please select a rejection reason");
+    return;
+  }
+  
+  setRejectingSaving(true);
+  setSaveError(null);
+  try {
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
+    const token = typeof window !== "undefined" ? localStorage.getItem("adminToken") : null;
+    const res = await fetch(`${API_BASE}/api/prescription/${prescriptionId}/verify`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      credentials: "include",
+      body: JSON.stringify({ 
+        status: "REJECTED",
+        rejectionReason 
+      }),
+    });
+    if (!res.ok) throw new Error("Failed to reject prescription");
+    const data = await res.json();
+    setPrescription(prev => ({ 
+      ...prev, 
+      status: "REJECTED",
+      rejectionReason 
+    }));
+    setSaveSuccess(true);
+    setRejectionDialogOpen(false);
+    setRejectionReason("");
+    setTimeout(() => setSaveSuccess(false), 2000);
+  } catch (e) {
+    setSaveError(e.message);
+  } finally {
+    setRejectingSaving(false); 
+  }
+};
 
   const handleSaveMedications = async () => {
     setSaving(true);
@@ -322,13 +388,73 @@ const handleConfirmDelete = async () => {
               <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" /> 
               <span className="hidden sm:inline">Back</span>
             </button>
-                    
-        <div className="flex items-center gap-2">
-          {/* When pending or expired, show both */}
-          {(!prescription?.status || 
-            prescription?.status === "PENDING" || 
-            prescription?.status === "EXPIRED") && (
-            <>
+           <div className="flex items-center gap-2">
+            {/* When pending or expired, show both */}
+            {(!prescription?.status || 
+              prescription?.status === "PENDING" || 
+              prescription?.status === "EXPIRED") && (
+              <>
+                <button
+                  onClick={() => handleQuickVerify("VERIFIED")}
+                  disabled={saving} // Only disabled when verifying
+                  className="px-3 sm:px-4 py-2 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700 transition-all text-xs sm:text-sm flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {saving ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
+                      <span>Verifying...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> 
+                      <span>Verify</span>
+                    </>
+                  )}
+                </button>
+
+                <button
+                  onClick={() => handleQuickVerify("REJECTED")}
+                  disabled={rejectingSaving} // Only disabled when rejecting
+                  className="px-3 sm:px-4 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition-all text-xs sm:text-sm flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {rejectingSaving ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
+                      <span>Rejecting...</span>
+                    </>
+                  ) : (
+                    <>
+                      <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> 
+                      <span>Reject</span>
+                    </>
+                  )}
+                </button>
+              </>
+            )}
+
+            {/* When verified, only show Reject */}
+            {prescription?.status === "VERIFIED" && (
+              <button
+                onClick={() => handleQuickVerify("REJECTED")}
+                disabled={rejectingSaving}
+                className="px-3 sm:px-4 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition-all text-xs sm:text-sm flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {rejectingSaving ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
+                    <span>Rejecting...</span>
+                  </>
+                ) : (
+                  <>
+                    <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> 
+                    <span>Reject</span>
+                  </>
+                )}
+              </button>
+            )}
+
+            {/* When rejected, only show Verify */}
+            {prescription?.status === "REJECTED" && (
               <button
                 onClick={() => handleQuickVerify("VERIFIED")}
                 disabled={saving}
@@ -346,69 +472,9 @@ const handleConfirmDelete = async () => {
                   </>
                 )}
               </button>
+            )}
+          </div>         
 
-              <button
-                onClick={() => handleQuickVerify("REJECTED")}
-                disabled={saving}
-                className="px-3 sm:px-4 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition-all text-xs sm:text-sm flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                {saving ? (
-                  <>
-                    <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
-                    <span>Rejecting...</span>
-                  </>
-                ) : (
-                  <>
-                    <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> 
-                    <span>Reject</span>
-                  </>
-                )}
-              </button>
-            </>
-          )}
-
-          {/* When verified, only show Reject */}
-          {prescription?.status === "VERIFIED" && (
-            <button
-              onClick={() => handleQuickVerify("REJECTED")}
-              disabled={saving}
-              className="px-3 sm:px-4 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition-all text-xs sm:text-sm flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {saving ? (
-                <>
-                  <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
-                  <span>Rejecting...</span>
-                </>
-              ) : (
-                <>
-                  <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> 
-                  <span>Reject</span>
-                </>
-              )}
-            </button>
-          )}
-
-          {/* When rejected, only show Verify */}
-          {prescription?.status === "REJECTED" && (
-            <button
-              onClick={() => handleQuickVerify("VERIFIED")}
-              disabled={saving}
-              className="px-3 sm:px-4 py-2 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700 transition-all text-xs sm:text-sm flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {saving ? (
-                <>
-                  <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
-                  <span>Verifying...</span>
-                </>
-              ) : (
-                <>
-                  <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> 
-                  <span>Verify</span>
-                </>
-              )}
-            </button>
-          )}
-        </div>
           </div>
         </div>
       </div>
@@ -503,6 +569,11 @@ const handleConfirmDelete = async () => {
                     Prescription ID: {prescription?.id || "Prescription"}
                   </h2>
                   <StatusBadge status={prescription?.status} />
+                    {prescription.status === "REJECTED" && prescription.rejectionReason && (
+                      <span className="text-xs text-red-600 mt-1 italic">
+                        Reason: {prescription.rejectionReason}
+                      </span>
+                    )}
                 </div>
                 <button
                   onClick={() => setDetailsExpanded(!detailsExpanded)}
@@ -689,6 +760,67 @@ const handleConfirmDelete = async () => {
             : "Are you sure you want to delete this medication? This action cannot be undone."
         }
       />
+
+      {/* Rejection Reason Dialog */}
+      {rejectionDialogOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-md w-full p-6">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">Reject Prescription</h3>
+            
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Rejection Reason *
+              </label>
+              <select
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#225F91] focus:border-transparent"
+              >
+                <option value="">Select a reason...</option>
+                {rejectionReasons.map((reason) => (
+                  <option key={reason} value={reason}>
+                    {reason}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {saveError && (
+              <div className="mb-4 bg-red-50 border border-red-200 text-red-800 px-3 py-2 rounded-lg text-sm">
+                {saveError}
+              </div>
+            )}
+
+        <div className="flex gap-3">
+          <button
+            onClick={() => {
+              setRejectionDialogOpen(false);
+              setRejectionReason("");
+              setSaveError(null);
+            }}
+            disabled={rejectingSaving} // Use separate state
+            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleReject}
+            disabled={rejectingSaving || !rejectionReason} // Use separate state
+            className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            {rejectingSaving ? ( // Use separate state
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Rejecting...
+              </>
+            ) : (
+              "Reject"
+            )}
+          </button>
+        </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

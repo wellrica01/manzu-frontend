@@ -45,7 +45,7 @@ export default function PharmacyLayout({ children }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50/95 to-gray-100/95 flex flex-row">
+    <div className="min-h-screen bg-linear-to-b from-gray-50/95 to-gray-100/95 flex flex-row">
       <SidebarNav 
         isCollapsed={sidebarCollapsed}
         onToggle={toggleSidebar}

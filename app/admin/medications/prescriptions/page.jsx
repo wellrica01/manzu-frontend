@@ -101,6 +101,11 @@ export default function PrescriptionsPage() {
         <div className="font-semibold">Prescription ID: {prescription.id}</div>
         <StatusBadge status={prescription.status} />
       </div>
+         {prescription.status === "REJECTED" && prescription.rejectionReason && (
+            <span className="text-xs text-red-600 font-medium mt-1 italic">
+              Reason: {prescription.rejectionReason}
+            </span>
+          )}
       <div className="flex justify-between text-sm text-gray-600 mb-2">
         <div>Verified: {prescription.status === "VERIFIED" ? "Yes" : "No"}</div>
         <div>Created: {new Date(prescription.createdAt).toLocaleDateString()}</div>
@@ -114,20 +119,51 @@ export default function PrescriptionsPage() {
     </div>
   );
 
-  const columns = [
-    { key: "user", label: "User", render: p => p.userIdentifier },
-    { key: "status", label: "Status", render: p => <StatusBadge status={p.status} /> },
-    { key: "verified", label: "Verified", render: p => p.status === "VERIFIED" ? <span className="text-green-600 font-semibold">Yes</span> : <span className="text-gray-400">No</span> },
-    { key: "createdAt", label: "Created", render: p => new Date(p.createdAt).toLocaleDateString() },
-    { key: "actions", label: "Actions", render: p => (
+const columns = [
+  { key: "id", label: "ID", render: p => p.id },
+  {
+    key: "status",
+    label: "Status",
+    render: p => (
+      <div className="flex flex-col items-start">
+        <StatusBadge status={p.status} />
+        {p.status === "REJECTED" && p.rejectionReason && (
+          <span className="text-xs text-red-600 mt-1 italic">
+            Reason: {p.rejectionReason}
+          </span>
+        )}
+      </div>
+    ),
+  },
+  {
+    key: "verified",
+    label: "Verified",
+    render: p =>
+      p.status === "VERIFIED" ? (
+        <span className="text-green-600 font-semibold">Yes</span>
+      ) : (
+        <span className="text-gray-400">No</span>
+      ),
+  },
+  {
+    key: "createdAt",
+    label: "Created",
+    render: p => new Date(p.createdAt).toLocaleDateString(),
+  },
+  {
+    key: "actions",
+    label: "Actions",
+    render: p => (
       <Link
         href={`/admin/medications/prescriptions/${p.id}`}
         className="px-4 py-2 rounded-lg bg-[#225F91] text-white font-semibold hover:bg-[#1A4971] transition text-sm"
       >
         View
       </Link>
-    ) },
-  ];
+    ),
+  },
+];
+
 
   const filters = [
     {

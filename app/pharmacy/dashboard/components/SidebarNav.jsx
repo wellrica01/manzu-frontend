@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { 
   Home, Package, ClipboardList, BarChart2, User, LogOut, 
-  ChevronLeft, X, Pill, Receipt, CreditCard
+  ChevronLeft, X, Pill, Receipt, CreditCard 
 } from 'lucide-react';
 
 const navItems = [
@@ -14,6 +14,7 @@ const navItems = [
   { href: '/pharmacy/orders', label: 'Orders', icon: ClipboardList },
   { href: '/pharmacy/pos/sales-history/', label: 'Sales History', icon: Package },
   { href: '/pharmacy/analytics', label: 'Analytics', icon: BarChart2 },
+  { href: '/pharmacy/payment', label: 'Payment', icon: CreditCard  },
   { href: '/pharmacy/profile', label: 'Profile', icon: User },
 ];
 

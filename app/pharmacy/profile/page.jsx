@@ -97,7 +97,7 @@ function InfoCard({ icon: Icon, label, value, color = brandBlue }) {
 
 function StatusBadge({ status }) {
   const configs = {
-    APPROVED: { bg: 'bg-green-100', text: 'text-green-800', label: 'Approved', icon: CheckCircle },
+    VERIFIED: { bg: 'bg-green-100', text: 'text-green-800', label: 'Verified', icon: CheckCircle },
     PENDING: { bg: 'bg-yellow-100', text: 'text-yellow-800', label: 'Pending', icon: Clock },
     REJECTED: { bg: 'bg-red-100', text: 'text-red-800', label: 'Rejected', icon: XCircle },
   };

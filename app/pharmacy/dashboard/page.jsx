@@ -21,6 +21,8 @@ import {
   Box,
   Truck,
 } from "lucide-react";
+import PayoutSummaryWidget from './components/PayoutSummaryWidget';
+
 
 const brandBlue = "#225F91";
 const brandGreen = "#1ABA7F";
@@ -251,7 +253,7 @@ export default function PharmacyDashboard() {
 
       {/* Combined Summary */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6">
-        <Card className="p-4 md:p-6 rounded-lg md:rounded-2xl shadow-lg bg-gradient-to-br from-blue-50 to-green-50 border border-blue-200/50">
+        <Card className="p-4 md:p-6 rounded-lg md:rounded-2xl shadow-lg bg-linear-to-br from-blue-50 to-green-50 border border-blue-200/50">
           <div className="flex items-center justify-between mb-3 md:mb-4">
             <h3 className="text-base md:text-lg font-semibold text-gray-800">Total Today</h3>
             <Activity className="w-5 h-5 md:w-6 md:h-6 text-blue-600" />
@@ -268,7 +270,16 @@ export default function PharmacyDashboard() {
           </div>
         </Card>
 
-        <Card className="p-4 md:p-6 rounded-lg md:rounded-2xl shadow-lg bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200/50">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+          <div className="lg:col-span-2">
+            <TopSellingCard medications={data.topSellingMeds || []} />
+          </div>
+         <div className="lg:col-span-2">
+          <PayoutSummaryWidget />
+        </div>
+        </div>
+
+        <Card className="p-4 md:p-6 rounded-lg md:rounded-2xl shadow-lg bg-linear-to-br from-purple-50 to-pink-50 border border-purple-200/50">
           <div className="flex items-center justify-between mb-3 md:mb-4">
             <h3 className="text-base md:text-lg font-semibold text-gray-800">Inventory Status</h3>
             <Package className="w-5 h-5 md:w-6 md:h-6 text-purple-600" />
