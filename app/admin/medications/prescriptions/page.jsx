@@ -102,7 +102,7 @@ export default function PrescriptionsPage() {
         <StatusBadge status={prescription.status} />
       </div>
          {prescription.status === "REJECTED" && prescription.rejectionReason && (
-            <span className="text-xs text-red-600 font-medium mt-1 italic">
+            <span className="text-xs text-red-600 font-medium my-1 italic">
               Reason: {prescription.rejectionReason}
             </span>
           )}
