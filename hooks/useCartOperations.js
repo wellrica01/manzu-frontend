@@ -46,7 +46,6 @@ export function useCartOperations(userIdentifier, guestId, prescriptionId, fetch
       // Optimistic update - refresh cart in background
       fetchCart();
 
-      toast.success(`${displayName} added to cart`);
       return validated;
     } catch (error) {
       console.error('Add to cart error:', error);
@@ -96,7 +95,6 @@ export function useCartOperations(userIdentifier, guestId, prescriptionId, fetch
       
       fetchCart();
       
-      toast.success(`Added ${items.length} item${items.length > 1 ? 's' : ''} from ${pharmacyName}`);
       return validated;
     } catch (error) {
       console.error('Bulk add error:', error);
@@ -123,7 +121,6 @@ export function useCartOperations(userIdentifier, guestId, prescriptionId, fetch
       );
       
       await fetchCart();
-      toast.success('Item removed from cart');
     } catch (error) {
       console.error('Remove error:', error);
       toast.error(error.message || 'Failed to remove item');
@@ -153,7 +150,6 @@ export function useCartOperations(userIdentifier, guestId, prescriptionId, fetch
       );
       
       await fetchCart();
-      toast.success(`Removed ${itemIds.length} item${itemIds.length > 1 ? 's' : ''}`);
     } catch (error) {
       console.error('Bulk remove error:', error);
       toast.error(error.message || 'Failed to remove items');

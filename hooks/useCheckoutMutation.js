@@ -11,9 +11,6 @@ export function useCheckoutMutation(guestId, apiUrl, options = {}) {
       const message = ERROR_MESSAGES[error.message] || error.message || 'An error occurred during checkout';
       toast.error(message, { duration: 4000 });
     },
-    onSuccess: (data) => {
-      toast.success('Order placed successfully!', { duration: 3000 });
-    },
     ...options
   });
 }

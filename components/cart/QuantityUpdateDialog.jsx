@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogTitle, DialogContent, DialogFooter } from '@/components/ui/dialog';
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Package, CheckCircle, Sparkles } from 'lucide-react';
 
@@ -10,7 +10,7 @@ const QuantityUpdateDialog = ({ quantityUpdate, setQuantityUpdate }) => {
     <Dialog open={!!quantityUpdate} onOpenChange={() => setQuantityUpdate(null)}>
       <DialogContent className="sm:max-w-lg bg-white/95 backdrop-blur-xl border-2 border-[#1ABA7F]/30 rounded-3xl shadow-2xl overflow-hidden">
         <VisuallyHidden>
-          <h2>Quantity Updated Successfully</h2>
+          <DialogTitle>Quantity Updated Successfully</DialogTitle>
         </VisuallyHidden>
 
         {/* Decorative Elements */}

@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Upload, CheckCircle, Clock, FileText, ArrowRight, Mail, X, Eye, Camera, AlertCircle, Shield } from 'lucide-react';
+import { Upload, CheckCircle, Clock, FileText, ArrowRight, Phone, X, Eye, Camera, AlertCircle, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 import { getGuestId } from '@/lib/utils';
 import Link from 'next/link';
@@ -47,7 +47,6 @@ export default function PrescriptionUploadForm() {
 
   const validateContact = (contact) => {
     if (!contact) return false;
-    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact)) return true;
     if (/^\+?\d{10,15}$/.test(contact)) return true;
     return false;
   };
@@ -57,13 +56,21 @@ export default function PrescriptionUploadForm() {
     if (!file) newErrors.file = t('upload.errors.file_required', 'Prescription file is required');
     if (!contact) newErrors.contact = t('upload.errors.contact_required', 'Contact information is required');
     if (contact && !validateContact(contact))
-      newErrors.contact = t('upload.errors.invalid_contact', 'Please enter a valid email or phone number');
+      newErrors.contact = t('upload.errors.invalid_contact', 'Please enter a valid phone number');
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
+
+   if (selectedFile.size > 5 * 1024 * 1024) {
+      toast.error('File is too large. Please upload a file smaller than 5MB.', {
+        duration: 5000,
+      });
+      return;
+    }
+
     if (
       selectedFile &&
       ['application/pdf', 'image/jpeg', 'image/png'].includes(selectedFile.type)
@@ -251,7 +258,7 @@ export default function PrescriptionUploadForm() {
             <div className="p-5 bg-gradient-to-br from-gray-50 to-white rounded-2xl border border-gray-200">
               <div className="flex items-start gap-4">
                 <div className="p-2.5 bg-[#1ABA7F]/10 rounded-lg flex-shrink-0">
-                  <Mail className="h-5 w-5 text-[#1ABA7F]" strokeWidth={2} />
+                  <Phone className="h-5 w-5 text-[#1ABA7F]" strokeWidth={2} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-gray-600 mb-1">
@@ -274,7 +281,7 @@ export default function PrescriptionUploadForm() {
               <div className="space-y-3">
                 {[
                   'Our pharmacists will review your prescription',
-                  `You'll receive updates via ${submittedContact.includes('@') ? 'email' : 'SMS'}`,
+                  `You'll receive updates via SMS`,
                   'Track your prescription status anytime'
                 ].map((step, i) => (
                   <div key={i} className="flex items-start gap-3">
@@ -474,8 +481,8 @@ export default function PrescriptionUploadForm() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <Label htmlFor="contact" className="text-sm font-bold text-gray-900 flex items-center gap-2">
-              <Mail className="h-4 w-4 text-[#1ABA7F]" strokeWidth={2} />
-              Contact Information
+              <Phone className="h-4 w-4 text-[#1ABA7F]" strokeWidth={2} />
+              Phone Number
             </Label>
             {contact && validateContact(contact) && (
               <Badge className="bg-[#1ABA7F] text-white border-0 px-3 py-1 text-xs font-semibold">
@@ -486,7 +493,7 @@ export default function PrescriptionUploadForm() {
           </div>
           
           <div className="relative">
-            <Mail
+            <Phone
               className={cn(
                 "absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 transition-colors duration-300",
                 contactFocused ? "text-[#1ABA7F]" : "text-gray-400"
@@ -503,7 +510,7 @@ export default function PrescriptionUploadForm() {
               }}
               onFocus={() => setContactFocused(true)}
               onBlur={() => setContactFocused(false)}
-              placeholder="Email or phone number"
+              placeholder="Phone number (e.g., +2348012345678)"
               className={cn(
                 "h-14 pl-12 pr-4 text-base font-medium rounded-lg border-2 transition-all duration-300",
                 errors.contact

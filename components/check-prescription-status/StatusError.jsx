@@ -4,7 +4,7 @@ import { AlertCircle, Home } from 'lucide-react';
 
 export default function StatusError({ error, onReset, onBackToHome }) {
   return (
-    <Card className="relative bg-white border-2 border-gray-100 rounded-3xl shadow-lg overflow-hidden">
+    <Card className="relative bg-white border-2 border-gray-100 rounded-lg shadow-lg overflow-hidden">
       <CardHeader className="relative bg-gradient-to-br from-red-50 to-red-50 p-8 text-center border-b border-yellow-100">
         <div className="relative mx-auto w-20 h-20 mb-6">
           <div className="absolute inset-0 bg-gradient-to-br from-red-500/30 to-pink-500/30 rounded-full blur-xl animate-pulse" />
@@ -22,7 +22,7 @@ export default function StatusError({ error, onReset, onBackToHome }) {
       </CardHeader>
 
       <CardContent className="p-8 space-y-6">
-        <div className="p-6 bg-gradient-to-br from-red-50 to-pink-50 rounded-xl border-2 border-red-200/50">
+        <div className="p-6 bg-gradient-to-br from-red-50 to-pink-50 rounded-lg border-2 border-red-200/50">
           <p className="text-sm text-gray-700 leading-relaxed mb-3">
             {error}
           </p>

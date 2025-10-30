@@ -27,7 +27,7 @@ const OrderDetails = ({ order }) => {
         ].map((item, idx) => (
           <div 
             key={idx} 
-            className="p-4 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-200"
+            className="p-4 bg-gradient-to-br from-gray-50 to-white rounded-lg border border-gray-200"
           >
             <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
               {item.label}
@@ -38,7 +38,7 @@ const OrderDetails = ({ order }) => {
       </div>
 
       {/* Address */}
-      <div className="p-5 bg-gradient-to-br from-blue-50 to-white rounded-xl border border-blue-200">
+      <div className="p-5 bg-gradient-to-br from-blue-50 to-white rounded-lg border border-blue-200">
         <div className="flex items-center gap-2 mb-3">
           <MapPin className="h-5 w-5 text-blue-600" strokeWidth={2} />
           <h4 className="font-bold text-gray-900">
@@ -62,7 +62,7 @@ const OrderDetails = ({ order }) => {
           {order.items?.map(item => (
             <div 
               key={item.id} 
-              className="flex items-start justify-between gap-4 p-4 bg-gray-50 rounded-xl border border-gray-200 hover:border-gray-300 transition-colors duration-200"
+              className="flex items-start justify-between gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors duration-200"
             >
               <div className="flex-1 min-w-0">
                 <p className="font-bold text-gray-900 mb-1">
@@ -92,7 +92,7 @@ const OrderDetails = ({ order }) => {
       </div>
 
       {/* Total */}
-      <div className="flex items-center justify-between p-5 bg-gradient-to-r from-[#225F91]/5 to-[#1ABA7F]/5 rounded-xl border-2 border-[#1ABA7F]/20">
+      <div className="flex items-center justify-between p-5 bg-gradient-to-r from-[#225F91]/5 to-[#1ABA7F]/5 rounded-lg border-2 border-[#1ABA7F]/20">
         <span className="text-lg font-bold text-gray-900">Order Total</span>
         <span className="text-3xl font-black text-[#225F91]">
           ₦{(order.totalPrice || 0).toLocaleString()}
@@ -101,7 +101,7 @@ const OrderDetails = ({ order }) => {
 
       {/* Cancellation Notice */}
       {order.status === 'CANCELLED' && (
-        <div className="flex items-start gap-3 p-5 bg-red-50 rounded-xl border border-red-200">
+        <div className="flex items-start gap-3 p-5 bg-red-50 rounded-lg border border-red-200">
           <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" strokeWidth={2} />
           <div className="flex-1">
             <p className="text-sm font-bold text-red-900 mb-2">

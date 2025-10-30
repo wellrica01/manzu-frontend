@@ -1,7 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useDebounce } from './useDebounce';
 import { fetchSuggestions } from '../lib/searchApi';
-import { toast } from 'sonner';
 
 export function useSearchSuggestions(apiUrl) {
   const [suggestions, setSuggestions] = useState([]);

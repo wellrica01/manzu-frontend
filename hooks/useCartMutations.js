@@ -2,23 +2,52 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { updateQuantity, removeItem, bulkRemoveItems } from '../lib/cartApiClient';
 import { toast } from 'sonner';
 
-export function useCartMutations(guestId, apiUrl) {
+export function useCartMutations(guestId, apiUrl, onUpdateSuccess) {
+
   const queryClient = useQueryClient();
   
- const updateQuantityMutation = useMutation({
-  mutationFn: ({ orderItemId, quantity }) =>
-    updateQuantity(guestId, orderItemId, quantity, apiUrl),
-  onError: (error) => {
-    toast.error(error.message || 'Failed to update quantity');
-  },
-  onSuccess: () => {
-    toast.success('Quantity updated');
-  },
-  onSettled: () => {
-    // Force refetch from backend to get accurate data
-    queryClient.invalidateQueries(['cart', guestId]);
-  },
-});
+  const updateQuantityMutation = useMutation({
+    mutationFn: ({ orderItemId, quantity }) =>
+      updateQuantity(guestId, orderItemId, quantity, apiUrl),
+    onError: (error) => {
+      // Handle insufficient stock error with detailed message
+      if (error.response?.data?.error === 'INSUFFICIENT_STOCK') {
+        const details = error.response.data.details;
+        const medicationName = details?.medicationName || 'this item';
+        const pharmacyName = details?.pharmacyName || 'This pharmacy';
+        const available = details?.available || 0;
+        const requested = details?.requested || 0;
+        
+        if (available > 0) {
+          toast.error(`Limited Stock at ${pharmacyName}`, {
+            description: `${pharmacyName} currently has ${available} unit${available !== 1 ? 's' : ''} of ${medicationName}, but you tried to add ${requested}. You can adjust the quantity or search for this medication at other pharmacies.`,
+            duration: 8000,
+          });
+        } else {
+          toast.error(`Out of Stock at ${pharmacyName}`, {
+            description: `${medicationName} is currently out of stock at ${pharmacyName}. Try searching for this medication at other pharmacies in your area.`,
+            duration: 6000
+          });
+        }
+      } else {
+        // Generic error handling
+        toast.error(error.response?.data?.message || error.message || 'Failed to update quantity. Please try again.', {
+          duration: 4000
+        });
+      }
+    },
+    onSuccess: (data, variables) => {
+      
+      // Call the success callback if provided
+      if (onUpdateSuccess) {
+        onUpdateSuccess(variables);
+      }
+    },
+    onSettled: () => {
+      // Force refetch from backend to get accurate data
+      queryClient.invalidateQueries(['cart', guestId]);
+    },
+  });
   
   const removeItemMutation = useMutation({
     mutationFn: (orderItemId) => removeItem(guestId, orderItemId, apiUrl),
@@ -44,10 +73,10 @@ export function useCartMutations(guestId, apiUrl) {
       if (context?.previousCart) {
         queryClient.setQueryData(['cart', guestId], context.previousCart);
       }
-      toast.error(error.message || 'Failed to remove item');
-    },
-    onSuccess: () => {
-      toast.success('Item removed from cart');
+      toast.error('Failed to remove item', {
+        description: error.response?.data?.message || error.message || 'Please try again',
+        duration: 4000
+      });
     },
     onSettled: () => {
       queryClient.invalidateQueries(['cart', guestId]);
@@ -79,10 +108,13 @@ export function useCartMutations(guestId, apiUrl) {
       if (context?.previousCart) {
         queryClient.setQueryData(['cart', guestId], context.previousCart);
       }
-      toast.error(error.message || 'Failed to remove items');
+      toast.error('Failed to remove items', {
+        description: error.response?.data?.message || error.message || 'Please try again',
+        duration: 4000
+      });
     },
     onSuccess: (data, variables) => {
-      toast.success(`Removed ${variables.length} item${variables.length > 1 ? 's' : ''}`);
+      const count = variables.length;
     },
     onSettled: () => {
       queryClient.invalidateQueries(['cart', guestId]);

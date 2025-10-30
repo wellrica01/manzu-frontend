@@ -3,6 +3,8 @@
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -33,14 +35,16 @@ const PrescriptionUploadSection = ({
   prescriptionStatuses = {} 
 }) => {
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadFileInfo, setUploadFileInfo] = useState(null);
   const [uploadedFiles, setUploadedFiles] = useState({});
   const [dragActive, setDragActive] = useState(false);
   const [showUploadArea, setShowUploadArea] = useState(true);
-  const [contactEmail, setContactEmail] = useState('');
   const [contactPhone, setContactPhone] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
   const [filePreview, setFilePreview] = useState(null);
   const [showFilePreview, setShowFilePreview] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [errors, setErrors] = useState({});
   const fileInputRef = useRef(null);
 
@@ -54,15 +58,9 @@ const PrescriptionUploadSection = ({
   const validateContact = () => {
     const newErrors = {};
     
-    if (!contactEmail && !contactPhone) {
-      newErrors.contact = 'Please provide either email or phone number';
-    }
-    
-    if (contactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) {
-      newErrors.email = 'Please enter a valid email address';
-    }
-    
-    if (contactPhone && !/^\+?[\d\s\-\(\)]{10,15}$/.test(contactPhone)) {
+    if (!contactPhone) {
+      newErrors.phone = 'Phone number is required';
+    } else if (!/^\+?[\d\s\-\(\)]{10,15}$/.test(contactPhone)) {
       newErrors.phone = 'Please enter a valid phone number';
     }
     
@@ -86,12 +84,16 @@ const PrescriptionUploadSection = ({
     const file = files[0];
     
     if (file.size > 5 * 1024 * 1024) {
-      alert('File exceeds 5MB limit');
+      toast.error('File is too large. Please upload a file smaller than 5MB.', {
+        duration: 5000,
+      });
       return;
     }
     
     if (!['application/pdf', 'image/jpeg', 'image/png'].includes(file.type)) {
-      alert('Invalid file type. Please upload PDF, JPG, or PNG');
+      toast.error('Unsupported file type. Please upload a PDF, JPG, or PNG file.', {
+        duration: 5000,
+      });
       return;
     }
 
@@ -103,15 +105,15 @@ const PrescriptionUploadSection = ({
   const { isConsentOpen, checkConsent, handleConsentClose } = useConsentCheck();
 
   const handleFileUpload = async () => {
-    if (!selectedFile) {
-      alert('Please select a file first');
-      return;
-    }
+  if (!selectedFile) {
+    toast.error('Please select a file first');
+    return;
+  }
 
-    if (!validateContact()) {
-      alert('Please fix contact information errors');
-      return;
-    }
+  if (!validateContact()) {
+    toast.error('Please fix contact information errors');  
+    return;
+  }
 
   
     // Check consent before uploading
@@ -133,37 +135,77 @@ const PrescriptionUploadSection = ({
     );
     
     formData.append('medicationIds', medicationsNeedingPrescription.map(item => item.medication.id).join(','));
-    formData.append('email', contactEmail);
     formData.append('phone', contactPhone);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart/prescription/upload`, {
-        method: 'POST',
-        headers: { 'x-guest-id': guestId },
-        body: formData
+      const xhr = new XMLHttpRequest();
+      
+      // Track upload progress
+      xhr.upload.addEventListener('progress', (e) => {
+        if (e.lengthComputable) {
+          const progress = (e.loaded / e.total) * 100;
+          setUploadProgress(progress);
+        }
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Upload failed');
-      }
+      xhr.addEventListener('load', () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          const responseData = JSON.parse(xhr.responseText);
+          
+          setUploadedFiles(prev => ({
+            ...prev,
+            [selectedFile.name]: 'uploaded'
+          }));
 
-      setUploadedFiles(prev => ({
-        ...prev,
-        [selectedFile.name]: 'uploaded'
-      }));
+          // Store file info for display
+          setUploadFileInfo(responseData.fileInfo);
 
-      alert('Prescription uploaded successfully!');
-      onUploadSuccess?.();
-      setShowUploadArea(false);
-      setSelectedFile(null);
-      setFilePreview(null);
-      setContactEmail('');
-      setContactPhone('');
+          // Show success dialog
+          setShowSuccessDialog(true);
+          onUploadSuccess?.();
+          setShowUploadArea(false);
+          setSelectedFile(null);
+          setFilePreview(null);
+          setContactPhone('');
+        } else {
+          // Parse error response
+          let errorMessage = 'Upload failed. Please try again.';
+          
+          try {
+            const errorData = JSON.parse(xhr.responseText);
+            errorMessage = errorData.message || errorMessage;
+          } catch (parseError) {
+            console.error('Failed to parse error response:', parseError);
+          }
+          
+          // Show error with longer duration for user to read
+          toast.error(errorMessage, {
+            duration: 6000,
+            description: xhr.status === 400 
+              ? 'Please check your file and try again.' 
+              : 'If this continues, please contact support.'
+          });
+        }
+        setUploading(false);
+        setUploadProgress(0);
+      });
+
+      xhr.addEventListener('error', () => {
+        toast.error('Network error occurred while uploading.', {
+          duration: 5000,
+          description: 'Please check your internet connection and try again.'
+        });
+        setUploading(false);
+        setUploadProgress(0);
+      });
+
+      xhr.open('POST', `${process.env.NEXT_PUBLIC_API_URL}/api/cart/prescription/upload`);
+      xhr.setRequestHeader('x-guest-id', guestId);
+      xhr.send(formData);
     } catch (error) {
-      alert(error.message);
-    } finally {
+      toast.error(error.message);
       setUploading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -445,61 +487,35 @@ const PrescriptionUploadSection = ({
               <div className="p-6 bg-gradient-to-br from-blue-50 to-white rounded-2xl border border-blue-200">
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 mb-4">
-                    <Mail className="h-5 w-5 text-blue-600" strokeWidth={2} />
+                    <Phone className="h-5 w-5 text-blue-600" strokeWidth={2} />
                     <h4 className="text-base font-bold text-gray-900">Contact Information</h4>
                   </div>
                   <p className="text-sm text-gray-600 leading-relaxed">
-                    We'll notify you when your prescription is verified
+                    We'll notify you via SMS when your prescription is verified
                   </p>
                   
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="email" className="text-sm font-bold text-gray-900">
-                        Email Address
-                      </Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="your@email.com"
-                        value={contactEmail}
-                        onChange={(e) => setContactEmail(e.target.value)}
-                        className={cn(
-                          "h-12",
-                          errors.email ? 'border-red-300' : ''
-                        )}
-                      />
-                      {errors.email && (
-                        <p className="text-sm text-red-600">{errors.email}</p>
+                  <div className="space-y-2">
+                    <Label htmlFor="phone" className="text-sm font-bold text-gray-900">
+                      Phone Number
+                    </Label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      placeholder="+234 801 234 5678"
+                      value={contactPhone}
+                      onChange={(e) => {
+                        setContactPhone(e.target.value);
+                        setErrors(prev => ({ ...prev, phone: null }));
+                      }}
+                      className={cn(
+                        "h-12",
+                        errors.phone ? 'border-red-300' : ''
                       )}
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="phone" className="text-sm font-bold text-gray-900">
-                        Phone Number
-                      </Label>
-                      <Input
-                        id="phone"
-                        type="tel"
-                        placeholder="+234 801 234 5678"
-                        value={contactPhone}
-                        onChange={(e) => setContactPhone(e.target.value)}
-                        className={cn(
-                          "h-12",
-                          errors.phone ? 'border-red-300' : ''
-                        )}
-                      />
-                      {errors.phone && (
-                        <p className="text-sm text-red-600">{errors.phone}</p>
-                      )}
-                    </div>
+                    />
+                    {errors.phone && (
+                      <p className="text-sm text-red-600">{errors.phone}</p>
+                    )}
                   </div>
-                  
-                  {errors.contact && (
-                    <div className="flex items-start gap-2 p-3 bg-red-50 rounded-lg border border-red-200">
-                      <AlertTriangle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" strokeWidth={2} />
-                      <p className="text-sm text-red-700">{errors.contact}</p>
-                    </div>
-                  )}
                   
                   <Button
                     onClick={handleFileUpload}
@@ -518,6 +534,29 @@ const PrescriptionUploadSection = ({
                       </>
                     )}
                   </Button>
+                </div>
+              </div>
+            )}
+            {/* Upload Progress */}
+            {uploading && uploadProgress > 0 && (
+              <div className="space-y-3 p-5 rounded-2xl bg-gradient-to-br from-[#1ABA7F]/5 to-white border border-[#1ABA7F]/20">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-700 font-semibold flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin text-[#1ABA7F]" strokeWidth={2} />
+                    Uploading prescription...
+                  </span>
+                  <span className="text-[#225F91] font-bold">{Math.round(uploadProgress)}%</span>
+                </div>
+                <Progress value={uploadProgress} className="h-2" />
+              </div>
+            )}
+
+            {errors.file && (
+              <div className="flex items-start gap-2 p-3 bg-red-50 rounded-lg border border-red-200 mb-4">
+                <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" strokeWidth={2} />
+                <div>
+                  <p className="text-sm font-semibold text-red-800">File Error</p>
+                  <p className="text-sm text-red-700">{errors.file}</p>
                 </div>
               </div>
             )}
@@ -607,6 +646,56 @@ const PrescriptionUploadSection = ({
       </CardContent>
 
       <ConsentModal isOpen={isConsentOpen} onClose={handleConsentClose} />
+
+      {/* Success Dialog */}
+      <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+        <DialogContent className="max-w-md rounded-3xl">
+          <div className="bg-gradient-to-br from-[#1ABA7F] to-[#16a876] p-8 -m-6 mb-0 rounded-t-3xl text-white">
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm border-2 border-white/30">
+                <CheckCircle className="h-8 w-8 text-white" strokeWidth={2.5} />
+              </div>
+              <div className="text-center">
+                <h3 className="text-2xl font-bold mb-1">Upload Successful!</h3>
+                <p className="text-white/90 text-sm">Your prescription is being reviewed</p>
+              </div>
+            </div>
+          </div>
+
+          {uploadFileInfo && (
+            <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <p className="text-xs text-gray-600 mb-2 font-semibold">File Processing Stats</p>
+              <div className="space-y-1 text-xs text-gray-700">
+                <div className="flex justify-between">
+                  <span>Original Size:</span>
+                  <span className="font-medium">{(uploadFileInfo.originalSize / 1024).toFixed(1)} KB</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Optimized Size:</span>
+                  <span className="font-medium">{(uploadFileInfo.processedSize / 1024).toFixed(1)} KB</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Size Reduction:</span>
+                  <span className="font-bold text-green-600">{uploadFileInfo.compressionRatio}</span>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <div className="p-6 space-y-4">
+            <p className="text-sm text-gray-700 text-center">
+              Our pharmacy team will verify your prescription within 15-30 minutes during business hours.
+            </p>
+            
+            <Button
+              onClick={() => setShowSuccessDialog(false)}
+              className="w-full h-12 bg-gradient-to-r from-[#225F91] to-[#1a4a73] hover:from-[#1a4a73] hover:to-[#225F91] text-white font-bold rounded-lg"
+            >
+              Continue
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };

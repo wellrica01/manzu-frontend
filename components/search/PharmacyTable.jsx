@@ -86,9 +86,9 @@ const PharmacyTable = ({
 
   return (
     <div className="hidden sm:block">
-      <div className="rounded-2xl overflow-hidden border-2 border-gray-200 shadow-xl bg-white">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse" aria-describedby={`pharmacy-comparison-${medId}`}>
+    <div className="rounded-2xl border-2 border-gray-200 shadow-xl bg-white">
+      <div className="overflow-x-auto w-full">
+        <table className="min-w-full table-auto text-left border-collapse">
             <caption id={`pharmacy-comparison-${medId}`} className="sr-only">
               Comparison of pharmacies for {displayName}
             </caption>

@@ -446,7 +446,9 @@ const MedicationCard = ({
       guestId={guestId} 
       fetchCart={fetchCart}
     />
-    {!isMultiMed && (
+    
+    {/*
+        {!isMultiMed && (
       <PharmacyTable
         availability={med.availability}
         medId={med.id}
@@ -464,6 +466,9 @@ const MedicationCard = ({
         fetchCart={fetchCart}
       />
     )}
+    
+    */}
+
   </>
 )}
       </div>

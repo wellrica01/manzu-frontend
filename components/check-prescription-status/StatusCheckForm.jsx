@@ -8,7 +8,7 @@ import {
   Home, 
   Clock, 
   FileText,
-  Mail,
+  Phone,
   Loader2
 } from 'lucide-react';
 
@@ -22,13 +22,13 @@ const StatusCheckForm = ({ onSubmit, onBackToHome, isLoading }) => {
   };
 
   return (
-    <Card className="relative bg-white border-2 border-gray-100 rounded-3xl shadow-lg overflow-hidden">
+    <Card className="relative bg-white border-2 border-gray-100 rounded-lg shadow-lg overflow-hidden">
       {/* Subtle decorative element */}
       <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-[#1ABA7F]/5 to-transparent" />
       
       <CardHeader className="relative z-10 px-6 py-8 border-b border-gray-100">
         <div className="flex items-center gap-3 justify-center mb-3">
-          <div className="p-3 rounded-xl bg-gradient-to-br from-[#1ABA7F] to-[#16a876] shadow-md">
+          <div className="p-3 rounded-lg bg-gradient-to-br from-[#1ABA7F] to-[#16a876] shadow-md">
             <FileText className="h-6 w-6 text-white" strokeWidth={2} />
           </div>
           <CardTitle className="text-3xl font-bold text-[#225F91]">
@@ -47,16 +47,16 @@ const StatusCheckForm = ({ onSubmit, onBackToHome, isLoading }) => {
               htmlFor="identifier" 
               className="text-sm font-bold text-gray-900 uppercase tracking-wider"
             >
-              Email or Phone Number
+              Phone Number
             </Label>
             
             <div className="relative">
-              <div className={`absolute inset-0 rounded-xl bg-gradient-to-r from-[#1ABA7F] to-[#16a876] opacity-0 blur-lg transition-opacity duration-300 ${
+              <div className={`absolute inset-0 rounded-lg bg-gradient-to-r from-[#1ABA7F] to-[#16a876] opacity-0 blur-lg transition-opacity duration-300 ${
                 isFocused ? 'opacity-20' : ''
               }`} />
               
               <div className="relative">
-                <Mail className={`absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 transition-colors duration-300 ${
+                <Phone className={`absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 transition-colors duration-300 ${
                   isFocused ? 'text-[#1ABA7F]' : 'text-gray-400'
                 }`} strokeWidth={2} />
                 
@@ -67,8 +67,8 @@ const StatusCheckForm = ({ onSubmit, onBackToHome, isLoading }) => {
                   onChange={(e) => setIdentifier(e.target.value)}
                   onFocus={() => setIsFocused(true)}
                   onBlur={() => setIsFocused(false)}
-                  className="relative h-14 pl-12 pr-4 text-sm sm:text-base font-medium rounded-xl border-2 border-gray-200 focus:border-[#1ABA7F] focus:ring-4 focus:ring-[#1ABA7F]/10 transition-all duration-300"
-                  placeholder="your@email.com or +234 901 2345 678..."
+                  className="relative h-14 pl-12 pr-4 text-sm sm:text-base font-medium rounded-lg border-2 border-gray-200 focus:border-[#1ABA7F] focus:ring-4 focus:ring-[#1ABA7F]/10 transition-all duration-300"
+                  placeholder="+234 901 2345 678..."
                   required
                 />
               </div>
@@ -76,14 +76,14 @@ const StatusCheckForm = ({ onSubmit, onBackToHome, isLoading }) => {
             
             <p className="text-sm text-gray-500 flex items-start gap-2">
               <Clock className="h-4 w-4 flex-shrink-0 mt-0.5 text-gray-400" strokeWidth={2} />
-              <span>Use the same contact info you provided when uploading your file</span>
+              <span>Use the same phone number you provided when uploading your prescription</span>
             </p>
           </div>
 
           <Button
             onClick={handleSubmit}
             disabled={isLoading || !identifier}
-            className="w-full h-14 bg-gradient-to-r from-[#1ABA7F] to-[#16a876] hover:from-[#16a876] hover:to-[#1ABA7F] text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full h-14 bg-gradient-to-r from-[#1ABA7F] to-[#16a876] hover:from-[#16a876] hover:to-[#1ABA7F] text-white font-bold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? (
               <span className="flex items-center justify-center gap-2">
@@ -111,7 +111,7 @@ const StatusCheckForm = ({ onSubmit, onBackToHome, isLoading }) => {
         <Button
           onClick={onBackToHome}
           variant="outline"
-          className="w-full h-12 border-2 border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 font-semibold rounded-xl transition-all duration-200"
+          className="w-full h-12 border-2 border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 font-semibold rounded-lg transition-all duration-200"
         >
           <Home className="h-5 w-5 mr-2" strokeWidth={2} />
           Back to Home

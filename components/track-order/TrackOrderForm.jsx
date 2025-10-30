@@ -17,13 +17,13 @@ const TrackOrderForm = ({
   const [isFocused, setIsFocused] = useState(false);
 
   return (
-    <Card className="relative bg-white border-2 border-gray-100 rounded-3xl shadow-lg overflow-hidden">
+    <Card className="relative bg-white border-2 border-gray-100 rounded-lg shadow-lg overflow-hidden">
       {/* Subtle decorative element */}
       <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-[#1ABA7F]/5 to-transparent" />
       
       <CardHeader className="relative z-10 px-6 py-8 border-b border-gray-100">
         <div className="flex items-center gap-3 justify-center mb-3">
-          <div className="p-3 rounded-xl bg-gradient-to-br from-[#1ABA7F] to-[#16a876] shadow-md">
+          <div className="p-3 rounded-lg bg-gradient-to-br from-[#1ABA7F] to-[#16a876] shadow-md">
             <Search className="h-6 w-6 text-white" strokeWidth={2} />
           </div>
           <CardTitle className="text-3xl font-bold text-[#225F91]">
@@ -46,7 +46,7 @@ const TrackOrderForm = ({
             </Label>
             
             <div className="relative">
-              <div className={`absolute inset-0 rounded-xl bg-gradient-to-r from-[#1ABA7F] to-[#16a876] opacity-0 blur-lg transition-opacity duration-300 ${
+              <div className={`absolute inset-0 rounded-lg bg-gradient-to-r from-[#1ABA7F] to-[#16a876] opacity-0 blur-lg transition-opacity duration-300 ${
                 isFocused ? 'opacity-20' : ''
               }`} />
               
@@ -56,7 +56,7 @@ const TrackOrderForm = ({
                 onChange={(e) => onTrackingCodeChange(e.target.value)}
                 onFocus={() => setIsFocused(true)}
                 onBlur={() => setIsFocused(false)}
-                className="relative h-14 text-sm sm:text-base font-medium rounded-xl border-2 border-gray-200 focus:border-[#1ABA7F] focus:ring-4 focus:ring-[#1ABA7F]/10 transition-all duration-300 px-4"
+                className="relative h-14 text-sm sm:text-base font-medium rounded-lg border-2 border-gray-200 focus:border-[#1ABA7F] focus:ring-4 focus:ring-[#1ABA7F]/10 transition-all duration-300 px-4"
                 placeholder="e.g., TRK-00A7-LMK6X1-J8Q"
                 required
               />
@@ -71,7 +71,7 @@ const TrackOrderForm = ({
           <Button
             onClick={() => onSubmit(trackingCode)}
             disabled={isLoading || !trackingCode}
-            className="w-full h-14 bg-gradient-to-r from-[#1ABA7F] to-[#16a876] hover:from-[#16a876] hover:to-[#1ABA7F] text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full h-14 bg-gradient-to-r from-[#1ABA7F] to-[#16a876] hover:from-[#16a876] hover:to-[#1ABA7F] text-white font-bold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? (
               <span className="flex items-center justify-center gap-2">
@@ -99,7 +99,7 @@ const TrackOrderForm = ({
         <Button
           onClick={onBackToHome}
           variant="outline"
-          className="w-full h-12 border-2 border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 font-semibold rounded-xl transition-all duration-200"
+          className="w-full h-12 border-2 border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 font-semibold rounded-lg transition-all duration-200"
         >
           <Home className="h-5 w-5 mr-2" strokeWidth={2} />
           Back to Home

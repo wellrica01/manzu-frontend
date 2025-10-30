@@ -180,6 +180,12 @@ export default function PharmacySalesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [refreshCounter, setRefreshCounter] = useState(0);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 20,
+    total: 0,
+    pages: 1,
+  });
 
   // Filters
   const [dateFilter, setDateFilter] = useState("");
@@ -206,7 +212,12 @@ export default function PharmacySalesPage() {
       setLoading(true);
       setError(null);
       try {
-        const params = {};
+        
+        const params = {
+          page: pagination.page,
+          limit: pagination.limit,
+          // ... existing filters
+        };
         
         if (dateFilter) {
           params.date = dateFilter;
@@ -220,22 +231,16 @@ export default function PharmacySalesPage() {
         if (maxAmount) params.maxAmount = maxAmount;
 
         const data = await fetchSales(params);
-        const salesData = data.sales || [];
-        setSales(salesData);
-
-        const total = salesData.length;
-        const revenue = salesData.reduce((sum, sale) => sum + sale.total, 0);
-        const cash = salesData.filter(s => s.paymentMethod === 'CASH').length;
-        const card = salesData.filter(s => s.paymentMethod === 'CARD').length;
-        const avg = total > 0 ? revenue / total : 0;
-
+        setSales(data.sales || []);
+        setPagination(data.pagination || pagination);
         setStats({
-          totalSales: total,
-          totalRevenue: revenue,
-          cashSales: cash,
-          cardSales: card,
-          avgTransaction: avg,
+          totalSales: data.pagination.total,
+          totalRevenue: data.stats.totalRevenue,
+          cashSales: data.stats.cashSales,
+          cardSales: data.stats.cardSales,
+          avgTransaction: data.pagination.total > 0 ? data.stats.totalRevenue / data.pagination.total : 0,
         });
+
       } catch (e) {
         setError("Failed to load sales records.");
         console.error(e);
@@ -244,7 +249,7 @@ export default function PharmacySalesPage() {
       }
     }
     loadSales();
-  }, [dateFilter, dateRange, paymentMethod, minAmount, maxAmount, refreshCounter]);
+  }, [dateFilter, dateRange, paymentMethod, minAmount, maxAmount, refreshCounter, pagination.page]);
 
   // Export function
   const handleExport = async () => {
@@ -622,6 +627,7 @@ export default function PharmacySalesPage() {
           </button>
         </div>
 
+
         <div className="p-3 md:p-6">
           {loading ? (
             <div className="text-center py-12">
@@ -640,6 +646,32 @@ export default function PharmacySalesPage() {
             </div>
           )}
         </div>
+
+          {/*  PAGINATION CONTROLS  */}
+          {pagination.pages > 1 && (
+            <div className="p-4 md:p-6 border-t border-gray-200 flex items-center justify-between">
+              <button
+                onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
+                disabled={pagination.page === 1}
+                className="px-3 md:px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-sm md:text-base"
+              >
+                Previous
+              </button>
+              
+              <span className="text-xs md:text-sm text-gray-600">
+                Page {pagination.page} of {pagination.pages} ({pagination.total} total)
+              </span>
+              
+              <button
+                onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
+                disabled={pagination.page === pagination.pages}
+                className="px-3 md:px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-sm md:text-base"
+              >
+                Next
+              </button>
+            </div>
+          )}
+
       </div>
 
       {/* Sale Details Modal */}

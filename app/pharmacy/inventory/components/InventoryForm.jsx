@@ -6,60 +6,9 @@ import {
   DollarSign, Calendar, Hash, Upload, X, ChevronDown, ChevronRight
 } from "lucide-react";
 import { AutocompleteInput } from "@/components/AutocompleteInput";
+import { pharmacyInventoryAPI } from '@/lib/pharmacyApiClient';
 
-async function searchMedications(query) {
-  const token = localStorage.getItem('pharmacyToken');
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/medication-suggestions?q=${query}`, {
-    headers: { 'Authorization': `Bearer ${token}` },
-  });
-  if (!res.ok) throw new Error('Failed to search medications');
-  const data = await res.json();
-  // The endpoint returns suggestions array directly or in a wrapper
-  const medications = Array.isArray(data) ? data : (data.suggestions || data.medications || []);
-  
-  // Return in the format AutocompleteInput expects
-  return {
-    data: {
-      result: {
-        medications: medications
-      }
-    }
-  };
-}
 
-async function createInventoryItem(formData) {
-  const token = localStorage.getItem('pharmacyToken');
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/pharmacy/medications`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(formData),
-  });
-  if (!res.ok) {
-    const error = await res.json();
-    throw new Error(error.message || 'Failed to create inventory item');
-  }
-  return res.json();
-}
-
-async function updateInventoryItem(medicationId, formData) {
-  const token = localStorage.getItem('pharmacyToken');
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/pharmacy/medications/${medicationId}`, {
-    method: 'PATCH',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(formData),
-  });
-  if (!res.ok) {
-    const error = await res.json();
-    throw new Error(error.message || 'Failed to update inventory item');
-  }
-  return res.json();
-}
 
 // Helper Components
 const FormSection = ({ title, description, icon: Icon, children, collapsible = false, defaultOpen = true }) => {
@@ -242,12 +191,12 @@ export default function InventoryForm({ item = {}, mode = "create", onSuccess })
         batchNumber: form.batchNumber.trim(),
         expiryDate: form.expiryDate,
       };
-
-      if (mode === "edit") {
-        await updateInventoryItem(item.medicationId, payload);
-      } else {
-        await createInventoryItem(payload);
-      }
+      
+    if (mode === "edit") {
+      await pharmacyInventoryAPI.updateInventoryItem(item.medicationId, payload);
+    } else {
+      await pharmacyInventoryAPI.createInventoryItem(payload);
+    }
 
       setSuccess(true);
       if (onSuccess) onSuccess();
@@ -280,12 +229,25 @@ export default function InventoryForm({ item = {}, mode = "create", onSuccess })
           description="Select the medication to add to inventory"
           icon={Package}
         >
-          <FormField 
-            label="Medication" 
-            required 
-            error={fieldErrors.medicationId}
-          >
-          <AutocompleteInput
+      <FormField 
+        label="Medication" 
+        required 
+        error={fieldErrors.medicationId}
+      >
+        {mode === "edit" ? (
+          // Show static medication info in edit mode
+          <div className="p-3 bg-gray-50 border border-gray-300 rounded-lg">
+            <p className="text-sm font-medium text-gray-900">{form.medication?.brandName || item.brandName || "Unknown"}</p>
+            <div className="text-xs text-gray-600 mt-1 space-y-0.5">
+              <p><strong>Manufacturer:</strong> {form.medication?.Manufacturer?.name || item.Manufacturer?.name || "Unknown"}</p>
+              <p><strong>Form:</strong> {form.medication?.form || item.form || "Not specified"}</p>
+              <p><strong>Pack Size:</strong> {form.medication?.packSizeExpression || item.packSizeExpression} {form.medication?.packSizeUnit || item.packSizeUnit}</p>
+            </div>
+          </div>
+        ) : (
+          // Show autocomplete input in create mode
+          <>
+            <AutocompleteInput
               value={form.medication}
               onChange={(selected) => {
                 setForm(prev => ({
@@ -295,17 +257,11 @@ export default function InventoryForm({ item = {}, mode = "create", onSuccess })
                 }));
                 validateField('medicationId', selected?.id || "");
               }}
-              fetchOptions={searchMedications}
+              fetchOptions={pharmacyInventoryAPI.searchMedications}
               placeholder="Type medication name..."
               displayFn={(option) => option?.displayName || option?.brandName || ''}
-              disabled={mode === "edit"}
               minChars={2}
             />
-            {mode === "edit" && (
-              <p className="text-xs text-gray-500 mt-1">
-                Medication cannot be changed when editing
-              </p>
-            )}
             {form.medication && (
               <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                 <p className="text-xs font-medium text-blue-900">Selected Medication:</p>
@@ -320,7 +276,9 @@ export default function InventoryForm({ item = {}, mode = "create", onSuccess })
                 </div>
               </div>
             )}
-          </FormField>
+          </>
+        )}
+      </FormField>
         </FormSection>
 
         {/* Stock & Pricing */}

@@ -5,37 +5,37 @@ import {
   Banknote, CheckCircle, AlertTriangle, Loader2, Receipt,
   DollarSign, Package, X, Calculator, Clock, User
 } from "lucide-react";
+import { pharmacyMedicationsAPI, pharmacySalesAPI } from '@/lib/pharmacyApiClient';
 
 const brandGreen = "#1ABA7F";
 const brandBlue = "#225F91";
 
-// Mock AutocompleteInput for demo
 function AutocompleteInput({ value, onChange, placeholder }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [showResults, setShowResults] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const mockMeds = [
-    { medicationId: 1, brandName: "Paracetamol 500mg", form: "Tablet", stock: 150, price: 500, packSizeExpression: "20", packSizeUnit: "tabs" },
-    { medicationId: 2, brandName: "Amoxicillin 250mg", form: "Capsule", stock: 80, price: 1200, packSizeExpression: "10", packSizeUnit: "caps" },
-    { medicationId: 3, brandName: "Ibuprofen 400mg", form: "Tablet", stock: 200, price: 800, packSizeExpression: "20", packSizeUnit: "tabs" },
-    { medicationId: 4, brandName: "Cetirizine 10mg", form: "Tablet", stock: 120, price: 600, packSizeExpression: "10", packSizeUnit: "tabs" },
-    { medicationId: 5, brandName: "Omeprazole 20mg", form: "Capsule", stock: 90, price: 1500, packSizeExpression: "14", packSizeUnit: "caps" },
-  ];
-
-  const handleSearch = (val) => {
-    setQuery(val);
-    if (val.length >= 2) {
-      const filtered = mockMeds.filter(med => 
-        med.brandName.toLowerCase().includes(val.toLowerCase())
-      );
-      setResults(filtered);
+const handleSearch = async (val) => {
+  setQuery(val);
+  if (val.length >= 2) {
+    setLoading(true);
+    try {
+      const response = await pharmacyMedicationsAPI.fetchMedications({ search: val });
+      setResults(response.medications || []);
       setShowResults(true);
-    } else {
+    } catch (error) {
+      console.error('Search error:', error);
       setResults([]);
       setShowResults(false);
+    } finally {
+      setLoading(false);
     }
-  };
+  } else {
+    setResults([]);
+    setShowResults(false);
+  }
+};
 
   return (
     <div className="relative">
@@ -46,6 +46,7 @@ function AutocompleteInput({ value, onChange, placeholder }) {
         placeholder={placeholder}
         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1ABA7F] focus:border-transparent"
       />
+      {loading && <div className="absolute right-3 top-3"><Loader2 className="w-4 h-4 animate-spin" /></div>}
       {showResults && results.length > 0 && (
         <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
           {results.map((med) => (
@@ -321,55 +322,31 @@ export default function PharmacyPOSPage() {
   };
 
 const handleCompleteSale = async () => {
-  if (cart.length === 0) {
-    setError("Cart is empty");
-    return;
-  }
-
+  if (cart.length === 0) return;
   setProcessing(true);
   setError(null);
 
-  try {
-    const token = localStorage.getItem('pharmacyToken');
-    
-    // Format items for the API
-    const formattedItems = cart.map(item => ({
-      medicationId: item.medicationId,
-      quantity: item.quantity,
-      price: item.price,
-      name: item.name,
-    }));
+  const formattedItems = cart.map(item => ({
+    medicationId: item.medicationId,
+    quantity: item.quantity,
+    price: item.price,
+    name: item.name
+  }));
 
-    // Make the API call
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/pharmacy/sales`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        items: formattedItems,
-        total: calculateTotal(),
-        paymentMethod: paymentMethod,
-      }),
+  try {
+    const response = await pharmacySalesAPI.recordSale({
+      items: formattedItems,
+      total: calculateTotal(),
+      paymentMethod: paymentMethod,
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to complete sale');
-    }
-
-    const data = await response.json();
-
-    // Show receipt with the sale data
     setCompletedSale({
-      id: data.sale.id,
+      id: response.sale.id,
       items: cart,
       total: calculateTotal(),
       paymentMethod: paymentMethod,
     });
 
-    // Clear cart and reset
     setCart([]);
     setPaymentMethod("CASH");
   } catch (err) {
@@ -379,7 +356,6 @@ const handleCompleteSale = async () => {
     setProcessing(false);
   }
 };
-
 
   const total = calculateTotal();
 

@@ -6,9 +6,10 @@ export default function TrackingSection({ trackingCode, isDelivery, deliveryAddr
   return (
     <Card className="bg-white border-2 border-gray-100 rounded-3xl shadow-lg">
       <CardContent className="p-6 sm:p-8 space-y-6">
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid md:grid-cols-1 gap-6">
           <div className="space-y-4">
-            <div className="p-5 bg-gradient-to-br from-blue-50 to-white rounded-2xl border border-blue-200">
+
+            <div className="p-5 bg-gradient-to-br from-blue-50 to-white rounded-lg border border-blue-200">
                   <h3 className="text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">
                     Tracking Code
                     </h3>
@@ -18,7 +19,7 @@ export default function TrackingSection({ trackingCode, isDelivery, deliveryAddr
             </div>
 
             {isDelivery && (
-              <div className="p-5 bg-gradient-to-br from-green-50 to-white rounded-2xl border border-green-200">
+              <div className="p-5 bg-gradient-to-br from-green-50 to-white rounded-lg border border-green-200">
                 <div className="flex items-center gap-2 mb-2">
                   <Clock className="h-4 w-4 text-green-600" strokeWidth={2} />
                   <h3 className="text-xs font-bold text-gray-600 uppercase tracking-wider">
@@ -30,7 +31,7 @@ export default function TrackingSection({ trackingCode, isDelivery, deliveryAddr
             )}
 
             {deliveryAddress && (
-              <div className="p-5 bg-gradient-to-br from-purple-50 to-white rounded-2xl border border-purple-200">
+              <div className="p-5 bg-gradient-to-br from-purple-50 to-white rounded-lg border border-purple-200">
                 <div className="flex items-center gap-2 mb-2">
                   <MapPin className="h-4 w-4 text-purple-600" />
                   <h3 className="text-xs font-bold text-gray-600 uppercase tracking-wider">
@@ -42,10 +43,9 @@ export default function TrackingSection({ trackingCode, isDelivery, deliveryAddr
                   </p>
               </div>
             )}
-          </div>
 
-          {trackingCode && typeof window !== 'undefined' && (
-          <div className="flex flex-col items-center justify-center p-8 bg-gradient-to-br from-gray-50 to-white rounded-2xl border-2 border-gray-200">
+       {trackingCode && typeof window !== 'undefined' && (
+          <div className="flex flex-col items-center justify-center p-8 bg-gradient-to-br from-gray-50 to-white rounded-lg border-2 border-gray-200">
             <h3 className="text-xs font-bold text-gray-600 mb-4 uppercase tracking-wider">
                 Scan to Track
                 </h3>
@@ -63,6 +63,9 @@ export default function TrackingSection({ trackingCode, isDelivery, deliveryAddr
             </p>
             </div>
           )}
+
+
+          </div>
         </div>
       </CardContent>
     </Card>

@@ -10,9 +10,6 @@ export function useConfirmationData(guestId, session, reference) {
     staleTime: Infinity, // Confirmation data never changes
     retry: 2,
     onSuccess: (data) => {
-      toast.success('Order confirmed! You will receive an email with your tracking code.', { 
-        duration: 6000 
-      });
       
       // Analytics tracking
       if (typeof window !== 'undefined' && window.gtag) {

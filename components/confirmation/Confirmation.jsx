@@ -121,15 +121,9 @@ export default function Confirmation() {
       {/* Main Content */}
       <div className="relative z-10 py-12 px-4">
         <div className="w-full max-w-4xl mx-auto space-y-8">
+          
           {/* Success Header */}
           <SuccessHeader firstName={firstName} />
-
-          {/* Tracking Section */}
-          <TrackingSection
-            trackingCode={confirmationData.trackingCode}
-            isDelivery={isDelivery}
-            deliveryAddress={deliveryOrder?.address}
-          />
 
           {/* Order Summary */}
           <div className="space-y-6">
@@ -147,6 +141,15 @@ export default function Confirmation() {
               ))
             )}
           </div>
+
+          {/* Tracking Section */}
+          <TrackingSection
+            trackingCode={confirmationData.trackingCode}
+            isDelivery={isDelivery}
+            deliveryAddress={deliveryOrder?.address}
+          />
+
+
 
           {/* Next Steps */}
           <NextStepsCard

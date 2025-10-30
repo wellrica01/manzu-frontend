@@ -205,13 +205,32 @@ function CartComponent() {
   const { isConsentOpen, checkConsent, handleConsentClose } = useConsentCheck();
 
   const { cart, itemCount, isLoading, isError, error, refetch } = useCartData(guestId, apiUrl);
+
+
+  const handleUpdateSuccess = useCallback((variables) => {
+    // Find the item name from cart data
+    const item = cart?.pharmacies
+      ?.flatMap(p => p.items)
+      .find(i => i.id === variables.orderItemId);
+    
+    if (item) {
+      setQuantityUpdate({ 
+        id: variables.orderItemId, 
+        name: item.medication.displayName, 
+        quantity: variables.quantity 
+      });
+    }
+  }, [cart]);
+
   const { 
     updateQuantity, 
     removeItem: removeItemMutation, 
     bulkRemove,
     isUpdating,
     isRemoving 
-  } = useCartMutations(guestId, apiUrl);
+  } = useCartMutations(guestId, apiUrl, handleUpdateSuccess);
+
+
   const isOnline = useOfflineDetection();
   const {
     selectionMode,
@@ -327,7 +346,6 @@ function CartComponent() {
         setPrescriptionStatuses(statuses);
       }
       
-      toast.success('Cart updated successfully', { duration: 2000 });
       trackEvent('cart_refreshed');
     } catch (err) {
       toast.error('Failed to refresh cart', { duration: 4000 });
@@ -345,7 +363,6 @@ function CartComponent() {
     }
 
     updateQuantity({ orderItemId, quantity: newQuantity });
-    setQuantityUpdate({ id: orderItemId, name: itemName, quantity: newQuantity });
     trackEvent('update_cart_quantity', { orderItemId, quantity: newQuantity });
   }, [updateQuantity, isOnline]);
 
@@ -448,7 +465,6 @@ function CartComponent() {
         setPrescriptionStatuses(statuses);
       }
       
-      toast.success('Prescription uploaded successfully. Please wait for verification.', { duration: 4000 });
       trackEvent('prescription_uploaded');
     } catch (err) {
       toast.error('Failed to refresh cart after upload', { duration: 4000 });

@@ -30,136 +30,180 @@ const brandOrange = "#FF6B35";
 const brandPurple = "#7C3AED";
 const brandRed = "#EF4444";
 
+
 // API Functions
+// Helper to safely get token
+function getAuthToken() {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem("pharmacyToken");
+}
+
+// Helper to create auth headers
+function getAuthHeaders() {
+  const token = getAuthToken();
+  return {
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+  };
+}
+
+// API Functions with improved error handling
 async function fetchBankingStatus() {
-  const token = localStorage.getItem("pharmacyToken");
+  const token = getAuthToken();
+  if (!token) throw new Error("Authentication required");
+  
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/api/pharmacy/banking/status`,
     {
       headers: { Authorization: `Bearer ${token}` },
     }
   );
-  if (!res.ok) throw new Error("Failed to fetch banking status");
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || "Failed to fetch banking status");
+  }
   return res.json();
 }
 
 async function fetchNigerianBanks() {
-  const token = localStorage.getItem("pharmacyToken");
+  const token = getAuthToken();
+  if (!token) throw new Error("Authentication required");
+  
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/api/pharmacy/banking/banks`,
     {
       headers: { Authorization: `Bearer ${token}` },
     }
   );
-  if (!res.ok) throw new Error("Failed to fetch banks");
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || "Failed to fetch banks");
+  }
   return res.json();
 }
 
 async function verifyBankAccount(accountNumber, bankCode) {
-  const token = localStorage.getItem("pharmacyToken");
+  const token = getAuthToken();
+  if (!token) throw new Error("Authentication required");
+  
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/api/pharmacy/banking/verify`,
     {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ accountNumber, bankCode }),
     }
   );
   if (!res.ok) {
-    const error = await res.json();
+    const error = await res.json().catch(() => ({ message: "Account verification failed" }));
     throw new Error(error.message || "Account verification failed");
   }
   return res.json();
 }
 
 async function setupBankAccount(accountNumber, bankCode, bankName) {
-  const token = localStorage.getItem("pharmacyToken");
+  const token = getAuthToken();
+  if (!token) throw new Error("Authentication required");
+  
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/api/pharmacy/banking/setup`,
     {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ accountNumber, bankCode, bankName }),
     }
   );
   if (!res.ok) {
-    const error = await res.json();
+    const error = await res.json().catch(() => ({ message: "Banking setup failed" }));
     throw new Error(error.message || "Banking setup failed");
   }
   return res.json();
 }
 
 async function updateBankAccount(accountNumber, bankCode, bankName) {
-  const token = localStorage.getItem("pharmacyToken");
+  const token = getAuthToken();
+  if (!token) throw new Error("Authentication required");
+  
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/api/pharmacy/banking/update`,
     {
       method: "PUT",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ accountNumber, bankCode, bankName }),
     }
   );
   if (!res.ok) {
-    const error = await res.json();
+    const error = await res.json().catch(() => ({ message: "Banking update failed" }));
     throw new Error(error.message || "Banking update failed");
   }
   return res.json();
 }
 
 async function fetchPayoutSummary() {
-  const token = localStorage.getItem("pharmacyToken");
+  const token = getAuthToken();
+  if (!token) throw new Error("Authentication required");
+  
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/api/pharmacy/payouts/summary`,
     {
       headers: { Authorization: `Bearer ${token}` },
     }
   );
-  if (!res.ok) throw new Error("Failed to fetch payout summary");
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || "Failed to fetch payout summary");
+  }
   return res.json();
 }
 
 async function fetchPayoutHistory(page = 1, limit = 20) {
-  const token = localStorage.getItem("pharmacyToken");
+  const token = getAuthToken();
+  if (!token) throw new Error("Authentication required");
+  
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/api/pharmacy/payouts/history?page=${page}&limit=${limit}`,
     {
       headers: { Authorization: `Bearer ${token}` },
     }
   );
-  if (!res.ok) throw new Error("Failed to fetch payout history");
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || "Failed to fetch payout history");
+  }
   return res.json();
 }
 
 async function fetchPendingPayoutOrders() {
-  const token = localStorage.getItem("pharmacyToken");
+  const token = getAuthToken();
+  if (!token) throw new Error("Authentication required");
+  
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/api/pharmacy/orders/pending-payout`,
     {
       headers: { Authorization: `Bearer ${token}` },
     }
   );
-  if (!res.ok) throw new Error("Failed to fetch pending payout orders");
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || "Failed to fetch pending payout orders");
+  }
   return res.json();
 }
 
 async function fetchEarningsAnalytics(period = "week") {
-  const token = localStorage.getItem("pharmacyToken");
+  const token = getAuthToken();
+  if (!token) throw new Error("Authentication required");
+  
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/api/pharmacy/earnings/analytics?period=${period}`,
     {
       headers: { Authorization: `Bearer ${token}` },
     }
   );
-  if (!res.ok) throw new Error("Failed to fetch earnings analytics");
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || "Failed to fetch earnings analytics");
+  }
   return res.json();
 }
 
@@ -196,7 +240,8 @@ function MetricCard({ icon: Icon, label, value, color, subtitle, prefix = "" }) 
 }
 
 function BankingSetupCard({ bankingStatus, onSetup }) {
-  const [showForm, setShowForm] = useState(false);
+  // FIX: Initialize showForm based on whether banking is already set up
+  const [showForm, setShowForm] = useState(!bankingStatus?.hasSetup);
   const [banks, setBanks] = useState([]);
   const [loadingBanks, setLoadingBanks] = useState(false);
   const [formData, setFormData] = useState({
@@ -209,11 +254,13 @@ function BankingSetupCard({ bankingStatus, onSetup }) {
   const [setupLoading, setSetupLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // FIX: Load banks when form should be visible
   useEffect(() => {
-    if (showForm && banks.length === 0) {
+    const needsForm = !bankingStatus?.hasSetup || showForm;
+    if (needsForm && banks.length === 0 && !loadingBanks) {
       loadBanks();
     }
-  }, [showForm]);
+  }, [showForm, bankingStatus?.hasSetup]);
 
   async function loadBanks() {
     setLoadingBanks(true);

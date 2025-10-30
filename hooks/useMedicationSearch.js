@@ -74,12 +74,7 @@ export function useMedicationSearch(apiUrl) {
         }
 
         setError(null);
-        
-        // Show success feedback if results found
-        if (cleanResults.length === 0) {
-          toast.info('No pharmacies found matching your criteria');
-        }
-        
+            
         return cleanResults;
       } catch (err) {
         if (err.name === 'AbortError') return; // ignore canceled calls

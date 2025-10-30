@@ -7,7 +7,7 @@ import {
 
 const SuccessHeader = ({ firstName }) => {
   return (
-    <Card className="relative bg-white border-2 border-gray-100 rounded-3xl shadow-lg overflow-hidden">
+    <Card className="relative bg-white border-2 border-gray-100 rounded-lg shadow-lg overflow-hidden">
       <CardHeader className="relative bg-gradient-to-br from-green-50 to-emerald-50 p-8 text-center border-b border-green-100">
         <div className="flex flex-col items-center">
           <div className="relative mb-6">

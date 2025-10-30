@@ -14,7 +14,7 @@ const OrderSummaryCard = ({ order, pharmacy }) =>{
   const isPickup = order.deliveryMethod !== 'COURIER';
 
   return (
-    <Card className="bg-white border-2 border-gray-100 rounded-3xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
+    <Card className="bg-white border-2 border-gray-100 rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
       <CardHeader className="bg-gradient-to-br from-gray-50 to-white p-6 border-b border-gray-100">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-3">
@@ -43,7 +43,7 @@ const OrderSummaryCard = ({ order, pharmacy }) =>{
       <CardContent className="p-6 space-y-6">
         {/* Pickup Address */}
         {isPickup && (
-          <div className="p-5 bg-gradient-to-br from-blue-50 to-white rounded-2xl border border-blue-200">
+          <div className="p-5 bg-gradient-to-br from-blue-50 to-white rounded-lg border border-blue-200">
             <div className="flex items-center gap-2 mb-3">
               <MapPin className="h-5 w-5 text-blue-600" strokeWidth={2} />
               <h4 className="font-bold text-gray-900">Pickup Location</h4>
@@ -94,7 +94,7 @@ const OrderSummaryCard = ({ order, pharmacy }) =>{
         </div>
 
         {/* Total */}
-        <div className="flex items-center justify-between p-5 bg-gradient-to-r from-[#225F91]/5 to-[#1ABA7F]/5 rounded-2xl border-2 border-[#1ABA7F]/20">
+        <div className="flex items-center justify-between p-5 bg-gradient-to-r from-[#225F91]/5 to-[#1ABA7F]/5 rounded-lg border-2 border-[#1ABA7F]/20">
           <span className="text-lg font-bold text-gray-900">Order Total</span>
           <span className="text-3xl font-black text-[#225F91]">
             ₦{(order.totalPrice || 0).toLocaleString()}

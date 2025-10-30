@@ -4,27 +4,8 @@ import { Loader2, AlertTriangle, Edit, Trash2, Plus, CheckCircle, Package, Refre
 import Dialog from "@/components/Dialog";
 import InventoryForm from "./components/InventoryForm";
 import DataTableView from "@/components/DataTableView";
+import { pharmacyInventoryAPI } from '@/lib/pharmacyApiClient';
 
-// API functions
-async function fetchInventory(params) {
-  const token = localStorage.getItem('pharmacyToken');
-  const queryParams = new URLSearchParams(params).toString();
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/pharmacy/medications?${queryParams}`, {
-    headers: { 'Authorization': `Bearer ${token}` },
-  });
-  if (!res.ok) throw new Error('Failed to fetch inventory');
-  return res.json();
-}
-
-async function deleteInventoryItem(medicationId) {
-  const token = localStorage.getItem('pharmacyToken');
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/pharmacy/medications/${medicationId}`, {
-    method: 'DELETE',
-    headers: { 'Authorization': `Bearer ${token}` },
-  });
-  if (!res.ok) throw new Error('Failed to delete inventory item');
-  return res.json();
-}
 
 export default function PharmacyInventoryPage() {
   const [inventory, setInventory] = useState([]);
@@ -88,7 +69,7 @@ export default function PharmacyInventoryPage() {
           params.prescriptionRequired = prescriptionFilter;
         }
 
-        const data = await fetchInventory(params);
+        const data = await pharmacyInventoryAPI.fetchInventory(params);
         setInventory(data.medications || []);
         setPagination(data.pagination || pagination);
         setSummary(data.summary || summary); 
@@ -113,7 +94,7 @@ export default function PharmacyInventoryPage() {
   async function handleDelete(id) {
     setDeleteLoading(true);
     try {
-      await deleteInventoryItem(id);
+      await pharmacyInventoryAPI.deleteInventoryItem(medicationId);
       setInventory(prev => prev.filter(item => item.medicationId !== id));
       showToast("Inventory item deleted successfully", "success");
     } catch (e) {

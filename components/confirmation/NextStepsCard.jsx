@@ -27,14 +27,14 @@ const NextStepsCard = ({ hasDelivery, hasPickup }) => {
   }
 
   return (
-    <Card className="bg-gradient-to-br from-blue-50 to-white border-2 border-blue-200 rounded-3xl shadow-lg">
+    <Card className="bg-gradient-to-br from-blue-50 to-white border-2 border-blue-200 rounded-lg shadow-lg">
       <CardContent className="p-6 sm:p-8 space-y-6">
         <h3 className="text-2xl font-black text-[#225F91] text-center">What Happens Next?</h3>
         <div className="grid sm:grid-cols-2 gap-4">
           {steps.map((step) => (
             <div 
               key={step.number} 
-              className="p-5 bg-white rounded-2xl border border-gray-200 hover:border-gray-300 transition-colors duration-200"
+              className="p-5 bg-white rounded-lg border border-gray-200 hover:border-gray-300 transition-colors duration-200"
             >
               <div className="flex items-start gap-4">
                 <div className={`w-10 h-10 bg-gradient-to-br ${step.color} rounded-full flex items-center justify-center text-white font-black text-lg flex-shrink-0 shadow-md`}>

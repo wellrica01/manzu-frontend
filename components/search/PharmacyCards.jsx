@@ -464,7 +464,7 @@ const PharmacyCards = ({
   }
 
   return (
-    <div className="block sm:hidden space-y-6">
+    <div className="block space-y-6">
       <SortFilterBar
         sortOption={sortOption}
         setSortOption={setSortOption}

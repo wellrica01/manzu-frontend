@@ -269,14 +269,6 @@ const SearchBar = () => {
     // Set safety timeout (60 seconds)
     locationTimeoutRef.current = setTimeout(() => {
       setIsLoadingLocation(false);
-      toast.error('Location Detection Timeout', {
-        description: 'This is taking longer than expected. You can select your area manually instead.',
-        duration: 6000,
-        action: {
-          label: 'Select Manually',
-          onClick: () => setShowFilters(true),
-        },
-      });
     }, 60000);
 
     // Request location with progressive fallback
@@ -286,47 +278,6 @@ const SearchBar = () => {
       // Clear timeout on success
       if (locationTimeoutRef.current) {
         clearTimeout(locationTimeoutRef.current);
-      }
-
-      console.log('Location success:', location);
-
-      // Success feedback based on accuracy
-      if (location.accuracy <= 100) {
-        toast.success('Precise Location Found!', {
-          description: `Accuracy: ~${location.accuracy}m - Showing pharmacies near you`,
-          duration: 3000,
-        });
-      } else if (location.accuracy <= 500) {
-        toast.success('Location Found!', {
-          description: `Accuracy: ~${location.accuracy}m - Showing nearby pharmacies`,
-          duration: 3000,
-        });
-      } else {
-        toast.success('Approximate Location Found', {
-          description: `Accuracy: ~${location.accuracy}m - Showing pharmacies in your area`,
-          duration: 4000,
-          action: {
-            label: 'Refine',
-            onClick: async () => {
-              setIsLoadingLocation(true);
-              try {
-                const betterLocation = await requestPreciseLocation();
-                toast.success('Location Refined!', {
-                  description: `Improved to ~${betterLocation.accuracy}m accuracy`,
-                  duration: 2000,
-                });
-              } catch (err) {
-                console.warn('Refinement failed:', err);
-                toast.error('Refinement Failed', {
-                  description: 'Using your original location instead.',
-                  duration: 3000,
-                });
-              } finally {
-                setIsLoadingLocation(false);
-              }
-            },
-          },
-        });
       }
 
     } catch (error) {
@@ -668,45 +619,10 @@ useEffect(() => {
     setFilterStateWrapper(match.state);
     
     // Provide feedback based on confidence
-    if (match.confidence.level === 'high') {
-      toast.success(
-        `📍 ${match.state} Detected`,
-        { 
-          description: `Near ${match.lga} (${match.distance.toFixed(1)}km away). Select your LGA from filters for precise results.`,
-          duration: 6000,
-          action: {
-            label: 'Select LGA',
-            onClick: () => setShowFilters(true)
-          }
-        }
-      );
-    } else if (match.confidence.level === 'good') {
-      toast.success(
-        `📍 ${match.state} Detected`,
-        { 
-          description: `Approximately ${match.distance.toFixed(1)}km from ${match.lga}. Please select your exact LGA from filters.`,
-          duration: 7000,
-          action: {
-            label: 'Select LGA',
-            onClick: () => setShowFilters(true)
-          }
-        }
-      );
+  if (match.confidence.level === 'good') {
       // Auto-open filters for good confidence
       setTimeout(() => setShowFilters(true), 1500);
     } else {
-      // Low confidence
-      toast.warning(
-        `📍 Approximate: ${match.state}`,
-        {
-          description: `${match.distance.toFixed(1)}km from ${match.lga}. Please manually select your LGA for accurate results.`,
-          duration: 8000,
-          action: {
-            label: 'Select LGA',
-            onClick: () => setShowFilters(true)
-          }
-        }
-      );
       // Auto-open filters for low confidence
       setTimeout(() => setShowFilters(true), 1000);
     }

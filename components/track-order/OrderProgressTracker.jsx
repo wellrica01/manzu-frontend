@@ -9,7 +9,7 @@ const OrderProgressTracker = ({ order }) => {
   if (order.status === 'CANCELLED') {
     return (
       <div className="mt-6">
-        <div className="flex items-center justify-center gap-3 p-4 bg-red-50 rounded-xl border border-red-200">
+        <div className="flex items-center justify-center gap-3 p-4 bg-red-50 rounded-lg border border-red-200">
           <XCircle className="h-6 w-6 text-red-600" strokeWidth={2} />
           <span className="text-red-900 font-bold">Order Cancelled</span>
         </div>
@@ -20,7 +20,7 @@ const OrderProgressTracker = ({ order }) => {
   if (order.status === 'COMPLETED') {
     return (
       <div className="mt-6">
-        <div className="flex items-center justify-center gap-3 p-4 bg-green-50 rounded-xl border border-green-200">
+        <div className="flex items-center justify-center gap-3 p-4 bg-green-50 rounded-lg border border-green-200">
           <CheckCircle className="h-6 w-6 text-green-600" strokeWidth={2} />
           <span className="text-green-900 font-bold">Order Completed</span>
         </div>

@@ -6,9 +6,9 @@ export default function TrackOrderError({ error }) {
   const showStatusCheckLink = error && typeof error === 'string' && error.includes('not yet ready for tracking');
 
   return (
-    <Card className="bg-white/95 backdrop-blur-sm border-2 border-red-200/50 rounded-2xl shadow-xl p-6 animate-in zoom-in-50 duration-500">
+    <Card className="bg-white/95 backdrop-blur-sm border-2 border-red-200/50 rounded-lg shadow-xl p-6 animate-in zoom-in-50 duration-500">
       <div className="flex items-start gap-4">
-        <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-red-500/20 to-orange-500/20 rounded-xl flex items-center justify-center">
+        <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-red-500/20 to-orange-500/20 rounded-lg flex items-center justify-center">
           <AlertCircle className="h-6 w-6 text-red-600" />
         </div>
         <div className="flex-1">

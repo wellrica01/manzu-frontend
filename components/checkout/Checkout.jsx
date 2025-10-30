@@ -425,10 +425,7 @@ function CheckoutComponent() {
     }
 
     setShowCheckoutDialog(false);
-    
-    // Validate stock before proceeding
-    toast.info('Verifying stock availability...', { duration: 2000 });
-    
+        
     const stockAvailable = await validateStockBeforePayment();
     
     if (!stockAvailable) {

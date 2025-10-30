@@ -7,7 +7,7 @@ import Link from 'next/link';
 
 const StatusNoMedications = ({ prescription, onReset, onBackToHome }) => {
   return (
-    <Card className="relative bg-white border-2 border-gray-100 rounded-3xl shadow-lg overflow-hidden">
+    <Card className="relative bg-white border-2 border-gray-100 rounded-lg shadow-lg overflow-hidden">
       <CardHeader className="relative bg-gradient-to-br from-yellow-50 to-orange-50 p-8 text-center border-b border-yellow-100">
         <div className="relative mx-auto w-20 h-20 mb-6">
           <div className="absolute inset-0 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full blur-xl opacity-40 animate-pulse" />
@@ -27,14 +27,14 @@ const StatusNoMedications = ({ prescription, onReset, onBackToHome }) => {
       </CardHeader>
 
       <CardContent className="p-6 sm:p-8 space-y-6">
-        <div className="p-5 bg-gradient-to-br from-yellow-50 to-white rounded-xl border border-yellow-200">
+        <div className="p-5 bg-gradient-to-br from-yellow-50 to-white rounded-lg border border-yellow-200">
           <p className="text-sm text-gray-700 leading-relaxed">
             We couldn't find any medications associated with this prescription. This could mean your 
             prescription is still being processed or there may be an issue that needs attention.
           </p>
         </div>
 
-        <div className="p-5 bg-gradient-to-br from-blue-50 to-white rounded-xl border border-blue-200">
+        <div className="p-5 bg-gradient-to-br from-blue-50 to-white rounded-lg border border-blue-200">
           <h3 className="font-bold text-gray-900 mb-3">What should I do?</h3>
           <ul className="space-y-3 text-sm text-gray-700">
             <li className="flex items-start gap-3">
@@ -51,14 +51,14 @@ const StatusNoMedications = ({ prescription, onReset, onBackToHome }) => {
         <div className="flex flex-col sm:flex-row gap-3 pt-2">
           <Button
             onClick={() => console.log('Contact support')}
-            className="flex-1 h-12 bg-gradient-to-r from-[#1ABA7F] to-[#16a876] hover:from-[#16a876] hover:to-[#1ABA7F] text-white font-bold rounded-xl"
+            className="flex-1 h-12 bg-gradient-to-r from-[#1ABA7F] to-[#16a876] hover:from-[#16a876] hover:to-[#1ABA7F] text-white font-bold rounded-lg"
           >
             Contact Support
           </Button>
           <Button
             onClick={onReset}
             variant="outline"
-            className="flex-1 h-12 border-2 border-gray-200 text-gray-700 hover:bg-gray-50 font-semibold rounded-xl"
+            className="flex-1 h-12 border-2 border-gray-200 text-gray-700 hover:bg-gray-50 font-semibold rounded-lg"
           >
             Check Another
           </Button>

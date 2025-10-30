@@ -12,7 +12,7 @@ const OrderCard = ({
   onToggle 
 }) => {
   return (
-    <Card className="relative bg-white border-2 border-gray-100 rounded-3xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
+    <Card className="relative bg-white border-2 border-gray-100 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
       <CardHeader
         className={`relative bg-gradient-to-br from-gray-50 to-white p-6 border-b border-gray-100 ${
           isExpandable ? 'cursor-pointer hover:bg-gray-50/80 transition-colors duration-200' : ''
@@ -22,7 +22,7 @@ const OrderCard = ({
         {/* Header Info */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-gradient-to-br from-[#1ABA7F] to-[#16a876] rounded-xl shadow-md">
+            <div className="p-3 bg-gradient-to-br from-[#1ABA7F] to-[#16a876] rounded-lg shadow-md">
               <Store className="h-6 w-6 text-white" strokeWidth={2} />
             </div>
             <div>
@@ -52,7 +52,7 @@ const OrderCard = ({
 
         {/* Status Badge */}
         <div className="mb-6">
-          <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm ${
+          <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-sm ${
             order.status === 'COMPLETED' 
               ? 'bg-green-50 text-green-900 border border-green-200'
               : order.status === 'CANCELLED'

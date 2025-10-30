@@ -6,7 +6,6 @@ export function useTrackOrder() {
   return useMutation({
     mutationFn: (trackingCode) => trackOrderApi(trackingCode),
     onSuccess: (data) => {
-      toast.success('Order details found!', { duration: 6000 });
       
       // Analytics tracking
       if (typeof window !== 'undefined' && window.gtag) {

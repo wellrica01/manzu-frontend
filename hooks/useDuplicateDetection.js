@@ -138,7 +138,6 @@ export function useDuplicateDetection({
 
   // Single item handlers
   const handleKeepExisting = useCallback(() => {
-    toast.info('Keeping your current selection');
     setDuplicateDialog({ isOpen: false, existingItem: null, newItem: null });
   }, []);
 
@@ -168,7 +167,6 @@ const handleReplaceWithNew = useCallback(async () => {
         }]);
       }
 
-      toast.success(`Switched to ${newItem.pharmacyName}`);
       setDuplicateDialog({ isOpen: false, existingItem: null, newItem: null });
     } catch (error) {
       console.error('Replace error:', error);
@@ -200,7 +198,6 @@ const handleReplaceWithNew = useCallback(async () => {
         }]);
       }
 
-      toast.info('Added from both pharmacies');
       setDuplicateDialog({ isOpen: false, existingItem: null, newItem: null });
     } catch (error) {
       console.error('Add both error:', error);
@@ -212,7 +209,6 @@ const handleReplaceWithNew = useCallback(async () => {
     const { safeItems, pharmacyId } = bulkDuplicateDialog;
 
     if (!safeItems?.length || !pharmacyId) {
-      toast.info('No new items to add');
       setBulkDuplicateDialog(prev => ({ ...prev, isOpen: false }));
       return;
     }
@@ -229,7 +225,6 @@ const handleReplaceWithNew = useCallback(async () => {
         }));
 
       if (itemsToAdd.length === 0) {
-        toast.info('All items already in cart');
         setBulkDuplicateDialog(prev => ({ ...prev, isOpen: false }));
         return;
       }
@@ -238,7 +233,6 @@ const handleReplaceWithNew = useCallback(async () => {
       await bulkAddToCart(itemsToAdd, pharmacy?.pharmacyName || 'pharmacy');
 
       setBulkDuplicateDialog(prev => ({ ...prev, isOpen: false }));
-      toast.success(`Added ${itemsToAdd.length} new item${itemsToAdd.length > 1 ? 's' : ''}`);
     } catch (error) {
       console.error('Bulk keep error:', error);
     } finally {
@@ -290,7 +284,6 @@ const handleReplaceWithNew = useCallback(async () => {
       }
 
       setBulkDuplicateDialog(prev => ({ ...prev, isOpen: false }));
-      toast.success(`Replaced ${duplicates.length} item${duplicates.length > 1 ? 's' : ''}`);
     } catch (error) {
       console.error('Bulk replace error:', error);
     } finally {
@@ -320,7 +313,6 @@ const handleReplaceWithNew = useCallback(async () => {
         }));
 
       if (itemsToAdd.length === 0) {
-        toast.info('All items already in cart');
         setBulkDuplicateDialog(prev => ({ ...prev, isOpen: false }));
         return;
       }
@@ -340,7 +332,6 @@ const handleReplaceWithNew = useCallback(async () => {
       }
 
       setBulkDuplicateDialog(prev => ({ ...prev, isOpen: false }));
-      toast.success('Added items from both pharmacies');
     } catch (error) {
       console.error('Bulk add all error:', error);
     } finally {

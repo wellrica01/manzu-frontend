@@ -96,10 +96,10 @@ const CartItem = ({
 
   const StatusIcon = itemStatus.icon;
 
-  const handleQuantityUpdate = (newQuantity) => {
-    if (newQuantity < 1) return;
-    handleQuantityChange(item.id, newQuantity, item.medication.displayName);
-  };
+const handleQuantityUpdate = (newQuantity) => {
+  if (newQuantity < 1) return;
+  handleQuantityChange(item.id, newQuantity, item.medication.displayName);
+};
 
   const handleRemove = () => {
     setRemoveItem({ id: item.id, name: item.medication.displayName, quantity: item.quantity });
@@ -245,6 +245,7 @@ const CartItem = ({
             quantity={item.quantity}
             onUpdate={handleQuantityUpdate}
             isUpdating={isUpdating[item.id]}
+            maxStock={item.availableStock}
           />
 
           <Button
@@ -324,37 +325,58 @@ const MetaRow = ({ icon: Icon, label, value }) => (
   </div>
 );
 
-const QuantityControl = ({ quantity, onUpdate, isUpdating }) => (
-  <div className="flex items-center gap-2">
-    <span className="text-sm font-bold text-gray-700 mr-2">Qty:</span>
-    <div className="flex items-center gap-1 bg-white rounded-lg border-2 border-gray-200">
-      <Button 
-        variant="ghost" 
-        size="sm" 
-        onClick={() => onUpdate(quantity - 1)} 
-        disabled={quantity <= 1 || isUpdating} 
-        className="h-9 w-9 p-0 hover:bg-[#1ABA7F]/10 text-[#225F91] disabled:opacity-50 rounded-l-lg"
-      >
-        <Minus className="h-4 w-4" strokeWidth={2} />
-      </Button>
-      <span className="px-3 py-2 text-sm font-bold text-[#225F91] min-w-[2.5rem] text-center">
-        {isUpdating ? (
-          <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#1ABA7F] border-t-transparent mx-auto" />
-        ) : (
-          quantity
-        )}
-      </span>
-      <Button 
-        variant="ghost" 
-        size="sm" 
-        onClick={() => onUpdate(quantity + 1)} 
-        disabled={isUpdating} 
-        className="h-9 w-9 p-0 hover:bg-[#1ABA7F]/10 text-[#225F91] rounded-r-lg"
-      >
-        <Plus className="h-4 w-4" strokeWidth={2} />
-      </Button>
+const QuantityControl = ({ quantity, onUpdate, isUpdating, maxStock }) => {
+  const isAtMax = maxStock && quantity >= maxStock;
+  
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-2">
+        <span className="text-sm font-bold text-gray-700 mr-2">Qty:</span>
+        <div className="flex items-center gap-1 bg-white rounded-lg border-2 border-gray-200">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => onUpdate(quantity - 1)} 
+            disabled={quantity <= 1 || isUpdating} 
+            className="h-9 w-9 p-0 hover:bg-[#1ABA7F]/10 text-[#225F91] disabled:opacity-50 rounded-l-lg"
+          >
+            <Minus className="h-4 w-4" strokeWidth={2} />
+          </Button>
+          <span className="px-3 py-2 text-sm font-bold text-[#225F91] min-w-[2.5rem] text-center">
+            {isUpdating ? (
+              <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#1ABA7F] border-t-transparent mx-auto" />
+            ) : (
+              quantity
+            )}
+          </span>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => onUpdate(quantity + 1)} 
+            disabled={isUpdating || isAtMax} 
+            className={cn(
+              "h-9 w-9 p-0 rounded-r-lg transition-colors",
+              isAtMax 
+                ? "text-gray-400 cursor-not-allowed" 
+                : "hover:bg-[#1ABA7F]/10 text-[#225F91]"
+            )}
+            title={isAtMax ? "Maximum stock reached" : "Increase quantity"}
+          >
+            <Plus className="h-4 w-4" strokeWidth={2} />
+          </Button>
+        </div>
+      </div>
+      
+      {/* Max stock indicator */}
+      {isAtMax && (
+        <div className="flex items-center gap-1 text-xs text-amber-600">
+          <AlertCircle className="h-3 w-3" strokeWidth={2} />
+          <span className="font-medium">Max stock: {maxStock}</span>
+        </div>
+      )}
     </div>
-  </div>
-);
+  );
+};
+
 
 export default CartItem;
