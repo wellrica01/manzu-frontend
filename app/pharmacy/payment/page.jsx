@@ -274,6 +274,7 @@ function BankingSetupCard({ bankingStatus, onSetup }) {
     }
   }
 
+
   async function handleVerify() {
     if (formData.accountNumber.length !== 10) {
       setError("Account number must be 10 digits");
@@ -413,11 +414,12 @@ function BankingSetupCard({ bankingStatus, onSetup }) {
             <option value="">
               {loadingBanks ? "Loading banks..." : "Choose your bank"}
             </option>
-            {banks.map((bank) => (
-              <option key={bank.code} value={bank.code}>
+            {banks.map((bank, index) => (
+              <option key={`${bank.code}-${index}`} value={bank.code}>
                 {bank.name}
               </option>
             ))}
+
           </select>
         </div>
 
@@ -554,6 +556,7 @@ function PayoutHistoryCard({ payouts, pagination, onPageChange, loading }) {
     );
   }
 
+
   return (
     <Card className="p-4 md:p-6">
       <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
@@ -682,6 +685,7 @@ export default function PaymentAccountPage() {
       setLoading(false);
     }
   }
+
 
   async function handleRefresh() {
     setRefreshing(true);

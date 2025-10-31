@@ -14,15 +14,6 @@ export default function TrackOrderError({ error }) {
         <div className="flex-1">
           <p className="text-red-800 font-semibold mb-2">Order Not Found</p>
           <p className="text-sm text-gray-600">{error}</p>
-          {showStatusCheckLink && (
-            <p className="text-sm text-gray-600 mt-2">
-              Try checking your order status with your email or phone number on the{' '}
-              <Link href="/status-check" className="text-[#225F91] underline font-semibold">
-                Status Check
-              </Link>{' '}
-              page.
-            </p>
-          )}
         </div>
       </div>
     </Card>

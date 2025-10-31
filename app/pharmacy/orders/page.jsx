@@ -324,7 +324,7 @@ export default function EnhancedOrdersPage() {
     totalOrders: 0,
     pendingOrders: 0,
     processingOrders: 0,
-    readyOrders: 0,
+    completedOrders: 0,
     totalRevenue: 0,
     avgOrderValue: 0,
   });
@@ -396,15 +396,16 @@ export default function EnhancedOrdersPage() {
         const total = ordersData.length;
         const pending = ordersData.filter(o => o.status === 'CONFIRMED').length;
         const processing = ordersData.filter(o => o.status === 'PROCESSING').length;
-        const ready = ordersData.filter(o => o.status === 'READY_FOR_PICKUP').length;
-        const revenue = ordersData.reduce((sum, o) => sum + (o.totalPrice || 0), 0);
-        const avg = total > 0 ? revenue / total : 0;
+        const completed = ordersData.filter(o => o.status === 'COMPLETED').length;
+        const revenue = ordersData.reduce((sum, o) => sum + (o.pharmacyAmount || 0), 0);
+        const order_value = ordersData.reduce((sum, o) => sum + (o.totalPrice || 0), 0);
+        const avg = total > 0 ? order_value / total : 0;
 
         setStats({
           totalOrders: total,
           pendingOrders: pending,
           processingOrders: processing,
-          readyOrders: ready,
+          completedOrders: completed,
           totalRevenue: revenue,
           avgOrderValue: avg,
         });
@@ -453,7 +454,7 @@ export default function EnhancedOrdersPage() {
     const statusLabels = {
       'PROCESSING': 'Processing',
       'SHIPPED': 'Shipped',
-      'READY_FOR_PICKUP': 'Ready for Pickup',
+      'COMPLETED': 'Completed',
       'DELIVERED': 'Delivered',
       'COMPLETED': 'Completed',
       'CANCELLED': 'Cancelled'
@@ -865,10 +866,10 @@ export default function EnhancedOrdersPage() {
         />
         <StatCard
           icon={CheckSquare}
-          label="Ready"
-          value={stats.readyOrders}
+          label="Completed"
+          value={stats.completedOrders}
           color={brandGreen}
-          subtitle="For pickup"
+          subtitle="Orders fulfilled"
         />
       </div>
 

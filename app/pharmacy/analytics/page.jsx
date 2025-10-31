@@ -170,9 +170,10 @@ export default function EnhancedPharmacyAnalyticsPage() {
   const filteredOrders = filterOrdersByRange(orders, range, customStart, customEnd);
 
   // Calculate metrics
-  const totalRevenue = filteredOrders.reduce((sum, o) => sum + (o.totalPrice || 0), 0);
+  const totalRevenue = filteredOrders.reduce((sum, o) => sum + (o.pharmacyAmount || 0), 0);
+  const orderValue = filteredOrders.reduce((sum, o) => sum + (o.totalPrice || 0), 0);
   const totalOrders = filteredOrders.length;
-  const avgOrderValue = totalOrders ? totalRevenue / totalOrders : 0;
+  const avgOrderValue = totalOrders ? orderValue / totalOrders : 0;
   
   // Customer metrics
   const uniqueCustomers = new Set(filteredOrders.map(o => o.userIdentifier)).size;

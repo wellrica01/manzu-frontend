@@ -552,7 +552,7 @@ export default function OrderDetailsDialog({ open, onClose, order, onStatusUpdat
               <div className="text-center p-3 bg-green-50 rounded-lg border border-green-200">
                 <div className="text-xs text-gray-600 mb-0.5">Revenue</div>
                 <div className="text-lg font-bold text-green-600">
-                  ₦{order.totalPrice?.toLocaleString()}
+                  ₦{order.pharmacyAmount?.toLocaleString()}
                 </div>
               </div>
             </div>

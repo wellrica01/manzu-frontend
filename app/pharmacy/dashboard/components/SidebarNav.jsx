@@ -142,7 +142,7 @@ export default function SidebarNav({ isCollapsed, onToggle, isMobile, isOpen, on
           
           {!isCollapsed && (
             <p className="text-xs text-gray-400 text-center mt-3">
-              © 2024 Manzu Pharmacy
+              © 2025 Manzu Pharmacy
             </p>
           )}
         </div>
