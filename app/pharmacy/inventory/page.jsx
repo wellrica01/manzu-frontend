@@ -60,16 +60,21 @@ export default function PharmacyInventoryPage() {
           page: pagination.page,
           limit: pagination.limit,
           ...(search ? { search } : {}),
-          ...(stockFilter === "low" ? { lowStock: true } : {}),
-          ...(stockFilter === "out" ? { outOfStock: true } : {}),
-          ...(stockFilter === "expiring" ? { expiringSoon: true } : {}),
+          status: stockFilter === "stocked" ? "stocked" :
+                  stockFilter === "not_stocked" ? "not_stocked" :
+                  stockFilter === "low" ? "low_stock" :
+                  stockFilter === "out" ? "out_of_stock" : 
+                  stockFilter === "expiring" ? "expiring_soon" : 
+                  "all",
+          ...(prescriptionFilter === "true" || prescriptionFilter === "false" ? 
+            { prescriptionRequired: prescriptionFilter } : {}),
         };
 
         if (prescriptionFilter === "true" || prescriptionFilter === "false") {
           params.prescriptionRequired = prescriptionFilter;
         }
 
-        const data = await pharmacyInventoryAPI.fetchInventory(params);
+        const data = await pharmacyInventoryAPI.fetchCatalog(params);
         setInventory(data.medications || []);
         setPagination(data.pagination || pagination);
         setSummary(data.summary || summary); 
@@ -94,7 +99,7 @@ export default function PharmacyInventoryPage() {
   async function handleDelete(id) {
     setDeleteLoading(true);
     try {
-      await pharmacyInventoryAPI.deleteInventoryItem(medicationId);
+      await pharmacyInventoryAPI.deleteInventoryItem(id);
       setInventory(prev => prev.filter(item => item.medicationId !== id));
       showToast("Inventory item deleted successfully", "success");
     } catch (e) {
@@ -106,14 +111,24 @@ export default function PharmacyInventoryPage() {
   }
 
   // Helper to get stock status badge
-  const getStockBadge = (stock) => {
-    if (stock === 0) {
+  const getStockBadge = (item) => {
+    // Check if medication is not stocked at all
+    if (!item.isStocked) {
+      return (
+        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+          Not Stocked
+        </span>
+      );
+    }
+    
+    // If stocked, check stock levels
+    if (item.stock === 0) {
       return (
         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
           Out of Stock
         </span>
       );
-    } else if (stock < 10) {
+    } else if (item.stock < 10) {
       return (
         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
           Low Stock
@@ -127,6 +142,7 @@ export default function PharmacyInventoryPage() {
       );
     }
   };
+
 
   // Helper to format expiry date
   const formatExpiryDate = (date) => {
@@ -163,26 +179,7 @@ export default function PharmacyInventoryPage() {
     );
   };
 
-  // Helper function to format strengths
-  const formatStrengths = (ingredients) => {
-    if (!ingredients || ingredients.length === 0) return "Not specified";
-    
-    const strengths = ingredients
-      .map((i) => `${i.strengthValue || ""} ${i.strengthUnit || ""}`.trim())
-      .filter(Boolean);
-    
-    if (strengths.length === 0) return "Not specified";
-    if (strengths.length <= 2) return strengths.join(" / ");
-    
-    return (
-      <span title={strengths.join(", ")}>
-        {strengths.slice(0, 2).join(", ")} 
-        <span className="text-gray-500 text-xs ml-1">+{strengths.length - 2} more</span>
-      </span>
-    );
-  };
-
-  // Mobile card component - IMPROVED FOR MOBILE
+  // Mobile card component
   const renderMobileCard = (item) => (
     <div key={item.medicationId} className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow">
       <div className="flex justify-between items-start mb-2">
@@ -240,9 +237,24 @@ export default function PharmacyInventoryPage() {
       <div className="pt-2 border-t border-gray-100">
         <div className="flex items-center justify-between">
           <span className="text-gray-500 font-medium text-xs">Status:</span>
-          {getStockBadge(item.stock)}
+          {!item.isStocked ? (
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+              Not Stocked
+            </span>
+          ) : (
+            getStockBadge(item.stock)
+          )}
         </div>
       </div>
+  
+      {!item.isStocked && (
+        <button
+          onClick={() => handleEditClick(item)}
+          className="mt-2 w-full py-2 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700"
+        >
+          📦 Stock This Medication
+        </button>
+      )}
     </div>
   );
 
@@ -313,7 +325,7 @@ export default function PharmacyInventoryPage() {
     {
       key: 'status',
       label: 'Status',
-      render: (item) => getStockBadge(item.stock),
+      render: (item) => getStockBadge(item),
       cellClassName: 'whitespace-nowrap'
     },
     {
@@ -353,11 +365,13 @@ export default function PharmacyInventoryPage() {
         setStockFilter(value);
       },
       options: [
+        { value: "stocked", label: "In Stock" },        
+        { value: "not_stocked", label: "Not Stocked" },
         { value: "low", label: "Low Stock" },
         { value: "out", label: "Out of Stock" },
         { value: "expiring", label: "Expiring Soon (30 days)" },
       ],
-      placeholder: "All Stock Levels",
+      placeholder: "All Medications",
       className: "sm:w-48"
     },
     {
@@ -384,7 +398,11 @@ export default function PharmacyInventoryPage() {
           setDialogOpen(false);
           setEditingItem(null);
         }}
-        title={editingItem ? "Edit Inventory Item" : "Add Inventory Item"}
+        title={
+          editingItem?.isStocked 
+            ? "Update Inventory" 
+            : "Stock Medication"
+        }
         size="lg"
       >
         <InventoryForm
@@ -440,17 +458,19 @@ export default function PharmacyInventoryPage() {
         </Dialog>
       )}
 
-      {/* Stats Cards - IMPROVED FOR MOBILE */}
+      {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
-        <div className="bg-white border-2 border-blue-200 rounded-lg md:rounded-lg p-3 md:p-5 shadow-sm hover:shadow-md transition-shadow">
+        <div className="bg-white border-2 border-purple-200 rounded-lg p-3 md:p-5 shadow-sm">
           <div className="flex items-center gap-2 md:gap-3">
-            <div className="p-2 md:p-3 bg-blue-100 rounded-lg flex-shrink-0">
-              <Package className="w-4 h-4 md:w-6 md:h-6 text-blue-600" />
+            <div className="p-2 md:p-3 bg-purple-100 rounded-lg">
+              <Package className="w-4 h-4 md:w-6 md:h-6 text-purple-600" />
             </div>
-            <div className="min-w-0">
-              <div className="text-xs md:text-sm text-gray-600 font-medium">Total Items</div>
-              <div className="text-xl md:text-3xl font-bold text-gray-900">{summary.totalItems}</div>
-              <div className="text-xs text-gray-500 mt-0.5">In inventory</div>
+            <div>
+              <div className="text-xs md:text-sm text-gray-600 font-medium">Available to Stock</div>
+              <div className="text-xl md:text-3xl font-bold text-purple-600">
+                {summary.catalogSize || 0}
+              </div>
+              <div className="text-xs text-gray-500">medications</div>
             </div>
           </div>
         </div>
@@ -497,7 +517,7 @@ export default function PharmacyInventoryPage() {
         </div>
       </div>
 
-      {/* Expiring Soon Alert - IMPROVED FOR MOBILE */}
+      {/* Expiring Soon Alert */}
       {summary.expiringSoonCount > 0 && (
         <div className="bg-orange-50 border-2 border-orange-300 rounded-lg md:rounded-lg p-3 md:p-4 flex items-center gap-2 md:gap-3">
           <AlertTriangle className="w-5 h-5 md:w-6 md:h-6 text-orange-600 flex-shrink-0" />
@@ -546,14 +566,6 @@ export default function PharmacyInventoryPage() {
           description: "Start by adding your first medication to inventory",
           showPrimaryAction: true
         }}
-        primaryAction={{
-          label: "Add to Inventory",
-          icon: Plus,
-          onClick: () => {
-            setEditingItem(null);
-            setDialogOpen(true);
-          }
-        }}
         refreshAction={{
           icon: RefreshCw,
           loading: loading,
@@ -561,7 +573,7 @@ export default function PharmacyInventoryPage() {
         }}
       />
 
-      {/* Toast Notification - IMPROVED FOR MOBILE */}
+      {/* Toast Notification */}
       {toast.visible && (
         <div className={`
           fixed bottom-4 md:bottom-6 right-4 md:right-6 left-4 md:left-auto px-3 md:px-4 py-2 md:py-3 rounded-lg flex items-center gap-2 shadow-lg z-50

@@ -6,7 +6,6 @@ import {
 } from 'lucide-react';
 
 const allStatusOptions = [
-  { value: 'CONFIRMED', label: 'Pending', color: '#F59E0B', icon: CheckCircle, forDelivery: ['courier', 'pickup'] },
   { value: 'PROCESSING', label: 'Processing', color: '#3B82F6', icon: Package, forDelivery: ['courier', 'pickup'] },
   { value: 'SHIPPED', label: 'Shipped', color: '#06B6D4', icon: Truck, forDelivery: ['courier'] },
   { value: 'READY_FOR_PICKUP', label: 'Ready for Pickup', color: '#8B5CF6', icon: CheckCircle, forDelivery: ['pickup'] },

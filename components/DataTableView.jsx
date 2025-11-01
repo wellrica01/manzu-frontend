@@ -14,19 +14,18 @@ export default function DataTableView({
   searchValue = "",
   onSearchChange,
   searchPlaceholder = "Search...",
-  filters = [], // Array of filter objects: { value, onChange, options, placeholder, className }
+  filters = [],
   
   // Table configuration
-  columns = [], // Array of column objects: { key, label, render?, className?, sortable? }
+  columns = [],
   emptyState = {},
   
   // Mobile card configuration
-  mobileCardRender, // Function to render mobile cards
+  mobileCardRender,
   
   // Actions
-  primaryAction = null, // { label, icon, onClick, className }
-  refreshAction = null, // { label?, icon?, onClick, className, loading? }
-
+  primaryAction = null,
+  refreshAction = null,
   
   // Additional props
   className = "",
@@ -35,7 +34,6 @@ export default function DataTableView({
 }) {
   const [isMobile, setIsMobile] = useState(false);
 
-  // Check for mobile view
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
@@ -58,27 +56,50 @@ export default function DataTableView({
 
   const finalEmptyState = { ...defaultEmptyState, ...emptyState };
 
-  // Empty state component
-  const EmptyState = () => (
-    <div className="text-center py-12 px-4">
-      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-        <finalEmptyState.icon className="w-8 h-8 text-gray-400" />
+  // Empty state component - FIXED
+  const EmptyState = () => {
+    const IconComponent = finalEmptyState.icon;
+    
+    return (
+      <div className="text-center py-12 px-4">
+        <div className="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
+          <IconComponent className="w-8 h-8 text-gray-400" />
+        </div>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">{finalEmptyState.title}</h3>
+        <p className="text-gray-500 mb-6 max-w-md mx-auto">
+          {finalEmptyState.description}
+        </p>
+        {finalEmptyState.showPrimaryAction && primaryAction && (
+          <button
+            onClick={() => {
+              if (typeof primaryAction.onClick === "function") {
+                primaryAction.onClick();
+              }
+            }}
+            className={
+              typeof primaryAction.className === "function"
+                ? primaryAction.className()
+                : primaryAction.className || "inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#1ABA7F] text-white font-semibold hover:bg-[#159e6a] transition"
+            }
+          >
+            {primaryAction.icon && (
+              typeof primaryAction.icon === "function" ? (
+                (() => {
+                  const IconComp = primaryAction.icon();
+                  return typeof IconComp === "function" ? <IconComp className="w-4 h-4" /> : IconComp;
+                })()
+              ) : (
+                <primaryAction.icon className="w-4 h-4" />
+              )
+            )}
+            {typeof primaryAction.label === "function"
+              ? primaryAction.label()
+              : primaryAction.label}
+          </button>
+        )}
       </div>
-      <h3 className="text-lg font-medium text-gray-900 mb-2">{finalEmptyState.title}</h3>
-      <p className="text-gray-500 mb-6 max-w-md mx-auto">
-        {finalEmptyState.description}
-      </p>
-      {finalEmptyState.showPrimaryAction && primaryAction && (
-        <button
-          onClick={primaryAction.onClick}
-          className={primaryAction.className || "inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#1ABA7F] text-white font-semibold hover:bg-[#159e6a] transition"}
-        >
-          {primaryAction.icon && <primaryAction.icon className="w-4 h-4" />}
-          {primaryAction.label}
-        </button>
-      )}
-    </div>
-  );
+    );
+  };
 
   return (
     <div className={`space-y-6 ${className}`}>
@@ -89,7 +110,7 @@ export default function DataTableView({
           {description && <p className="text-gray-600 mt-1">{description}</p>}
         </div>
         <div className="flex gap-2">
-         {refreshAction && (
+          {refreshAction && (
             <button
               onClick={refreshAction.onClick}
               disabled={refreshAction.loading}
@@ -99,24 +120,42 @@ export default function DataTableView({
               {refreshAction.loading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Refreshing...
+                  <span className="hidden sm:inline">Refreshing...</span>
                 </>
               ) : (
                 <>
                   {refreshAction.icon && <refreshAction.icon className="w-4 h-4" />}
-                  {refreshAction.label || "Refresh"}
+                  <span className="hidden sm:inline">{refreshAction.label || "Refresh"}</span>
                 </>
               )}
             </button>
           )}
-
           {primaryAction && (
             <button
-              onClick={primaryAction.onClick}
-              className={primaryAction.className || "flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-[#1ABA7F] text-white font-semibold hover:bg-[#159e6a] transition-colors shadow-sm"}
+              onClick={(e) => {
+                if (typeof primaryAction.onClick === "function") {
+                  primaryAction.onClick(e);
+                }
+              }}
+              className={
+                typeof primaryAction.className === "function"
+                  ? primaryAction.className()
+                  : primaryAction.className ||
+                    "flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-[#1ABA7F] text-white font-semibold hover:bg-[#159e6a] transition-colors shadow-sm"
+              }
             >
-              {primaryAction.icon && <primaryAction.icon className="w-4 h-4" />}
-              {primaryAction.label}
+              {primaryAction.icon &&
+                (typeof primaryAction.icon === "function" ? (
+                  (() => {
+                    const IconComp = primaryAction.icon();
+                    return typeof IconComp === "function" ? <IconComp className="w-4 h-4" /> : IconComp;
+                  })()
+                ) : (
+                  <primaryAction.icon className="w-4 h-4" />
+                ))}
+              {typeof primaryAction.label === "function"
+                ? primaryAction.label()
+                : primaryAction.label}
             </button>
           )}
         </div>
@@ -126,7 +165,6 @@ export default function DataTableView({
       {(onSearchChange || filters.length > 0) && (
         <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
           <div className="flex flex-col sm:flex-row gap-4">
-            {/* Search */}
             {onSearchChange && (
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -140,7 +178,6 @@ export default function DataTableView({
               </div>
             )}
 
-            {/* Custom Filters */}
             {filters.map((filter, index) => (
               <div key={index} className={filter.className || "sm:w-48"}>
                 <select
@@ -181,7 +218,6 @@ export default function DataTableView({
       ) : data.length === 0 ? (
         <EmptyState />
       ) : isMobile && mobileCardRender ? (
-        // Mobile view - cards
         <div>
           {showResultsCount && (
             <div className="flex items-center justify-between mb-4">
@@ -190,16 +226,14 @@ export default function DataTableView({
               </p>
             </div>
           )}
-      <div className="space-y-3">
-        {data.map((item, index) => (
-          <div key={item.id || item._id || item.userIdentifier || index}>
-            {mobileCardRender(item, index)}
+          <div className="space-y-3">
+            {data.map((item, index) => (
+              <div key={item.id || item._id || item.userIdentifier || index}>
+                {mobileCardRender(item, index)}
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-
           
-          {/* Mobile Pagination */}
           {pagination.pages > 1 && (
             <div className="flex justify-between items-center mt-6 pt-4 border-t border-gray-200">
               <button
@@ -225,7 +259,6 @@ export default function DataTableView({
           )}
         </div>
       ) : (
-        // Desktop view - table
         <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className={`w-full ${tableClassName}`}>
@@ -258,7 +291,6 @@ export default function DataTableView({
             </table>
           </div>
           
-          {/* Desktop Pagination */}
           {pagination.pages > 1 && (
             <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
               <div className="flex-1 flex justify-between sm:hidden">
@@ -301,7 +333,6 @@ export default function DataTableView({
                       Previous
                     </button>
                     
-                    {/* Page numbers */}
                     {Array.from({ length: Math.min(5, pagination.pages) }, (_, i) => {
                       let pageNum;
                       if (pagination.pages <= 5) {

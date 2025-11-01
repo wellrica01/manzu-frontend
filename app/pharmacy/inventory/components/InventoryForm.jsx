@@ -184,29 +184,28 @@ export default function InventoryForm({ item = {}, mode = "create", onSuccess })
     }
 
     try {
-      const payload = {
-        medicationId: parseInt(form.medicationId),
-        stock: parseInt(form.stock),
-        price: parseFloat(form.price),
-        batchNumber: form.batchNumber.trim(),
-        expiryDate: form.expiryDate,
-      };
-      
-    if (mode === "edit") {
-      await pharmacyInventoryAPI.updateInventoryItem(item.medicationId, payload);
-    } else {
-      await pharmacyInventoryAPI.createInventoryItem(payload);
-    }
+        const payload = {
+          stock: parseInt(form.stock),
+          price: parseFloat(form.price),
+          batchNumber: form.batchNumber.trim(),
+          expiryDate: form.expiryDate,
+        };
+        
+        await pharmacyInventoryAPI.updateOrCreateInventoryItem(
+          parseInt(form.medicationId), 
+          payload
+        );
 
-      setSuccess(true);
-      if (onSuccess) onSuccess();
-    } catch (e) {
-      console.error('Submit error:', e);
-      setError(e.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+        setSuccess(true);
+        if (onSuccess) onSuccess();
+      } catch (e) {
+        console.error('Submit error:', e);
+        setError(e.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
 
   // Calculate days until expiry
   const getDaysUntilExpiry = () => {
@@ -229,56 +228,23 @@ export default function InventoryForm({ item = {}, mode = "create", onSuccess })
           description="Select the medication to add to inventory"
           icon={Package}
         >
-      <FormField 
-        label="Medication" 
-        required 
-        error={fieldErrors.medicationId}
-      >
-        {mode === "edit" ? (
-          // Show static medication info in edit mode
-          <div className="p-3 bg-gray-50 border border-gray-300 rounded-lg">
-            <p className="text-sm font-medium text-gray-900">{form.medication?.brandName || item.brandName || "Unknown"}</p>
-            <div className="text-xs text-gray-600 mt-1 space-y-0.5">
-              <p><strong>Manufacturer:</strong> {form.medication?.Manufacturer?.name || item.Manufacturer?.name || "Unknown"}</p>
-              <p><strong>Form:</strong> {form.medication?.form || item.form || "Not specified"}</p>
-              <p><strong>Pack Size:</strong> {form.medication?.packSizeExpression || item.packSizeExpression} {form.medication?.packSizeUnit || item.packSizeUnit}</p>
-            </div>
-          </div>
-        ) : (
-          // Show autocomplete input in create mode
-          <>
-            <AutocompleteInput
-              value={form.medication}
-              onChange={(selected) => {
-                setForm(prev => ({
-                  ...prev,
-                  medicationId: selected?.id || "",
-                  medication: selected,
-                }));
-                validateField('medicationId', selected?.id || "");
-              }}
-              fetchOptions={pharmacyInventoryAPI.searchMedications}
-              placeholder="Type medication name..."
-              displayFn={(option) => option?.displayName || option?.brandName || ''}
-              minChars={2}
-            />
-            {form.medication && (
-              <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-xs font-medium text-blue-900">Selected Medication:</p>
-                <div className="text-xs text-blue-700 mt-1 space-y-0.5">
-                  <p><strong>Brand:</strong> {form.medication.brandName}</p>
-                  <p><strong>Manufacturer:</strong> {form.medication.Manufacturer?.name || "Unknown"}</p>
-                  <p><strong>Form:</strong> {form.medication.form || "Not specified"}</p>
-                  <p><strong>Pack Size:</strong> {form.medication.packSizeExpression} {form.medication.packSizeUnit}</p>
-                  {form.medication.prescriptionRequired && (
-                    <p className="text-orange-600"><strong>⚠️ Prescription Required</strong></p>
-                  )}
-                </div>
+          <FormField label="Medication" required>
+            <div className="p-3 bg-gray-50 border border-gray-300 rounded-lg">
+              <p className="text-sm font-medium text-gray-900">
+                {item.brandName || "Unknown"}
+              </p>
+              <div className="text-xs text-gray-600 mt-1 space-y-0.5">
+                <p><strong>Active Substances:</strong> {item.activeSubstances}</p>
+                <p><strong>Manufacturer:</strong> {item.manufacturerName || "Unknown"}</p>
+                <p><strong>Form:</strong> {item.form || "Not specified"}</p>
+                <p><strong>Regulatory Class:</strong> 
+                  <span className="ml-1 px-2 py-0.5 bg-blue-100 text-blue-800 rounded text-xs">
+                    {item.regulatoryClass || "N/A"}
+                  </span>
+                </p>
               </div>
-            )}
-          </>
-        )}
-      </FormField>
+            </div>
+          </FormField>
         </FormSection>
 
         {/* Stock & Pricing */}
