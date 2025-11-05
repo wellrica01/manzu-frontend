@@ -47,24 +47,33 @@ const handleSearch = async (val) => {
         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1ABA7F] focus:border-transparent"
       />
       {loading && <div className="absolute right-3 top-3"><Loader2 className="w-4 h-4 animate-spin" /></div>}
-      {showResults && results.length > 0 && (
+      {showResults && (
         <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-          {results.map((med) => (
-            <button
-              key={med.medicationId}
-              onClick={() => {
-                onChange(med);
-                setQuery("");
-                setShowResults(false);
-              }}
-              className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b last:border-b-0"
-            >
-              <div className="font-medium text-gray-900">{med.brandName}</div>
-              <div className="text-sm text-gray-600">{med.form} • Stock: {med.stock}</div>
-            </button>
-          ))}
+          {loading ? (
+            <div className="p-3 text-gray-500 text-sm text-center">Searching...</div>
+          ) : results.length > 0 ? (
+            results.map((med) => (
+              <button
+                key={med.medicationId}
+                onClick={() => {
+                  onChange(med);
+                  setQuery("");
+                  setShowResults(false);
+                }}
+                className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b last:border-b-0"
+              >
+                <div className="font-medium text-gray-900">{med.brandName}</div>
+                <div className="text-sm text-gray-600">{med.form} • Stock: {med.stock}</div>
+              </button>
+            ))
+          ) : (
+            <div className="p-3 text-gray-500 text-sm text-center">
+              No medications found or not in stock.
+            </div>
+          )}
         </div>
       )}
+
     </div>
   );
 }

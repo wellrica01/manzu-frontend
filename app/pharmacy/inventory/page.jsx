@@ -26,7 +26,7 @@ export default function PharmacyInventoryPage() {
   const [error, setError] = useState(null);
 
   const [search, setSearch] = useState("");
-  const [stockFilter, setStockFilter] = useState("");
+  const [stockFilter, setStockFilter] = useState("stocked");
   const [prescriptionFilter, setPrescriptionFilter] = useState("");
 
   const [editingItem, setEditingItem] = useState(null);
@@ -56,19 +56,23 @@ export default function PharmacyInventoryPage() {
       setLoading(true);
       setError(null);
       try {
+
+        const statusMap = {
+          stocked: "stocked",
+          not_stocked: "not_stocked",
+          low: "low_stock",
+          out: "out_of_stock",
+          expiring: "expiring_soon",
+        };
+
         const params = {
           page: pagination.page,
           limit: pagination.limit,
-          ...(search ? { search } : {}),
-          status: stockFilter === "stocked" ? "stocked" :
-                  stockFilter === "not_stocked" ? "not_stocked" :
-                  stockFilter === "low" ? "low_stock" :
-                  stockFilter === "out" ? "out_of_stock" : 
-                  stockFilter === "expiring" ? "expiring_soon" : 
-                  "all",
-          ...(prescriptionFilter === "true" || prescriptionFilter === "false" ? 
-            { prescriptionRequired: prescriptionFilter } : {}),
+          ...(search && { search }),
+          status: statusMap[stockFilter] || "stocked", // default to stocked
+          ...(prescriptionFilter && { prescriptionRequired: prescriptionFilter }),
         };
+
 
         if (prescriptionFilter === "true" || prescriptionFilter === "false") {
           params.prescriptionRequired = prescriptionFilter;
@@ -331,29 +335,45 @@ export default function PharmacyInventoryPage() {
     {
       key: 'actions',
       label: 'Actions',
-      render: (item) => (
-        <div className="flex gap-2">
-          <button
-            className="p-1.5 rounded-md hover:bg-[#1ABA7F]/10 text-[#1ABA7F] transition-colors"
-            title="Edit inventory"
-            onClick={() => handleEditClick(item)}
-            aria-label={`Edit ${item?.brandName}`}
-          >
-            <Edit className="w-4 h-4" />
-          </button>
-          <button
-            className="p-1.5 rounded-md hover:bg-red-100 text-red-600 transition-colors"
-            title="Delete inventory"
-            onClick={() => setDeleteId(item.medicationId)}
-            disabled={deleteLoading && deleteId === item.medicationId}
-            aria-label={`Delete ${item?.brandName}`}
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
-      ),
+      render: (item) => {
+        // If the filter is "Not Stocked", show only the "Stock" button
+        if (stockFilter === "not_stocked" || !item.isStocked) {
+          return (
+            <button
+              className="px-3 py-1.5 bg-blue-600 text-white text-sm font-semibold rounded-md hover:bg-blue-700 transition-colors"
+              onClick={() => handleEditClick(item)}
+            >
+              📦 Stock
+            </button>
+          );
+        }
+
+        // Default actions for stocked items
+        return (
+          <div className="flex gap-2">
+            <button
+              className="p-1.5 rounded-md hover:bg-[#1ABA7F]/10 text-[#1ABA7F] transition-colors"
+              title="Edit inventory"
+              onClick={() => handleEditClick(item)}
+              aria-label={`Edit ${item?.brandName}`}
+            >
+              <Edit className="w-4 h-4" />
+            </button>
+            <button
+              className="p-1.5 rounded-md hover:bg-red-100 text-red-600 transition-colors"
+              title="Delete inventory"
+              onClick={() => setDeleteId(item.medicationId)}
+              disabled={deleteLoading && deleteId === item.medicationId}
+              aria-label={`Delete ${item?.brandName}`}
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+        );
+      },
       cellClassName: 'whitespace-nowrap text-sm font-medium'
     }
+
   ];
 
   // Filter configurations
@@ -365,13 +385,12 @@ export default function PharmacyInventoryPage() {
         setStockFilter(value);
       },
       options: [
-        { value: "stocked", label: "In Stock" },        
         { value: "not_stocked", label: "Not Stocked" },
         { value: "low", label: "Low Stock" },
         { value: "out", label: "Out of Stock" },
         { value: "expiring", label: "Expiring Soon (30 days)" },
       ],
-      placeholder: "All Medications",
+      placeholder: "In Stock",
       className: "sm:w-48"
     },
     {
@@ -466,14 +485,20 @@ export default function PharmacyInventoryPage() {
               <Package className="w-4 h-4 md:w-6 md:h-6 text-purple-600" />
             </div>
             <div>
-              <div className="text-xs md:text-sm text-gray-600 font-medium">Available to Stock</div>
+              <div className="text-xs md:text-sm text-gray-600 font-medium">In Stock</div>
               <div className="text-xl md:text-3xl font-bold text-purple-600">
-                {summary.catalogSize || 0}
+                {summary.stockedCount || 0}
               </div>
-              <div className="text-xs text-gray-500">medications</div>
+              <div className="text-xs text-gray-500">
+                medications <br />
+                <span className="text-[11px] text-gray-400">
+                  Available to stock: {summary.notStockedCount || 0}
+                </span>
+              </div>
             </div>
           </div>
         </div>
+
 
         <div className="bg-white border-2 border-yellow-200 rounded-lg md:rounded-lg p-3 md:p-5 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center gap-2 md:gap-3">

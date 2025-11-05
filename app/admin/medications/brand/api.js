@@ -7,10 +7,7 @@ function getAuthHeaders() {
 }
 
 const BACKEND_BASE = process.env.NEXT_PUBLIC_API_URL || "http://192.168.221.67:5000";
-
-// Ensure API_BASE always has a valid base URL
 const API_BASE = `${BACKEND_BASE}/api/admin/medications`;
-
 
 export async function fetchMedications(params = {}) {
   const query = new URLSearchParams(params).toString();
@@ -26,7 +23,6 @@ export async function fetchMedications(params = {}) {
   };
 }
 
-
 export async function fetchMedication(id) {
   const res = await fetch(`${API_BASE}/${id}`, {
     headers: getAuthHeaders(),
@@ -36,17 +32,14 @@ export async function fetchMedication(id) {
   return res.json();
 }
 
-// Fixed API functions for frontend
 export async function createMedication(formData) {
-  // formData should already be a FormData object
   const res = await fetch(API_BASE, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${localStorage.getItem('adminToken')}`,
-      // Don't set Content-Type - let browser set it for FormData
     },
     credentials: 'include',
-    body: formData, // Pass FormData directly
+    body: formData,
   });
 
   if (!res.ok) {
@@ -61,7 +54,6 @@ export async function updateMedication(id, formData) {
     method: 'PATCH',
     headers: {
       Authorization: `Bearer ${localStorage.getItem('adminToken')}`,
-      // Don't set Content-Type for FormData
     },
     credentials: 'include',
     body: formData,
@@ -74,7 +66,6 @@ export async function updateMedication(id, formData) {
   return res.json();
 }
 
-
 export async function deleteMedication(id) {
   const res = await fetch(`${API_BASE}/${id}`, {
     method: 'DELETE',
@@ -85,8 +76,7 @@ export async function deleteMedication(id) {
   return res.json();
 } 
 
-// --- Search functions ---
-
+// --- Search functions (Fixed to return consistent structure) ---
 
 export async function searchManufacturers(searchTerm, limit = 20) {
   const query = new URLSearchParams({ search: searchTerm, limit }).toString();
@@ -95,7 +85,14 @@ export async function searchManufacturers(searchTerm, limit = 20) {
     credentials: 'include',
   });
   if (!res.ok) throw new Error('Search for manufacturers failed');
-  return res.json();
+  const json = await res.json();
+  
+  // Return in the structure AutocompleteInput expects
+  return {
+    data: {
+      manufacturers: json.data?.manufacturers || []
+    }
+  };
 }
 
 export async function searchActiveSubstances(searchTerm, limit = 20) {
@@ -105,7 +102,13 @@ export async function searchActiveSubstances(searchTerm, limit = 20) {
     credentials: 'include',
   });
   if (!res.ok) throw new Error('Search for active substances failed');
-  return res.json();
+  const json = await res.json();
+  
+  return {
+    data: {
+      activeSubstances: json.data?.activeSubstances || []
+    }
+  };
 }
 
 export async function searchMedicationIngredients(searchTerm, limit = 20) {
@@ -115,6 +118,11 @@ export async function searchMedicationIngredients(searchTerm, limit = 20) {
     credentials: 'include',
   });
   if (!res.ok) throw new Error('Search for medication ingredients failed');
-  return res.json();
+  const json = await res.json();
+  
+  return {
+    data: {
+      medicationIngredients: json.data?.medicationIngredients || []
+    }
+  };
 }
-
