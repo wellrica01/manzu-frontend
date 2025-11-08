@@ -3,14 +3,18 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Toaster } from '@/components/ui/sonner';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
-import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
-import { Menu, X, Twitter, Instagram, Facebook, ShoppingCart, Home, FileText, MapPin, ChevronUp, Shield, Award, Clock, Phone, Mail, Sparkles, Globe, Heart } from 'lucide-react';
+import { 
+  Menu, X, Twitter, Instagram, Facebook, ShoppingCart, Home, FileText, 
+  MapPin, ChevronUp, Shield, Award, Clock, Phone, Mail, Sparkles, 
+  Building2, Users, Heart, TrendingUp, Zap, ExternalLink, CheckCircle
+} from 'lucide-react';
 import Image from 'next/image';
 import { useCartData } from '@/hooks/useCartData';
 import { useTranslation } from 'react-i18next';
-
 
 const CONFIG = {
   socialMedia: {
@@ -19,7 +23,6 @@ const CONFIG = {
     facebook: 'https://facebook.com/manzu.pharmacy',
   },
   images: {
-    pharmacyCTA: '/images/pharmacy-cta.jpg',
     logo: '/logo_1.png',
   },
   contact: {
@@ -31,12 +34,13 @@ const CONFIG = {
 const guestId = typeof window !== 'undefined' ? localStorage.getItem('guestId') : null;
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
+// Enhanced Cart Badge
 const CartBadge = ({ count }) => {
   if (count <= 0) return null;
   
   return (
     <span 
-      className="absolute -top-2 -right-2 bg-gradient-to-br from-[#1ABA7F] to-[#16a876] text-white text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center shadow-lg border-2 border-white"
+      className="absolute -top-2 -right-2 bg-gradient-to-br from-emerald-500 to-teal-500 text-white text-xs font-black rounded-full h-6 w-6 flex items-center justify-center shadow-lg border-2 border-white animate-pulse"
       aria-label={`${count} items in cart`}
     >
       {count > 99 ? '99+' : count}
@@ -44,28 +48,38 @@ const CartBadge = ({ count }) => {
   );
 };
 
+// Navigation Items Component
 const NavigationItems = ({ items, onClick, isMobile = false }) => {
   return (
     <>
-      {items.map(({ label, icon: Icon, href, badge }) => (
+      {items.map(({ label, icon: Icon, href, badge, description }) => (
         <Link
           key={href}
           href={href}
           className={
             isMobile
-              ? 'group flex items-center gap-3 px-4 py-3.5 text-sm font-semibold text-gray-700 hover:text-[#225F91] hover:bg-gray-50 rounded-lg transition-all duration-200'
-              : 'group relative flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-[#225F91] px-4 py-2 rounded-lg transition-all duration-200'
+              ? 'group flex items-center gap-4 px-5 py-4 text-sm font-semibold text-gray-700 hover:text-[#225F91] hover:bg-gradient-to-r hover:from-emerald-50 hover:to-cyan-50 rounded-2xl transition-all'
+              : 'group relative flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-[#225F91] px-4 py-2.5 rounded-xl hover:bg-gray-50 transition-all'
           }
           onClick={onClick}
           aria-label={badge ? `${label} with ${badge} items` : label}
         >
-          <Icon className="h-4 w-4" strokeWidth={2} />
-          <span>{label}</span>
-          {!isMobile && <CartBadge count={badge} />}
+          <div className={isMobile ? "p-2 rounded-xl bg-gradient-to-br from-gray-100 to-gray-50 group-hover:from-emerald-100 group-hover:to-cyan-100 transition-colors" : ""}>
+            <Icon className="h-5 w-5 group-hover:scale-110 transition-transform" strokeWidth={2} />
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <span>{label}</span>
+              {!isMobile && <CartBadge count={badge} />}
+            </div>
+            {isMobile && description && (
+              <p className="text-xs text-gray-500 mt-0.5">{description}</p>
+            )}
+          </div>
           {isMobile && badge > 0 && (
-            <span className="bg-[#1ABA7F] text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center ml-auto">
+            <Badge className="bg-gradient-to-br from-emerald-500 to-teal-500 text-white font-bold">
               {badge > 99 ? '99+' : badge}
-            </span>
+            </Badge>
           )}
         </Link>
       ))}
@@ -82,10 +96,34 @@ function MainLayoutContent({ children }) {
   const navRef = useRef(null);
 
   const navItems = useMemo(() => [
-    { label: t('nav.home'), icon: Home, href: '/', badge: 0 },
-    { label: t('nav.check_status'), icon: FileText, href: '/check-prescription-status', badge: 0 },
-    { label: t('nav.track_order'), icon: MapPin, href: '/track-order', badge: 0 },
-    { label: t('nav.cart'), icon: ShoppingCart, href: '/cart', badge: itemCount },
+    { 
+      label: t('nav.home'), 
+      icon: Home, 
+      href: '/', 
+      badge: 0,
+      description: 'Find medications instantly'
+    },
+    { 
+      label: t('nav.check_status'), 
+      icon: FileText, 
+      href: '/check-prescription-status', 
+      badge: 0,
+      description: 'Track prescription status'
+    },
+    { 
+      label: t('nav.track_order'), 
+      icon: MapPin, 
+      href: '/track-order', 
+      badge: 0,
+      description: 'Live order tracking'
+    },
+    { 
+      label: t('nav.cart'), 
+      icon: ShoppingCart, 
+      href: '/cart', 
+      badge: itemCount,
+      description: 'Review your items'
+    },
   ], [t, itemCount]);
 
   const handleScroll = useCallback(() => {
@@ -106,75 +144,87 @@ function MainLayoutContent({ children }) {
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
-      {/* Premium Trust Bar */}
-      <div className="bg-gradient-to-r from-[#225F91] via-[#1a4a73] to-[#225F91] text-white py-2.5 px-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-center gap-8 text-xs font-semibold">
+      {/* Enhanced Trust Bar */}
+      <div className="bg-gradient-to-r from-[#225F91] via-[#1a4a73] to-[#225F91] text-white py-2.5">
+        <div className="max-w-7xl mx-auto px-6 flex items-center justify-center gap-8 text-xs font-bold">
           <div className="flex items-center gap-2">
-            <Shield className="h-3.5 w-3.5 text-[#1ABA7F]" strokeWidth={2.5} />
+            <div className="relative">
+              <Shield className="h-4 w-4 text-emerald-400" strokeWidth={2.5} />
+              <div className="absolute inset-0 bg-emerald-400/30 rounded-full blur-sm animate-pulse" />
+            </div>
             <span>NAFDAC Verified</span>
           </div>
           <div className="hidden sm:flex items-center gap-2">
-            <Award className="h-3.5 w-3.5 text-[#76D1F3]" strokeWidth={2.5} />
-            <span>Nigeria's Premier Platform</span>
+            <Award className="h-4 w-4 text-cyan-400" strokeWidth={2.5} />
+            <span>Trusted Platform</span>
           </div>
           <div className="hidden md:flex items-center gap-2">
-            <Clock className="h-3.5 w-3.5 text-[#1ABA7F]" strokeWidth={2.5} />
-            <span>Available 24/7</span>
+            <Clock className="h-4 w-4 text-emerald-400" strokeWidth={2.5} />
+            <span>24/7 Support</span>
+          </div>
+          <div className="hidden lg:flex items-center gap-2">
+            <Zap className="h-4 w-4 text-cyan-400" strokeWidth={2.5} />
+            <span>Instant Results</span>
           </div>
         </div>
       </div>
 
-      {/* Skip to main content */}
+      {/* Skip Link for Accessibility */}
       <a 
         href="#main-content" 
-        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-6 focus:py-3 focus:bg-[#1ABA7F] focus:text-white focus:rounded-lg focus:shadow-lg"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-8 focus:py-4 focus:bg-gradient-to-r focus:from-emerald-500 focus:to-cyan-500 focus:text-white focus:rounded-2xl focus:shadow-2xl focus:font-bold"
       >
         Skip to main content
       </a>
 
-      {/* Refined Navigation */}
+      {/* Enhanced Navigation */}
       <nav
         ref={navRef}
         className={`sticky top-0 z-50 bg-white transition-all duration-300 ${
-          isScrolled ? 'shadow-md' : 'border-b border-gray-100'
+          isScrolled ? 'shadow-lg border-b border-gray-100' : 'border-b border-gray-100'
         }`}
         role="navigation"
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
           <Link
             href="/"
             className="flex items-center gap-3 group"
             aria-label="Manzu Homepage"
           >
-            <div className="relative">
-              <Image
-                src={CONFIG.images.logo}
-                alt="Manzu"
-                width={120}
-                height={48}
-                className="h-8 sm:h-10 w-auto object-contain"
-                priority
-              />
-            </div>
-            <div className="hidden lg:flex flex-col">
-              <span className="text-lg font-bold text-[#225F91]">Manzu</span>
-              <span className="text-xs text-gray-500 font-medium">Your Health Partner</span>
-            </div>
+            <Image
+              src={CONFIG.images.logo}
+              alt="Manzu"
+              width={140}
+              height={56}
+              className="h-8 sm:h-10 w-auto group-hover:scale-105 transition-transform"
+              priority
+            />
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-1">
+          <nav className="hidden lg:flex items-center gap-2">
             <NavigationItems items={navItems} />
+            
+            <div className="ml-4 pl-4 border-l border-gray-200">
+              <Link
+                href="/pharmacy-register"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#225F91] to-[#1a4a73] hover:from-[#1a4a73] hover:to-[#225F91] text-white font-semibold text-sm shadow-lg hover:shadow-xl transition-all"
+              >
+                <Building2 className="w-4 h-4" strokeWidth={2} />
+                <span className="hidden xl:inline">For Pharmacies</span>
+                <span className="xl:hidden">Pharmacies</span>
+              </Link>
+            </div>
           </nav>
 
-          {/* Mobile Menu */}
-          <div className="flex items-center gap-3 md:hidden">
+          {/* Mobile Cart & Menu */}
+          <div className="flex items-center gap-3 lg:hidden">
             <Link
               href="/cart"
-              className="relative p-3 text-gray-700 hover:text-[#225F91] rounded-lg"
+              className="relative p-2.5 text-gray-700 hover:text-[#225F91] hover:bg-gray-50 rounded-xl transition-all"
               aria-label={itemCount > 0 ? `${t('nav.cart')} with ${itemCount} items` : t('nav.cart')}
             >
-              <ShoppingCart className="h-5 w-5" strokeWidth={2} />
+              <ShoppingCart className="h-6 w-6" strokeWidth={2} />
               <CartBadge count={itemCount} />
             </Link>
             
@@ -183,33 +233,55 @@ function MainLayoutContent({ children }) {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="p-2"
+                  className="p-2.5 hover:bg-gray-50 rounded-xl"
                   aria-label={isOpen ? 'Close menu' : 'Open menu'}
                 >
                   {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-[85vw] max-w-sm bg-white p-0">
+              <SheetContent side="right" className="w-[90vw] max-w-md bg-white p-0">
                 <VisuallyHidden>
                   <SheetTitle>Navigation Menu</SheetTitle>
                 </VisuallyHidden>
                 
-                <div className="p-6 border-b border-gray-100">
+                {/* Mobile Menu Header */}
+                <div className="p-6 border-b border-gray-100 bg-gradient-to-br from-gray-50 to-white">
                   <Image
                     src={CONFIG.images.logo}
                     alt="Manzu"
-                    width={100}
-                    height={40}
-                    className="h-10 w-auto"
+                    width={120}
+                    height={48}
+                    className="h-9 w-auto mb-3"
                   />
+                  <p className="text-sm text-gray-600 font-medium">
+                    Nigeria's trusted medication platform
+                  </p>
                 </div>
 
-                <nav className="flex flex-col gap-1 p-4">
+                {/* Mobile Menu Items */}
+                <nav className="flex flex-col gap-2 p-4">
                   <NavigationItems items={navItems} onClick={() => setIsOpen(false)} isMobile />
+                  
+                  <div className="my-4 border-t border-gray-200" />
+                  
+                  <Link
+                    href="/pharmacy-register"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-4 px-5 py-4 text-sm font-semibold text-white bg-gradient-to-r from-[#225F91] to-[#1a4a73] hover:from-[#1a4a73] hover:to-[#225F91] rounded-2xl transition-all shadow-lg"
+                  >
+                    <div className="p-2 rounded-xl bg-white/20">
+                      <Building2 className="w-5 h-5" strokeWidth={2} />
+                    </div>
+                    <div className="flex-1">
+                      <div>For Pharmacies</div>
+                      <p className="text-xs text-white/80 mt-0.5">Join our network</p>
+                    </div>
+                  </Link>
                 </nav>
 
+                {/* Mobile Menu Footer */}
                 <div className="absolute bottom-0 left-0 right-0 p-6 border-t border-gray-100 bg-gray-50">
-                  <p className="text-xs text-gray-500 text-center">
+                  <p className="text-xs text-gray-500 text-center font-medium">
                     © {new Date().getFullYear()} Manzu. All rights reserved.
                   </p>
                 </div>
@@ -224,59 +296,25 @@ function MainLayoutContent({ children }) {
         {children}
       </main>
 
-      {/* Premium Pharmacy CTA */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-[#225F91] via-[#1a4a73] to-[#0f2942] text-white py-24">
-        <div className="absolute inset-0">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#1ABA7F]/15 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-[#76D1F3]/15 rounded-full blur-3xl" />
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:32px_32px]" />
-        </div>
-
-        <div className="relative z-10 max-w-5xl mx-auto px-4 text-center">
-          <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 mb-8">
-            <Award className="w-4 h-4 text-[#1ABA7F]" strokeWidth={2.5} />
-            <span className="text-sm font-bold">Partner Opportunity</span>
-          </div>
-
-          <h2 className="text-4xl sm:text-6xl font-black mb-6 leading-tight tracking-tight">
-            Are You a Pharmacy?
-          </h2>
-          
-          <p className="text-lg sm:text-xl text-gray-100 mb-12 max-w-2xl mx-auto font-light leading-relaxed">
-            Join Nigeria's first medication discovery platform and connect with verified customers across the nation.
-          </p>
-
-          <Button
-            asChild
-            className="group relative h-14 sm:h-16 px-8 sm:px-12 text-lg font-bold rounded-lg bg-[#1ABA7F] hover:bg-[#16a876] text-white shadow-2xl hover:shadow-[#1ABA7F]/30 transition-all duration-300 overflow-hidden"
-          >
-            <Link href="/pharmacy-register">
-              <span className="relative z-10 flex items-center gap-3">
-                Join Manzu Network
-                <ChevronUp className="w-5 h-5 rotate-90 group-hover:translate-x-1 transition-transform duration-300" strokeWidth={2.5} />
-              </span>
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-            </Link>
-          </Button>
-        </div>
-      </section>
-
-      {/* Refined Footer */}
-      <footer className="bg-gradient-to-b from-gray-50 to-white border-t-2 border-gray-100" role="contentinfo">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
-            {/* Brand */}
-            <div className="md:col-span-2">
+      {/* Enhanced Footer */}
+      <footer className="bg-gradient-to-b from-gray-900 to-black text-white" role="contentinfo">
+        <div className="max-w-7xl mx-auto px-6 py-20">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+            {/* Brand Column */}
+            <div className="lg:col-span-2">
               <Image
                 src={CONFIG.images.logo}
                 alt="Manzu"
-                width={140}
-                height={56}
-                className="h-12 w-auto mb-6"
+                width={160}
+                height={64}
+                className="h-12 w-auto mb-6 brightness-0 invert"
               />
-              <p className="text-base text-gray-600 mb-6 max-w-md leading-relaxed font-light">
-                Nigeria's first medication discovery platform, connecting patients with trusted pharmacies nationwide.
+              <p className="text-lg text-white/70 mb-8 max-w-md leading-relaxed">
+                Nigeria's first medication discovery platform, connecting patients with verified pharmacies nationwide. Making healthcare accessible, transparent, and efficient.
               </p>
+            
+              
+              {/* Social Links */}
               <div className="flex gap-3">
                 {[
                   { name: 'Twitter', href: CONFIG.socialMedia.twitter, icon: Twitter },
@@ -288,10 +326,10 @@ function MainLayoutContent({ children }) {
                     href={social.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group p-3 rounded-lg bg-white border-2 border-gray-200 hover:border-[#1ABA7F] hover:bg-[#1ABA7F] text-gray-600 hover:text-white transition-all duration-300 shadow-sm hover:shadow-md"
+                    className="group p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 transition-all"
                     aria-label={social.name}
                   >
-                    <social.icon className="h-5 w-5" strokeWidth={2} />
+                    <social.icon className="h-5 w-5 group-hover:scale-110 transition-transform" strokeWidth={2} />
                   </a>
                 ))}
               </div>
@@ -299,15 +337,28 @@ function MainLayoutContent({ children }) {
 
             {/* Quick Links */}
             <div>
-              <h3 className="text-sm font-bold text-gray-900 mb-6 uppercase tracking-wider">Company</h3>
-              <nav className="space-y-2">
-                {['About', 'Contact', 'Careers'].map((item) => (
+              <h3 className="text-sm font-black text-white mb-6 uppercase tracking-wider flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-emerald-400" strokeWidth={2} />
+                Quick Links
+              </h3>
+              <nav className="space-y-3">
+                {[
+                  { label: 'About Us', href: '/about' },
+                  { label: 'How It Works', href: '/how-it-works' },
+                  { label: 'For Pharmacies', href: '/pharmacy-register' },
+                  { label: 'FAQs', href: '/faqs' },
+                  { label: 'Blog', href: '/blog' },
+                  { label: 'Careers', href: '/careers' },
+                ].map((link) => (
                   <Link
-                    key={item}
-                    href={`/${item.toLowerCase()}`}
-                    className="block text-base text-gray-600 hover:text-[#225F91] transition-colors font-medium"
+                    key={link.href}
+                    href={link.href}
+                    className="group block text-white/70 hover:text-white transition-colors"
                   >
-                    {item}
+                    <span className="flex items-center gap-2">
+                      {link.label}
+                      <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" strokeWidth={2} />
+                    </span>
                   </Link>
                 ))}
               </nav>
@@ -315,56 +366,94 @@ function MainLayoutContent({ children }) {
 
             {/* Contact */}
             <div>
-              <h3 className="text-sm font-bold text-gray-900 mb-6 uppercase tracking-wider">Contact</h3>
-              <div className="space-y-3">
+              <h3 className="text-sm font-black text-white mb-6 uppercase tracking-wider flex items-center gap-2">
+                <Phone className="w-4 h-4 text-cyan-400" strokeWidth={2} />
+                Get in Touch
+              </h3>
+              <div className="space-y-4">
                 <a 
                   href={`tel:${CONFIG.contact.phone}`} 
-                  className="flex items-center gap-3 text-base text-gray-600 hover:text-[#225F91] transition-colors group"
+                  className="group flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 transition-all"
                 >
-                  <div className="p-2 rounded-lg bg-gray-100 group-hover:bg-[#1ABA7F]/10 transition-colors">
+                  <div className="p-2 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500">
                     <Phone className="h-4 w-4" strokeWidth={2} />
                   </div>
-                  <span className="font-medium">{CONFIG.contact.phone}</span>
+                  <div>
+                    <div className="text-xs text-white/60 font-semibold">Call Us</div>
+                    <div className="font-bold text-sm">{CONFIG.contact.phone}</div>
+                  </div>
                 </a>
+                
                 <a 
                   href={`mailto:${CONFIG.contact.email}`} 
-                  className="flex items-center gap-3 text-base text-gray-600 hover:text-[#225F91] transition-colors group"
+                  className="group flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 transition-all"
                 >
-                  <div className="p-2 rounded-lg bg-gray-100 group-hover:bg-[#1ABA7F]/10 transition-colors">
+                  <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-500">
                     <Mail className="h-4 w-4" strokeWidth={2} />
                   </div>
-                  <span className="font-medium">{CONFIG.contact.email}</span>
+                  <div>
+                    <div className="text-xs text-white/60 font-semibold">Email Us</div>
+                    <div className="font-bold text-sm">{CONFIG.contact.email}</div>
+                  </div>
                 </a>
+
+                <div className="p-4 rounded-xl bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Clock className="w-4 h-4 text-emerald-400" strokeWidth={2} />
+                    <span className="text-xs font-bold text-emerald-400">Available 24/7</span>
+                  </div>
+                  <p className="text-xs text-white/70">
+                    Our support team is always here to help you
+                  </p>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="pt-8 border-t-2 border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-4">
-            <p className="text-sm text-gray-500 font-medium">
-              © {new Date().getFullYear()} Manzu. All rights reserved.
-            </p>
-            <div className="flex gap-8">
-              <Link href="/privacy-policy" className="text-sm text-gray-500 hover:text-[#225F91] font-medium transition-colors">
-                Privacy Policy
-              </Link>
-              <Link href="/terms" className="text-sm text-gray-500 hover:text-[#225F91] font-medium transition-colors">
-                Terms of Service
-              </Link>
+          {/* Footer Bottom */}
+          <div className="pt-8 border-t border-white/10">
+            <div className="flex flex-col lg:flex-row justify-between items-center gap-6">
+              <p className="text-sm text-white/50 font-medium">
+                © {new Date().getFullYear()} Manzu. All rights reserved. Making healthcare accessible to every Nigerian.
+              </p>
+              <div className="flex flex-wrap gap-6">
+                {[
+                  { label: 'Privacy Policy', href: '/privacy-policy' },
+                  { label: 'Terms of Service', href: '/terms' },
+                  { label: 'Cookie Policy', href: '/cookies' },
+                ].map((link) => (
+                  <Link 
+                    key={link.href}
+                    href={link.href} 
+                    className="text-sm text-white/50 hover:text-white transition-colors font-medium"
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
             </div>
           </div>
         </div>
       </footer>
 
-      {/* Refined Scroll to Top */}
+      {/* Scroll to Top Button */}
       <Button
         onClick={scrollToTop}
-        className={`fixed bottom-8 right-8 z-50 p-3 bg-[#225F91] hover:bg-[#1a4a73] text-white rounded-full shadow-lg transition-all duration-300 ${
-          showScrollTop ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8 pointer-events-none'
+        className={`fixed bottom-8 right-8 z-50 p-4 bg-gradient-to-br from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-white rounded-2xl shadow-2xl hover:shadow-emerald-500/50 transition-all ${
+          showScrollTop ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-8 scale-90 pointer-events-none'
         }`}
         aria-label="Scroll to top"
       >
-        <ChevronUp className="h-5 w-5" strokeWidth={2} />
+        <ChevronUp className="h-6 w-6" strokeWidth={2.5} />
       </Button>
+
+      {/* Toast Notifications */}
+      <Toaster 
+        position="bottom-right"
+        toastOptions={{
+          className: 'rounded-2xl border-2',
+        }}
+      />
     </div>
   );
 }

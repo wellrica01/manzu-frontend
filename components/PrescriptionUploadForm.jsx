@@ -510,7 +510,7 @@ export default function PrescriptionUploadForm() {
               }}
               onFocus={() => setContactFocused(true)}
               onBlur={() => setContactFocused(false)}
-              placeholder="Phone number (e.g., +2348012345678)"
+              placeholder="e.g., +2348012345678"
               className={cn(
                 "h-14 pl-12 pr-4 text-base font-medium rounded-lg border-2 transition-all duration-300",
                 errors.contact

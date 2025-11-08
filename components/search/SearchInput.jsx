@@ -213,7 +213,7 @@ const handleInputFocus = useCallback(() => {
         <Input
           ref={inputRef}
           type="text"
-          placeholder="Search for any medication..."
+          placeholder="paracetamol..."
           value={searchTerm}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
