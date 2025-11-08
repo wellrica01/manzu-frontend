@@ -80,7 +80,7 @@ const RevealOnScroll = ({ children, delay = 0, className = '' }) => {
       ref={ref}
       className={`transition-all duration-1000 ease-out ${
         isVisible 
-          ? 'opacity-100 translate-y-0 scale-100' 
+          ? 'opacity-100 ' 
           : 'opacity-0 translate-y-12 scale-95'
       } ${className}`}
     >
@@ -618,11 +618,11 @@ const TestimonialsSection = () => {
 // Enhanced Service Card (Responsive)
 const ServiceCard = ({ title, icon: Icon, children, description }) => {
   return (
-    <Card className="relative overflow-hidden rounded-[1.5rem] sm:rounded-[2rem] border-2 border-gray-200 hover:border-gray-300 shadow-lg hover:shadow-2xl transition-all duration-500">
+    <Card className="relative rounded-3xl sm:rounded-4xl border-2 border-gray-200 hover:border-gray-300 shadow-lg hover:shadow-2xl transition-all duration-500">
       {/* Subtle decorative gradient glow */}
       <div className="absolute top-0 right-0 w-40 sm:w-64 h-40 sm:h-64 bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 rounded-full blur-3xl" />
       
-      <CardContent className="relative p-6 sm:p-12">
+      <CardContent className="relative px-4 sm:px-6 py-6 sm:py-12">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0 mb-8">
           <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-cyan-500 text-white shadow-lg">
             <Icon className="w-7 h-7 sm:w-8 sm:h-8" strokeWidth={2} />
@@ -727,7 +727,7 @@ function HomePageContent() {
     {/* Service Section - Enhanced & Responsive */}
     {visibleSection && (
       <section className="py-16 sm:py-24 bg-gradient-to-b from-gray-50 via-white to-gray-50">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6">
+        <div className="max-w-5xl mx-auto px-2 sm:px-6">
           {visibleSection === "search" && (
             <RevealOnScroll>
               <div ref={searchRef}>
@@ -759,12 +759,11 @@ function HomePageContent() {
       </section>
     )}
 
-
     {/* Trust Section - Responsive */}
     <section className="py-16 sm:py-24 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <RevealOnScroll>
-          <div className="relative p-8 sm:p-16 rounded-[2rem] sm:rounded-[3rem] bg-gradient-to-br from-[#225F91] to-[#1a4a73] text-white overflow-hidden">
+          <div className="relative p-8 sm:p-16 rounded-[2rem] sm:rounded-[3rem] bg-gradient-to-br from-[#225F91] to-[#1a4a73] text-white">
             {/* Pattern Background */}
             <div className="absolute inset-0 opacity-10">
               <div
