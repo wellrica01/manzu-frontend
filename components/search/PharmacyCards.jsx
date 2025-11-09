@@ -87,8 +87,29 @@ return (
     </div>
   </div>
 );
-
 };
+
+/* ----------------------------- No Open Pharmacies Empty State ----------------------------- */
+const NoOpenPharmaciesState = ({ onShowAll }) => (
+  <div className="flex flex-col items-center justify-center py-12 px-6 bg-gradient-to-br from-orange-50 to-red-50 rounded-2xl border-2 border-red-200 animate-in fade-in zoom-in-95 duration-500">
+    <div className="bg-white p-4 rounded-full shadow-lg mb-4 animate-in zoom-in-50" style={{ animationDelay: '200ms' }}>
+      <Clock className="h-10 w-10 text-red-500 animate-pulse" />
+    </div>
+    <h3 className="text-lg font-bold text-center text-gray-800 mb-2 animate-in slide-in-from-bottom-2" style={{ animationDelay: '300ms' }}>
+      No Pharmacies Currently Open
+    </h3>
+    <p className="text-sm text-gray-600 text-center mb-4 animate-in fade-in" style={{ animationDelay: '400ms' }}>
+      All pharmacies offering this medication are currently closed.
+    </p>
+    <Button
+      onClick={onShowAll}
+      className="bg-gradient-to-r from-emerald-500 to-cyan-500 text-white rounded-lg px-6 py-2 font-bold hover:shadow-lg hover:scale-105 transition-all duration-300 animate-in zoom-in-95" 
+      style={{ animationDelay: '500ms' }}
+    >
+      Show All Pharmacies
+    </Button>
+  </div>
+);
 
 // Pharmacy Card
 const PharmacyCard = ({
