@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Save, Bookmark, X, MapPin, Filter } from "lucide-react";
+import { Save, Bookmark, X, MapPin, Filter, Badge } from "lucide-react";
 import Select from "react-select";
 import { cn } from '@/lib/utils';
 
@@ -82,46 +82,11 @@ const FilterControls = ({
   states,
   lgas,
   clearFilters,
-  showFilters,     
+  showFilters,
   setShowFilters,
 }) => {
   const [savedFilters, setSavedFilters] = useState([]);
   const [activeFilters, setActiveFilters] = useState(0);
-  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
-  const filterContainerRef = useRef(null);
-
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.visualViewport) {
-        const viewportHeight = window.visualViewport.height;
-        const windowHeight = window.innerHeight;
-        const keyboardVisible = viewportHeight < windowHeight * 0.75;
-        setIsKeyboardVisible(keyboardVisible);
-      }
-    };
-
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', handleResize);
-      return () => window.visualViewport.removeEventListener('resize', handleResize);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (isKeyboardVisible && showFilters && filterContainerRef.current) {
-      const activeElement = document.activeElement;
-      const isFilterInput = filterContainerRef.current.contains(activeElement);
-      
-      if (isFilterInput) {
-        setTimeout(() => {
-          filterContainerRef.current?.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'start',
-            inline: 'nearest'
-          });
-        }, 100);
-      }
-    }
-  }, [isKeyboardVisible, showFilters]);
 
   useEffect(() => {
     const saved = localStorage.getItem("savedFilters");
@@ -135,16 +100,8 @@ const FilterControls = ({
     setActiveFilters(count);
   }, [filterState, filterLga]);
 
-  const formatLocationName = (state, lga, ward) => {
-    if (!state && !lga && !ward) return "All Locations";
-    let name = state || "";
-    if (lga) name += `, ${lga}`;
-    if (ward) name += ` (Ward: ${ward})`;
-    return name;
-  };
-
   const saveCurrentFilter = () => {
-    const locationName = formatLocationName(filterState, filterLga);
+    const locationName = `${filterState || 'All'}${filterLga ? `, ${filterLga}` : ''}`;
     const currentFilter = {
       id: Date.now(),
       name: locationName,
@@ -168,173 +125,184 @@ const FilterControls = ({
     localStorage.setItem("savedFilters", JSON.stringify(newSaved));
   };
 
-  const locationText = (() => {
-    if (!filterState && !filterLga) return null;
-    let text = `Showing Pharmacies in: ${filterState || ''}`;
-    if (filterLga) text += `, ${filterLga}`;
-    return text;
-  })();
-
-  return (
-    <div data-filters className="space-y-4" ref={filterContainerRef}>
-      <div className="flex items-center justify-between animate-in fade-in slide-in-from-top-2 duration-500">
-        <Button
-          variant="outline"
-          onClick={() => setShowFilters(!showFilters)}
-          className="group h-12 px-6 text-sm font-semibold rounded-lg border-2 border-[#1ABA7F]/30 text-[#225F91] hover:bg-gradient-to-r hover:from-[#1ABA7F]/10 hover:to-transparent transition-all duration-300 hover:shadow-lg hover:scale-105 relative overflow-hidden"
-        >
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          
-          <Filter className={cn(
-            "h-4 w-4 mr-2 transition-transform duration-300",
-            showFilters ? "rotate-180" : "rotate-0 group-hover:rotate-12"
-          )} />
-          
-          <span className="relative z-10">
-            {showFilters ? 'Hide' : 'Show'} Location Filters
+return (
+  <div className="space-y-5">
+    {/* Toggle Section */}
+    <div className="flex items-center justify-between">
+      <Button
+        variant="outline"
+        onClick={() => setShowFilters(!showFilters)}
+        className="group relative h-12 sm:h-14 px-6 sm:px-8 font-bold rounded-2xl border-2 overflow-hidden transition-all duration-500 hover:scale-105 active:scale-95"
+      >
+        {/* Gradient Background */}
+        <div
+          className={cn(
+            "absolute inset-0 bg-gradient-to-r transition-opacity duration-500",
+            showFilters
+              ? "from-emerald-500 to-cyan-500 opacity-100"
+              : "from-emerald-500/10 to-cyan-500/10 opacity-0 group-hover:opacity-100"
+          )}
+        />
+        
+        {/* Content */}
+        <div className="relative z-10 flex items-center gap-3">
+          <Filter
+            className={cn(
+              "h-5 w-5 transition-all duration-500",
+              showFilters
+                ? "rotate-180 text-white"
+                : "rotate-0 text-gray-700 group-hover:text-emerald-600"
+            )}
+            strokeWidth={2.5}
+          />
+          <span
+            className={cn(
+              "transition-colors duration-300 font-bold tracking-wide",
+              showFilters ? "text-white" : "text-gray-700 group-hover:text-emerald-600"
+            )}
+          >
+            {showFilters ? 'Hide Filters' : 'Show Filters'}
           </span>
-          
+
           {activeFilters > 0 && (
-            <span className="ml-2 px-2 py-0.5 rounded-full bg-gradient-to-r from-[#1ABA7F] to-[#16a876] text-white text-xs font-bold animate-in zoom-in-50 duration-300">
+            <Badge className="bg-white text-emerald-600 font-black text-xs px-2.5 py-1 shadow-md">
               {activeFilters}
-            </span>
-          )}
-        </Button>
-
-        {activeFilters > 0 && (
-          <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-2 duration-500">
-            <MapPin className="h-4 w-4 text-[#1ABA7F] animate-pulse" />
-            <span className="text-sm font-medium text-gray-600">
-              {activeFilters} filter{activeFilters > 1 ? 's' : ''} active
-            </span>
-          </div>
-        )}
-      </div>
-
-      {savedFilters.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2 p-4 rounded-lg bg-gradient-to-r from-gray-50 to-white border border-gray-200 animate-in fade-in slide-in-from-bottom-2 duration-500" style={{ animationDelay: '100ms' }}>
-          <Bookmark className="h-4 w-4 text-[#225F91]" />
-          <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Saved:</span>
-          {savedFilters.map((filter, index) => (
-            <div 
-              key={filter.id} 
-              className="group flex items-center gap-1 bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-300 animate-in zoom-in-95"
-              style={{ animationDelay: `${(index + 2) * 50}ms` }}
-            >
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => applySavedFilter(filter)}
-                className="h-8 px-3 text-xs font-medium border border-[#1ABA7F]/20 text-[#225F91] hover:bg-[#1ABA7F]/10 rounded-l-lg rounded-r-none hover:scale-105 transition-all duration-300"
-              >
-                {filter.name}
-              </Button>
-              <button
-                onClick={() => deleteSavedFilter(filter.id)}
-                className="h-8 px-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-r-lg transition-all duration-300 hover:scale-110"
-                aria-label={`Delete ${filter.name}`}
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {showFilters && (
-        <div className="space-y-4 p-6 rounded-2xl bg-gradient-to-br from-white to-gray-50 border-2 border-[#1ABA7F]/20 shadow-xl animate-in fade-in slide-in-from-top-4 duration-500">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2 animate-in fade-in slide-in-from-left-2" style={{ animationDelay: '100ms', animationDuration: '500ms' }}>
-              <label htmlFor="state-filter" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                <MapPin className="h-3.5 w-3.5 text-[#1ABA7F]" />
-                State
-              </label>
-              <Select
-                inputId="state-filter"
-                options={states}
-                onChange={(selected) => {
-                  if (!selected) {
-                    clearFilters(); // Clear all filters when clearing state
-                  } else {
-                    const newState = selected.value;
-                    setFilterState(newState);
-                    setFilterLga("");
-                  }
-                }}
-                value={states.find((o) => o.value === filterState) || null}
-                placeholder="Select state..."
-                isClearable
-                styles={customSelectStyles}
-              />
-            </div>
-
-            <div className="space-y-2 animate-in fade-in slide-in-from-left-2" style={{ animationDelay: '200ms', animationDuration: '500ms' }}>
-              <label htmlFor="lga-filter" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                <MapPin className="h-3.5 w-3.5 text-[#225F91]" />
-                LGA
-              </label>
-              <Select
-                inputId="lga-filter"
-                options={lgas}
-                onChange={(selected) => {
-                  if (!selected) {
-                    setFilterLga("");
-                  } else {
-                    setFilterLga(selected.value);
-                  }
-                }}
-                value={lgas.find((o) => o.value === filterLga) || null}
-                placeholder="Select LGA..."
-                isClearable
-                isDisabled={!filterState}
-                styles={customSelectStyles}
-              />
-            </div>
-          </div>
-
-          {activeFilters > 0 && (
-            <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-gray-200 animate-in fade-in slide-in-from-bottom-2" style={{ animationDelay: '400ms', animationDuration: '500ms' }}>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={clearFilters}
-                  className="h-10 px-4 text-sm font-semibold border-2 border-gray-300 text-gray-700 hover:bg-gray-100 hover:border-gray-400 rounded-lg transition-all duration-300 hover:scale-105 active:scale-95"
-                >
-                  Clear All
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={saveCurrentFilter}
-                  className="h-10 px-4 text-sm font-semibold border-2 border-[#1ABA7F] text-[#1ABA7F] hover:bg-[#1ABA7F]/10 hover:border-[#16a876] rounded-lg transition-all duration-300 hover:scale-105 active:scale-95"
-                >
-                  <Save className="h-4 w-4 mr-2" />
-                  Save Filter
-                </Button>
-              </div>
-              
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-green-50 border border-green-200 animate-pulse" style={{ animationDuration: '2s' }}>
-                <div className="h-2 w-2 rounded-full bg-green-500" />
-                <span className="text-xs font-semibold text-green-700">
-                  Filters Active
-                </span>
-              </div>
-            </div>
+            </Badge>
           )}
         </div>
-      )}
+      </Button>
 
-      {locationText && (
-        <div className="flex items-center gap-2 p-4 rounded-lg bg-gradient-to-r from-[#1ABA7F]/5 to-[#225F91]/5 border border-[#1ABA7F]/20 animate-in fade-in slide-in-from-bottom-2 duration-500" data-location-text>
-          <MapPin className="h-4 w-4 text-[#1ABA7F] flex-shrink-0 animate-pulse" />
-          <p className="text-sm text-gray-700 font-medium italic">
-            {locationText}
-          </p>
+      {activeFilters > 0 && (
+        <div className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-50 border border-emerald-200 animate-in fade-in slide-in-from-right-2 duration-300">
+          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="text-sm font-bold text-emerald-700">
+            {activeFilters} Active
+          </span>
         </div>
       )}
     </div>
-  );
+
+    {/* Saved Filters */}
+    {savedFilters.length > 0 && (
+      <div className="flex flex-wrap items-center gap-2 p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-gray-50 to-white border border-gray-200 animate-in fade-in slide-in-from-bottom-2 duration-500">
+        <div className="flex items-center gap-2">
+          <Bookmark className="h-5 w-5 text-emerald-600" strokeWidth={2.5} />
+          <span className="text-xs font-black text-gray-600 uppercase tracking-wider">
+            Saved:
+          </span>
+        </div>
+
+        {savedFilters.map((filter, index) => (
+          <div
+            key={filter.id}
+            className="group flex items-center bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 hover:border-emerald-300"
+            style={{ animationDelay: `${index * 70}ms` }}
+          >
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => applySavedFilter(filter)}
+              className="h-9 px-3 text-sm font-semibold text-gray-700 hover:text-emerald-600 rounded-l-xl rounded-r-none hover:bg-emerald-50 transition-all duration-300"
+            >
+              {filter.name}
+            </Button>
+            <button
+              onClick={() => deleteSavedFilter(filter.id)}
+              className="h-9 px-3 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-r-xl transition-all duration-300 border-l border-gray-100"
+            >
+              <X className="h-4 w-4" strokeWidth={2.5} />
+            </button>
+          </div>
+        ))}
+      </div>
+    )}
+
+    {/* Filter Panel */}
+    {showFilters && (
+      <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-white via-gray-50 to-white border border-emerald-200 shadow-xl animate-in fade-in slide-in-from-top-4 duration-500">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+          {/* State */}
+          <div className="space-y-2.5">
+            <label className="flex items-center gap-2 text-xs font-black text-gray-700 uppercase tracking-wider">
+              <MapPin className="h-4 w-4 text-emerald-500" strokeWidth={2.5} />
+              State
+            </label>
+            <select
+              value={filterState}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (!value) clearFilters();
+                else {
+                  setFilterState(value);
+                  setFilterLga("");
+                }
+              }}
+              className="w-full h-11 px-4 rounded-xl border border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 font-medium text-gray-700 bg-white shadow-sm hover:shadow transition-all duration-300"
+            >
+              <option value="">Select state...</option>
+              {states.map((state) => (
+                <option key={state.value} value={state.value}>
+                  {state.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* LGA */}
+          <div className="space-y-2.5">
+            <label className="flex items-center gap-2 text-xs font-black text-gray-700 uppercase tracking-wider">
+              <MapPin className="h-4 w-4 text-cyan-500" strokeWidth={2.5} />
+              LGA
+            </label>
+            <select
+              value={filterLga}
+              onChange={(e) => setFilterLga(e.target.value)}
+              disabled={!filterState}
+              className="w-full h-11 px-4 rounded-xl border border-gray-200 focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/20 font-medium text-gray-700 bg-white shadow-sm hover:shadow transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <option value="">Select LGA...</option>
+              {lgas.map((lga) => (
+                <option key={lga.value} value={lga.value}>
+                  {lga.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Active Filter Controls */}
+        {activeFilters > 0 && (
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-5 border-t border-gray-200">
+            <div className="flex flex-wrap gap-3">
+              <Button
+                onClick={clearFilters}
+                variant="outline"
+                className="h-11 px-6 font-semibold rounded-xl border border-gray-300 hover:border-gray-400 hover:bg-gray-50 transition-all duration-300 hover:scale-105 active:scale-95"
+              >
+                Clear All
+              </Button>
+              <Button
+                onClick={saveCurrentFilter}
+                className="h-11 px-6 font-bold rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-white shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 active:scale-95"
+              >
+                <Save className="h-5 w-5 mr-2" strokeWidth={2.5} />
+                Save Filter
+              </Button>
+            </div>
+
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200">
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-xs font-bold text-emerald-700">Active</span>
+            </div>
+          </div>
+        )}
+      </div>
+    )}
+  </div>
+);
+
+
 };
+
 
 export default FilterControls;

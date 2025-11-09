@@ -22,7 +22,7 @@ const SORT_OPTIONS = {
   NEAREST: 'nearest'
 };
 
-/* ===================== UTILITY FUNCTIONS ===================== */
+/* ==================== UTILITY FUNCTIONS ==================== */
 const formatCurrency = (amount) => {
   if (typeof amount !== 'number' || isNaN(amount)) return '₦0';
   return `₦${amount.toLocaleString('en-NG', { maximumFractionDigits: 0 })}`;
@@ -32,6 +32,7 @@ const formatDistance = (distance) => {
   if (typeof distance !== 'number' || isNaN(distance)) return 'N/A';
   return `${distance.toFixed(1)} km`;
 };
+
 
 
 /* ===================== MEDICATION CARD ===================== */
@@ -49,27 +50,27 @@ const MedicationCard = React.memo(({
   if (!med?.id) return null;
 
   return (
-    <div className="p-3 bg-gray-50 rounded-lg border border-gray-200 space-y-3">
-      <div className="flex justify-between gap-2">
+    <div className="relative p-4 bg-gradient-to-br from-gray-50 to-white rounded-2xl border-2 border-gray-200 hover:border-emerald-300 transition-all duration-300 hover:shadow-lg group">
+      <div className="flex justify-between gap-3 mb-4">
         <div className="flex-1">
-          <p className="text-sm font-bold text-gray-900 mb-1">
+          <p className="text-base font-black text-gray-900 mb-2 group-hover:text-emerald-600 transition-colors duration-300">
             {med.displayName || 'Unknown'}
           </p>
-          <div className="flex items-center gap-2 text-xs text-gray-600">
-            <span className="px-2 py-1 bg-white rounded border border-gray-300">
+          <div className="flex items-center gap-3 text-sm text-gray-600 flex-wrap">
+            <Badge className="bg-white border-2 border-gray-300 text-gray-700 font-bold">
               Qty: {qty}
-            </span>
-            <span>{formatCurrency(med.price)} each</span>
+            </Badge>
+            <span className="font-semibold">{formatCurrency(med.price)} each</span>
           </div>
         </div>
         <div className="text-right">
           {isLowestPrice && (
-            <Badge className="bg-green-50 text-green-700 border-green-200 font-bold text-xs mb-1">
-              <TrendingDown className="h-3 w-3 mr-1" strokeWidth={2} />
-              Best
+            <Badge className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-black text-xs px-2.5 py-1 mb-2 shadow-lg">
+              <TrendingDown className="h-3 w-3 mr-1" strokeWidth={2.5} />
+              Best Price
             </Badge>
           )}
-          <p className="text-sm font-black text-[#225F91]">
+          <p className="text-lg font-black text-[#225F91]">
             {formatCurrency(lineTotal)}
           </p>
         </div>
@@ -79,19 +80,18 @@ const MedicationCard = React.memo(({
         {inCart ? (
           <>
             <Button
-              variant="ghost"
               disabled
-              className="flex-1 h-10 rounded-lg font-bold text-sm bg-green-50 text-green-700 border border-green-200"
+              className="flex-1 h-12 rounded-xl font-bold bg-emerald-50 text-emerald-700 border-2 border-emerald-200 cursor-not-allowed"
             >
-              <Check className="h-4 w-4 mr-2" strokeWidth={2} />
-              Added
+              <Check className="h-5 w-5 mr-2" strokeWidth={2.5} />
+              In Cart
             </Button>
             <Button
               onClick={() => onRemove(med, pharmacy)}
               variant="outline"
-              className="flex-1 h-10 rounded-lg font-bold text-sm border-red-200 text-red-600 hover:bg-red-50"
+              className="flex-1 h-12 rounded-xl font-bold border-2 border-rose-300 text-rose-600 hover:bg-rose-50 hover:border-rose-400 transition-all duration-300 hover:scale-105 active:scale-95"
             >
-              <Trash2 className="h-4 w-4 mr-2" strokeWidth={2} />
+              <Trash2 className="h-5 w-5 mr-2" strokeWidth={2.5} />
               Remove
             </Button>
           </>
@@ -99,19 +99,24 @@ const MedicationCard = React.memo(({
           <Button
             onClick={() => onAddToCart(med.id, pharmacy.pharmacyId, med.displayName)}
             disabled={isAddingSingle}
-            className="w-full h-10 rounded-lg font-bold text-sm bg-gradient-to-r from-[#1ABA7F] to-[#225F91] text-white hover:opacity-90 disabled:opacity-50"
+            className="relative w-full h-12 rounded-xl font-bold overflow-hidden group transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
           >
-            {isAddingSingle ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin mr-2" strokeWidth={2} />
-                Adding...
-              </>
-            ) : (
-              <>
-                <ShoppingCart className="h-4 w-4 mr-2" strokeWidth={2} />
-                Add to Cart
-              </>
-            )}
+            <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-cyan-500" />
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" 
+                 style={{ backgroundSize: '200% 100%', animation: 'shimmer 2s infinite' }} />
+            <span className="relative z-10 flex items-center justify-center gap-2 text-white">
+              {isAddingSingle ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin" strokeWidth={2.5} />
+                  Adding...
+                </>
+              ) : (
+                <>
+                  <ShoppingCart className="h-5 w-5" strokeWidth={2.5} />
+                  Add to Cart
+                </>
+              )}
+            </span>
           </Button>
         )}
       </div>
@@ -328,6 +333,7 @@ const PharmacyRecommendations = ({
   onRemoveItem,
 }) => {
   const [filterOpen, setFilterOpen] = useState(false);
+  const [bulkAddingPharmacy, setBulkAddingPharmacy] = useState(null);
 
   const {
     sortOption,
@@ -365,10 +371,19 @@ const PharmacyRecommendations = ({
       return;
     }
 
-    if (handleBulkAddWithDuplicateCheck) {
-      await handleBulkAddWithDuplicateCheck(pharmacyId, meds);
-    }
-  }, [handleBulkAddWithDuplicateCheck]);
+      setBulkAddingPharmacy(pharmacyId); 
+
+      try {
+        if (handleBulkAddWithDuplicateCheck) {
+          await handleBulkAddWithDuplicateCheck(pharmacyId, meds);
+        }
+      } catch (error) {
+        console.error('Bulk add error:', error);
+        toast.error('Failed to add items');
+      } finally {
+        setBulkAddingPharmacy(null); 
+      }
+    }, [handleBulkAddWithDuplicateCheck]);
 
   const sortOptions = [
     { value: 'default', label: 'Best Deal', icon: Award },
@@ -457,7 +472,7 @@ const PharmacyRecommendations = ({
               onAddToCart={handleAddToCart}
               onRemove={handleRemove}
               onBulkAdd={handleBulkAdd}
-              isBulkAdding={false}
+              isBulkAdding={bulkAddingPharmacy === pharmacy.pharmacyId}
             />
           ))}
         </div>

@@ -171,14 +171,35 @@ export default function MedicationForm({ medication = {}, mode = "create", onSuc
     const fetchOptions = async () => {
       try {
         const [manufacturerRes, substanceRes, ingredientRes] = await Promise.all([
-          fetchManufacturers({ limit: 100 }),
-          fetchActiveSubstances({ limit: 100 }),
-          fetchMedicationIngredients({ limit: 100 })
+          fetchManufacturers({ limit: 500 }),
+          fetchActiveSubstances({ limit: 500 }),
+          fetchMedicationIngredients({ limit: 500 })
         ]);
 
         setManufacturerOptions(manufacturerRes.manufacturers || []);
         setActiveSubstances(substanceRes.activeSubstances || []);
         setMedicationIngredients(ingredientRes.medicationIngredients || []);
+       
+        if (mode === "edit") {
+          // Add current manufacturer
+          if (medication.Manufacturer && !manufacturerOptions.some(m => m.id === medication.Manufacturer.id)) {
+            setManufacturerOptions(prev => [medication.Manufacturer, ...prev]);
+          }
+
+          // Add current medication ingredients
+          const existingMIs = medication.Medication_MedicationIngredient?.map(mi => mi.MedicationIngredient) || [];
+          setMedicationIngredients(prev => {
+            const added = existingMIs.filter(mi => !prev.some(p => p.id === mi.id));
+            return [...added, ...prev];
+          });
+
+          // Add current active substances from ingredients
+          const existingASs = existingMIs.map(mi => mi.ActiveSubstance).filter(Boolean);
+          setActiveSubstances(prev => {
+            const added = existingASs.filter(as => !prev.some(p => p.id === as.id));
+            return [...added, ...prev];
+          });
+        }
       } catch (error) {
         console.error("Failed to fetch options:", error);
       }
@@ -322,7 +343,6 @@ const handleSubmit = async (e) => {
     if (form.packSizeExpression?.trim()) formData.append("packSizeExpression", form.packSizeExpression.trim());
     if (form.pharmacopeia) formData.append("pharmacopeia", form.pharmacopeia); 
 
-
     // Handle manufacturer
     if (form.manufacturerId) {
       formData.append("manufacturerId", String(form.manufacturerId));
@@ -339,6 +359,12 @@ const handleSubmit = async (e) => {
     }
 
     // Validate ingredients
+    if (ingredients.some(ing => !ing.medicationIngredientId && !ing.activeSubstanceId)) {
+      setError('All ingredients must have an active substance selected');
+      setLoading(false); // also stop loading
+      return;
+    }
+
     const validIngredients = ingredients.filter(ing =>
       ing.medicationIngredientId || (ing.activeSubstanceId && ing.activeSubstanceId !== "")
     );
@@ -347,26 +373,22 @@ const handleSubmit = async (e) => {
       throw new Error('At least one valid ingredient is required');
     }
 
-    formData.append("ingredients", JSON.stringify(
-      validIngredients.map((ing) => {
-        if (ing.medicationIngredientId) {
-          const existing = medicationIngredients.find(mi => mi.id === parseInt(ing.medicationIngredientId));
-          if (!existing) throw new Error("Selected medication ingredient not found");
+    const preparedIngredients = validIngredients.map(ing => ({
+      ...ing,
+      id: ing.medicationIngredientId || ing.id,
+    }));
 
-          return {
-            activeSubstanceId: existing.substanceId,
-            strengthValue: existing.strengthValue,
-            strengthUnit: existing.strengthUnit,
-            perUnitValue: existing.perUnitValue || 1,
-            perUnitType: existing.perUnitType || form.packSizeUnit || null,
-          };
-        } else {
+    formData.append("ingredients", JSON.stringify(
+      preparedIngredients.map((ing) => {
+        if (ing.id) {  // Existing: Send only id to avoid null/empty fields failing validation
+          return { id: parseInt(ing.id) };
+        } else {  // New: Send full required data
           return {
             activeSubstanceId: parseInt(ing.activeSubstanceId),
             strengthValue: parseFloat(ing.strengthValue),
             strengthUnit: ing.strengthUnit,
             perUnitValue: parseFloat(ing.perUnitValue || 1),
-            perUnitType: ing.perUnitType || null,
+            perUnitType: ing.perUnitType || form.packSizeUnit || null,
           };
         }
       })
@@ -418,32 +440,34 @@ const renderIngredientItem = (ing, idx) => {
       <div className="space-y-4">
         {/* Existing ingredient selector */}
       <FormField label="Medication Ingredient">
-        <AutocompleteInput
-          value={medicationIngredients.find(mi => mi.id === ing.medicationIngredientId) || null}
+       <AutocompleteInput
+          value={
+            medicationIngredients.find(mi => mi.id === parseInt(ing.medicationIngredientId)) ||
+            null
+          }
           onChange={(selected) => {
-            handleIngredientChange(idx, "medicationIngredientId", selected?.id || null);
+            handleIngredientChange(idx, "medicationIngredientId", selected?.id || "");
 
             if (selected) {
-              // Clear custom fields when an existing ingredient is selected
+              // Add selected to medicationIngredients if not present (from search)
+              setMedicationIngredients(prev => {
+                if (!prev.some(mi => mi.id === selected.id)) {
+                  return [selected, ...prev];
+                }
+                return prev;
+              });
+            }
+
+            if (!selected) {
               handleIngredientChange(idx, "activeSubstanceId", "");
               handleIngredientChange(idx, "strengthValue", "");
               handleIngredientChange(idx, "strengthUnit", "");
-              handleIngredientChange(idx, "perUnitValue", selected.perUnitValue || 1);
-              handleIngredientChange(
-                idx,
-                "perUnitType",
-                selected.perUnitType || form.packSizeUnit || ""
-              );
             }
           }}
           fetchOptions={searchMedicationIngredients}
-          placeholder="Type medication ingredient..."
-          displayFn={(option) =>
-            option.ActiveSubstance
-              ? `${option.ActiveSubstance.name}${option.strengthValue ? ` - ${option.strengthValue}${option.strengthUnit || ''}` : ''}`
-              : option.name
-          }
-          minChars={1} // allows search after 1 character
+          placeholder="Search for existing ingredient..."
+          displayFn={(opt) => `${opt.ActiveSubstance?.name || ''} - ${opt.strengthValue || ''}${opt.strengthUnit || ''}`}
+          showClearButton={true}
         />
       </FormField>
 
@@ -465,7 +489,11 @@ const renderIngredientItem = (ing, idx) => {
             {/* Active Substance */}
             <FormField label="Active Substance" required error={ingredientErrors.activeSubstanceId}>
               <AutocompleteInput
-                value={activeSubstances.find(a => a.id === ing.activeSubstanceId) || null}
+                value={
+                  activeSubstances.find(as => as.id === parseInt(ing.activeSubstanceId)) ||
+                  (medication.Medication_MedicationIngredient?.find(mi => mi.MedicationIngredient?.substanceId === ing.activeSubstanceId)?.MedicationIngredient?.ActiveSubstance) ||
+                  null
+                }
                 onChange={(selected) => handleIngredientChange(idx, "activeSubstanceId", selected?.id || null)}
                 fetchOptions={searchActiveSubstances}
                 placeholder="Type active substance..."
@@ -556,9 +584,8 @@ const renderIngredientItem = (ing, idx) => {
             <FormField label="Manufacturer" error={fieldErrors.manufacturerId}>
               <AutocompleteInput
                 value={
-                  // If an existing manufacturer is selected
                   manufacturerOptions.find(m => m.id === form.manufacturerId) ||
-                  // If a custom manufacturer is typed
+                  (medication.Manufacturer && { id: medication.Manufacturer.id, name: medication.Manufacturer.name }) ||
                   (form.customManufacturerName ? { name: form.customManufacturerName } : null)
                 }
                 onChange={(selected) => {
@@ -652,7 +679,7 @@ const renderIngredientItem = (ing, idx) => {
             </FormField>
 
              <FormField 
-                label="Pack Size Quantity" 
+                label="Pack Size" 
                 error={fieldErrors.packSizeExpression}
               >
                 <Input

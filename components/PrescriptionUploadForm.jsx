@@ -227,102 +227,100 @@ export default function PrescriptionUploadForm() {
   return (
     <div className="w-full">
       {/* Success Dialog */}
-      <Dialog open={openSuccessDialog} onOpenChange={setOpenSuccessDialog}>
-        <DialogContent className="w-[95vw] sm:w-full max-w-md sm:max-w-lg max-h-[90vh] mx-auto p-0 overflow-y-auto rounded-3xl border border-gray-200 shadow-2xl">
-          {/* Header */}
-          <div className="relative bg-gradient-to-br from-[#1ABA7F] to-[#16a876] p-8 sm:p-10 text-white overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl" />
+     <Dialog open={openSuccessDialog} onOpenChange={setOpenSuccessDialog}>
+      <DialogContent className="w-[95vw] sm:w-full max-w-md sm:max-w-lg max-h-[90vh] mx-auto p-3 sm:p-6 overflow-y-auto rounded-2xl sm:rounded-3xl border border-gray-200 shadow-2xl">
+        
+        {/* Header */}
+        <div className="relative bg-gradient-to-br from-[#1ABA7F] to-[#16a876] p-6 sm:p-10 text-white overflow-hidden rounded-t-2xl sm:rounded-t-3xl">
+          <div className="absolute top-0 right-0 w-24 sm:w-32 h-24 sm:h-32 bg-white/10 rounded-full blur-3xl" />
+          
+          <div className="relative z-10 flex flex-col items-center gap-4 sm:gap-6">
+            <div className="relative">
+              <div className="absolute inset-0 bg-white/20 rounded-full blur-xl animate-pulse" />
+              <div className="relative w-16 h-16 sm:w-20 sm:h-20 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm border-2 border-white/30">
+                <CheckCircle className="h-8 w-8 sm:h-10 sm:w-10 text-white" strokeWidth={2.5} />
+              </div>
+            </div>
             
-            <div className="relative z-10 flex flex-col items-center gap-6">
-              <div className="relative">
-                <div className="absolute inset-0 bg-white/20 rounded-full blur-xl animate-pulse" />
-                <div className="relative w-20 h-20 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm border-2 border-white/30">
-                  <CheckCircle className="h-10 w-10 text-white" strokeWidth={2.5} />
-                </div>
-              </div>
-              
-              <div className="text-center">
-                <DialogTitle className="text-2xl sm:text-3xl font-bold mb-2">
-                  Prescription Uploaded Successfully
-                </DialogTitle>
-                <p className="text-white/90 font-medium">
-                  We've received your prescription
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Content */}
-          <div className="p-6 sm:p-8 space-y-6">
-            {/* Confirmation Details */}
-            <div className="p-5 bg-gradient-to-br from-gray-50 to-white rounded-2xl border border-gray-200">
-              <div className="flex items-start gap-4">
-                <div className="p-2.5 bg-[#1ABA7F]/10 rounded-lg flex-shrink-0">
-                  <Phone className="h-5 w-5 text-[#1ABA7F]" strokeWidth={2} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gray-600 mb-1">
-                    Confirmation sent to
-                  </p>
-                  <p className="text-base font-bold text-[#225F91] break-all">
-                    {submittedContact}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Next Steps */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 mb-4">
-                <Clock className="h-5 w-5 text-[#225F91]" strokeWidth={2} />
-                <h3 className="text-base font-bold text-gray-900">What happens next?</h3>
-              </div>
-              
-              <div className="space-y-3">
-                {[
-                  'Our pharmacists will review your prescription',
-                  `You'll receive updates via SMS`,
-                  'Track your prescription status anytime'
-                ].map((step, i) => (
-                  <div key={i} className="flex items-start gap-3">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[#1ABA7F] mt-2 flex-shrink-0" />
-                    <p className="text-sm text-gray-700 font-medium leading-relaxed">{step}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="space-y-3 pt-4">
-              <Button
-                asChild
-                className="w-full h-14 text-base font-bold rounded-lg bg-gradient-to-r from-[#225F91] to-[#1a4a73] hover:from-[#1a4a73] hover:to-[#225F91] text-white shadow-lg transition-all duration-300"
-              >
-                <Link href="/check-prescription-status">
-                  <Clock className="h-5 w-5 mr-2" strokeWidth={2} />
-                  Check Prescription Status
-                  <ArrowRight className="h-4 w-4 ml-2" strokeWidth={2.5} />
-                </Link>
-              </Button>
-
-              <Button
-                variant="outline"
-                onClick={handleUploadAnother}
-                className="w-full h-12 text-base font-semibold rounded-lg border-2 border-gray-200 text-gray-700 hover:bg-gray-50 transition-all duration-300"
-              >
-                Close
-              </Button>
-            </div>
-
-            {/* Help Text */}
-            <div className="pt-4 border-t border-gray-100">
-              <p className="text-xs text-center text-gray-500">
-                Questions? Contact our support team anytime for assistance
+            <div className="text-center">
+              <DialogTitle className="text-xl sm:text-2xl font-bold mb-1 sm:mb-2">
+                Prescription Uploaded Successfully
+              </DialogTitle>
+              <p className="text-sm sm:text-base text-white/90 font-medium">
+                We've received your prescription
               </p>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+
+        {/* Content */}
+        <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+          {/* Confirmation Details */}
+          <div className="p-4 sm:p-5 bg-gradient-to-br from-gray-50 to-white rounded-2xl border border-gray-200">
+            <div className="flex items-start gap-3 sm:gap-4">
+              <div className="p-2.5 sm:p-3 bg-[#1ABA7F]/10 rounded-lg flex-shrink-0">
+                <Phone className="h-4 w-4 sm:h-5 sm:w-5 text-[#1ABA7F]" strokeWidth={2} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs sm:text-sm font-semibold text-gray-600 mb-1">Confirmation sent to</p>
+                <p className="text-sm sm:text-base font-bold text-[#225F91] break-all">{submittedContact}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Next Steps */}
+          <div className="space-y-2 sm:space-y-3">
+            <div className="flex items-center gap-2 mb-2 sm:mb-4">
+              <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-[#225F91]" strokeWidth={2} />
+              <h3 className="text-sm sm:text-base font-bold text-gray-900">What happens next?</h3>
+            </div>
+            
+            <div className="space-y-2 sm:space-y-3">
+              {[
+                'Our pharmacists will review your prescription',
+                `You'll receive updates via SMS`,
+                'Track your prescription status anytime'
+              ].map((step, i) => (
+                <div key={i} className="flex items-start gap-2 sm:gap-3">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#1ABA7F] mt-2 flex-shrink-0" />
+                  <p className="text-xs sm:text-sm text-gray-700 font-medium leading-relaxed">{step}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="space-y-2 sm:space-y-3 pt-2">
+            <Button
+              asChild
+              className="w-full h-12 sm:h-14 text-sm sm:text-base font-bold rounded-lg bg-gradient-to-r from-[#225F91] to-[#1a4a73] hover:from-[#1a4a73] hover:to-[#225F91] text-white shadow-md sm:shadow-lg transition-all duration-300 flex items-center justify-center gap-1 sm:gap-2"
+            >
+              <Link href="/check-prescription-status">
+                <Clock className="h-4 w-4 sm:h-5" strokeWidth={2} />
+                Check Prescription Status
+                <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2" strokeWidth={2.5} />
+              </Link>
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={handleUploadAnother}
+              className="w-full h-10 sm:h-12 text-sm sm:text-base font-semibold rounded-lg border-2 border-gray-200 text-gray-700 hover:bg-gray-50 transition-all duration-300"
+            >
+              Close
+            </Button>
+          </div>
+
+          {/* Footer Note */}
+          <div className="pt-2 border-t border-gray-100">
+            <p className="text-[10px] sm:text-xs text-center text-gray-500">
+              Questions? Contact our support team anytime for assistance
+            </p>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+
 
       {/* Upload Form */}
       <form onSubmit={handleSubmit} className="space-y-8 p-2">

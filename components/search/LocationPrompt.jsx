@@ -240,105 +240,133 @@ const LocationPrompt = ({
   progress,
   error,
 }) => {
-  // Show error state if there's an error
   if (error && !isLoadingLocation) {
     return (
-      <LocationError
-        error={error}
-        onRetry={onEnableLocation}
-        onSelectManually={onSelectLocation}
-        permissionDenied={permissionDenied}
-      />
+      <div className="p-8 rounded-3xl bg-gradient-to-br from-rose-50 via-orange-50 to-white border-2 border-rose-200 shadow-xl animate-in fade-in zoom-in-95 duration-300">
+        <div className="flex justify-center mb-6">
+          <div className="relative">
+            <div className="absolute inset-0 bg-rose-500/20 rounded-full blur-xl animate-pulse" />
+            <div className="relative p-4 rounded-full bg-white shadow-lg">
+              <AlertCircle className="h-12 w-12 text-rose-500" strokeWidth={2} />
+            </div>
+          </div>
+        </div>
+
+        <h3 className="text-2xl font-black text-gray-900 text-center mb-3">
+          Location Unavailable
+        </h3>
+
+        <p className="text-gray-600 text-center mb-6 leading-relaxed">
+          {error.details || error.message || "We couldn't detect your location. Please select your area manually."}
+        </p>
+
+        <div className="flex flex-col gap-3">
+          <Button
+            onClick={onEnableLocation}
+            className="h-14 rounded-2xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-white font-bold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 active:scale-95"
+          >
+            <Navigation className="h-5 w-5 mr-2" strokeWidth={2.5} />
+            Try Again
+          </Button>
+
+          <Button
+            onClick={onSelectLocation}
+            variant="outline"
+            className="h-14 rounded-2xl border-2 border-emerald-500 text-emerald-600 font-bold hover:bg-emerald-50 transition-all duration-300 hover:scale-105 active:scale-95"
+          >
+            <MapPin className="h-5 w-5 mr-2" strokeWidth={2.5} />
+            Select Manually
+          </Button>
+        </div>
+      </div>
     );
   }
 
-  // Show loading state
   if (isLoadingLocation) {
     return (
-      <DetailedProgress 
-        progress={progress}
-        onCancel={onCancelLocation}
-      />
+      <div className="p-8 rounded-3xl bg-gradient-to-br from-cyan-50 via-blue-50 to-white border-2 border-cyan-200 shadow-xl animate-in fade-in zoom-in-95 duration-300">
+        <div className="flex justify-center mb-6">
+          <div className="relative">
+            <div className="absolute inset-0 bg-cyan-500/30 rounded-full blur-2xl animate-pulse" style={{ animationDuration: '2s' }} />
+            <div className="absolute inset-0 bg-cyan-500/20 rounded-full blur-xl animate-ping" />
+            <div className="relative w-20 h-20 rounded-full bg-white flex items-center justify-center shadow-2xl">
+              <Navigation className="h-10 w-10 text-cyan-500 animate-pulse" strokeWidth={2} />
+            </div>
+          </div>
+        </div>
+
+        <h3 className="text-xl font-black text-gray-900 text-center mb-3">
+          {progress?.message || "Finding your location..."}
+        </h3>
+
+        <p className="text-sm text-gray-600 text-center mb-6">
+          This usually takes just a few seconds
+        </p>
+
+        <div className="space-y-3 mb-6">
+          <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div className="h-full rounded-full bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 animate-pulse"
+                 style={{ width: '100%', backgroundSize: '200% 100%', animation: 'shimmer 2s infinite' }} />
+          </div>
+        </div>
+
+        {onCancelLocation && (
+          <Button
+            onClick={onCancelLocation}
+            variant="ghost"
+            className="w-full h-12 rounded-xl font-semibold hover:bg-gray-100"
+          >
+            <X className="h-5 w-5 mr-2" strokeWidth={2} />
+            Cancel
+          </Button>
+        )}
+      </div>
     );
   }
 
-  // Show initial prompt
   return (
-    <div className="text-center py-12 px-6 rounded-2xl bg-gradient-to-br from-teal-50 via-blue-50 to-indigo-50 border-2 border-teal-200 animate-in fade-in zoom-in-95 duration-500">
-      {/* Friendly Icon */}
-      <div className="relative w-24 h-24 mx-auto mb-6 animate-in zoom-in-50 duration-700" 
-           style={{ animationDelay: '200ms' }}>
-        <div className="absolute inset-0 bg-gradient-to-br from-teal-400 to-blue-500 rounded-full blur-2xl opacity-30 animate-pulse" 
-             style={{ animationDuration: '2s' }} />
-        <div className="relative w-full h-full bg-white rounded-full flex items-center justify-center shadow-xl">
+    <div className="p-10 rounded-3xl bg-gradient-to-br from-cyan-50 via-blue-50 to-indigo-50 border-2 border-cyan-200 shadow-xl animate-in fade-in zoom-in-95 duration-500">
+      <div className="relative w-24 h-24 mx-auto mb-8">
+        <div className="absolute inset-0 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-full blur-3xl opacity-30 animate-pulse" style={{ animationDuration: '2s' }} />
+        <div className="relative w-full h-full bg-white rounded-full flex items-center justify-center shadow-2xl">
           <div className="relative">
-            <MapPin className="h-12 w-12 text-teal-600" />
-            <Sparkles className="h-5 w-5 text-yellow-500 absolute -top-1 -right-1 animate-pulse" />
+            <MapPin className="h-12 w-12 text-cyan-600" strokeWidth={2} />
+            <Sparkles className="h-6 w-6 text-amber-500 absolute -top-1 -right-1 animate-pulse" strokeWidth={2.5} />
           </div>
         </div>
       </div>
 
-      {/* Friendly Title */}
-      <h3 className="text-2xl font-black text-[#225F91] mb-3 animate-in slide-in-from-bottom-2 duration-500" 
-          style={{ animationDelay: '300ms' }}>
-        Find Pharmacies Near You
+      <h3 className="text-3xl font-black text-gray-900 text-center mb-4">
+        Find Nearby Pharmacies
       </h3>
 
-      {/* Simple Description */}
-      <p className="text-gray-600 text-base mb-6 max-w-md mx-auto leading-relaxed animate-in fade-in duration-500" 
-         style={{ animationDelay: '400ms' }}>
-        We found this medication! Let us show you the closest pharmacies with the best prices.
+      <p className="text-gray-600 text-center text-lg mb-8 leading-relaxed max-w-md mx-auto">
+        Let us show you the closest pharmacies with the best prices
       </p>
 
-      {/* Permission info (non-blocking) */}
-      {permissionDenied && (
-        <div className="mb-6 p-4 bg-amber-50 border-2 border-amber-200 rounded-lg animate-in fade-in duration-300">
-          <p className="text-sm font-bold text-amber-800 mb-2">
-            🔐 Location Access Needed
-          </p>
-          <p className="text-xs text-amber-700 mb-3">
-            Please allow location access in your browser to see nearby pharmacies. Don't worry, we only use this to show you relevant results!
-          </p>
-          <button
-            onClick={() => window.open('https://support.google.com/chrome/answer/142065', '_blank')}
-            className="text-xs text-amber-700 underline hover:text-amber-900 font-medium"
-          >
-            How to enable location →
-          </button>
-        </div>
-      )}
-
-      {/* Action Buttons */}
-      <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+      <div className="flex flex-col sm:flex-row gap-4">
         <Button
           onClick={onEnableLocation}
           disabled={isLoadingLocation}
-          className="bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 text-white px-8 py-6 rounded-lg font-bold shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 w-full sm:w-auto animate-in slide-in-from-left-4 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 group" 
-          style={{ animationDelay: '500ms', animationDuration: '500ms' }}
+          className="flex-1 h-16 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white font-bold shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <Navigation className="h-5 w-5 mr-2 group-hover:rotate-12 transition-transform duration-300" />
-          <span>Use My Location</span>
+          <Navigation className="h-6 w-6 mr-2" strokeWidth={2.5} />
+          Use My Location
         </Button>
         
         <Button
           onClick={onSelectLocation}
           variant="outline"
           disabled={isLoadingLocation}
-          className="border-2 border-teal-600 text-teal-700 hover:bg-teal-50 px-8 py-6 rounded-lg font-bold shadow-md hover:shadow-xl hover:scale-105 transition-all duration-300 w-full sm:w-auto animate-in slide-in-from-right-4 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 group" 
-          style={{ animationDelay: '600ms', animationDuration: '500ms' }}
+          className="flex-1 h-16 rounded-2xl border-2 border-cyan-500 text-cyan-600 font-bold hover:bg-cyan-50 shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105 active:scale-95"
         >
-          <MapPin className="h-5 w-5 mr-2 group-hover:bounce transition-transform duration-300" />
-          <span>Choose My Area</span>
+          <MapPin className="h-6 w-6 mr-2" strokeWidth={2.5} />
+          Choose Area
         </Button>
       </div>
 
-      {/* Reassuring Text */}
-      <p className="text-xs text-gray-500 mt-6 animate-in fade-in duration-500" 
-         style={{ animationDelay: '700ms' }}>
-        {permissionDenied 
-          ? '🔒 Your location is private and secure'
-          : '✨ We\'ll show you the closest options first'
-        }
+      <p className="text-xs text-gray-500 text-center mt-6">
+        🔒 Your location is private and secure
       </p>
     </div>
   );

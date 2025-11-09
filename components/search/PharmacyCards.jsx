@@ -8,119 +8,92 @@ import UnifiedRemoveDialog from '@/components/cart/UnifiedRemoveDialog';
 import { toast } from 'sonner';
 
 
-/* ----------------------------- Premium Sort & Filter Controls ----------------------------- */
+// Sort & Filter Bar
 const SortFilterBar = ({ sortOption, setSortOption, filterOpen, setFilterOpen }) => {
-  const [hoveredOption, setHoveredOption] = useState(null);
-  
   const options = [
-    { value: 'default', label: 'Best Deal', icon: Award },
-    { value: 'cheapest', label: 'Cheapest', icon: DollarSign },
-    { value: 'nearest', label: 'Nearest', icon: Navigation },
-    { value: 'open', label: 'Open Now', icon: Clock, isFilter: true },
+    { value: 'default', label: 'Best Deal', icon: Award, gradient: 'from-blue-600 to-indigo-600' },
+    { value: 'cheapest', label: 'Cheapest', icon: DollarSign, gradient: 'from-emerald-600 to-teal-600' },
+    { value: 'nearest', label: 'Nearest', icon: Navigation, gradient: 'from-cyan-600 to-blue-600' },
+    { value: 'open', label: 'Open Now', icon: Clock, gradient: 'from-rose-600 to-pink-600', isFilter: true },
   ];
 
-  return (
-    <div className="space-y-4 mt-10 mb-10 animate-in fade-in slide-in-from-top-2 duration-500">
-      {/* Buttons Grid with stagger */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-        {options.map((option, index) => {
-          const isActive = option.isFilter ? filterOpen : sortOption === option.value;
-          const isHovered = hoveredOption === option.value;
-          
-          const gradientClass = option.value === 'default'
-            ? "from-[#225F91] to-[#1a4a73]"
-            : option.value === 'cheapest'
-            ? "from-[#1ABA7F] to-[#16a876]"
-            : option.value === 'nearest'
-            ? "from-[#76D1F3] to-[#5bc0de]"
-            : option.value === 'open'
-            ? "from-[#FF6B6B] to-[#ee5a5a]"
-            : "from-gray-300 to-gray-300";
+return (
+  <div className="space-y-4 sm:space-y-6">
+    {/* Filter + Sort Buttons */}
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+      {options.map((option, index) => {
+        const isActive = option.isFilter ? filterOpen : sortOption === option.value;
 
-          return (
-            <Button
-              key={option.value}
-              variant="outline"
-              onClick={() => {
-                option.isFilter ? setFilterOpen(!filterOpen) : setSortOption(option.value);
-              }}
-              onMouseEnter={() => setHoveredOption(option.value)}
-              onMouseLeave={() => setHoveredOption(null)}
+        return (
+          <Button
+            key={option.value}
+            variant="outline"
+            onClick={() =>
+              option.isFilter
+                ? setFilterOpen(!filterOpen)
+                : setSortOption(option.value)
+            }
+            className={cn(
+              "relative h-12 sm:h-14 rounded-xl sm:rounded-2xl font-extrabold transition-all duration-500 border-2 overflow-hidden group animate-in zoom-in-95 text-sm sm:text-base",
+              isActive
+                ? `bg-gradient-to-r ${option.gradient} text-white border-0 shadow-xl sm:shadow-2xl scale-105`
+                : "bg-white text-gray-700 border-gray-200 hover:border-gray-300 hover:scale-[1.03] hover:shadow-lg"
+            )}
+            style={{ animationDelay: `${index * 80}ms` }}
+          >
+            {/* Hover Shine Effect */}
+            <div
               className={cn(
-                "h-12 rounded-2xl font-black transition-all duration-300 border-2 shadow-lg relative overflow-hidden group animate-in zoom-in-95",
-                isActive
-                  ? `bg-gradient-to-r ${gradientClass} text-white border-0 shadow-2xl scale-105` 
-                  : "bg-white text-gray-700 border-gray-300 hover:border-gray-400 hover:scale-105"
-              )}
-              style={{ 
-                animationDelay: `${index * 80}ms`,
-                animationDuration: '400ms'
-              }}
-            >
-              {/* Shine effect on hover */}
-              <div className={cn(
                 "absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transition-opacity duration-500",
-                isHovered ? "opacity-100" : "opacity-0"
-              )} />
-              
-              <option.icon className={cn(
-                "h-5 w-5 mr-2 transition-transform duration-300",
-                isActive && "scale-110"
-              )} strokeWidth={2.5} />
-              
-              <span className="relative z-10">{option.label}</span>
-            </Button>
-          );
-        })}
-      </div>
+                isActive ? "opacity-0" : "opacity-0 group-hover:opacity-100"
+              )}
+            />
 
-      {/* Explanation bar */}
-      <div className="p-4 bg-gradient-to-r from-[#1ABA7F]/10 to-[#225F91]/10 rounded-2xl border-2 border-[#1ABA7F]/20 animate-in fade-in slide-in-from-bottom-2 duration-500" 
-           style={{ animationDelay: '400ms' }}>
-        <p className="text-sm font-bold text-gray-700 text-center">
-          {filterOpen && (
-            <span className="inline-flex items-center gap-2 text-green-600 animate-in fade-in duration-300">
-              <Clock className="h-4 w-4 animate-pulse" />
-              Showing only open pharmacies
-            </span>
-          )}
-          {!filterOpen && sortOption === 'default' && 'Sorted by Most Medications Available'}
-          {!filterOpen && sortOption === 'cheapest' && 'Sorted by Cheapest Total Price'}
-          {!filterOpen && sortOption === 'nearest' && 'Sorted by Nearest Distance'}
-        </p>
-      </div>
-    </div>
-  );
-};
+            {/* Icon */}
+            <option.icon
+              className={cn(
+                "h-4 w-4 sm:h-5 sm:w-5 mr-1.5 sm:mr-2 transition-transform duration-300",
+                isActive && "animate-pulse"
+              )}
+              strokeWidth={2.5}
+            />
 
-/* ----------------------------- No Open Pharmacies Empty State ----------------------------- */
-const NoOpenPharmaciesState = ({ onShowAll }) => (
-  <div className="flex flex-col items-center justify-center py-12 px-6 bg-gradient-to-br from-orange-50 to-red-50 rounded-2xl border-2 border-red-200 animate-in fade-in zoom-in-95 duration-500">
-    <div className="bg-white p-4 rounded-full shadow-lg mb-4 animate-in zoom-in-50" style={{ animationDelay: '200ms' }}>
-      <Clock className="h-10 w-10 text-red-500 animate-pulse" />
+            {/* Label */}
+            <span className="relative z-10">{option.label}</span>
+          </Button>
+        );
+      })}
     </div>
-    <h3 className="text-lg font-bold text-center text-gray-800 mb-2 animate-in slide-in-from-bottom-2" style={{ animationDelay: '300ms' }}>
-      No Pharmacies Currently Open
-    </h3>
-    <p className="text-sm text-gray-600 text-center mb-4 animate-in fade-in" style={{ animationDelay: '400ms' }}>
-      All pharmacies offering this medication are currently closed.
-    </p>
-    <Button
-      onClick={onShowAll}
-      className="bg-gradient-to-r from-[#225F91] to-[#1a4a73] text-white rounded-lg px-6 py-2 font-bold hover:shadow-lg hover:scale-105 transition-all duration-300 animate-in zoom-in-95" 
-      style={{ animationDelay: '500ms' }}
-    >
-      Show All Pharmacies
-    </Button>
+
+    {/* Active Filter/Sort Display */}
+    <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-r from-emerald-50 to-cyan-50 border-2 border-emerald-200">
+      <p className="text-xs sm:text-sm font-bold text-gray-700 text-center leading-snug sm:leading-relaxed">
+        {filterOpen && (
+          <span className="inline-flex items-center gap-1.5 sm:gap-2 text-emerald-600">
+            <Clock className="h-4 w-4 animate-pulse" strokeWidth={2.5} />
+            Showing only open pharmacies
+          </span>
+        )}
+        {!filterOpen && sortOption === "default" && (
+          <span>✨ Sorted by Most Medications Available</span>
+        )}
+        {!filterOpen && sortOption === "cheapest" && (
+          <span>💰 Sorted by Cheapest Total Price</span>
+        )}
+        {!filterOpen && sortOption === "nearest" && (
+          <span>📍 Sorted by Nearest Distance</span>
+        )}
+      </p>
+    </div>
   </div>
 );
 
-/* ------------------------------ Pharmacy Card ------------------------------- */
+};
+
+// Pharmacy Card
 const PharmacyCard = ({
   avail,
   index,
-  expandedCard,
-  setExpandedCard,
   quantities,
   setQuantities,
   medId,
@@ -132,24 +105,20 @@ const PharmacyCard = ({
   onRemoveFromCart,
 }) => {
   const [isImageLoaded, setIsImageLoaded] = useState(false);
-  const isExpanded = expandedCard === index;
   const key = `${medId}-${avail.pharmacyId}`;
   const adding = !!isAddingToCart[key];
   const currentQty = quantities[avail.pharmacyId] || 1;
+  const isOpen = avail.operatingHours && avail.operatingHours.includes('Open');
 
   return (
     <div className={cn(
-      "group overflow-hidden rounded-2xl bg-white border-2 transition-all duration-500 animate-in fade-in slide-in-from-bottom-4",
-      isExpanded 
-        ? "shadow-2xl border-[#1ABA7F] scale-[1.02]" 
-        : "shadow-lg border-gray-200 hover:border-[#1ABA7F]/50 hover:shadow-2xl hover:scale-[1.01]"
-    )}
-    style={{
-      animationDelay: `${index * 120}ms`,
-      animationDuration: '500ms'
-    }}>
-      {/* Enhanced header with image load animation */}
-      <div className="relative w-full h-40 sm:h-48 overflow-hidden">
+        "group relative overflow-hidden rounded-2xl sm:rounded-3xl bg-white border-2 transition-all duration-500 animate-in fade-in slide-in-from-bottom-4",
+        "shadow-md hover:shadow-2xl hover:scale-[1.015] border-gray-200 hover:border-emerald-300"
+      )}
+
+    style={{ animationDelay: `${index * 120}ms` }}>
+      {/* Premium header */}
+      <div className="relative w-full h-40 sm:h-48 md:h-56 overflow-hidden">
         {avail.logoUrl ? (
           <>
             {!isImageLoaded && (
@@ -157,7 +126,7 @@ const PharmacyCard = ({
             )}
             <img 
               src={avail.logoUrl} 
-              alt={`${avail.pharmacyName} cover`} 
+              alt={avail.pharmacyName} 
               className={cn(
                 "w-full h-full object-cover transition-all duration-700",
                 isImageLoaded ? "opacity-100 scale-100" : "opacity-0 scale-110"
@@ -166,124 +135,105 @@ const PharmacyCard = ({
             />
           </>
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-[#1ABA7F]/20 via-[#225F91]/20 to-[#76D1F3]/20 animate-gradient bg-300%" />
+          <div className="w-full h-full bg-gradient-to-br from-emerald-100 via-cyan-100 to-blue-100" />
         )}
         
-        {/* Animated gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
         
-        {/* Badges with entrance animation */}
+        {/* Badges */}
         {avail.isNearest && (
-          <Badge className="absolute top-3 left-3 px-3 py-1.5 rounded-lg bg-[#225F91] text-white border-2 border-white text-xs font-bold shadow-lg backdrop-blur-sm animate-in slide-in-from-left-2 duration-500" 
+          <Badge className="absolute top-4 left-4 px-3 py-1.5 rounded-xl bg-cyan-600 text-white font-black text-xs shadow-xl border-2 border-white backdrop-blur-sm animate-in slide-in-from-left-2" 
                  style={{ animationDelay: `${index * 120 + 200}ms` }}>
-            <Navigation className="h-3 w-3 mr-1 animate-pulse" />
+            <Navigation className="h-3 w-3 mr-1 animate-pulse" strokeWidth={2.5} />
             Nearest
           </Badge>
         )}
         {avail.isCheapest && (
-          <Badge className="absolute top-3 right-3 px-3 py-1.5 rounded-lg bg-[#1ABA7F] text-white border-2 border-white text-xs font-bold shadow-lg backdrop-blur-sm animate-in slide-in-from-right-2 duration-500" 
+          <Badge className="absolute top-4 right-4 px-3 py-1.5 rounded-xl bg-emerald-600 text-white font-black text-xs shadow-xl border-2 border-white backdrop-blur-sm animate-in slide-in-from-right-2" 
                  style={{ animationDelay: `${index * 120 + 300}ms` }}>
-            <TrendingDown className="h-3 w-3 mr-1 animate-pulse" />
+            <TrendingDown className="h-3 w-3 mr-1 animate-pulse" strokeWidth={2.5} />
             Cheapest
           </Badge>
         )}
 
-        {/* Pharmacy name with slide animation */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent animate-in slide-in-from-bottom-2 duration-500" 
-             style={{ animationDelay: `${index * 120 + 400}ms` }}>
-          <div className="flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-white/20 backdrop-blur-sm border border-white/30">
-              <Store className="h-5 w-5 text-white" strokeWidth={2}/>
+        {/* Pharmacy name */}
+        <div className="absolute bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-black/90 to-transparent">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-white/20 backdrop-blur-md border border-white/30">
+              <Store className="h-6 w-6 text-white" strokeWidth={2}/>
             </div>
-            <h3 className="text-white font-bold text-xl">{avail.pharmacyName}</h3>
+            <h3 className="text-white font-black text-lg sm:text-xl leading-tight line-clamp-2">{avail.pharmacyName}</h3>
           </div>
         </div>
       </div>
       
-      <div className="px-3 pt-4 pb-8 space-y-2">
-        {/* Address with icon animation */}
+     <div className="p-4 sm:p-5 space-y-3 sm:space-y-4">
+
+        {/* Address */}
         {avail.address && (
-          <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200"
-               style={{ animationDelay: `${index * 120 + 500}ms` }}>
-            <MapPin className="h-4 w-4 text-[#1ABA7F] flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform duration-300" strokeWidth={2.5} />
-            <p className="text-sm text-gray-700 font-semibold line-clamp-2">
+          <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200 hover:border-emerald-300 transition-colors duration-300">
+            <MapPin className="h-5 w-5 text-emerald-500 flex-shrink-0 mt-0.5" strokeWidth={2.5} />
+            <p className="text-sm text-gray-700 font-semibold leading-relaxed">
               {avail.address}
             </p>
           </div>
         )}
 
-        {/* Operating Hours */}
-        {avail.operatingHours && (() => {
-          const formattedHours = formatOperatingHours(avail.operatingHours);
-          if (!formattedHours) return null;
-          return (
-          <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200"
-              style={{ animationDelay: `${index * 120 + 600}ms` }}>
-          <Clock className="h-4 w-4 text-[#225F91] flex-shrink-0" strokeWidth={2} />
+        {/* Operating hours */}
+      {avail.operatingHours && (() => {
+        const formattedHours = formatOperatingHours(avail.operatingHours);
+        if (!formattedHours) return null;
+        return (
+          <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <Clock className="h-4 w-4 text-[#225F91] flex-shrink-0" strokeWidth={2} />
             <span className={cn('text-sm font-bold flex-1', getOperatingHoursTextColor(avail.operatingHours))}>
               {formattedHours.text}
             </span>
-              {formattedHours.status === 'open' && (
-                <Badge className="bg-green-500 text-white px-2 py-0.5 text-xs">
-                  Open
-                </Badge>
-              )}
-            </div>
-          );
-        })()}
-
-        {/* Distance & Price with number animation */}
-        <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-gradient-to-r from-gray-50 to-white border border-gray-200 hover:border-[#1ABA7F]/30 hover:shadow-md transition-all duration-300 animate-in fade-in slide-in-from-right-2" 
-             style={{ animationDelay: `${index * 120 + 700}ms` }}>
-          <div className="flex items-center gap-2 text-gray-700">
-            <Navigation className="h-4 w-4 text-[#76D1F3]" />
-
-            {avail.distance_km != null ? (
-              <span className="text-sm font-semibold">
-                {avail.distance_km < 1
-                  ? `${Math.round(avail.distance_km * 1000)} m`
-                  : `${avail.distance_km.toFixed(1)} km`}
-                {avail.distance_minutes != null && (
-                  <span className="text-gray-500 font-normal ml-1">
-                    • {avail.distance_minutes} min{avail.distance_minutes > 1 ? 's' : ''}
-                  </span>
-                )}
-              </span>
-            ) : (
-              <span className="text-sm font-semibold text-gray-400">N/A</span>
+            {formattedHours.status === 'open' && (
+              <Badge className="bg-green-500 text-white px-2 py-0.5 text-xs">Open</Badge>
             )}
+          </div>
+        );
+      })()}
+
+
+
+        {/* Distance & Price */}
+        <div className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-gray-50 to-white border border-gray-200 hover:border-emerald-300 transition-all duration-300">
+          <div className="flex items-center gap-2 text-gray-700">
+            <Navigation className="h-5 w-5 text-cyan-500" strokeWidth={2.5} />
+            <span className="text-sm font-bold">
+              {avail.distance_km != null
+                ? avail.distance_km < 1
+                  ? `${Math.round(avail.distance_km * 1000)}m`
+                  : `${avail.distance_km.toFixed(1)}km`
+                : 'N/A'}
+            </span>
           </div>
 
           <div className="text-right">
             {currentQty > 1 ? (
-              <div className="space-y-0.5">
+              <div>
                 <p className="text-xs text-gray-500">₦{avail.price.toLocaleString()} each</p>
-                <div className="transition-all duration-300 ease-out">
-                  <p className="text-lg font-black text-[#225F91]">
-                    ₦{(avail.price * currentQty).toLocaleString()}
-                  </p>
-                </div>
-                <p className="text-xs text-gray-500">x{currentQty} units</p>
+                <p className="text-xl font-black text-gray-900">
+                  ₦{(avail.price * currentQty).toLocaleString()}
+                </p>
+                <p className="text-xs text-gray-500">×{currentQty} units</p>
               </div>
             ) : (
-              <p className="text-lg font-black text-[#225F91]">
+              <p className="text-xl font-black text-gray-900">
                 ₦{avail.price.toLocaleString()}
               </p>
             )}
           </div>
         </div>
 
-        {/* Enhanced Quantity Controls */}
-        <div className="flex items-center justify-between px-2 py-2 rounded-lg border-2 border-gray-200 hover:border-[#1ABA7F]/50 transition-all duration-300 animate-in fade-in zoom-in-95" 
-             style={{ animationDelay: `${index * 120 + 800}ms` }}>
-          <label htmlFor={`qty-${avail.pharmacyId}`} className="text-sm font-semibold text-gray-700">
-            Quantity:
-          </label>
+        {/* Quantity controls */}
+        <div className="flex items-center gap-2 bg-gray-100 rounded-xl shadow-sm p-1 border-2 border-gray-200 hover:border-emerald-300 transition-all duration-300">
+          <label className="text-sm font-black text-gray-700">Quantity:</label>
 
-          <div className="flex items-center gap-1 bg-gray-100 rounded-lg shadow-sm">
+          <div className="flex items-center gap-2 bg-gray-100 rounded-xl shadow-sm">
             <button
-              type="button"
-              aria-label="Decrease quantity"
               onClick={() =>
                 setQuantities((prev) => ({
                   ...prev,
@@ -291,41 +241,38 @@ const PharmacyCard = ({
                 }))
               }
               disabled={(quantities[avail.pharmacyId] || 1) <= 1}
-              className="h-6 w-6  flex items-center justify-center hover:bg-[#1ABA7F]/20 text-[#225F91] disabled:opacity-50 disabled:cursor-not-allowed rounded active:scale-90 transition-all duration-200"
+              className="h-10 w-10 flex items-center justify-center hover:bg-emerald-100 text-gray-700 disabled:opacity-50 rounded-lg active:scale-90 transition-all duration-200"
             >
-              <Minus className="h-4 w-4" />
+              <Minus className="h-5 w-5" strokeWidth={2.5} />
             </button>
 
-            <span className="px-3 py-1 text-sm font-bold text-[#225F91] min-w-[2rem] text-center transition-all duration-200">
+            <span className="px-4 py-2 text-base font-black text-gray-900 min-w-[3rem] text-center">
               {quantities[avail.pharmacyId] || 1}
             </span>
 
             <button
-              type="button"
-              aria-label="Increase quantity"
               onClick={() =>
                 setQuantities((prev) => ({
                   ...prev,
                   [avail.pharmacyId]: (prev[avail.pharmacyId] || 1) + 1,
                 }))
               }
-              className="h-6 w-6 flex items-center justify-center hover:bg-[#1ABA7F]/20 text-[#225F91] rounded active:scale-90 transition-all duration-200"
+              className="h-10 w-10 flex items-center justify-center hover:bg-emerald-100 text-gray-700 rounded-lg active:scale-90 transition-all duration-200"
             >
-              <Plus className="h-4 w-4" />
+              <Plus className="h-5 w-5" strokeWidth={2.5} />
             </button>
           </div>
         </div>
 
-        {/* Enhanced Buttons with smooth transitions */}
-        <div className="flex gap-2 animate-in fade-in zoom-in-95" 
-             style={{ animationDelay: `${index * 120 + 900}ms` }}>
+        {/* Action buttons */}
+        <div className="flex gap-2">
           {isInCart(medId, avail.pharmacyId) ? (
             <>
               <Button
                 disabled
-                className="flex-1 h-12 rounded-lg font-bold text-sm bg-gray-100 text-gray-600 border-2 border-gray-300 cursor-not-allowed"
+                className="flex-1 h-14 rounded-xl font-bold bg-gray-100 text-gray-600 border-2 border-gray-300 cursor-not-allowed"
               >
-                Already in Cart
+                In Cart
               </Button>
               
               <Button
@@ -343,9 +290,9 @@ const PharmacyCard = ({
                   }
                 }}
                 variant="outline"
-                className="h-12 px-4 rounded-lg font-bold text-sm border-2 border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400 hover:scale-110 transition-all duration-300 group"
+                className="h-14 px-5 rounded-xl font-bold border-2 border-rose-300 text-rose-600 hover:bg-rose-50 hover:border-rose-400 hover:scale-110 active:scale-95 transition-all duration-300"
               >
-                <Trash2 className="h-4 w-4 group-hover:scale-125 transition-transform duration-300" />
+                <Trash2 className="h-5 w-5" strokeWidth={2.5} />
               </Button>
             </>
           ) : (
@@ -358,24 +305,20 @@ const PharmacyCard = ({
                 quantities[avail.pharmacyId] || 1 
               )}
               disabled={adding}
-              className={cn(
-                "w-full h-12 rounded-lg font-bold text-sm transition-all duration-300 shadow-lg hover:shadow-2xl relative overflow-hidden",
-                "bg-gradient-to-r from-[#1ABA7F] to-[#225F91] text-white hover:from-[#1a4a73] hover:to-[#225F91] active:scale-95 hover:scale-105"
-              )}
+              className="relative w-full h-14 rounded-xl font-bold transition-all duration-300 shadow-lg hover:shadow-2xl overflow-hidden bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-white active:scale-95 hover:scale-105"
             >
-              {/* Shine effect on hover */}
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               
               <span className="relative z-10 flex items-center gap-2 justify-center">
                 {adding ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" />
                     Adding...
                   </>
                 ) : (
                   <>
-                 <ShoppingCart className="h-4 w-4 mr-2" strokeWidth={2} />
-                  Add to Cart
+                    <ShoppingCart className="h-5 w-5" strokeWidth={2.5} />
+                    Add to Cart
                   </>
                 )}
               </span>

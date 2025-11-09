@@ -90,7 +90,7 @@ export async function searchManufacturers(searchTerm, limit = 20) {
   // Return in the structure AutocompleteInput expects
   return {
     data: {
-      manufacturers: json.data?.manufacturers || []
+      manufacturers: json.data?.result || []
     }
   };
 }
@@ -106,7 +106,7 @@ export async function searchActiveSubstances(searchTerm, limit = 20) {
   
   return {
     data: {
-      activeSubstances: json.data?.activeSubstances || []
+      activeSubstances: json.data?.result || []
     }
   };
 }
@@ -122,7 +122,7 @@ export async function searchMedicationIngredients(searchTerm, limit = 20) {
   
   return {
     data: {
-      medicationIngredients: json.data?.medicationIngredients || []
+      medicationIngredients: json.data?.result || []
     }
   };
 }

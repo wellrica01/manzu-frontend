@@ -4,14 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Search, Mic, Sparkles, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+/* ==================== SEARCH INPUT COMPONENT ==================== */
 const SearchInput = ({
   searchTerm,
   setSearchTerm,
   suggestions,
-  setSuggestions,
   isLoadingSuggestions,
-  setIsLoadingSuggestions,
-  showDropdown = false,
+  showDropdown,
   setShowDropdown,
   focusedSuggestionIndex,
   setFocusedSuggestionIndex,
@@ -26,42 +25,10 @@ const SearchInput = ({
 }) => {
   const [isListening, setIsListening] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
-  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
 
-  // Smooth keyboard detection
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.visualViewport) {
-        const viewportHeight = window.visualViewport.height;
-        const windowHeight = window.innerHeight;
-        const keyboardVisible = viewportHeight < windowHeight * 0.75;
-        setIsKeyboardVisible(keyboardVisible);
-      }
-    };
-
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', handleResize);
-      return () => window.visualViewport.removeEventListener('resize', handleResize);
-    }
-  }, []);
-
-  // Smooth scroll when keyboard appears
-  useEffect(() => {
-    if (isKeyboardVisible && (showDropdown || showHistory) && inputRef.current) {
-      setTimeout(() => {
-        inputRef.current?.scrollIntoView({ 
-          behavior: 'smooth', 
-          block: 'center',
-          inline: 'nearest'
-        });
-      }, 150);
-    }
-  }, [isKeyboardVisible, showDropdown, showHistory, inputRef]);
-
-  // Enhanced voice search with feedback
   const startVoiceSearch = useCallback(() => {
     if (!('webkitSpeechRecognition' in window)) {
-      alert('Voice search is not supported in this browser');
+      alert('Voice search not supported in this browser');
       return;
     }
 
@@ -85,7 +52,6 @@ const SearchInput = ({
     recognition.onend = () => setIsListening(false);
   }, [setSearchTerm, setShowHistory, setShowDropdown]);
 
-  // Smooth keyboard navigation
   const handleKeyDown = useCallback((e) => {
     if (!showDropdown || suggestions.length === 0) {
       if (e.key === 'Enter') {
@@ -100,10 +66,7 @@ const SearchInput = ({
       setFocusedSuggestionIndex((prev) => {
         const next = Math.min(prev + 1, suggestions.length - 1);
         setTimeout(() => {
-          suggestionRefs.current[next]?.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'nearest' 
-          });
+          suggestionRefs.current[next]?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }, 0);
         return next;
       });
@@ -111,14 +74,10 @@ const SearchInput = ({
       e.preventDefault();
       setFocusedSuggestionIndex((prev) => {
         const next = Math.max(prev - 1, -1);
-        if (next === -1) {
-          inputRef.current?.focus();
-        } else {
+        if (next === -1) inputRef.current?.focus();
+        else {
           setTimeout(() => {
-            suggestionRefs.current[next]?.scrollIntoView({ 
-              behavior: 'smooth', 
-              block: 'nearest' 
-            });
+            suggestionRefs.current[next]?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
           }, 0);
         }
         return next;
@@ -127,7 +86,7 @@ const SearchInput = ({
       e.preventDefault();
       if (focusedSuggestionIndex >= 0) {
         const suggestion = suggestions[focusedSuggestionIndex];
-        addToHistoryAndSelect(suggestion);
+        handleSelectMedication(suggestion);
       }
       inputRef.current?.blur();
     } else if (e.key === 'Escape') {
@@ -136,41 +95,18 @@ const SearchInput = ({
       setFocusedSuggestionIndex(-1);
       inputRef.current?.blur();
     }
-  }, [showDropdown, suggestions, focusedSuggestionIndex, setFocusedSuggestionIndex, inputRef, suggestionRefs, setShowDropdown, setShowHistory]);
+  }, [showDropdown, suggestions, focusedSuggestionIndex, setFocusedSuggestionIndex, inputRef, suggestionRefs, setShowDropdown, setShowHistory, handleSelectMedication]);
 
-  // Add to history with smooth transition
-  const addToHistoryAndSelect = useCallback((suggestion) => {
-    const newHistory = [
-      suggestion,
-      ...searchHistory.filter((item) => item.id !== suggestion.id),
-    ].slice(0, 5);
-
-    setSearchHistory(newHistory);
-    localStorage.setItem('searchHistory', JSON.stringify(newHistory));
-
-    setSearchTerm(suggestion.displayName);
-    
-    // Smooth close animation
-    setTimeout(() => {
+  const handleInputFocus = useCallback(() => {
+    setIsFocused(true);
+    if (searchHistory.length > 0 && !searchTerm) {
       setShowDropdown(false);
+      setTimeout(() => setShowHistory(true), 100);
+    } else if (searchTerm) {
+      setShowDropdown(true);
       setShowHistory(false);
-    }, 100);
-    
-    handleSelectMedication(suggestion);
-  }, [searchHistory, setSearchHistory, setSearchTerm, setShowDropdown, setShowHistory, handleSelectMedication]);
-
-  // Input handlers with smooth transitions
-const handleInputFocus = useCallback(() => {
-  setIsFocused(true);
-
-  if (searchHistory.length > 0 && !searchTerm) {
-    setShowDropdown(false);  
-    setTimeout(() => setShowHistory(true), 100);
-  } else if (searchTerm) {
-    setShowDropdown(true);  
-    setShowHistory(false);
-  }
-}, [searchHistory.length, searchTerm, setShowHistory, setShowDropdown]);
+    }
+  }, [searchHistory.length, searchTerm, setShowHistory, setShowDropdown]);
 
   const handleInputBlur = useCallback(() => {
     setTimeout(() => setIsFocused(false), 150);
@@ -183,7 +119,6 @@ const handleInputFocus = useCallback(() => {
     setShowHistory(false);
   }, [setSearchTerm, setShowDropdown, setShowHistory]);
 
-  // Clear search with animation
   const handleClearSearch = useCallback(() => {
     setSearchTerm('');
     setShowDropdown(false);
@@ -192,101 +127,117 @@ const handleInputFocus = useCallback(() => {
   }, [setSearchTerm, setShowDropdown, setShowHistory, searchHistory.length, inputRef]);
 
   return (
-    <div className="relative w-full group">
-      {/* Animated glow effect */}
+<div className="relative w-full group">
+  {/* Premium glow effect */}
+  <div className={cn(
+    "absolute -inset-1 rounded-3xl bg-gradient-to-r from-emerald-500 via-cyan-500 to-blue-500 transition-all duration-700 blur-xl",
+    isFocused ? "opacity-30 animate-gradient bg-300%" : "opacity-0"
+  )} />
+
+  <div className="relative">
+    {/* Search icon */}
+    <div className="absolute left-4 sm:left-5 top-1/2 -translate-y-1/2 pointer-events-none">
       <div className={cn(
-        "absolute inset-0 rounded-2xl bg-gradient-to-r from-[#1ABA7F] via-[#225F91] to-[#1ABA7F] transition-all duration-500 blur-sm",
-        isFocused ? "opacity-30 animate-gradient bg-300%" : "opacity-0"
-      )} />
-      
-      <div className="relative">
-        {/* Search icon with smooth animation */}
-        <Search
-          className={cn(
-            "absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 transition-all duration-300 pointer-events-none",
-            isFocused ? "text-[#1ABA7F] scale-110" : "text-[#225F91]/70"
-          )}
-          aria-hidden="true"
-        />
-        
-        {/* Main input */}
-        <Input
-          ref={inputRef}
-          type="text"
-          placeholder="paracetamol..."
-          value={searchTerm}
-          onChange={handleInputChange}
-          onKeyDown={handleKeyDown}
-          onFocus={handleInputFocus}
-          onBlur={handleInputBlur}
-          className={cn(
-            "pl-12 pr-24 sm:pr-32 h-14 text-base sm:text-lg font-bold rounded-2xl border-2 bg-white text-gray-600 placeholder:text-gray-400 transition-all duration-300 w-full shadow-lg",
-            isFocused 
-              ? "border-[#1ABA7F] shadow-[0_0_20px_rgba(26,186,127,0.2)] focus:ring-2 focus:ring-[#1ABA7F] focus:ring-offset-2" 
-              : "border-gray-200 hover:border-[#1ABA7F]/50"
-          )}
-          autoComplete="off"
-          aria-autocomplete="list"
-          aria-expanded={showDropdown || showHistory}
-          aria-controls="suggestions-list"
-        />
-
-        {/* Sparkles animation */}
-        <Sparkles 
-          className={cn(
-            "absolute right-20 top-1/2 -translate-y-1/2 h-4 w-4 text-[#1ABA7F] transition-all duration-300",
-            searchTerm ? "opacity-100 animate-pulse scale-100" : "opacity-0 scale-0"
-          )} 
-          aria-hidden="true" 
-        />
-
-        {/* Clear button */}
-        {searchTerm && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleClearSearch}
-            className={cn(
-              "absolute right-14 top-1/2 -translate-y-1/2 h-8 w-8 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 p-0 border-0 transition-all duration-200",
-              "animate-in fade-in zoom-in-50 duration-200"
-            )}
-            aria-label="Clear search"
-          >
-            <X className="h-4 w-4" />
-          </Button>
+        "relative transition-all duration-500",
+        isFocused && "scale-110"
+      )}>
+        <Search className={cn(
+          "h-5 sm:h-6 w-5 sm:w-6 transition-colors duration-300",
+          isFocused ? "text-emerald-500" : "text-gray-400"
+        )} strokeWidth={2.5} />
+        {isFocused && (
+          <div className="absolute inset-0 bg-emerald-500/20 rounded-full blur-md animate-pulse" />
         )}
-
-        {/* Voice search button with pulse animation */}
-        <Button
-          variant="ghost"
-          size="lg"
-          onClick={startVoiceSearch}
-          disabled={isListening}
-          className={cn(
-            "absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-xl bg-gradient-to-br from-[#1ABA7F] to-[#16a876] hover:from-[#16a876] hover:to-[#1ABA7F] text-white p-0 border-0 transition-all duration-300 shadow-lg",
-            isListening 
-              ? "scale-110 animate-pulse shadow-[0_0_25px_rgba(26,186,127,0.7)]" 
-              : "hover:scale-105 active:scale-95 hover:shadow-xl"
-          )}
-          aria-label="Voice search"
-        >
-          <Mic className={cn(
-            "h-5 w-5 transition-transform duration-300",
-            isListening && "animate-pulse scale-110"
-          )} />
-        </Button>
       </div>
-
-      {/* Voice search feedback */}
-      {isListening && (
-        <div className="absolute left-0 right-0 top-full mt-2 p-3 bg-[#1ABA7F]/10 border border-[#1ABA7F]/30 rounded-xl animate-in fade-in slide-in-from-top-2 duration-300">
-          <div className="flex items-center gap-2 text-[#1ABA7F] text-sm font-semibold">
-            <div className="w-2 h-2 rounded-full bg-[#1ABA7F] animate-pulse" />
-            Listening...
-          </div>
-        </div>
-      )}
     </div>
+
+    {/* Main input */}
+    <Input
+      ref={inputRef}
+      type="text"
+      placeholder="Search..."
+      value={searchTerm}
+      onChange={handleInputChange}
+      onKeyDown={handleKeyDown}
+      onFocus={handleInputFocus}
+      onBlur={handleInputBlur}
+      className={cn(
+        "pl-14 sm:pl-16 pr-28 sm:pr-32 h-14 sm:h-16 text-base sm:text-lg font-semibold rounded-2xl border-2 bg-white placeholder:text-gray-400 transition-all duration-500 shadow-xl",
+        isFocused 
+          ? "border-emerald-500 shadow-[0_0_30px_rgba(16,185,129,0.25)] ring-4 ring-emerald-500/10" 
+          : "border-gray-200 hover:border-gray-300 hover:shadow-2xl"
+      )}
+      autoComplete="off"
+    />
+
+    {/* Sparkles indicator */}
+    {searchTerm && (
+      <Sparkles
+        className={cn(
+          "absolute right-20 sm:right-24 top-1/2 -translate-y-1/2 h-4 sm:h-5 w-4 sm:w-5 text-amber-500 transition-all duration-500 animate-pulse drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]"
+        )}
+      />
+    )}
+
+    {/* Clear button */}
+    {searchTerm && (
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={handleClearSearch}
+        className="absolute right-12 sm:right-16 top-1/2 -translate-y-1/2 h-9 sm:h-10 w-9 sm:w-10 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-600 p-0 transition-all duration-300 hover:scale-110 active:scale-95"
+      >
+        <X className="h-4 sm:h-5 w-4 sm:w-5" strokeWidth={2.5} />
+      </Button>
+    )}
+
+    {/* Voice button */}
+    <Button
+      variant="ghost"
+      size="lg"
+      onClick={startVoiceSearch}
+      disabled={isListening}
+      className={cn(
+        "absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 h-10 sm:h-12 w-10 sm:w-12 rounded-xl p-0 transition-all duration-500 shadow-lg",
+        isListening 
+          ? "bg-gradient-to-br from-rose-500 to-pink-500 text-white scale-110 animate-pulse shadow-[0_0_25px_rgba(244,63,94,0.6)]"
+          : "bg-gradient-to-br from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-white hover:scale-110 active:scale-95"
+      )}
+    >
+      <Mic className={cn(
+        "h-5 sm:h-6 w-5 sm:w-6 transition-transform duration-300",
+        isListening && "animate-pulse scale-125"
+      )} strokeWidth={2.5} />
+    </Button>
+  </div>
+
+  {/* Voice feedback */}
+  {isListening && (
+    <div className="absolute left-0 right-0 top-full mt-2 sm:mt-3 p-3 sm:p-4 bg-gradient-to-r from-rose-500/10 to-pink-500/10 border-2 border-rose-500/30 rounded-2xl animate-in fade-in slide-in-from-top-2 duration-300 backdrop-blur-sm">
+      <div className="flex items-center gap-2 sm:gap-3">
+        <div className="relative w-2.5 h-2.5 sm:w-3 sm:h-3">
+          <div className="w-full h-full rounded-full bg-rose-500 animate-ping absolute" />
+          <div className="w-full h-full rounded-full bg-rose-500" />
+        </div>
+        <span className="text-rose-700 font-bold text-xs sm:text-sm">Listening... Speak now</span>
+      </div>
+    </div>
+  )}
+
+  <style jsx global>{`
+    @keyframes gradient {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    .animate-gradient {
+      animation: gradient 3s ease infinite;
+    }
+    .bg-300\\% {
+      background-size: 300% 300%;
+    }
+  `}</style>
+</div>
+
   );
 };
 

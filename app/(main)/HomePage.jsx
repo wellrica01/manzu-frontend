@@ -360,17 +360,18 @@ const StatsSection = () => {
   return (
     <section className="py-16 sm:py-24 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        {/* Header */}
         <RevealOnScroll>
-          <div className="text-center mb-12 sm:mb-16">
-            <Badge className="mb-4 sm:mb-6 bg-emerald-50 text-emerald-700 font-bold px-3 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base">
+          <div className="text-center mb-10 sm:mb-16">
+            <Badge className="mb-3 sm:mb-6 bg-emerald-50 text-emerald-700 font-bold px-3 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base">
               Platform Metrics
             </Badge>
 
-            <h2 className="text-4xl sm:text-6xl font-black text-gray-900 mb-3 sm:mb-4 leading-tight">
+            <h2 className="text-3xl sm:text-6xl font-black text-gray-900 mb-2 sm:mb-4 leading-tight">
               Trusted by Thousands
             </h2>
 
-            <p className="text-lg sm:text-xl text-gray-600 font-light max-w-2xl mx-auto px-2">
+            <p className="text-base sm:text-xl text-gray-600 font-light max-w-2xl mx-auto px-2">
               Real numbers. Real impact.
             </p>
           </div>
@@ -381,6 +382,7 @@ const StatsSection = () => {
           {stats.map((stat, i) => (
             <RevealOnScroll key={i} delay={i * 150}>
               <div className="group relative p-6 sm:p-10 rounded-3xl bg-gradient-to-br from-gray-50 to-white border border-gray-200 hover:border-gray-300 hover:shadow-2xl transition-all duration-500 overflow-hidden">
+                
                 {/* Hover gradient accent */}
                 <div
                   className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-0 group-hover:opacity-5 transition-opacity`}
@@ -388,23 +390,23 @@ const StatsSection = () => {
 
                 {/* Icon */}
                 <div
-                  className={`inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br ${stat.gradient} text-white mb-5 sm:mb-6 group-hover:scale-110 transition-transform shadow-lg`}
+                  className={`inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br ${stat.gradient} text-white mb-4 sm:mb-6 group-hover:scale-110 transition-transform shadow-lg`}
                 >
                   <stat.icon className="w-7 h-7 sm:w-8 sm:h-8" strokeWidth={2} />
                 </div>
 
                 {/* Animated Counter */}
                 <div
-                  className={`text-5xl sm:text-6xl font-black bg-gradient-to-br ${stat.gradient} bg-clip-text text-transparent mb-2 sm:mb-3`}
+                  className={`text-4xl sm:text-5xl font-black bg-gradient-to-br ${stat.gradient} bg-clip-text text-transparent mb-1 sm:mb-2`}
                 >
                   <AnimatedCounter end={stat.value} suffix={stat.suffix} />
                 </div>
 
                 {/* Labels */}
-                <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-1">
+                <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-1">
                   {stat.label}
                 </h3>
-                <p className="text-sm text-gray-500 font-medium">
+                <p className="text-xs sm:text-sm text-gray-500 font-medium">
                   {stat.description}
                 </p>
               </div>
@@ -413,6 +415,7 @@ const StatsSection = () => {
         </div>
       </div>
     </section>
+
   );
 };
 
