@@ -23,7 +23,7 @@ const DetailedProgress = ({ progress, onCancel }) => {
   const isSuccess = progress.status?.includes('success');
 
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-teal-50 via-blue-50 to-white border-2 border-teal-200 p-6 animate-in fade-in zoom-in-95 duration-300">
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-teal-50 via-blue-50 to-white border-2 border-teal-200 p-5 animate-in fade-in zoom-in-95 duration-300">
       {/* Animated background */}
       <div className="absolute inset-0 bg-gradient-to-r from-teal-100/20 via-blue-100/20 to-teal-100/20 animate-shimmer" 
            style={{ 
@@ -242,7 +242,7 @@ const LocationPrompt = ({
 }) => {
   if (error && !isLoadingLocation) {
     return (
-      <div className="p-8 rounded-3xl bg-gradient-to-br from-rose-50 via-orange-50 to-white border-2 border-rose-200 shadow-xl animate-in fade-in zoom-in-95 duration-300">
+      <div className="p-6 rounded-3xl bg-gradient-to-br from-rose-50 via-orange-50 to-white border-2 border-rose-200 shadow-xl animate-in fade-in zoom-in-95 duration-300">
         <div className="flex justify-center mb-6">
           <div className="relative">
             <div className="absolute inset-0 bg-rose-500/20 rounded-full blur-xl animate-pulse" />
@@ -325,7 +325,7 @@ const LocationPrompt = ({
   }
 
   return (
-    <div className="p-10 rounded-3xl bg-gradient-to-br from-cyan-50 via-blue-50 to-indigo-50 border-2 border-cyan-200 shadow-xl animate-in fade-in zoom-in-95 duration-500">
+    <div className="p-8 rounded-3xl bg-gradient-to-br from-cyan-50 via-blue-50 to-indigo-50 border-2 border-cyan-200 shadow-xl animate-in fade-in zoom-in-95 duration-500">
       <div className="relative w-24 h-24 mx-auto mb-8">
         <div className="absolute inset-0 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-full blur-3xl opacity-30 animate-pulse" style={{ animationDuration: '2s' }} />
         <div className="relative w-full h-full bg-white rounded-full flex items-center justify-center shadow-2xl">

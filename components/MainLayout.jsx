@@ -152,7 +152,7 @@ function MainLayoutContent({ children }) {
               <Shield className="h-4 w-4 text-emerald-400" strokeWidth={2.5} />
               <div className="absolute inset-0 bg-emerald-400/30 rounded-full blur-sm animate-pulse" />
             </div>
-            <span>NAFDAC Verified</span>
+            <span>Genuine Medications</span>
           </div>
           <div className="hidden sm:flex items-center gap-2">
             <Award className="h-4 w-4 text-cyan-400" strokeWidth={2.5} />
@@ -239,7 +239,7 @@ function MainLayoutContent({ children }) {
                   {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-[90vw] max-w-md bg-white p-0">
+              <SheetContent side="right" className="w-[85vw] max-w-md bg-white p-0">
                 <VisuallyHidden>
                   <SheetTitle>Navigation Menu</SheetTitle>
                 </VisuallyHidden>

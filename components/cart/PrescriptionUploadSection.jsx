@@ -313,7 +313,7 @@ const PrescriptionUploadSection = ({
         </CardTitle>
       </CardHeader>
 
-      <CardContent className="p-6 space-y-6">
+      <CardContent className="p-3 sm:p-5 space-y-6">
         {/* Items Status List */}
         <div className="space-y-3">
           {items.map((item) => {

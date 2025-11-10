@@ -625,7 +625,7 @@ const ServiceCard = ({ title, icon: Icon, children, description }) => {
       {/* Subtle decorative gradient glow */}
       <div className="absolute top-0 right-0 w-40 sm:w-64 h-40 sm:h-64 bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 rounded-full blur-3xl" />
       
-      <CardContent className="relative px-4 sm:px-6 py-6 sm:py-12">
+      <CardContent className="relative px-3 sm:px-6 py-6 sm:py-12">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0 mb-8">
           <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-cyan-500 text-white shadow-lg">
             <Icon className="w-7 h-7 sm:w-8 sm:h-8" strokeWidth={2} />
@@ -865,7 +865,7 @@ function HomePageContent() {
                   'Type your medication name or upload a prescription. Our AI-powered system searches across all pharmacies instantly.',
                 icon: Search,
                 gradient: 'from-emerald-500 to-teal-500',
-                features: ['10,000+ Medications', 'ATC Classification', 'Smart Suggestions'],
+                features: ['10,000+ Medications', 'Smart Suggestions'],
               },
               {
                 step: '02',
@@ -874,7 +874,7 @@ function HomePageContent() {
                   'View real-time availability, prices, and pharmacy ratings. Select the best option for your needs.',
                 icon: TrendingUp,
                 gradient: 'from-blue-500 to-indigo-500',
-                features: ['Price Comparison', 'Live Stock', 'Verified Reviews'],
+                features: ['Price Comparison', 'Live Stock'],
               },
               {
                 step: '03',
@@ -883,7 +883,7 @@ function HomePageContent() {
                   'Secure checkout with multiple payment options. Track your order in real-time or schedule pickup.',
                 icon: Package,
                 gradient: 'from-purple-500 to-pink-500',
-                features: ['Secure Payment', 'GPS Tracking', 'Flexible Delivery'],
+                features: ['Secure Payment', 'Flexible Delivery'],
               },
             ].map((step, i) => (
               <RevealOnScroll key={i} delay={i * 200}>

@@ -96,7 +96,7 @@ const MedicationCard = ({
     <div className="w-full space-y-6">
       {/* Medication Header */}
       {!isMultiMed && (
-        <div className="relative rounded-3xl bg-gradient-to-br from-white to-gray-50 border-2 border-[#1ABA7F]/20 shadow-xl py-4 sm:py-6 px-4 sm:px-8 mb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="relative rounded-3xl bg-gradient-to-br from-white to-gray-50 border-2 border-[#1ABA7F]/20 shadow-xl py-4 sm:py-6 px-3 sm:px-8 mb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
           {/* Animated decorative elements */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[#1ABA7F]/5 to-transparent rounded-full blur-3xl animate-pulse" 
               style={{ animationDuration: '3s' }} />
@@ -357,7 +357,7 @@ const MedicationCard = ({
           />
         )}
 
-        <div className="flex items-center justify-between px-2">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-gradient-to-br from-[#1ABA7F]/10 to-[#225F91]/10">
               <MapPin className="h-5 w-5 text-[#225F91]" />
