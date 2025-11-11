@@ -5,7 +5,7 @@ import {
   Banknote, CheckCircle, AlertTriangle, Loader2, Receipt,
   DollarSign, Package, X, Calculator, Clock, User
 } from "lucide-react";
-import { pharmacyMedicationsAPI, pharmacySalesAPI } from '@/lib/pharmacyApiClient';
+import { pharmacyMedicationsAPI, pharmacySalesAPI } from '@/app/pharmacy/pharmacyApiClient';
 
 const brandGreen = "#1ABA7F";
 const brandBlue = "#225F91";

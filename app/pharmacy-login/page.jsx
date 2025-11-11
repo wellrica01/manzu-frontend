@@ -13,7 +13,7 @@ import Image from 'next/image';
 import { toast } from 'sonner';
 
 // ✅ Import the API client
-import { pharmacyAuthAPI, setPharmacyToken } from '@/lib/pharmacyApiClient';
+import { pharmacyAuthAPI, setPharmacyToken } from '@/app/pharmacy/pharmacyApiClient';
 import { APIError } from '@/lib/apiClient';
 
 const loginSchema = z.object({

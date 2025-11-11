@@ -16,7 +16,7 @@ import Image from 'next/image';
 import { toast } from 'sonner';
 
 // âœ… Import the API client
-import { pharmacyAuthAPI, setPharmacyToken } from '@/lib/pharmacyApiClient';
+import { pharmacyAuthAPI, setPharmacyToken } from '@/app/pharmacy/pharmacyApiClient';
 import { APIError } from '@/lib/apiClient';
 
 // Load state-LGA mapping

@@ -4,7 +4,7 @@ import { Loader2, AlertTriangle, Edit, Trash2, Plus, CheckCircle, Package, Refre
 import Dialog from "@/components/Dialog";
 import InventoryForm from "./components/InventoryForm";
 import DataTableView from "@/components/DataTableView";
-import { pharmacyInventoryAPI } from '@/lib/pharmacyApiClient';
+import { pharmacyInventoryAPI } from '@/app/pharmacy/pharmacyApiClient';
 
 
 export default function PharmacyInventoryPage() {

@@ -1,5 +1,5 @@
 // lib/pharmacyApiClient.js
-import { apiRequest, APIError } from './apiClient';
+import { apiRequest, APIError } from '../../lib/apiClient';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
 

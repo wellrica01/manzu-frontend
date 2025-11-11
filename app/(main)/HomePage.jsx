@@ -723,119 +723,10 @@ function HomePageContent() {
       
       <StatsSection />
       
-      <FeaturesSection />
-      
-      <TestimonialsSection />
+     {/* <FeaturesSection /> */}
 
-    {/* Service Section - Enhanced & Responsive */}
-    {visibleSection && (
-      <section className="py-16 sm:py-24 bg-gradient-to-b from-gray-50 via-white to-gray-50">
-        <div className="max-w-5xl mx-auto px-2 sm:px-6">
-          {visibleSection === "search" && (
-            <RevealOnScroll>
-              <div ref={searchRef}>
-                <ServiceCard
-                  title="Search Medications"
-                  icon={Search}
-                  description="Find any medication across our network of verified pharmacies. Real-time availability, transparent pricing, instant results."
-                >
-                  <SearchBar />
-                </ServiceCard>
-              </div>
-            </RevealOnScroll>
-          )}
 
-          {visibleSection === "upload" && (
-            <RevealOnScroll>
-              <div ref={uploadRef}>
-                <ServiceCard
-                  title="Upload Prescription"
-                  icon={Upload}
-                  description="Upload your prescription and we'll match you with pharmacies that have all your medications in stock. Fast, secure, and NAFDAC compliant."
-                >
-                  <PrescriptionUploadForm />
-                </ServiceCard>
-              </div>
-            </RevealOnScroll>
-          )}
-        </div>
-      </section>
-    )}
-
-    {/* Trust Section - Responsive */}
-    <section className="py-16 sm:py-24 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <RevealOnScroll>
-          <div className="relative p-8 sm:p-16 rounded-[2rem] sm:rounded-[3rem] bg-gradient-to-br from-[#225F91] to-[#1a4a73] text-white">
-            {/* Pattern Background */}
-            <div className="absolute inset-0 opacity-10">
-              <div
-                className="absolute inset-0"
-                style={{
-                  backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-                }}
-              />
-            </div>
-
-            {/* Content Grid */}
-            <div className="relative grid grid-cols-1 md:grid-cols-2 gap-10 sm:gap-12 items-center">
-              {/* Left Column */}
-              <div>
-                <Badge className="mb-4 sm:mb-6 bg-white/20 text-white font-bold px-4 py-2 backdrop-blur-sm text-sm sm:text-base">
-                  Our Commitment
-                </Badge>
-
-                <h2 className="text-3xl sm:text-5xl font-black mb-4 sm:mb-6 leading-tight">
-                  Your Health,
-                  <span className="block mt-1 sm:mt-2 text-emerald-400">Our Priority</span>
-                </h2>
-
-                <p className="text-base sm:text-xl text-white/80 mb-6 sm:mb-8 leading-relaxed">
-                  We're not just a platform—we're your healthcare partner. Every pharmacy is verified, every medication is authentic, and every transaction is secure.
-                </p>
-
-                <div className="space-y-3 sm:space-y-4">
-                  {[
-                    { icon: Shield, text: '100% PCN-verified pharmacies' },
-                    { icon: CheckCircle, text: 'Secure payment processing' },
-                    { icon: Award, text: 'Quality guarantee on all medications' },
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-center gap-3">
-                      <div className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white/20 backdrop-blur-sm">
-                        <item.icon className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={2.5} />
-                      </div>
-                      <span className="text-base sm:text-lg font-semibold">{item.text}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Right Column - Metrics */}
-              <div className="grid grid-cols-2 gap-4 sm:gap-6">
-                {[
-                  { value: '99.9', suffix: '%', label: 'Uptime' },
-                  { value: '4.8', suffix: '/5', label: 'User Rating' },
-                  { value: '24', suffix: '/7', label: 'Support' },
-                  { value: '5', suffix: 'min', label: 'Avg. Response' },
-                ].map((metric, i) => (
-                  <div
-                    key={i}
-                    className="p-4 sm:p-6 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 text-center sm:text-left"
-                  >
-                    <div className="text-3xl sm:text-4xl font-black text-emerald-400 mb-1 sm:mb-2">
-                      <AnimatedCounter end={parseFloat(metric.value)} suffix={metric.suffix} />
-                    </div>
-                    <p className="text-xs sm:text-sm font-semibold text-white/80">{metric.label}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </RevealOnScroll>
-      </div>
-    </section>
-
-    {/* How It Works - Process Section */}
+        {/* How It Works - Process Section */}
     <section className="py-16 sm:py-24 bg-gradient-to-b from-gray-50 to-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <RevealOnScroll>
@@ -929,6 +820,121 @@ function HomePageContent() {
         </div>
       </div>
     </section>
+      
+
+    {/* Service Section - Enhanced & Responsive */}
+    {visibleSection && (
+      <section className="py-16 sm:py-24 bg-gradient-to-b from-gray-50 via-white to-gray-50">
+        <div className="max-w-5xl mx-auto px-2 sm:px-6">
+          {visibleSection === "search" && (
+            <RevealOnScroll>
+              <div ref={searchRef}>
+                <ServiceCard
+                  title="Search Medications"
+                  icon={Search}
+                  description="Find any medication across our network of verified pharmacies. Real-time availability, transparent pricing, instant results."
+                >
+                  <SearchBar />
+                </ServiceCard>
+              </div>
+            </RevealOnScroll>
+          )}
+
+          {visibleSection === "upload" && (
+            <RevealOnScroll>
+              <div ref={uploadRef}>
+                <ServiceCard
+                  title="Upload Prescription"
+                  icon={Upload}
+                  description="Upload your prescription and we'll match you with pharmacies that have all your medications in stock. Fast, secure, and NAFDAC compliant."
+                >
+                  <PrescriptionUploadForm />
+                </ServiceCard>
+              </div>
+            </RevealOnScroll>
+          )}
+        </div>
+      </section>
+    )}
+
+    {/* Trust Section - Responsive */}
+
+     {/* 
+
+    <section className="py-16 sm:py-24 bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        <RevealOnScroll>
+          <div className="relative p-8 sm:p-16 rounded-[2rem] sm:rounded-[3rem] bg-gradient-to-br from-[#225F91] to-[#1a4a73] text-white">
+            <div className="absolute inset-0 opacity-10">
+              <div
+                className="absolute inset-0"
+                style={{
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+                }}
+              />
+            </div>
+     
+            <div className="relative grid grid-cols-1 md:grid-cols-2 gap-10 sm:gap-12 items-center">
+              <div>
+                <Badge className="mb-4 sm:mb-6 bg-white/20 text-white font-bold px-4 py-2 backdrop-blur-sm text-sm sm:text-base">
+                  Our Commitment
+                </Badge>
+
+                <h2 className="text-3xl sm:text-5xl font-black mb-4 sm:mb-6 leading-tight">
+                  Your Health,
+                  <span className="block mt-1 sm:mt-2 text-emerald-400">Our Priority</span>
+                </h2>
+
+                <p className="text-base sm:text-xl text-white/80 mb-6 sm:mb-8 leading-relaxed">
+                  We're not just a platform—we're your healthcare partner. Every pharmacy is verified, every medication is authentic, and every transaction is secure.
+                </p>
+
+                <div className="space-y-3 sm:space-y-4">
+                  {[
+                    { icon: Shield, text: '100% PCN-verified pharmacies' },
+                    { icon: CheckCircle, text: 'Secure payment processing' },
+                    { icon: Award, text: 'Quality guarantee on all medications' },
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <div className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white/20 backdrop-blur-sm">
+                        <item.icon className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={2.5} />
+                      </div>
+                      <span className="text-base sm:text-lg font-semibold">{item.text}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 sm:gap-6">
+                {[
+                  { value: '99.9', suffix: '%', label: 'Uptime' },
+                  { value: '4.8', suffix: '/5', label: 'User Rating' },
+                  { value: '24', suffix: '/7', label: 'Support' },
+                  { value: '5', suffix: 'min', label: 'Avg. Response' },
+                ].map((metric, i) => (
+                  <div
+                    key={i}
+                    className="p-4 sm:p-6 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 text-center sm:text-left"
+                  >
+                    <div className="text-3xl sm:text-4xl font-black text-emerald-400 mb-1 sm:mb-2">
+                      <AnimatedCounter end={parseFloat(metric.value)} suffix={metric.suffix} />
+                    </div>
+                    <p className="text-xs sm:text-sm font-semibold text-white/80">{metric.label}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </RevealOnScroll>
+      </div>
+    </section>  
+    
+    */}
+
+
+      <TestimonialsSection />
+
+ 
 
     {/* Final CTA */}
     <section className="py-16 sm:py-24 bg-white">

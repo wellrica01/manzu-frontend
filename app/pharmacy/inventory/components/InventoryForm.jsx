@@ -6,7 +6,7 @@ import {
   DollarSign, Calendar, Hash, Upload, X, ChevronDown, ChevronRight
 } from "lucide-react";
 import { AutocompleteInput } from "@/components/AutocompleteInput";
-import { pharmacyInventoryAPI } from '@/lib/pharmacyApiClient';
+import { pharmacyInventoryAPI } from '@/app/pharmacy/pharmacyApiClient';
 
 
 
