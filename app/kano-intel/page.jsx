@@ -1,9 +1,10 @@
 'use client';
+
 import React, { useState } from 'react';
 import { Filter, ZoomIn, ZoomOut, Maximize2, MapPin, Layers, Search } from 'lucide-react';
 
 const KanoIntelligenceMap = () => {
-  const [view, setView] = useState('kano'); // 'kano' or 'northern'
+  const [view, setView] = useState('kano');
   const [selectedZone, setSelectedZone] = useState('all');
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -46,42 +47,42 @@ const KanoIntelligenceMap = () => {
     { name: "Bebeji", lat: 11.66595444, lon: 8.255353809, district: "Central" },
     { name: "Bichi", lat: 12.19072733, lon: 8.193985317, district: "West" },
     { name: "Bunkure", lat: 11.68477212, lon: 8.532921022, district: "Central" },
-    { name: "Dala", lat: 11.99941196, lon: 8.457929242, district: "Metropolitan", isMetro: true },
+    { name: "Dala", lat: 12.0167, lon: 8.4833, district: "Metropolitan", isMetro: true },
     { name: "Dambatta", lat: 12.39738781, lon: 8.536801099, district: "North" },
     { name: "Dawakin Kudu", lat: 11.84341232, lon: 8.588567209, district: "Central" },
     { name: "Dawakin Tofa", lat: 12.11234745, lon: 8.343793221, district: "Central" },
     { name: "Doguwa", lat: 10.74423476, lon: 8.606166028, district: "South" },
-    { name: "Fagge", lat: 11.96704377, lon: 8.560595863, district: "Metropolitan", isMetro: true },
+    { name: "Fagge", lat: 12.0067, lon: 8.5292, district: "Metropolitan", isMetro: true },
     { name: "Gabasawa", lat: 12.16417154, lon: 8.888191945, district: "North" },
     { name: "Garko", lat: 11.61100232, lon: 8.75437773, district: "East" },
     { name: "Garum Mallam", lat: 11.6709982, lon: 8.325301379, district: "Central" },
     { name: "Gaya", lat: 11.83067369, lon: 9.034707762, district: "East" },
     { name: "Gezawa", lat: 12.11564093, lon: 8.748604314, district: "North" },
-    { name: "Gwale", lat: 11.96633024, lon: 8.495781845, district: "Metropolitan", isMetro: true },
+    { name: "Gwale", lat: 11.9667, lon: 8.5000, district: "Metropolitan", isMetro: true },
     { name: "Gwarzo", lat: 11.91410689, lon: 7.927826562, district: "West" },
     { name: "Kabo", lat: 11.84658641, lon: 8.179198752, district: "West" },
-    { name: "Kano Municipal", lat: 11.94989173, lon: 8.457973676, district: "Metropolitan", isMetro: true, isHub: true },
+    { name: "Kano Municipal", lat: 11.9519, lon: 8.5403, district: "Metropolitan", isMetro: true, isHub: true },
     { name: "Karaye", lat: 11.79107326, lon: 8.022594242, district: "West" },
     { name: "Kibiya", lat: 11.5197996, lon: 8.625747533, district: "South" },
     { name: "Kiru", lat: 11.69955834, lon: 8.15470437, district: "West" },
-    { name: "Kumbotso", lat: 11.87650372, lon: 8.4816389, district: "Metropolitan", isMetro: true },
+    { name: "Kumbotso", lat: 11.8881, lon: 8.5028, district: "Metropolitan", isMetro: true },
     { name: "Kunchi", lat: 12.49901596, lon: 8.288600914, district: "North" },
     { name: "Kura", lat: 11.74004179, lon: 8.412020222, district: "Central" },
     { name: "Madobi", lat: 11.76787492, lon: 8.280328563, district: "Central" },
     { name: "Makoda", lat: 12.4232591, lon: 8.407853609, district: "North" },
     { name: "Minjibir", lat: 12.15882104, lon: 8.656771156, district: "North" },
-    { name: "Nasarawa", lat: 12.00483966, lon: 8.516293769, district: "Metropolitan", isMetro: true },
+    { name: "Nassarawa", lat: 11.9769, lon: 8.5625, district: "Metropolitan", isMetro: true },
     { name: "Rano", lat: 11.53462388, lon: 8.551242227, district: "South" },
     { name: "Rimin Gado", lat: 11.95408098, lon: 8.257522726, district: "Central" },
     { name: "Rogo", lat: 11.55190186, lon: 7.835528127, district: "South" },
     { name: "Shanono", lat: 12.04562446, lon: 7.970345245, district: "West" },
     { name: "Sumaila", lat: 11.48701594, lon: 8.92812862, district: "East" },
     { name: "Takai", lat: 11.55641207, lon: 9.111899078, district: "East" },
-    { name: "Tarauni", lat: 11.97097576, lon: 8.52673957, district: "Metropolitan", isMetro: true },
+    { name: "Tarauni", lat: 11.9667, lon: 8.5667, district: "Metropolitan", isMetro: true },
     { name: "Tofa", lat: 12.05046, lon: 8.241119925, district: "Central" },
     { name: "Tsanyawa", lat: 12.24716534, lon: 7.995661541, district: "North" },
     { name: "Tundun Wada", lat: 11.24287546, lon: 8.455228404, district: "South" },
-    { name: "Ungogo", lat: 12.08384294, lon: 8.474765739, district: "Metropolitan", isMetro: true },
+    { name: "Ungogo", lat: 12.0906, lon: 8.4967, district: "Metropolitan", isMetro: true },
     { name: "Warawa", lat: 11.83156899, lon: 8.729350533, district: "East" },
     { name: "Wudil", lat: 11.81350673, lon: 8.828012312, district: "East" }
   ];
@@ -97,20 +98,56 @@ const KanoIntelligenceMap = () => {
         (searchTerm === '' || state.name.toLowerCase().includes(searchTerm.toLowerCase()))
       );
 
-  const latitudes = filteredData.map(d => d.lat);
-  const longitudes = filteredData.map(d => d.lon);
-  const minLat = Math.min(...latitudes);
-  const maxLat = Math.max(...latitudes);
-  const minLon = Math.min(...longitudes);
-  const maxLon = Math.max(...longitudes);
+  // Web Mercator projection (same as Google Maps)
+  const toWebMercator = (lat, lon) => {
+    const latRad = lat * Math.PI / 180;
+    const n = Math.log(Math.tan(Math.PI / 4 + latRad / 2));
+    return { x: lon, y: n * 180 / Math.PI };
+  };
+
+  // Get projected bounds
+  const projectedData = filteredData.map(d => ({
+    ...d,
+    projected: toWebMercator(d.lat, d.lon)
+  }));
+
+  const projectedX = projectedData.map(d => d.projected.x);
+  const projectedY = projectedData.map(d => d.projected.y);
+  const minX = Math.min(...projectedX);
+  const maxX = Math.max(...projectedX);
+  const minY = Math.min(...projectedY);
+  const maxY = Math.max(...projectedY);
 
   const width = 1400;
   const height = 900;
   const padding = 100;
 
+  // Calculate aspect ratio to maintain proper proportions
+  const dataWidth = maxX - minX;
+  const dataHeight = maxY - minY;
+  const dataAspect = dataWidth / dataHeight;
+  const viewAspect = (width - 2 * padding) / (height - 2 * padding);
+
+  let scaleX, scaleY, offsetX, offsetY;
+  
+  if (dataAspect > viewAspect) {
+    // Data is wider - fit to width
+    scaleX = (width - 2 * padding) / dataWidth;
+    scaleY = scaleX;
+    offsetX = padding;
+    offsetY = (height - dataHeight * scaleY) / 2;
+  } else {
+    // Data is taller - fit to height
+    scaleY = (height - 2 * padding) / dataHeight;
+    scaleX = scaleY;
+    offsetY = padding;
+    offsetX = (width - dataWidth * scaleX) / 2;
+  }
+
   const projectPoint = (lat, lon) => {
-    const x = ((lon - minLon) / (maxLon - minLon)) * (width - 2 * padding) + padding;
-    const y = height - (((lat - minLat) / (maxLat - minLat)) * (height - 2 * padding) + padding);
+    const mercator = toWebMercator(lat, lon);
+    const x = (mercator.x - minX) * scaleX + offsetX;
+    const y = height - ((mercator.y - minY) * scaleY + offsetY);
     return { x, y };
   };
 
