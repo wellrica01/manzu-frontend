@@ -489,7 +489,7 @@ export default function OrderDetailsDialog({ open, onClose, order, onStatusUpdat
             )}
 
             {/* Order Items */}
-            <div className="bg-white border-2 border-gray-200 rounded-lg p-4">
+            <div className="bg-white border-2 border-gray-200 rounded-lg p-3">
               <div className="flex items-center gap-2 mb-3">
                 <Package className="w-4 h-4 text-[#225F91]" />
                 <h3 className="font-semibold text-sm text-gray-900">Order Items</h3>
@@ -543,7 +543,7 @@ export default function OrderDetailsDialog({ open, onClose, order, onStatusUpdat
                 <div className="pt-2 border-t-2 border-gray-300">
                   <div className="flex justify-between items-center">
                     <span className="text-base font-semibold text-gray-900">Total</span>
-                    <span className="text-2xl font-bold text-green-600">
+                    <span className="text-xl font-bold text-green-600">
                       ₦{order.totalPrice?.toLocaleString()}
                     </span>
                   </div>
@@ -552,7 +552,7 @@ export default function OrderDetailsDialog({ open, onClose, order, onStatusUpdat
             </div>
 
             {/* Quick Stats */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-2">
               <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-200">
                 <div className="text-xs text-gray-600 mb-0.5">Total Items</div>
                 <div className="text-xl font-bold text-blue-600">

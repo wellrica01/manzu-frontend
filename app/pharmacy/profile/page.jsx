@@ -582,11 +582,11 @@ const cancelLogoUpload = () => {
         <div className="lg:col-span-2 space-y-6">
           {activeTab === 'info' && (
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+              <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
                 <User className="w-5 h-5 text-[#225F91]" />
                 General Information
-              </h2>
-              
+              </h3>
+
               {editMode ? (
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -753,10 +753,10 @@ const cancelLogoUpload = () => {
 
           {activeTab === 'location' && (
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+              <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
                 <MapPin className="w-5 h-5 text-[#225F91]" />
                 Location & GPS Coordinates
-              </h2>
+              </h3>
 
               {editMode ? (
                 <div className="space-y-4">
@@ -843,10 +843,10 @@ const cancelLogoUpload = () => {
 {activeTab === 'hours' && (
   <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
     <div className="flex items-center justify-between mb-6">
-      <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+      <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
         <Clock className="w-5 h-5 text-[#225F91]" />
         Operating Hours
-      </h2>
+      </h3>
       {!editingHours && (
         <button
           onClick={() => setEditingHours(true)}
@@ -1001,10 +1001,10 @@ const cancelLogoUpload = () => {
 )}
       {activeTab === 'security' && (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+          <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
             <Key className="w-5 h-5 text-[#225F91]" />
             Change 6-Digit PIN
-          </h2>
+          </h3>
           <form onSubmit={handleChangePin} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Current PIN</label>

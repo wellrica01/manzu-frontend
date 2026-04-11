@@ -387,7 +387,7 @@ const handleCompleteSale = async () => {
           <div className="bg-white border border-gray-200 rounded-lg md:rounded-2xl shadow-sm p-4 md:p-6">
             <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4">
               <Search className="w-4 h-4 md:w-5 md:h-5 text-[#225F91]" />
-              <h2 className="text-base md:text-lg font-semibold text-gray-900">Search Medications</h2>
+              <h3 className="text-base md:text-lg font-semibold text-gray-900">Search Medications</h3>
             </div>
             <AutocompleteInput
               value={selectedMedication}
@@ -405,9 +405,9 @@ const handleCompleteSale = async () => {
             <div className="flex items-center justify-between mb-3 md:mb-4">
               <div className="flex items-center gap-2 md:gap-3">
                 <ShoppingCart className="w-4 h-4 md:w-5 md:h-5 text-[#225F91]" />
-                <h2 className="text-base md:text-lg font-semibold text-gray-900">
+                <h3 className="text-base md:text-lg font-semibold text-gray-900">
                   Cart ({cart.length})
-                </h2>
+                </h3>
               </div>
               {cart.length > 0 && (
                 <button
@@ -446,7 +446,7 @@ const handleCompleteSale = async () => {
           <div className="bg-gradient-to-br from-blue-50 to-green-50 border-2 border-[#1ABA7F]/30 rounded-lg md:rounded-2xl shadow-lg p-4 md:p-6">
             <div className="flex items-center gap-2 mb-3 md:mb-4">
               <Calculator className="w-4 h-4 md:w-5 md:h-5 text-[#225F91]" />
-              <h2 className="text-base md:text-lg font-semibold text-gray-900">Order Summary</h2>
+              <h3 className="text-base md:text-lg font-semibold text-gray-900">Order Summary</h3>
             </div>
 
             <div className="space-y-2 md:space-y-3">
@@ -458,7 +458,7 @@ const handleCompleteSale = async () => {
               <div className="pt-2 md:pt-3 border-t-2 border-gray-200">
                 <div className="flex justify-between items-center">
                   <span className="text-base md:text-lg font-semibold text-gray-900">Total</span>
-                  <span className="text-2xl md:text-3xl font-bold text-[#1ABA7F]">
+                  <span className="text-xl md:text-3xl font-bold text-[#1ABA7F]">
                     ₦{total.toLocaleString()}
                   </span>
                 </div>
@@ -470,7 +470,7 @@ const handleCompleteSale = async () => {
           <div className="bg-white border border-gray-200 rounded-lg md:rounded-2xl shadow-sm p-4 md:p-6">
             <div className="flex items-center gap-2 mb-3 md:mb-4">
               <DollarSign className="w-4 h-4 md:w-5 md:h-5 text-[#225F91]" />
-              <h2 className="text-base md:text-lg font-semibold text-gray-900">Payment Method</h2>
+              <h3 className="text-base md:text-lg font-semibold text-gray-900">Payment Method</h3>
             </div>
 
             <div className="grid grid-cols-2 gap-2 md:gap-3">

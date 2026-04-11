@@ -13,30 +13,31 @@ export default function Topbar({ onSidebarToggle, isMobile }) {
     router.push('/pharmacy-login');
   };
 
+  // On mobile, render only the sidebar toggle
+if (isMobile) {
   return (
-    <header className="w-full flex items-center justify-between px-6 py-4 bg-white/80 backdrop-blur-sm border-b border-gray-200/60 shadow-sm sticky top-0 z-30">
+    <div className="sticky top-0 z-30 p-3 pointer-events-none">
+      <button
+        onClick={onSidebarToggle}
+        className="p-2 bg-white/80 backdrop-blur-sm shadow-sm rounded-lg hover:bg-white transition-colors pointer-events-auto"
+        aria-label="Toggle menu"
+      >
+        <Menu className="w-5 h-5 text-gray-600" />
+      </button>
+    </div>
+  );
+}
+
+  // Desktop: full topbar
+  return (
+    <header className="w-full flex items-center justify-between px-6 py-3 bg-white/80 backdrop-blur-sm border-b border-gray-200/60 shadow-sm sticky top-0 z-30">
       {/* Left side */}
       <div className="flex items-center gap-4">
-        {/* Mobile menu button */}
-        {isMobile && (
-          <button
-            onClick={onSidebarToggle}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors lg:hidden"
-            aria-label="Toggle menu"
-          >
-            <Menu className="w-5 h-5 text-gray-600" />
-          </button>
-        )}
-        
-        {/* Page title - optional, you can customize per page */}
-        <h1 className="text-xl font-bold text-gray-800 hidden sm:block">
-          Pharmacy Portal
-        </h1>
+        <h1 className="text-xl font-bold text-gray-800">Pharmacy Portal</h1>
       </div>
 
       {/* Right side */}
       <div className="flex items-center gap-3">
-
         {/* Notifications */}
         <div className="relative">
           <button
@@ -50,7 +51,6 @@ export default function Topbar({ onSidebarToggle, isMobile }) {
             </span>
           </button>
 
-          {/* Notifications dropdown */}
           {showNotifications && (
             <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
               <div className="p-4 border-b border-gray-200">
@@ -79,7 +79,6 @@ export default function Topbar({ onSidebarToggle, isMobile }) {
           )}
         </div>
 
-
         {/* Profile dropdown */}
         <div className="relative">
           <button
@@ -90,18 +89,17 @@ export default function Topbar({ onSidebarToggle, isMobile }) {
             <div className="w-8 h-8 bg-gradient-to-br from-[#1ABA7F] to-[#225F91] rounded-full flex items-center justify-center">
               <User className="w-4 h-4 text-white" />
             </div>
-            <div className="hidden sm:block text-left">
+            <div className="text-left">
               <p className="text-sm font-medium text-gray-900">Pharmacy User</p>
               <p className="text-xs text-gray-500">Pharmacist</p>
             </div>
             <ChevronDown className="w-4 h-4 text-gray-500" />
           </button>
 
-          {/* Profile dropdown menu */}
           {showProfileMenu && (
             <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
               <div className="p-2">
-                <button 
+                <button
                   onClick={() => router.push('/pharmacy/profile')}
                   className="flex items-center gap-2 w-full px-3 py-2 text-left hover:bg-gray-100 rounded-md transition-colors"
                 >
@@ -113,7 +111,7 @@ export default function Topbar({ onSidebarToggle, isMobile }) {
                   <span className="text-sm text-gray-700">Settings</span>
                 </button>
                 <hr className="my-2 border-gray-200" />
-                <button 
+                <button
                   onClick={handleLogout}
                   className="flex items-center gap-2 w-full px-3 py-2 text-left hover:bg-gray-100 rounded-md transition-colors text-red-600"
                 >
@@ -125,18 +123,11 @@ export default function Topbar({ onSidebarToggle, isMobile }) {
         </div>
       </div>
 
-      {/* Click outside handlers */}
       {showProfileMenu && (
-        <div
-          className="fixed inset-0 z-40"
-          onClick={() => setShowProfileMenu(false)}
-        />
+        <div className="fixed inset-0 z-40" onClick={() => setShowProfileMenu(false)} />
       )}
       {showNotifications && (
-        <div
-          className="fixed inset-0 z-40"
-          onClick={() => setShowNotifications(false)}
-        />
+        <div className="fixed inset-0 z-40" onClick={() => setShowNotifications(false)} />
       )}
     </header>
   );
