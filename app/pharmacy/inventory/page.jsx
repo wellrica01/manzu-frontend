@@ -7,6 +7,43 @@ import DataTableView from "@/components/DataTableView";
 import { pharmacyInventoryAPI } from '@/app/pharmacy/pharmacyApiClient';
 
 
+
+function StatCard({ icon: Icon, label, value, color, active, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`
+        w-full text-left bg-white border rounded-lg shadow-sm p-3 md:p-6 
+        transition-all hover:shadow-md
+        ${active ? "ring-2 ring-offset-1" : ""}
+      `}
+      style={{
+        borderColor: active ? color : "#e5e7eb",
+        ringColor: active ? color : undefined
+      }}
+    >
+      <div className="flex items-center gap-2 md:gap-4">
+        <div
+          className="p-2 md:p-3 rounded-lg flex-shrink-0"
+          style={{ background: `${color}20` }}
+        >
+          <Icon className="w-4 h-4 md:w-6 md:h-6" style={{ color }} />
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <div className="text-xs md:text-sm font-medium text-gray-600">
+            {label}
+          </div>
+          <div className="text-lg md:text-2xl font-bold text-gray-900 mt-0.5 md:mt-1">
+            {value}
+          </div>
+        </div>
+      </div>
+    </button>
+  );
+}
+
+
 export default function PharmacyInventoryPage() {
   const [inventory, setInventory] = useState([]);
   const [summary, setSummary] = useState({
@@ -199,23 +236,16 @@ export default function PharmacyInventoryPage() {
           </p>
         </div>
         <div className="flex gap-1.5 flex-shrink-0">
-          <button
-            className="p-1.5 rounded-full hover:bg-[#1ABA7F]/10 text-[#1ABA7F] transition-colors"
-            title="Edit inventory"
-            onClick={() => handleEditClick(item)}
-            aria-label={`Edit ${item.brandName}`}
-          >
-            <Edit className="w-3.5 h-3.5 md:w-4 md:h-4" />
-          </button>
-          <button
-            className="p-1.5 rounded-full hover:bg-red-100 text-red-600 transition-colors"
-            title="Delete inventory"
-            onClick={() => setDeleteId(item.medicationId)}
-            disabled={deleteLoading && deleteId === item.medicationId}
-            aria-label={`Delete ${item?.brandName}`}
-          >
-            <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
-          </button>
+          {item.isStocked && (
+            <button
+              className="p-1.5 rounded-full hover:bg-[#1ABA7F]/10 text-[#1ABA7F] transition-colors"
+              title="Edit inventory"
+              onClick={() => handleEditClick(item)}
+              aria-label={`Edit ${item.brandName}`}
+            >
+              <Edit className="w-3.5 h-3.5 md:w-4 md:h-4" />
+            </button>
+          )}
         </div>
       </div>
       
@@ -359,15 +389,6 @@ export default function PharmacyInventoryPage() {
             >
               <Edit className="w-4 h-4" />
             </button>
-            <button
-              className="p-1.5 rounded-md hover:bg-red-100 text-red-600 transition-colors"
-              title="Delete inventory"
-              onClick={() => setDeleteId(item.medicationId)}
-              disabled={deleteLoading && deleteId === item.medicationId}
-              aria-label={`Delete ${item?.brandName}`}
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
           </div>
         );
       },
@@ -477,70 +498,79 @@ export default function PharmacyInventoryPage() {
         </Dialog>
       )}
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
-        <div className="bg-white border-2 border-purple-200 rounded-lg p-3 md:p-5 shadow-sm">
-          <div className="flex items-center gap-2 md:gap-3">
-            <div className="p-2 md:p-3 bg-purple-100 rounded-lg">
-              <Package className="w-4 h-4 md:w-6 md:h-6 text-purple-600" />
-            </div>
-            <div>
-              <div className="text-xs md:text-sm text-gray-600 font-medium">In Stock</div>
-              <div className="text-xl md:text-3xl font-bold text-purple-600">
-                {summary.stockedCount || 0}
-              </div>
-              <div className="text-xs text-gray-500">
-                medications <br />
-                <span className="text-[11px] text-gray-400">
-                  Available to stock: {summary.notStockedCount || 0}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
+
+<div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
+  <StatCard
+    icon={CheckCircle}
+    label="In Stock"
+    value={summary.stockedCount || 0}
+    color="#1ABA7F"
+    active={stockFilter === "stocked"}
+    onClick={() => {
+      setStockFilter("stocked");
+      setPagination(prev => ({ ...prev, page: 1 }));
+    }}
+  />
+
+  <StatCard
+    icon={AlertCircle}
+    label="Low Stock"
+    value={summary.lowStockCount || 0}
+    color="#F59E0B"
+    active={stockFilter === "low"}
+    onClick={() => {
+      setStockFilter("low");
+      setPagination(prev => ({ ...prev, page: 1 }));
+    }}
+  />
+
+  <StatCard
+    icon={AlertTriangle}
+    label="Out of Stock"
+    value={summary.outOfStockCount || 0}
+    color="#EF4444"
+    active={stockFilter === "out"}
+    onClick={() => {
+      setStockFilter("out");
+      setPagination(prev => ({ ...prev, page: 1 }));
+    }}
+  />
+
+  <StatCard
+    icon={Package}
+    label="Not Stocked"
+    value={summary.notStockedCount || 0}
+    color="#6B7280"
+    active={stockFilter === "not_stocked"}
+    onClick={() => {
+      setStockFilter("not_stocked");
+      setPagination(prev => ({ ...prev, page: 1 }));
+    }}
+  />
+</div>
 
 
-        <div className="bg-white border-2 border-yellow-200 rounded-lg md:rounded-lg p-3 md:p-5 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center gap-2 md:gap-3">
-            <div className="p-2 md:p-3 bg-yellow-100 rounded-lg flex-shrink-0">
-              <AlertCircle className="w-4 h-4 md:w-6 md:h-6 text-yellow-600" />
-            </div>
-            <div className="min-w-0">
-              <div className="text-xs md:text-sm text-gray-600 font-medium">Low Stock</div>
-              <div className="text-xl md:text-3xl font-bold text-yellow-600">{summary.lowStockCount}</div>
-              <div className="text-xs text-gray-500 mt-0.5">&lt; 10 units</div>
-            </div>
-          </div>
-        </div>
+<StatCard
+  icon={DollarSign}
+  label="Stock Value"
+  value={`₦${summary.totalValue?.toLocaleString() || 0}`}
+  color="#10B981"
+  active={false} // 👈 not a filter
+  onClick={() => {}} // 👈 no action
+/>
 
-        <div className="bg-white border-2 border-red-200 rounded-lg md:rounded-lg p-3 md:p-5 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center gap-2 md:gap-3">
-            <div className="p-2 md:p-3 bg-red-100 rounded-lg flex-shrink-0">
-              <AlertTriangle className="w-4 h-4 md:w-6 md:h-6 text-red-600" />
-            </div>
-            <div className="min-w-0">
-              <div className="text-xs md:text-sm text-gray-600 font-medium">Out of Stock</div>
-              <div className="text-xl md:text-3xl font-bold text-red-600">{summary.outOfStockCount}</div>
-              <div className="text-xs text-gray-500 mt-0.5">Need restock</div>
-            </div>
-          </div>
-        </div>
 
-        <div className="bg-white border-2 border-green-200 rounded-lg md:rounded-lg p-3 md:p-5 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center gap-2 md:gap-3">
-            <div className="p-2 md:p-3 bg-green-100 rounded-lg flex-shrink-0">
-              <DollarSign className="w-4 h-4 md:w-6 md:h-6 text-green-600" />
-            </div>
-            <div className="min-w-0">
-              <div className="text-xs md:text-sm text-gray-600 font-medium">Total Value</div>
-              <div className="text-lg md:text-2xl font-bold text-green-600">
-                ₦{summary.totalValue.toLocaleString()}
-              </div>
-              <div className="text-xs text-gray-500 mt-0.5">Inventory worth</div>
-            </div>
-          </div>
-        </div>
-      </div>
+{stockFilter !== "stocked" && (
+  <button
+    onClick={() => {
+      setStockFilter("stocked");
+      setPagination(prev => ({ ...prev, page: 1 }));
+    }}
+    className="text-sm text-blue-600 mt-2"
+  >
+    Clear filter
+  </button>
+)}
 
       {/* Expiring Soon Alert */}
       {summary.expiringSoonCount > 0 && (
@@ -567,10 +597,9 @@ export default function PharmacyInventoryPage() {
         </div>
       )}
 
+
       {/* Main Data Table View */}
       <DataTableView
-        title="Inventory Management"
-        description="Manage your pharmacy's medication inventory"
         data={inventory}
         loading={loading}
         error={error}
@@ -582,7 +611,6 @@ export default function PharmacyInventoryPage() {
           setSearch(value);
         }}
         searchPlaceholder="Search by medication name..."
-        filters={filters}
         columns={columns}
         mobileCardRender={renderMobileCard}
         emptyState={{

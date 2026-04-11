@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Loader2,
   AlertTriangle,
@@ -20,9 +21,9 @@ import {
   ArrowDownRight,
   Box,
   Truck,
+  ArrowRight,
 } from "lucide-react";
 import PayoutSummaryWidget from './components/PayoutSummaryWidget';
-
 
 const brandBlue = "#225F91";
 const brandGreen = "#1ABA7F";
@@ -30,20 +31,24 @@ const brandOrange = "#FF6B35";
 const brandPurple = "#7C3AED";
 const brandRed = "#EF4444";
 
-function Card({ children, className }) {
+function Card({ children, className, onClick }) {
   return (
-    <div className={`bg-white rounded-lg shadow ${className || ''}`}>
+    <div 
+      className={`bg-white rounded-lg shadow ${onClick ? 'cursor-pointer hover:shadow-lg transition-all duration-200' : ''} ${className || ''}`}
+      onClick={onClick}
+    >
       {children}
     </div>
   );
 }
 
-function MetricCard({ icon: Icon, label, value, color, trend, trendValue, subtitle, prefix = "" }) {
+// Clickable Metric Card for navigation
+function MetricCard({ icon: Icon, label, value, color, trend, trendValue, subtitle, prefix = "", onClick, href }) {
   const TrendIcon = trend === 'up' ? TrendingUp : trend === 'down' ? TrendingDown : Minus;
   const trendColor = trend === 'up' ? '#10B981' : trend === 'down' ? '#EF4444' : '#6B7280';
 
   return (
-    <Card className="p-4 md:p-6 rounded-lg md:rounded-2xl shadow-lg bg-gradient-to-br from-white to-gray-50 border border-gray-200/50 hover:shadow-xl transition-all duration-300 group">
+    <Card className="p-4 md:p-6 rounded-lg md:rounded-2xl shadow-lg bg-gradient-to-br from-white to-gray-50 border border-gray-200/50 hover:shadow-xl transition-all duration-300 group" onClick={onClick}>
       <div className="flex items-start justify-between mb-3 md:mb-4">
         <div className={`p-2 md:p-3 rounded-lg md:rounded-2xl group-hover:scale-110 transition-transform duration-300`} 
              style={{ background: `linear-gradient(135deg, ${color}15, ${color}25)` }}>
@@ -67,9 +72,10 @@ function MetricCard({ icon: Icon, label, value, color, trend, trendValue, subtit
   );
 }
 
+// Clickable Alert Card for navigation
 function AlertCard({ icon: Icon, title, count, color, description, onClick }) {
   return (
-    <Card className={`p-3 md:p-4 rounded-lg md:rounded-lg border-l-4 bg-gradient-to-r from-white to-gray-50 cursor-pointer hover:shadow-md transition-all`} 
+    <Card className={`p-3 md:p-4 rounded-lg md:rounded-lg border-l-4 bg-gradient-to-r from-white to-gray-50 hover:shadow-md transition-all`} 
           style={{ borderLeftColor: color }}
           onClick={onClick}>
       <div className="flex items-center space-x-2 md:space-x-3">
@@ -83,6 +89,7 @@ function AlertCard({ icon: Icon, title, count, color, description, onClick }) {
           </div>
           <p className="text-xs md:text-sm text-gray-600 truncate">{description}</p>
         </div>
+        <ArrowRight className="w-4 h-4 text-gray-400" />
       </div>
     </Card>
   );
@@ -144,6 +151,7 @@ function LowStockCard({ medications }) {
 }
 
 export default function PharmacyDashboard() {
+  const router = useRouter();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -210,7 +218,14 @@ export default function PharmacyDashboard() {
           <h1 className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-[#225F91] to-[#1ABA7F] bg-clip-text text-transparent">
             Dashboard
           </h1>
-          <p className="text-sm md:text-base text-gray-600 mt-1 md:mt-2">Monitor your pharmacy's performance</p>
+          <p className="text-sm md:text-base text-gray-600 mt-1 md:mt-2">
+            Monitor your pharmacy's performance
+            {data.pendingOrders > 0 && (
+              <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                {data.pendingOrders} pending orders
+              </span>
+            )}
+          </p>
         </div>
         <div className="text-right hidden sm:block">
           <div className="text-xs md:text-sm text-gray-500">Last updated</div>
@@ -218,61 +233,91 @@ export default function PharmacyDashboard() {
         </div>
       </div>
 
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
+
+      {/* Key Metrics - Updated with status badges */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6">
         <MetricCard 
-          icon={CreditCard} 
-          label="POS Sales Today" 
+          icon={ShoppingCart} 
+          label="Walk-in Sales" 
           value={data.posSalesToday || 0}
           color={brandPurple}
           trend={data.posSalesTrend > 0 ? 'up' : data.posSalesTrend < 0 ? 'down' : null}
           trendValue={Math.abs(data.posSalesTrend || 0)}
-          subtitle="Walk-in customers"
+          subtitle="Click to open POS"
+          onClick={() => router.push('/pharmacy/pos/new-sale')}
         />
-        <MetricCard 
-          icon={DollarSign} 
-          label="Online Revenue" 
-          value={(data.revenueToday || 0).toLocaleString()}
-          color={brandGreen}
-          trend={data.revenueTrend > 0 ? 'up' : data.revenueTrend < 0 ? 'down' : null}
-          trendValue={Math.abs(data.revenueTrend || 0)}
-          prefix="₦"
-          subtitle="From online orders"
-        />
-        <MetricCard 
-          icon={DollarSign} 
-          label="POS Revenue" 
-          value={(data.posRevenueToday || 0).toLocaleString()}
-          color={brandOrange}
-          trend={data.posRevenueTrend > 0 ? 'up' : data.posRevenueTrend < 0 ? 'down' : null}
-          trendValue={Math.abs(data.posRevenueTrend || 0)}
-          prefix="₦"
-          subtitle="From walk-in sales"
-        />
-      </div>
-
-      {/* Combined Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6">
-        <Card className="p-4 md:p-6 rounded-lg md:rounded-2xl shadow-lg bg-linear-to-br from-blue-50 to-green-50 border border-blue-200/50">
-          <div className="flex items-center justify-between mb-3 md:mb-4">
-            <h3 className="text-base md:text-lg font-semibold text-gray-800">Total Today</h3>
-            <Activity className="w-5 h-5 md:w-6 md:h-6 text-blue-600" />
-          </div>
-          <div className="space-y-3 md:space-y-4">
-            <div>
-              <div className="text-xs md:text-sm text-gray-600">Combined Revenue</div>
-              <div className="text-2xl md:text-3xl font-bold text-blue-600">₦{combinedRevenue.toLocaleString()}</div>
+        
+        {/* Updated Online Orders card with status badges */}
+        <Card 
+          className="p-4 md:p-6 rounded-lg md:rounded-2xl shadow-lg bg-gradient-to-br from-white to-gray-50 border border-gray-200/50 hover:shadow-xl transition-all duration-300 group cursor-pointer" 
+          onClick={() => router.push('/pharmacy/orders')}
+        >
+          <div className="flex items-start justify-between mb-3 md:mb-4">
+            <div className={`p-2 md:p-3 rounded-lg md:rounded-2xl group-hover:scale-110 transition-transform duration-300`} 
+                style={{ background: `linear-gradient(135deg, ${brandGreen}15, ${brandGreen}25)` }}>
+              <Package className="w-5 h-5 md:w-6 md:h-6" style={{ color: brandGreen }} />
             </div>
+            {data.revenueTrend && (
+              <div className="flex items-center space-x-1 text-xs md:text-sm">
+                {data.revenueTrend > 0 ? 
+                  <TrendingUp className="w-3 h-3 md:w-4 md:h-4 text-green-500" /> : 
+                  <TrendingDown className="w-3 h-3 md:w-4 md:h-4 text-red-500" />
+                }
+                <span className={data.revenueTrend > 0 ? "text-green-500" : "text-red-500"} className="font-medium">
+                  {Math.abs(data.revenueTrend)}%
+                </span>
+              </div>
+            )}
+          </div>
+          
+          <div className="space-y-2">
             <div>
-              <div className="text-xs md:text-sm text-gray-600">Combined Orders/Sales</div>
-              <div className="text-2xl md:text-3xl font-bold text-green-600">{combinedOrders}</div>
+              <div className="text-2xl md:text-3xl font-bold text-gray-900">{data.ordersToday || 0}</div>
+              <div className="text-xs md:text-sm font-medium text-gray-600">Online Orders Today</div>
+            </div>
+            
+            {/* Status badges */}
+            <div className="flex gap-3 pt-2 border-t border-gray-100">
+              <div className="flex-1">
+                <div className="flex items-center gap-1">
+                  <Clock className="w-3 h-3 text-orange-500" />
+                  <span className="text-xs text-gray-500">Pending</span>
+                </div>
+                <div className="text-lg md:text-xl font-bold text-orange-600">{data.pendingOrders || 0}</div>
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-1">
+                  <Package className="w-3 h-3 text-blue-500" />
+                  <span className="text-xs text-gray-500">Processing</span>
+                </div>
+                <div className="text-lg md:text-xl font-bold text-blue-600">{data.processingOrders || 0}</div>
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-1">
+                  <CheckCircle className="w-3 h-3 text-green-500" />
+                  <span className="text-xs text-gray-500">Completed</span>
+                </div>
+                <div className="text-lg md:text-xl font-bold text-green-600">{data.completedOrders || 0}</div>
+              </div>
             </div>
           </div>
         </Card>
+      </div>
 
-          <PayoutSummaryWidget />
+      {/* Revenue Summary - Combined view */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6">
+        <Card className="p-4 md:p-6 rounded-lg md:rounded-2xl shadow-lg bg-gradient-to-br from-blue-50 to-green-50 border border-blue-200/50">
+          <div className="flex items-center justify-between mb-3 md:mb-4">
+            <h3 className="text-base md:text-lg font-semibold text-gray-800">Total Revenue Today</h3>
+            <DollarSign className="w-5 h-5 md:w-6 md:h-6 text-blue-600" />
+          </div>
+          <div className="text-2xl md:text-3xl font-bold text-blue-600">₦{combinedRevenue.toLocaleString()}</div>
+          <div className="text-xs text-gray-500 mt-2">From {combinedOrders} total transactions</div>
+        </Card>
 
-        <Card className="p-4 md:p-6 rounded-lg md:rounded-2xl shadow-lg bg-linear-to-br from-purple-50 to-pink-50 border border-purple-200/50">
+        <PayoutSummaryWidget />
+
+        <Card className="p-4 md:p-6 rounded-lg md:rounded-2xl shadow-lg bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200/50">
           <div className="flex items-center justify-between mb-3 md:mb-4">
             <h3 className="text-base md:text-lg font-semibold text-gray-800">Inventory Status</h3>
             <Package className="w-5 h-5 md:w-6 md:h-6 text-purple-600" />
@@ -290,33 +335,6 @@ export default function PharmacyDashboard() {
         </Card>
       </div>
 
-      {/* Order Status Alerts */}
-      <div>
-        <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-3 md:mb-4">Order Processing</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
-          <AlertCard 
-            icon={Clock}
-            title="Pending Orders"
-            count={data.pendingOrders || 0}
-            color={brandOrange}
-            description="New orders awaiting processing"
-          />
-          <AlertCard 
-            icon={Package}
-            title="Processing"
-            count={data.processingOrders || 0}
-            color={brandBlue}
-            description="Orders currently being prepared"
-          />
-          <AlertCard 
-            icon={CheckCircle}
-            title="Ready for Pickup"
-            count={data.readyOrders || 0}
-            color={brandGreen}
-            description="Orders ready for customer pickup"
-          />
-        </div>
-      </div>
 
       {/* Top Selling & Low Stock */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-6">
@@ -324,165 +342,162 @@ export default function PharmacyDashboard() {
         <LowStockCard medications={data.lowStockMeds || []} />
       </div>
 
-{/* Recent Activity */}
-<Card className="p-3 md:p-4 rounded-lg md:rounded-2xl shadow-lg bg-white border border-gray-200/50">
-  {/* Header */}
-  <div className="flex items-center justify-between mb-4 md:mb-6">
-    <h2 className="text-xl md:text-2xl font-bold text-gray-800">Recent Activity</h2>
-    <div className="flex items-center space-x-2 text-xs md:text-sm text-gray-500">
-      <Activity className="w-3 h-3 md:w-4 md:h-4" />
-      <span className="hidden sm:inline">Last {(data.recentActivity || []).length} transactions</span>
-      <span className="sm:hidden">{(data.recentActivity || []).length}</span>
-    </div>
-  </div>
-
-  {/* Responsive container */}
-  <div className="hidden md:block overflow-x-auto">
-    {/* Desktop Table */}
-    <table className="min-w-full">
-      <thead>
-        <tr className="border-b-2 border-gray-100">
-          <th className="text-left py-4 px-3 font-semibold text-gray-600">Type</th>
-          <th className="text-left py-4 px-3 font-semibold text-gray-600">ID</th>
-          <th className="text-left py-4 px-3 font-semibold text-gray-600">Customer</th>
-          <th className="text-left py-4 px-3 font-semibold text-gray-600">Amount</th>
-          <th className="text-left py-4 px-3 font-semibold text-gray-600">Status</th>
-          <th className="text-left py-4 px-3 font-semibold text-gray-600">Time</th>
-        </tr>
-      </thead>
-      <tbody className="divide-y divide-gray-50">
-        {Array.isArray(data.recentActivity) && data.recentActivity.length > 0 ? (
-          data.recentActivity.map((activity, index) => (
-            <tr key={`${activity.type}-${activity.id}-${index}`} className="hover:bg-gray-50/50 transition-colors">
-              <td className="py-4 px-3">
-                <span
-                  className={`px-2 py-1 rounded text-xs font-semibold ${
-                    activity.type === "ORDER"
-                      ? "bg-blue-100 text-blue-700"
-                      : "bg-purple-100 text-purple-700"
-                  }`}
-                >
-                  {activity.type}
-                </span>
-              </td>
-              <td className="py-4 px-3">
-                <span className="font-mono text-sm font-medium text-gray-900">
-                  #{activity.id}
-                </span>
-              </td>
-              <td className="py-4 px-3 text-gray-700">{activity.name || "Walk-in"}</td>
-              <td className="py-4 px-3 font-semibold text-green-600">
-                ₦{activity.amount?.toLocaleString?.() ?? activity.amount}
-              </td>
-              <td className="py-4 px-3">
-                <span
-                  className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                    activity.status === "CONFIRMED" || activity.status === "PAID"
-                      ? "bg-green-100 text-green-800"
-                      : activity.status === "PROCESSING"
-                      ? "bg-blue-100 text-blue-800"
-                      : activity.status === "READY_FOR_PICKUP"
-                      ? "bg-purple-100 text-purple-800"
-                      : activity.status === "CASH" || activity.status === "CARD"
-                      ? "bg-green-100 text-green-800"
-                      : "bg-gray-100 text-gray-800"
-                  }`}
-                >
-                  {activity.status}
-                </span>
-              </td>
-              <td className="py-4 px-3 text-sm text-gray-500">
-                {new Date(activity.time).toLocaleString()}
-              </td>
-            </tr>
-          ))
-        ) : (
-          <tr>
-            <td colSpan={6} className="text-center py-12">
-              <div className="flex flex-col items-center space-y-2">
-                <Activity className="w-12 h-12 text-gray-300" />
-                <span className="text-lg font-medium text-gray-400">
-                  No recent activity
-                </span>
-              </div>
-            </td>
-          </tr>
-        )}
-      </tbody>
-    </table>
-  </div>
-
-  {/* 📱 Mobile Card View */}
-  <div className="block md:hidden space-y-3">
-    {Array.isArray(data.recentActivity) && data.recentActivity.length > 0 ? (
-      data.recentActivity.map((activity, index) => (
-        <div
-          key={`${activity.type}-${activity.id}-${index}`}
-          className="border border-gray-100 rounded-lg p-3 shadow-sm bg-white"
-        >
-          <div className="flex justify-between items-start mb-2">
-            <div className="flex items-center gap-2">
-              <span
-                className={`px-2 py-0.5 rounded text-xs font-semibold ${
-                  activity.type === "ORDER"
-                    ? "bg-blue-100 text-blue-700"
-                    : "bg-purple-100 text-purple-700"
-                }`}
-              >
-                {activity.type}
-              </span>
-              <span className="font-mono text-xs text-gray-500">
-                #{activity.id}
-              </span>
-            </div>
-            <span
-              className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                activity.status === "CONFIRMED" || activity.status === "PAID"
-                  ? "bg-green-100 text-green-800"
-                  : activity.status === "PROCESSING"
-                  ? "bg-blue-100 text-blue-800"
-                  : activity.status === "READY_FOR_PICKUP"
-                  ? "bg-purple-100 text-purple-800"
-                  : activity.status === "CASH" || activity.status === "CARD"
-                  ? "bg-green-100 text-green-800"
-                  : "bg-gray-100 text-gray-800"
-              }`}
-            >
-              {activity.status}
-            </span>
-          </div>
-
-          <div className="flex justify-between items-center">
-            <div className="flex-1 min-w-0 pr-2">
-              <div className="text-sm text-gray-700 font-medium truncate">
-                {activity.name || "Walk-in"}
-              </div>
-              <div className="text-xs text-gray-500">
-                {new Date(activity.time).toLocaleString('en-US', { 
-                  month: 'short', 
-                  day: 'numeric', 
-                  hour: '2-digit', 
-                  minute: '2-digit' 
-                })}
-              </div>
-            </div>
-            <div className="text-base font-bold text-green-600">
-              ₦{activity.amount?.toLocaleString?.() ?? activity.amount}
-            </div>
+      {/* Recent Activity */}
+      <Card className="p-3 md:p-4 rounded-lg md:rounded-2xl shadow-lg bg-white border border-gray-200/50">
+        <div className="flex items-center justify-between mb-4 md:mb-6">
+          <h2 className="text-xl md:text-2xl font-bold text-gray-800">Recent Activity</h2>
+          <div className="flex items-center space-x-2 text-xs md:text-sm text-gray-500">
+            <Activity className="w-3 h-3 md:w-4 md:h-4" />
+            <span className="hidden sm:inline">Last {(data.recentActivity || []).length} transactions</span>
+            <span className="sm:hidden">{(data.recentActivity || []).length}</span>
           </div>
         </div>
-      ))
-    ) : (
-      <div className="flex flex-col items-center space-y-2 py-8">
-        <Activity className="w-10 h-10 text-gray-300" />
-        <span className="text-base font-medium text-gray-400">
-          No recent activity
-        </span>
-      </div>
-    )}
-  </div>
-</Card>
 
+        {/* Desktop Table */}
+        <div className="hidden md:block overflow-x-auto">
+          <table className="min-w-full">
+            <thead>
+              <tr className="border-b-2 border-gray-100">
+                <th className="text-left py-4 px-3 font-semibold text-gray-600">Type</th>
+                <th className="text-left py-4 px-3 font-semibold text-gray-600">ID</th>
+                <th className="text-left py-4 px-3 font-semibold text-gray-600">Customer</th>
+                <th className="text-left py-4 px-3 font-semibold text-gray-600">Amount</th>
+                <th className="text-left py-4 px-3 font-semibold text-gray-600">Status</th>
+                <th className="text-left py-4 px-3 font-semibold text-gray-600">Time</th>
+               </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {Array.isArray(data.recentActivity) && data.recentActivity.length > 0 ? (
+                data.recentActivity.map((activity, index) => (
+                  <tr key={`${activity.type}-${activity.id}-${index}`} className="hover:bg-gray-50/50 transition-colors">
+                    <td className="py-4 px-3">
+                      <span
+                        className={`px-2 py-1 rounded text-xs font-semibold ${
+                          activity.type === "ORDER"
+                            ? "bg-blue-100 text-blue-700"
+                            : "bg-purple-100 text-purple-700"
+                        }`}
+                      >
+                        {activity.type}
+                      </span>
+                     </td>
+                    <td className="py-4 px-3">
+                      <span className="font-mono text-sm font-medium text-gray-900">
+                        #{activity.id}
+                      </span>
+                     </td>
+                    <td className="py-4 px-3 text-gray-700">{activity.name || "Walk-in"} </td>
+                    <td className="py-4 px-3 font-semibold text-green-600">
+                      ₦{activity.amount?.toLocaleString?.() ?? activity.amount}
+                     </td>
+                    <td className="py-4 px-3">
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                          activity.status === "CONFIRMED" || activity.status === "PAID"
+                            ? "bg-green-100 text-green-800"
+                            : activity.status === "PROCESSING"
+                            ? "bg-blue-100 text-blue-800"
+                            : activity.status === "READY_FOR_PICKUP"
+                            ? "bg-purple-100 text-purple-800"
+                            : activity.status === "CASH" || activity.status === "CARD"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-gray-100 text-gray-800"
+                        }`}
+                      >
+                        {activity.status}
+                      </span>
+                     </td>
+                    <td className="py-4 px-3 text-sm text-gray-500">
+                      {new Date(activity.time).toLocaleString()}
+                     </td>
+                   </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={6} className="text-center py-12">
+                    <div className="flex flex-col items-center space-y-2">
+                      <Activity className="w-12 h-12 text-gray-300" />
+                      <span className="text-lg font-medium text-gray-400">
+                        No recent activity
+                      </span>
+                    </div>
+                   </td>
+                 </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Mobile Card View */}
+        <div className="block md:hidden space-y-3">
+          {Array.isArray(data.recentActivity) && data.recentActivity.length > 0 ? (
+            data.recentActivity.map((activity, index) => (
+              <div
+                key={`${activity.type}-${activity.id}-${index}`}
+                className="border border-gray-100 rounded-lg p-3 shadow-sm bg-white"
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`px-2 py-0.5 rounded text-xs font-semibold ${
+                        activity.type === "ORDER"
+                          ? "bg-blue-100 text-blue-700"
+                          : "bg-purple-100 text-purple-700"
+                      }`}
+                    >
+                      {activity.type}
+                    </span>
+                    <span className="font-mono text-xs text-gray-500">
+                      #{activity.id}
+                    </span>
+                  </div>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
+                      activity.status === "CONFIRMED" || activity.status === "PAID"
+                        ? "bg-green-100 text-green-800"
+                        : activity.status === "PROCESSING"
+                        ? "bg-blue-100 text-blue-800"
+                        : activity.status === "READY_FOR_PICKUP"
+                        ? "bg-purple-100 text-purple-800"
+                        : activity.status === "CASH" || activity.status === "CARD"
+                        ? "bg-green-100 text-green-800"
+                        : "bg-gray-100 text-gray-800"
+                    }`}
+                  >
+                    {activity.status}
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <div className="flex-1 min-w-0 pr-2">
+                    <div className="text-sm text-gray-700 font-medium truncate">
+                      {activity.name || "Walk-in"}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {new Date(activity.time).toLocaleString('en-US', { 
+                        month: 'short', 
+                        day: 'numeric', 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                      })}
+                    </div>
+                  </div>
+                  <div className="text-base font-bold text-green-600">
+                    ₦{activity.amount?.toLocaleString?.() ?? activity.amount}
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="flex flex-col items-center space-y-2 py-8">
+              <Activity className="w-10 h-10 text-gray-300" />
+              <span className="text-base font-medium text-gray-400">
+                No recent activity
+              </span>
+            </div>
+          )}
+        </div>
+      </Card>
     </div>
   );
 }

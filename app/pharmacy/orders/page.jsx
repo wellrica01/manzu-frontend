@@ -522,52 +522,55 @@ export default function EnhancedOrdersPage() {
     setPagination((prev) => ({ ...prev, page: 1 }));
   };
 
-  const getStatusBadge = (status) => {
-    let colorClass = '';
-    let Icon = Clock;
-    
-    switch (status.toLowerCase()) {
-      case 'delivered':
-        colorClass = 'bg-green-100 text-green-800 border-green-300';
-        Icon = CheckCircle;
-        break;
-      case 'ready_for_pickup':
-        colorClass = 'bg-purple-100 text-purple-800 border-purple-300';
-        Icon = CheckSquare;
-        break;
-      case 'shipped':
-        colorClass = 'bg-blue-100 text-blue-800 border-blue-300';
-        Icon = Truck;
-        break;
-      case 'processing':
-        colorClass = 'bg-cyan-100 text-cyan-800 border-cyan-300';
-        Icon = Package;
-        break;
-      case 'confirmed':
-      case 'pending':
-        colorClass = 'bg-yellow-100 text-yellow-800 border-yellow-300';
-        Icon = Clock;
-        break;
-      case 'cancelled':
-        colorClass = 'bg-red-100 text-red-800 border-red-300';
-        Icon = XCircle;
-        break;
-      case 'completed':
-        colorClass = 'bg-green-100 text-green-800 border-green-300';
-        Icon = CheckCircle;
-        break;
-      default:
-        colorClass = 'bg-gray-100 text-gray-800 border-gray-300';
-    }
-    
-    return (
-      <span className={`inline-flex items-center gap-1 md:gap-1.5 px-2 md:px-3 py-0.5 md:py-1 rounded-full text-xs font-semibold border ${colorClass}`}>
-        <Icon className="w-3 h-3 md:w-3.5 md:h-3.5" />
-        <span className="hidden sm:inline">{capitalizeWords(status)}</span>
-        <span className="sm:hidden">{capitalizeWords(status).split(' ')[0]}</span>
-      </span>
-    );
-  };
+const getStatusBadge = (status) => {
+  let colorClass = '';
+  let Icon = Clock;
+  
+  // Map CONFIRMED to show as PENDING
+  const displayStatus = status === 'CONFIRMED' ? 'PENDING' : status;
+  
+  switch (displayStatus.toLowerCase()) {
+    case 'delivered':
+      colorClass = 'bg-green-100 text-green-800 border-green-300';
+      Icon = CheckCircle;
+      break;
+    case 'ready_for_pickup':
+      colorClass = 'bg-purple-100 text-purple-800 border-purple-300';
+      Icon = CheckSquare;
+      break;
+    case 'shipped':
+      colorClass = 'bg-blue-100 text-blue-800 border-blue-300';
+      Icon = Truck;
+      break;
+    case 'processing':
+      colorClass = 'bg-cyan-100 text-cyan-800 border-cyan-300';
+      Icon = Package;
+      break;
+    case 'pending':
+    case 'confirmed':
+      colorClass = 'bg-yellow-100 text-yellow-800 border-yellow-300';
+      Icon = Clock;
+      break;
+    case 'cancelled':
+      colorClass = 'bg-red-100 text-red-800 border-red-300';
+      Icon = XCircle;
+      break;
+    case 'completed':
+      colorClass = 'bg-green-100 text-green-800 border-green-300';
+      Icon = CheckCircle;
+      break;
+    default:
+      colorClass = 'bg-gray-100 text-gray-800 border-gray-300';
+  }
+  
+  return (
+    <span className={`inline-flex items-center gap-1 md:gap-1.5 px-2 md:px-3 py-0.5 md:py-1 rounded-full text-xs font-semibold border ${colorClass}`}>
+      <Icon className="w-3 h-3 md:w-3.5 md:h-3.5" />
+      <span className="hidden sm:inline">{capitalizeWords(displayStatus)}</span>
+      <span className="sm:hidden">{capitalizeWords(displayStatus).split(' ')[0]}</span>
+    </span>
+  );
+};
 
   const getDeliveryBadge = (method) => {
     const isPickup = method?.toLowerCase() === 'pickup';
@@ -997,8 +1000,6 @@ export default function EnhancedOrdersPage() {
 
       {/* Main Data Table View */}
       <DataTableView
-        title="All Orders"
-        description={`Showing ${orders.length} order${orders.length !== 1 ? 's' : ''}${selectedOrderIds.length > 0 ? ` · ${selectedOrderIds.length} selected` : ''}`}
         data={orders}
         loading={loading}
         error={error}

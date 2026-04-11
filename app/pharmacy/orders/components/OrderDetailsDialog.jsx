@@ -115,7 +115,8 @@ function ConfirmationDialog({ open, onClose, onConfirm, title, message, status, 
 }
 
 export default function OrderDetailsDialog({ open, onClose, order, onStatusUpdate }) {
-  const [status, setStatus] = useState(order?.status || '');
+  // Initialize status to empty string for CONFIRMED orders, otherwise use current status
+  const [status, setStatus] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   const [showPrescription, setShowPrescription] = useState(false);
@@ -128,9 +129,16 @@ export default function OrderDetailsDialog({ open, onClose, order, onStatusUpdat
 
   useEffect(() => {
     if (order) {
-      setStatus(order.status);
+      // For CONFIRMED/PENDING orders, set status to empty string so placeholder shows
+      // For other statuses, set to the current status
+      if (order.status === 'CONFIRMED') {
+        setStatus('');
+      } else {
+        setStatus(order.status);
+      }
     }
   }, [order]);
+
 
   useEffect(() => {
     if (open) {
@@ -255,80 +263,89 @@ export default function OrderDetailsDialog({ open, onClose, order, onStatusUpdat
           {/* Scrollable Content */}
           <div className="overflow-y-auto px-4 py-4 flex-1 min-h-0 space-y-4">
             
-            {/* Status Section */}
-            <div className="bg-gradient-to-r from-blue-50 to-green-50 border-2 border-blue-200 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  {currentStatus && <currentStatus.icon className="w-5 h-5" style={{ color: currentStatus.color }} />}
+          {/* Status Section */}
+          <div className="bg-gradient-to-r from-blue-50 to-green-50 border-2 border-blue-200 rounded-lg p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                {/* Get the ORIGINAL status icon, not the selected one */}
+                {(() => {
+                  const originalStatus = allStatusOptions.find(opt => opt.value === order.status);
+                  return originalStatus && <originalStatus.icon className="w-5 h-5" style={{ color: originalStatus.color }} />;
+                })()}
+                <div>
+                  <h3 className="font-semibold text-sm text-gray-900">Current Status</h3>
+                  <p className="text-xs text-gray-600">Track order progress</p>
+                </div>
+              </div>
+              <span 
+                className="px-3 py-1 rounded-full text-xs font-bold text-white shadow-md"
+                style={{ backgroundColor: (() => {
+                  const originalStatus = allStatusOptions.find(opt => opt.value === order.status);
+                  return originalStatus?.color || '#F59E0B';
+                })() }}
+              >
+                {order.status === 'CONFIRMED' ? 'PENDING' : capitalizeWords(order.status)}
+              </span>
+            </div>
+
+            {/* Display cancellation reason if order is cancelled */}
+            {order.status === 'CANCELLED' && order.cancelReason && (
+              <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
                   <div>
-                    <h3 className="font-semibold text-sm text-gray-900">Current Status</h3>
-                    <p className="text-xs text-gray-600">Track order progress</p>
+                    <div className="text-xs font-semibold text-red-900 mb-0.5">Cancellation Reason</div>
+                    <div className="text-sm text-red-700">{order.cancelReason}</div>
                   </div>
                 </div>
-                <span 
-                  className="px-3 py-1 rounded-full text-xs font-bold text-white shadow-md"
-                  style={{ backgroundColor: currentStatus?.color || '#6B7280' }}
-                >
-                  {capitalizeWords(order.status)}
-                </span>
               </div>
+            )}
 
-              {/* Display cancellation reason if order is cancelled */}
-              {order.status === 'CANCELLED' && order.cancelReason && (
-                <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-                  <div className="flex items-start gap-2">
-                    <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <div className="text-xs font-semibold text-red-900 mb-0.5">Cancellation Reason</div>
-                      <div className="text-sm text-red-700">{order.cancelReason}</div>
-                    </div>
-                  </div>
+            {/* Status Update Form */}
+            <form onSubmit={handleUpdateStatus} className="space-y-3">
+              <div>
+                <label className="block mb-1.5 font-medium text-sm text-gray-700" htmlFor="order-status-select">
+                  Update Order Status
+                </label>
+                <select
+                  id="order-status-select"
+                  value={status}
+                  onChange={handleStatusChange}
+                  className="w-full border-2 border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#1ABA7F] focus:border-[#1ABA7F] transition-all"
+                  required
+                >
+                  {/* Add a placeholder option */}
+                  <option value="" disabled>Select new status...</option>
+                  {statusOptions.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+              {submitError && (
+                <div className="flex items-center gap-2 p-2 bg-red-50 border border-red-200 rounded-lg text-red-700">
+                  <AlertCircle className="w-4 h-4" />
+                  <p className="text-xs">{submitError}</p>
                 </div>
               )}
-
-              {/* Status Update Form */}
-              <form onSubmit={handleUpdateStatus} className="space-y-3">
-                <div>
-                  <label className="block mb-1.5 font-medium text-sm text-gray-700" htmlFor="order-status-select">
+              <button
+                type="submit"
+                className="w-full px-4 py-2 bg-[#1ABA7F] text-white text-sm rounded-lg hover:bg-[#159e6a] focus:ring-2 focus:ring-[#1ABA7F] transition-all font-semibold disabled:opacity-60 flex items-center justify-center gap-2 shadow-md"
+                disabled={submitting || status === order.status || !status}
+              >
+                {submitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Updating Status...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-4 h-4" />
                     Update Order Status
-                  </label>
-                  <select
-                    id="order-status-select"
-                    value={status}
-                    onChange={handleStatusChange}
-                    className="w-full border-2 border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#1ABA7F] focus:border-[#1ABA7F] transition-all"
-                    required
-                  >
-                    {statusOptions.map(opt => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </select>
-                </div>
-                {submitError && (
-                  <div className="flex items-center gap-2 p-2 bg-red-50 border border-red-200 rounded-lg text-red-700">
-                    <AlertCircle className="w-4 h-4" />
-                    <p className="text-xs">{submitError}</p>
-                  </div>
+                  </>
                 )}
-                <button
-                  type="submit"
-                  className="w-full px-4 py-2 bg-[#1ABA7F] text-white text-sm rounded-lg hover:bg-[#159e6a] focus:ring-2 focus:ring-[#1ABA7F] transition-all font-semibold disabled:opacity-60 flex items-center justify-center gap-2 shadow-md"
-                  disabled={submitting || status === order.status}
-                >
-                  {submitting ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Updating Status...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="w-4 h-4" />
-                      Update Order Status
-                    </>
-                  )}
-                </button>
-              </form>
-            </div>
+              </button>
+            </form>
+          </div>
 
             {/* Customer & Delivery Info */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
