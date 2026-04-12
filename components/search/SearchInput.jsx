@@ -130,26 +130,11 @@ const SearchInput = ({
 <div className="relative w-full group">
   {/* Premium glow effect */}
   <div className={cn(
-    "absolute -inset-1 rounded-3xl bg-gradient-to-r from-emerald-500 via-cyan-500 to-blue-500 transition-all duration-700 blur-xl",
+    "absolute -inset-1 bg-gradient-to-r from-emerald-500 via-cyan-500 to-blue-500 transition-all duration-700 blur-xl",
     isFocused ? "opacity-30 animate-gradient bg-300%" : "opacity-0"
   )} />
 
   <div className="relative">
-    {/* Search icon */}
-    <div className="absolute left-4 sm:left-5 top-1/2 -translate-y-1/2 pointer-events-none">
-      <div className={cn(
-        "relative transition-all duration-500",
-        isFocused && "scale-110"
-      )}>
-        <Search className={cn(
-          "h-5 sm:h-6 w-5 sm:w-6 transition-colors duration-300",
-          isFocused ? "text-emerald-500" : "text-gray-400"
-        )} strokeWidth={2.5} />
-        {isFocused && (
-          <div className="absolute inset-0 bg-emerald-500/20 rounded-full blur-md animate-pulse" />
-        )}
-      </div>
-    </div>
 
     {/* Main input */}
     <Input
@@ -162,7 +147,7 @@ const SearchInput = ({
       onFocus={handleInputFocus}
       onBlur={handleInputBlur}
       className={cn(
-        "pl-14 sm:pl-16 pr-28 sm:pr-32 h-14 sm:h-16 text-base sm:text-lg font-semibold rounded-2xl border-2 bg-white placeholder:text-gray-400 transition-all duration-500 shadow-xl",
+        "pl-4 pr-28 sm:pr-32 h-14 sm:h-16 text-base sm:text-lg font-semibold rounded-xl border-2 bg-white placeholder:text-gray-500 transition-all duration-500 shadow-xl",
         isFocused 
           ? "border-emerald-500 shadow-[0_0_30px_rgba(16,185,129,0.25)] ring-4 ring-emerald-500/10" 
           : "border-gray-200 hover:border-gray-300 hover:shadow-2xl"
@@ -213,7 +198,7 @@ const SearchInput = ({
 
   {/* Voice feedback */}
   {isListening && (
-    <div className="absolute left-0 right-0 top-full mt-2 sm:mt-3 p-3 sm:p-4 bg-gradient-to-r from-rose-500/10 to-pink-500/10 border-2 border-rose-500/30 rounded-2xl animate-in fade-in slide-in-from-top-2 duration-300 backdrop-blur-sm">
+    <div className="relative left-0 right-0 top-full mt-2 mb-2 sm:mt-3 p-3 sm:p-4 bg-gradient-to-r from-rose-500/10 to-pink-500/10 border-2 border-rose-500/30 rounded-2xl animate-in fade-in slide-in-from-top-2 duration-300 backdrop-blur-sm">
       <div className="flex items-center gap-2 sm:gap-3">
         <div className="relative w-2.5 h-2.5 sm:w-3 sm:h-3">
           <div className="w-full h-full rounded-full bg-rose-500 animate-ping absolute" />

@@ -79,7 +79,7 @@ const CartItem = ({
             bgColor: 'bg-orange-50', 
             borderColor: 'border-orange-200', 
             text: 'Rx Required',
-            helpText: 'Upload prescription to proceed'
+            helpText: 'Please upload your prescription below to continue'
           };
       }
     }

@@ -856,10 +856,10 @@ useEffect(() => {
                       )}
 
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-bold text-gray-800 truncate group-hover:text-[#225F91] transition-colors duration-200">
+                        <div className="text-sm font-bold text-gray-800  group-hover:text-[#225F91] transition-colors duration-200">
                           {suggestion.displayName}
                         </div>
-                        <div className="text-xs text-gray-500 truncate mt-0.5">
+                        <div className="text-xs text-gray-500  mt-0.5">
                           {suggestion.ingredients
                             ?.map((ing) => {
                               const strength = ing.strengthValue ? ` ${ing.strengthValue}${ing.strengthUnit ?? ''}` : '';

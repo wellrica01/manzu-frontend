@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import ConsentModal from '@/components/ConsentModal';
@@ -621,34 +621,43 @@ const TestimonialsSection = () => {
 // Enhanced Service Card (Responsive)
 const ServiceCard = ({ title, icon: Icon, children, description }) => {
   return (
-    <Card className="relative rounded-3xl sm:rounded-4xl border-2 border-gray-200 hover:border-gray-300 shadow-lg hover:shadow-2xl transition-all duration-500">
-      {/* Subtle decorative gradient glow */}
-      <div className="absolute top-0 right-0 w-40 sm:w-64 h-40 sm:h-64 bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 rounded-full blur-3xl" />
-      
-      <CardContent className="relative px-3 sm:px-6 py-6 sm:py-12">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0 mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-cyan-500 text-white shadow-lg">
-            <Icon className="w-7 h-7 sm:w-8 sm:h-8" strokeWidth={2} />
-          </div>
+<Card className="relative rounded-xl sm:rounded-4xl border-2 border-gray-200 hover:border-gray-300 shadow-lg hover:shadow-2xl transition-all duration-500">
+  
+  {/* Decorative gradient */}
+  <div className="absolute top-0 right-0 w-40 sm:w-64 h-40 sm:h-64 bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 rounded-full blur-3xl" />
 
-          <Badge className="bg-emerald-50 text-emerald-700 font-bold text-xs sm:text-sm px-3 py-1 sm:px-4 sm:py-1.5">
-            Active
-          </Badge>
-        </div>
-        
-        <h3 className="text-3xl sm:text-4xl font-black text-gray-900 mb-3 sm:mb-4 leading-snug">
-          {title}
-        </h3>
+  {/* HEADER */}
+  <CardHeader className="relative px-6 pt-6 sm:pt-10 pb-4 space-y-6">
+    
+    {/* Top row */}
+    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-cyan-500 text-white shadow-lg">
+        <Icon className="w-7 h-7 sm:w-8 sm:h-8" strokeWidth={2} />
+      </div>
 
-        <p className="text-base sm:text-lg text-gray-600 mb-8 sm:mb-10 leading-relaxed">
-          {description}
-        </p>
+      <Badge className="bg-emerald-50 text-emerald-700 font-bold text-xs sm:text-sm px-3 py-1 sm:px-4 sm:py-1.5">
+        Active
+      </Badge>
+    </div>
 
-        <div className="w-full">
-          {children}
-        </div>
-      </CardContent>
-    </Card>
+    {/* Title */}
+    <CardTitle className="text-3xl sm:text-4xl font-black text-gray-900 leading-snug">
+      {title}
+    </CardTitle>
+
+    {/* Description */}
+    <CardDescription className="text-base sm:text-lg text-gray-600 leading-relaxed">
+      {description}
+    </CardDescription>
+
+  </CardHeader>
+
+  {/* CONTENT */}
+  <CardContent className="relative px-3 sm:px-6 pb-6 sm:pb-10">
+    {children}
+  </CardContent>
+
+</Card>
   );
 };
 
@@ -825,7 +834,7 @@ function HomePageContent() {
     {/* Service Section - Enhanced & Responsive */}
     {visibleSection && (
       <section className="py-16 sm:py-24 bg-gradient-to-b from-gray-50 via-white to-gray-50">
-        <div className="max-w-5xl mx-auto px-2 sm:px-6">
+        <div className="max-w-5xl mx-auto sm:px-6">
           {visibleSection === "search" && (
             <RevealOnScroll>
               <div ref={searchRef}>
@@ -940,7 +949,7 @@ function HomePageContent() {
     <section className="py-16 sm:py-24 bg-white">
       <div className="max-w-5xl mx-auto px-4 sm:px-6">
         <RevealOnScroll>
-          <div className="relative p-8 sm:p-16 rounded-[2rem] sm:rounded-[3rem] bg-gradient-to-br from-gray-900 to-gray-800 text-white overflow-hidden text-center">
+          <div className="relative py-10 px-5 sm:p-16 rounded-2xl sm:rounded-[2rem] bg-gradient-to-br from-gray-900 to-gray-800 text-white overflow-hidden text-center">
             {/* Gradient overlay */}
             <div className="absolute inset-0">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(16,185,129,0.15),transparent_70%),radial-gradient(circle_at_70%_50%,rgba(59,130,246,0.15),transparent_70%)]" />
@@ -967,10 +976,10 @@ function HomePageContent() {
               </p>
 
               {/* CTA Buttons */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4 w-full sm:w-auto px-2">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4 w-full sm:w-auto px-0.5">
                 <Button
                   onClick={handleSearchClick}
-                  className="group h-14 sm:h-16 w-full sm:w-auto px-8 sm:px-12 text-base sm:text-lg font-bold rounded-2xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-white shadow-xl hover:shadow-emerald-500/50 transition-all"
+                  className="group h-16 w-full sm:w-auto px-8 sm:px-12 text-base sm:text-lg font-bold rounded-2xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-white shadow-xl hover:shadow-emerald-500/50 transition-all"
                 >
                   <span className="flex items-center justify-center gap-3">
                     Start Searching
@@ -980,7 +989,7 @@ function HomePageContent() {
 
                 <Button
                   onClick={handleUploadClick}
-                  className="h-14 sm:h-16 w-full sm:w-auto px-8 sm:px-12 text-base sm:text-lg font-semibold rounded-2xl bg-white/10 hover:bg-white/20 backdrop-blur-sm border-2 border-white/30 hover:border-white/50 text-white transition-all"
+                  className="h-16 w-full sm:w-auto px-8 sm:px-12 text-base sm:text-lg font-semibold rounded-2xl bg-white/10 hover:bg-white/20 backdrop-blur-sm border-2 border-white/30 hover:border-white/50 text-white transition-all"
                 >
                   <Upload className="w-5 h-5 mr-2" strokeWidth={2} />
                   Upload Prescription

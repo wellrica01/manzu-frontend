@@ -20,7 +20,7 @@ const SortFilterBar = ({ sortOption, setSortOption, filterOpen, setFilterOpen })
 return (
   <div className="space-y-4 sm:space-y-6">
     {/* Filter + Sort Buttons */}
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
       {options.map((option, index) => {
         const isActive = option.isFilter ? filterOpen : sortOption === option.value;
 
@@ -34,7 +34,7 @@ return (
                 : setSortOption(option.value)
             }
             className={cn(
-              "relative h-12 sm:h-14 rounded-xl sm:rounded-2xl font-extrabold transition-all duration-500 border-2 overflow-hidden group animate-in zoom-in-95 text-sm sm:text-base",
+              "relative h-10 sm:h-14 rounded-lg sm:rounded-2xl font-extrabold transition-all duration-500 border-2 overflow-hidden group animate-in zoom-in-95 text-sm sm:text-base",
               isActive
                 ? `bg-gradient-to-r ${option.gradient} text-white border-0 shadow-xl sm:shadow-2xl scale-105`
                 : "bg-white text-gray-700 border-gray-200 hover:border-gray-300 hover:scale-[1.03] hover:shadow-lg"
@@ -188,7 +188,7 @@ const PharmacyCard = ({
         </div>
       </div>
       
-     <div className="p-4 sm:p-5 space-y-3 sm:space-y-4">
+     <div className="p-3 sm:p-5 space-y-2 sm:space-y-4">
 
         {/* Address */}
         {avail.address && (
@@ -236,13 +236,13 @@ const PharmacyCard = ({
             {currentQty > 1 ? (
               <div>
                 <p className="text-xs text-gray-500">₦{avail.price.toLocaleString()} each</p>
-                <p className="text-xl font-black text-gray-900">
+                <p className="text-base font-black text-gray-900">
                   ₦{(avail.price * currentQty).toLocaleString()}
                 </p>
                 <p className="text-xs text-gray-500">×{currentQty} units</p>
               </div>
             ) : (
-              <p className="text-xl font-black text-gray-900">
+              <p className="text-base font-black text-gray-900">
                 ₦{avail.price.toLocaleString()}
               </p>
             )}
@@ -250,48 +250,54 @@ const PharmacyCard = ({
         </div>
 
         {/* Quantity controls */}
-        <div className="flex items-center gap-2 bg-gray-100 rounded-xl shadow-sm p-1 border-2 border-gray-200 hover:border-emerald-300 transition-all duration-300">
-          <label className="text-sm font-black text-gray-700">Quantity:</label>
+      <div className="w-full flex items-center justify-between bg-gray-100 rounded-lg shadow-sm px-3 py-0.5 border-2 border-gray-200 hover:border-emerald-300 transition-all duration-300">
+        
+        {/* Label */}
+        <label className="text-sm font-black text-gray-700">
+          Quantity:
+        </label>
 
-          <div className="flex items-center gap-2 bg-gray-100 rounded-xl shadow-sm">
-            <button
-              onClick={() =>
-                setQuantities((prev) => ({
-                  ...prev,
-                  [avail.pharmacyId]: Math.max(1, (prev[avail.pharmacyId] || 1) - 1),
-                }))
-              }
-              disabled={(quantities[avail.pharmacyId] || 1) <= 1}
-              className="h-10 w-10 flex items-center justify-center hover:bg-emerald-100 text-gray-700 disabled:opacity-50 rounded-lg active:scale-90 transition-all duration-200"
-            >
-              <Minus className="h-5 w-5" strokeWidth={2.5} />
-            </button>
+        {/* Controls */}
+        <div className="flex items-center bg-gray-100 rounded-lg">
+          <button
+            onClick={() =>
+              setQuantities((prev) => ({
+                ...prev,
+                [avail.pharmacyId]: Math.max(1, (prev[avail.pharmacyId] || 1) - 1),
+              }))
+            }
+            disabled={(quantities[avail.pharmacyId] || 1) <= 1}
+            className="h-8 w-8 flex items-center justify-center hover:bg-emerald-100 text-gray-700 disabled:opacity-50 rounded-lg active:scale-90 transition-all duration-200"
+          >
+            <Minus className="h-4 w-4" strokeWidth={2.5} />
+          </button>
 
-            <span className="px-4 py-2 text-base font-black text-gray-900 min-w-[3rem] text-center">
-              {quantities[avail.pharmacyId] || 1}
-            </span>
+          <span className="px-4 py-2 text-sm font-black text-gray-900 min-w-[3rem] text-center">
+            {quantities[avail.pharmacyId] || 1}
+          </span>
 
-            <button
-              onClick={() =>
-                setQuantities((prev) => ({
-                  ...prev,
-                  [avail.pharmacyId]: (prev[avail.pharmacyId] || 1) + 1,
-                }))
-              }
-              className="h-10 w-10 flex items-center justify-center hover:bg-emerald-100 text-gray-700 rounded-lg active:scale-90 transition-all duration-200"
-            >
-              <Plus className="h-5 w-5" strokeWidth={2.5} />
-            </button>
-          </div>
+          <button
+            onClick={() =>
+              setQuantities((prev) => ({
+                ...prev,
+                [avail.pharmacyId]: (prev[avail.pharmacyId] || 1) + 1,
+              }))
+            }
+            className="h-8 w-8 flex items-center justify-center hover:bg-emerald-100 text-gray-700 rounded-lg active:scale-90 transition-all duration-200"
+          >
+            <Plus className="h-4 w-4" strokeWidth={2.5} />
+          </button>
         </div>
 
+      </div>
+
         {/* Action buttons */}
-        <div className="flex gap-2">
+        <div className="flex gap-2 mt-4">
           {isInCart(medId, avail.pharmacyId) ? (
             <>
               <Button
                 disabled
-                className="flex-1 h-14 rounded-xl font-bold bg-gray-100 text-gray-600 border-2 border-gray-300 cursor-not-allowed"
+                className="flex-1 h-13 rounded-xl font-bold bg-gray-100 text-gray-600 border-2 border-gray-300 cursor-not-allowed"
               >
                 In Cart
               </Button>
@@ -311,7 +317,7 @@ const PharmacyCard = ({
                   }
                 }}
                 variant="outline"
-                className="h-14 px-5 rounded-xl font-bold border-2 border-rose-300 text-rose-600 hover:bg-rose-50 hover:border-rose-400 hover:scale-110 active:scale-95 transition-all duration-300"
+                className="h-13 px-5 rounded-xl font-bold border-2 border-rose-300 text-rose-600 hover:bg-rose-50 hover:border-rose-400 hover:scale-110 active:scale-95 transition-all duration-300"
               >
                 <Trash2 className="h-5 w-5" strokeWidth={2.5} />
               </Button>
@@ -326,7 +332,7 @@ const PharmacyCard = ({
                 quantities[avail.pharmacyId] || 1 
               )}
               disabled={adding}
-              className="relative w-full h-14 rounded-xl font-bold transition-all duration-300 shadow-lg hover:shadow-2xl overflow-hidden bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-white active:scale-95 hover:scale-105"
+              className="relative w-full h-13 rounded-xl font-bold transition-all duration-300 shadow-lg hover:shadow-2xl overflow-hidden bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-white active:scale-95 hover:scale-105"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               

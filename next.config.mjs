@@ -2,6 +2,8 @@
 const nextConfig = {
   reactStrictMode: true,
 
+  allowedDevOrigins: ['10.208.3.67'],
+
  images: {
     remotePatterns: [
       {

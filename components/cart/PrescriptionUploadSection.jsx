@@ -378,7 +378,7 @@ const PrescriptionUploadSection = ({
             {/* File Upload Area */}
             <div
               className={cn(
-                "border-2 border-dashed rounded-2xl p-8 text-center transition-all duration-300",
+                "border-2 border-dashed rounded-2xl p-6 text-center transition-all duration-300",
                 dragActive 
                   ? "border-[#1ABA7F] bg-[#1ABA7F]/5 scale-[1.01]" 
                   : "border-gray-300 bg-gray-50 hover:border-[#1ABA7F]/50"
@@ -391,7 +391,7 @@ const PrescriptionUploadSection = ({
               {!selectedFile ? (
                 <>
                   <div className={cn(
-                    "p-4 rounded-full mx-auto mb-4 w-16 h-16 flex items-center justify-center transition-all duration-300",
+                    "p-3 rounded-full mx-auto mb-4 w-16 h-16 flex items-center justify-center transition-all duration-300",
                     dragActive ? "bg-[#1ABA7F]/20" : "bg-gray-200"
                   )}>
                     <Upload className={cn(
@@ -624,7 +624,7 @@ const PrescriptionUploadSection = ({
                   <span>
                     {items.some(item => ['REJECTED', 'EXPIRED'].includes(getItemStatus(item)))
                       ? 'Re-verification typically takes 15-30 minutes during business hours'
-                      : 'Verification typically takes 24-48 hours'}
+                      : 'Verification typically takes 15-30 minutes'}
                   </span>
                 </div>
                 <div className="flex items-start gap-2">

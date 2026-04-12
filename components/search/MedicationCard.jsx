@@ -160,7 +160,7 @@ const MedicationCard = ({
               )}
 
               {/* Info Cards with stagger */}
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-1.5">
               {med.ingredients?.length > 0 && (
                   <div className="p-3 rounded-lg bg-white border border-gray-200 hover:border-[#1ABA7F]/50 transition-all duration-300">
                     <div className="flex items-center gap-2 mb-1">
@@ -366,7 +366,7 @@ const MedicationCard = ({
           </div>
         {/* ✅ Show badge ONLY when location prompt is NOT showing */}
         {filtersWereSet && availabilityCount > 0 && (
-          <Badge className="bg-gradient-to-r from-[#1ABA7F] to-[#16a876] text-white border-0 px-4 py-1.5 text-sm font-bold shadow-lg">
+          <Badge className="bg-gradient-to-r from-[#1ABA7F] to-[#16a876] text-white border-0 px-4 py-1.5 text-xs font-bold shadow-lg">
             {availabilityCount} available
           </Badge>
         )}
