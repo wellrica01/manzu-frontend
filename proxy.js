@@ -1,26 +1,25 @@
 import { NextResponse } from 'next/server';
 
-export function middleware(request) {
+// Change "middleware" to "proxy" here
+export function proxy(request) {
   const url = request.nextUrl;
   const hostname = request.headers.get('host');
   const targetSubdomain = 'pharmacy.manzu.ng';
 
   if (hostname === targetSubdomain) {
-    // 1. Handle the Root: pharmacy.manzu.ng/
-    // Since you have a (dashboard)/dashboard/page.jsx, 
-    // we rewrite the root to that specific path.
+    // Handle the Root: pharmacy.manzu.ng/ -> pharmacy/dashboard
     if (url.pathname === '/') {
       return NextResponse.rewrite(new URL('/pharmacy/dashboard', request.url));
     }
 
-    // 2. Handle all other paths: pharmacy.manzu.ng/login, pharmacy.manzu.ng/orders, etc.
-    // This will correctly resolve to (auth)/login or (dashboard)/orders
+    // Handle all other paths
     return NextResponse.rewrite(new URL(`/pharmacy${url.pathname}`, request.url));
   }
 
   return NextResponse.next();
 }
 
+// Keep the config exactly as it was
 export const config = {
   matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
 };
