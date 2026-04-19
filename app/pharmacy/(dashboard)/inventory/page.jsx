@@ -499,6 +499,18 @@ export default function PharmacyInventoryPage() {
       )}
 
 
+
+      {/* Header */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <h1 className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-[#225F91] to-[#1ABA7F] bg-clip-text text-transparent">
+            Inventory Management
+          </h1>
+          <p className="text-sm md:text-base text-gray-600 mt-1 md:mt-2">Manage your medications catalog</p>
+        </div>
+      </div>
+
+
 <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
   <StatCard
     icon={CheckCircle}

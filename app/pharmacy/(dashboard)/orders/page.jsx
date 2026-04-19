@@ -262,11 +262,20 @@ function BulkActionBar({ selectedCount, onAction, onClear, selectedOrders }) {
 }
 
 // Helper Components
-function StatCard({ icon: Icon, label, value, color, subtitle, trend }) {
+function StatCard({ icon: Icon, label, value, color, subtitle, trend, onClick, active }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-lg md:rounded-lg shadow-sm p-3 md:p-6 hover:shadow-md transition-shadow">
+    <div 
+      onClick={onClick}
+      className={`bg-white border rounded-lg md:rounded-lg shadow-sm p-3 md:p-6 transition-all cursor-pointer select-none
+        ${active 
+          ? 'border-2 shadow-md scale-[1.02]' 
+          : 'border-gray-200 hover:shadow-md hover:scale-[1.01]'
+        }`}
+      style={active ? { borderColor: color } : {}}
+    >
       <div className="flex items-center gap-2 md:gap-4">
-        <div className={`p-2 md:p-3 rounded-lg md:rounded-lg flex-shrink-0`} style={{ background: `${color}20` }}>
+        <div className={`p-2 md:p-3 rounded-lg md:rounded-lg flex-shrink-0 transition-colors`} 
+          style={{ background: active ? `${color}30` : `${color}20` }}>
           <Icon className="w-4 h-4 md:w-6 md:h-6" style={{ color }} />
         </div>
         <div className="flex-1 min-w-0">
@@ -274,13 +283,14 @@ function StatCard({ icon: Icon, label, value, color, subtitle, trend }) {
           <div className="text-lg md:text-2xl font-bold text-gray-900 mt-0.5 md:mt-1">{value}</div>
           {subtitle && (
             <div className="flex items-center gap-1 mt-0.5 md:mt-1">
-              {trend > 0 ? (
-                <TrendingUp className="w-3 h-3 text-green-600" />
-              ) : null}
+              {trend > 0 ? <TrendingUp className="w-3 h-3 text-green-600" /> : null}
               <span className="text-xs text-gray-500">{subtitle}</span>
             </div>
           )}
         </div>
+        {active && (
+          <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: color }} />
+        )}
       </div>
     </div>
   );
@@ -307,6 +317,8 @@ export default function EnhancedOrdersPage() {
 
   const [refreshCounter, setRefreshCounter] = useState(0);
   const [showFilters, setShowFilters] = useState(false);
+
+  const [activeStatFilter, setActiveStatFilter] = useState("all");
 
   const [loadingSpecificOrder, setLoadingSpecificOrder] = useState(false);
 
@@ -521,6 +533,24 @@ export default function EnhancedOrdersPage() {
     }
     setPagination((prev) => ({ ...prev, page: 1 }));
   };
+
+
+  const handleStatCardClick = (filterKey) => {
+  if (activeStatFilter === filterKey) {
+    // Clicking the active filter resets to "all"
+    setActiveStatFilter("all");
+    setStatusFilter("");
+  } else {
+    setActiveStatFilter(filterKey);
+    const statusMap = {
+      pending: "CONFIRMED",
+      processing: "PROCESSING",
+      completed: "COMPLETED",
+    };
+    setStatusFilter(statusMap[filterKey] || "");
+  }
+  setPagination((prev) => ({ ...prev, page: 1 }));
+};
 
 const getStatusBadge = (status) => {
   let colorClass = '';
@@ -772,6 +802,8 @@ const getStatusBadge = (status) => {
       onChange: (value) => {
         setPagination((prev) => ({ ...prev, page: 1 }));
         setStatusFilter(value);
+        // Reset stat card highlight if user picks a different status via dropdown
+        setActiveStatFilter("all");
       },
       options: [
         { value: "CONFIRMED", label: "Pending" },
@@ -852,6 +884,8 @@ const getStatusBadge = (status) => {
           value={stats.totalOrders}
           color={brandBlue}
           subtitle="All time"
+          active={activeStatFilter === "all"}
+          onClick={() => handleStatCardClick("all")}
         />
         <StatCard
           icon={Clock}
@@ -859,6 +893,8 @@ const getStatusBadge = (status) => {
           value={stats.pendingOrders}
           color={brandOrange}
           subtitle="Needs attention"
+          active={activeStatFilter === "pending"}
+          onClick={() => handleStatCardClick("pending")}
         />
         <StatCard
           icon={Package}
@@ -866,6 +902,8 @@ const getStatusBadge = (status) => {
           value={stats.processingOrders}
           color="#3B82F6"
           subtitle="In progress"
+          active={activeStatFilter === "processing"}
+          onClick={() => handleStatCardClick("processing")}
         />
         <StatCard
           icon={CheckSquare}
@@ -873,6 +911,8 @@ const getStatusBadge = (status) => {
           value={stats.completedOrders}
           color={brandGreen}
           subtitle="Orders fulfilled"
+          active={activeStatFilter === "completed"}
+          onClick={() => handleStatCardClick("completed")}
         />
       </div>
 

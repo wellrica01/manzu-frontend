@@ -207,7 +207,9 @@ function MainLayoutContent({ children }) {
             
             <div className="ml-4 pl-4 border-l border-gray-200">
               <Link
-                href="/pharmacy-register"
+                href="https://pharmacy.manzu.ng/register"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#225F91] to-[#1a4a73] hover:from-[#1a4a73] hover:to-[#225F91] text-white font-semibold text-sm shadow-lg hover:shadow-xl transition-all"
               >
                 <Building2 className="w-4 h-4" strokeWidth={2} />
@@ -265,7 +267,9 @@ function MainLayoutContent({ children }) {
                   <div className="my-4 border-t border-gray-200" />
                   
                   <Link
-                    href="/pharmacy-register"
+                    href="https://pharmacy.manzu.ng/register"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     onClick={() => setIsOpen(false)}
                     className="flex items-center gap-4 px-5 py-4 text-sm font-semibold text-white bg-gradient-to-r from-[#225F91] to-[#1a4a73] hover:from-[#1a4a73] hover:to-[#225F91] rounded-2xl transition-all shadow-lg"
                   >
@@ -345,7 +349,7 @@ function MainLayoutContent({ children }) {
                 {[
                   { label: 'About Us', href: '/about' },
                   { label: 'How It Works', href: '/how-it-works' },
-                  { label: 'For Pharmacies', href: '/pharmacy-register' },
+                  { label: 'For Pharmacies', href: 'https://pharmacy.manzu.ng/register' },
                   { label: 'FAQs', href: '/faqs' },
                   { label: 'Blog', href: '/blog' },
                   { label: 'Careers', href: '/careers' },
