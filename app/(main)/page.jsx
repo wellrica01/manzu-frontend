@@ -8,7 +8,7 @@ export const metadata = {
   openGraph: {
     title: 'Manzu - Find Your Medications Instantly',
     description: "Nigeria's first medication discovery platform. Compare prices and find available medications near you.",
-    url: 'https://manzu.com',
+    url: 'https://manzu.ng',
     type: "website",
     images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: 'Manzu Homepage' }],
   },
