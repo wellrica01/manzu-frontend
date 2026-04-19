@@ -99,7 +99,7 @@ export default function PharmacyLogin() {
 
       toast.success('Login successful!');
       setPharmacyToken(data.token);
-      router.push('/pharmacy/dashboard');
+      router.push('/dashboard');
 
     } catch (err) {
       const errorMessage = err instanceof APIError 
@@ -206,7 +206,7 @@ export default function PharmacyLogin() {
                 <Button
                   type="button"
                   variant="ghost"
-                  onClick={() => router.push('/pharmacy/register')}
+                  onClick={() => router.push('/register')}
                   className="w-full text-sm sm:text-base text-[#225F91] hover:text-[#1ABA7F]"
                 >
                   Don't have an account? Register

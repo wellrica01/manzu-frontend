@@ -51,7 +51,7 @@ function PayoutSummaryWidget() {
           Payout Status
         </h3>
         <button
-          onClick={() => router.push('/pharmacy/payment')}
+          onClick={() => router.push('/payment')}
           className="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
         >
           View All
@@ -68,7 +68,7 @@ function PayoutSummaryWidget() {
               Configure your bank account to receive payouts
             </p>
             <button
-              onClick={() => router.push('/pharmacy/payment')}
+              onClick={() => router.push('/payment')}
               className="mt-2 text-xs font-semibold text-yellow-900 hover:text-yellow-700 underline"
             >
               Setup Now

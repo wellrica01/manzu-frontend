@@ -227,7 +227,7 @@ const handlePinPaste = (e) => {
       const data = await pharmacyAuthAPI.register(values);
       toast.success('Registration successful! Redirecting to dashboard...');
       setPharmacyToken(data.token);
-      router.push('/pharmacy/dashboard');
+      router.push('/dashboard');
 
     } catch (err) {
       const errorMessage = err instanceof APIError 
@@ -573,7 +573,7 @@ const handlePinPaste = (e) => {
                   <Button
                     type="button"
                     variant="ghost"
-                    onClick={() => router.push('/pharmacy/login')}
+                    onClick={() => router.push('/login')}
                     className="h-12 text-base font-medium text-[#225F91] hover:text-[#1ABA7F] hover:bg-green-50"
                   >
                     <LogIn className="h-5 w-5 mr-2" />

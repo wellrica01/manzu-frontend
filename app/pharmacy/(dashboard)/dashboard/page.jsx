@@ -171,7 +171,7 @@ export default function PharmacyDashboard() {
         if (res.status === 401) {
           localStorage.removeItem('pharmacyToken');
           sessionStorage.setItem('authErrorMessage', 'Your session has expired. Please log in again.');
-          window.location.href = '/pharmacy/login';
+          window.location.href = '/login';
           return;
         }
         
@@ -253,13 +253,13 @@ export default function PharmacyDashboard() {
           trend={data.posSalesTrend > 0 ? 'up' : data.posSalesTrend < 0 ? 'down' : null}
           trendValue={Math.abs(data.posSalesTrend || 0)}
           subtitle="Click to open POS"
-          onClick={() => router.push('/pharmacy/pos/new-sale')}
+          onClick={() => router.push('/pos/new-sale')}
         />
         
         {/* Updated Online Orders card with status badges */}
         <Card 
           className="p-4 md:p-6 rounded-lg md:rounded-2xl shadow-lg bg-gradient-to-br from-white to-gray-50 border border-gray-200/50 hover:shadow-xl transition-all duration-300 group cursor-pointer" 
-          onClick={() => router.push('/pharmacy/orders')}
+          onClick={() => router.push('/orders')}
         >
           <div className="flex items-start justify-between mb-3 md:mb-4">
             <div className={`p-2 md:p-3 rounded-lg md:rounded-2xl group-hover:scale-110 transition-transform duration-300`} 
