@@ -1,7 +1,45 @@
 // lib/pharmacyApiClient.js
-import { apiRequest, APIError } from '../../lib/apiClient';
+import { apiRequest, APIError, setAuthErrorHandler, isAuthError } from '../../lib/apiClient';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
+
+/**
+ * Global auth error handler for pharmacy module
+ * Clears token and redirects to login on 401/TOKEN_EXPIRED
+ */
+function handlePharmacyAuthError(error) {
+  if (typeof window !== 'undefined') {
+    // Clear the expired/invalid token
+    localStorage.removeItem('pharmacyToken');
+    
+    // Store a message to show on the login page
+    const message = error.code === 'TOKEN_EXPIRED' 
+      ? 'Your session has expired. Please log in again.'
+      : 'Authentication failed. Please log in again.';
+    sessionStorage.setItem('authErrorMessage', message);
+    
+    // Redirect to login page
+    window.location.href = '/pharmacy/login';
+  }
+}
+
+// Register the global auth error handler
+setAuthErrorHandler(handlePharmacyAuthError);
+
+/**
+ * Helper to wrap API calls with auth error handling
+ * Automatically triggers logout/redirect on 401/TOKEN_EXPIRED
+ */
+async function withAuthHandling(promise) {
+  try {
+    return await promise;
+  } catch (error) {
+    if (isAuthError(error)) {
+      handlePharmacyAuthError(error);
+    }
+    throw error;
+  }
+}
 
 /**
  * Pharmacy Authentication APIs
@@ -166,32 +204,34 @@ export const pharmacyProfileAPI = {
    * @returns {Promise<Object>}
    */
   getProfile: async (token) => {
-    try {
-      if (!token) {
-        throw new APIError('Authentication required', 401, 'UNAUTHORIZED');
-      }
-
-      const response = await apiRequest(
-        `pharmacy-profile-${token.substring(0, 20)}`,
-        `${API_BASE_URL}/api/pharmacy/profile`,
-        {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
+    return withAuthHandling((async () => {
+      try {
+        if (!token) {
+          throw new APIError('Authentication required', 401, 'UNAUTHORIZED');
         }
-      );
 
-      return response;
-    } catch (error) {
-      if (error instanceof APIError) throw error;
-      throw new APIError(
-        error.message || 'Failed to fetch profile',
-        500,
-        'PROFILE_FETCH_ERROR'
-      );
-    }
+        const response = await apiRequest(
+          `pharmacy-profile-${token.substring(0, 20)}`,
+          `${API_BASE_URL}/api/pharmacy/profile`,
+          {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+
+        return response;
+      } catch (error) {
+        if (error instanceof APIError) throw error;
+        throw new APIError(
+          error.message || 'Failed to fetch profile',
+          500,
+          'PROFILE_FETCH_ERROR'
+        );
+      }
+    })());
   },
 
   /**
@@ -201,33 +241,35 @@ export const pharmacyProfileAPI = {
    * @returns {Promise<Object>}
    */
   updateProfile: async (token, updates) => {
-    try {
-      if (!token) {
-        throw new APIError('Authentication required', 401, 'UNAUTHORIZED');
-      }
-
-      const response = await apiRequest(
-        `pharmacy-update-${token.substring(0, 20)}-${Date.now()}`,
-        `${API_BASE_URL}/api/pharmacy/profile`,
-        {
-          method: 'PATCH',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(updates),
+    return withAuthHandling((async () => {
+      try {
+        if (!token) {
+          throw new APIError('Authentication required', 401, 'UNAUTHORIZED');
         }
-      );
 
-      return response;
-    } catch (error) {
-      if (error instanceof APIError) throw error;
-      throw new APIError(
-        error.message || 'Failed to update profile',
-        500,
-        'PROFILE_UPDATE_ERROR'
-      );
-    }
+        const response = await apiRequest(
+          `pharmacy-update-${token.substring(0, 20)}-${Date.now()}`,
+          `${API_BASE_URL}/api/pharmacy/profile`,
+          {
+            method: 'PATCH',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(updates),
+          }
+        );
+
+        return response;
+      } catch (error) {
+        if (error instanceof APIError) throw error;
+        throw new APIError(
+          error.message || 'Failed to update profile',
+          500,
+          'PROFILE_UPDATE_ERROR'
+        );
+      }
+    })());
   },
 };
 
@@ -241,36 +283,38 @@ export const pharmacyMedicationsAPI = {
    * @returns {Promise<Object>}
    */
   fetchMedications: async (params = {}) => {
-    try {
-      const token = getPharmacyToken();
-      if (!token) {
-        throw new APIError('Authentication required', 401, 'UNAUTHORIZED');
-      }
-
-      const queryString = new URLSearchParams(params).toString();
-      const cacheKey = `pharmacy-medications-${queryString || 'all'}-${token.substring(0, 20)}`;
-
-      const response = await apiRequest(
-        cacheKey,
-        `${API_BASE_URL}/api/pharmacy/medications${queryString ? '?' + queryString : ''}`,
-        {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
+    return withAuthHandling((async () => {
+      try {
+        const token = getPharmacyToken();
+        if (!token) {
+          throw new APIError('Authentication required', 401, 'UNAUTHORIZED');
         }
-      );
 
-      return response;
-    } catch (error) {
-      if (error instanceof APIError) throw error;
-      throw new APIError(
-        error.message || 'Failed to fetch medications',
-        500,
-        'MEDICATIONS_FETCH_ERROR'
-      );
-    }
+        const queryString = new URLSearchParams(params).toString();
+        const cacheKey = `pharmacy-medications-${queryString || 'all'}-${token.substring(0, 20)}`;
+
+        const response = await apiRequest(
+          cacheKey,
+          `${API_BASE_URL}/api/pharmacy/medications${queryString ? '?' + queryString : ''}`,
+          {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+
+        return response;
+      } catch (error) {
+        if (error instanceof APIError) throw error;
+        throw new APIError(
+          error.message || 'Failed to fetch medications',
+          500,
+          'MEDICATIONS_FETCH_ERROR'
+        );
+      }
+    })());
   },
 };
 
@@ -284,39 +328,41 @@ export const pharmacySalesAPI = {
    * @returns {Promise<Object>}
    */
   recordSale: async (data) => {
-    try {
-      const token = getPharmacyToken();
-      if (!token) {
-        throw new APIError('Authentication required', 401, 'UNAUTHORIZED');
-      }
-
-      // Validate data
-      if (!data.items || !Array.isArray(data.items) || !data.total || !data.paymentMethod) {
-        throw new APIError('Invalid sale data', 400, 'VALIDATION_ERROR');
-      }
-
-      const response = await apiRequest(
-        `pharmacy-sale-record-${Date.now()}-${token.substring(0, 20)}`,
-        `${API_BASE_URL}/api/pharmacy/sales`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(data),
+    return withAuthHandling((async () => {
+      try {
+        const token = getPharmacyToken();
+        if (!token) {
+          throw new APIError('Authentication required', 401, 'UNAUTHORIZED');
         }
-      );
 
-      return response;
-    } catch (error) {
-      if (error instanceof APIError) throw error;
-      throw new APIError(
-        error.message || 'Failed to record sale',
-        500,
-        'SALE_RECORD_ERROR'
-      );
-    }
+        // Validate data
+        if (!data.items || !Array.isArray(data.items) || !data.total || !data.paymentMethod) {
+          throw new APIError('Invalid sale data', 400, 'VALIDATION_ERROR');
+        }
+
+        const response = await apiRequest(
+          `pharmacy-sale-record-${Date.now()}-${token.substring(0, 20)}`,
+          `${API_BASE_URL}/api/pharmacy/sales`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+          }
+        );
+
+        return response;
+      } catch (error) {
+        if (error instanceof APIError) throw error;
+        throw new APIError(
+          error.message || 'Failed to record sale',
+          500,
+          'SALE_RECORD_ERROR'
+        );
+      }
+    })());
   },
 
   /**
@@ -325,37 +371,39 @@ export const pharmacySalesAPI = {
    * @returns {Promise<Object>}
    */
   fetchSpecificSale: async (saleId) => {
-    try {
-      const token = getPharmacyToken();
-      if (!token) {
-        throw new APIError('Authentication required', 401, 'UNAUTHORIZED');
-      }
-
-      if (!saleId) {
-        throw new APIError('Sale ID required', 400, 'VALIDATION_ERROR');
-      }
-
-      const response = await apiRequest(
-        `pharmacy-sale-${saleId}-${token.substring(0, 20)}`,
-        `${API_BASE_URL}/api/pharmacy/sales/${saleId}`,
-        {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
+    return withAuthHandling((async () => {
+      try {
+        const token = getPharmacyToken();
+        if (!token) {
+          throw new APIError('Authentication required', 401, 'UNAUTHORIZED');
         }
-      );
 
-      return response;
-    } catch (error) {
-      if (error instanceof APIError) throw error;
-      throw new APIError(
-        error.message || 'Failed to fetch sale',
-        500,
-        'SALE_FETCH_ERROR'
-      );
-    }
+        if (!saleId) {
+          throw new APIError('Sale ID required', 400, 'VALIDATION_ERROR');
+        }
+
+        const response = await apiRequest(
+          `pharmacy-sale-${saleId}-${token.substring(0, 20)}`,
+          `${API_BASE_URL}/api/pharmacy/sales/${saleId}`,
+          {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+
+        return response;
+      } catch (error) {
+        if (error instanceof APIError) throw error;
+        throw new APIError(
+          error.message || 'Failed to fetch sale',
+          500,
+          'SALE_FETCH_ERROR'
+        );
+      }
+    })());
   },
 };
 
@@ -372,6 +420,51 @@ export const pharmacyInventoryAPI = {
    * @returns {Promise<{medications: Array, pagination: Object, summary: Object}>}
    */
   fetchInventory: async (params = {}) => {
+    return withAuthHandling((async () => {
+      try {
+        const token = getPharmacyToken();
+        if (!token) {
+          throw new APIError('Authentication required', 401, 'UNAUTHORIZED');
+        }
+
+        const queryString = new URLSearchParams(params).toString();
+        const cacheKey = `pharmacy-inventory-${queryString || 'all'}-${token.substring(0, 20)}`;
+
+        const response = await apiRequest(
+          cacheKey,
+          `${API_BASE_URL}/api/pharmacy/medications${queryString ? '?' + queryString : ''}`,
+          {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+
+        return response;
+      } catch (error) {
+        if (error instanceof APIError) throw error;
+        throw new APIError(
+          error.message || 'Failed to fetch inventory',
+          500,
+          'INVENTORY_FETCH_ERROR'
+        );
+      }
+    })());
+  },
+
+
+
+
+
+  /**
+ * Fetch medication catalog (NEW unified endpoint)
+ * @param {Object} params - Query parameters (page, limit, search, status, prescriptionRequired)
+ * @returns {Promise<Object>}
+ */
+fetchCatalog: async (params = {}) => {
+  return withAuthHandling((async () => {
     try {
       const token = getPharmacyToken();
       if (!token) {
@@ -379,11 +472,11 @@ export const pharmacyInventoryAPI = {
       }
 
       const queryString = new URLSearchParams(params).toString();
-      const cacheKey = `pharmacy-inventory-${queryString || 'all'}-${token.substring(0, 20)}`;
+      const cacheKey = `pharmacy-catalog-${queryString || 'all'}-${token.substring(0, 20)}`;
 
       const response = await apiRequest(
         cacheKey,
-        `${API_BASE_URL}/api/pharmacy/medications${queryString ? '?' + queryString : ''}`,
+        `${API_BASE_URL}/api/pharmacy/medications/catalog${queryString ? '?' + queryString : ''}`,
         {
           method: 'GET',
           headers: {
@@ -397,53 +490,12 @@ export const pharmacyInventoryAPI = {
     } catch (error) {
       if (error instanceof APIError) throw error;
       throw new APIError(
-        error.message || 'Failed to fetch inventory',
+        error.message || 'Failed to fetch catalog',
         500,
-        'INVENTORY_FETCH_ERROR'
+        'CATALOG_FETCH_ERROR'
       );
     }
-  },
-
-
-
-
-
-  /**
- * Fetch medication catalog (NEW unified endpoint)
- * @param {Object} params - Query parameters (page, limit, search, status, prescriptionRequired)
- * @returns {Promise<Object>}
- */
-fetchCatalog: async (params = {}) => {
-  try {
-    const token = getPharmacyToken();
-    if (!token) {
-      throw new APIError('Authentication required', 401, 'UNAUTHORIZED');
-    }
-
-    const queryString = new URLSearchParams(params).toString();
-    const cacheKey = `pharmacy-catalog-${queryString || 'all'}-${token.substring(0, 20)}`;
-
-    const response = await apiRequest(
-      cacheKey,
-      `${API_BASE_URL}/api/pharmacy/medications/catalog${queryString ? '?' + queryString : ''}`,
-      {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
-
-    return response;
-  } catch (error) {
-    if (error instanceof APIError) throw error;
-    throw new APIError(
-      error.message || 'Failed to fetch catalog',
-      500,
-      'CATALOG_FETCH_ERROR'
-    );
-  }
+  })());
 },
 
 /**
@@ -453,46 +505,7 @@ fetchCatalog: async (params = {}) => {
  * @returns {Promise<Object>}
  */
 updateOrCreateInventoryItem: async (medicationId, data) => {
-  try {
-    const token = getPharmacyToken();
-    if (!token) {
-      throw new APIError('Authentication required', 401, 'UNAUTHORIZED');
-    }
-
-    const response = await apiRequest(
-      `pharmacy-inventory-upsert-${medicationId}-${Date.now()}-${token.substring(0, 20)}`,
-      `${API_BASE_URL}/api/pharmacy/medications/${medicationId}`,
-      {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      }
-    );
-
-    return response;
-  } catch (error) {
-    if (error instanceof APIError) throw error;
-    throw new APIError(
-      error.message || 'Failed to update inventory',
-      500,
-      'INVENTORY_UPSERT_ERROR'
-    );
-  }
-},
-
-
-
-
-
-  /**
-   * Create new inventory item
-   * @param {Object} data - {medicationId, stock, price, batchNumber, expiryDate}
-   * @returns {Promise<Object>}
-   */
-  createInventoryItem: async (data) => {
+  return withAuthHandling((async () => {
     try {
       const token = getPharmacyToken();
       if (!token) {
@@ -500,44 +513,7 @@ updateOrCreateInventoryItem: async (medicationId, data) => {
       }
 
       const response = await apiRequest(
-        `pharmacy-inventory-create-${Date.now()}-${token.substring(0, 20)}`,
-        `${API_BASE_URL}/api/pharmacy/medications`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(data),
-        }
-      );
-
-      return response;
-    } catch (error) {
-      if (error instanceof APIError) throw error;
-      throw new APIError(
-        error.message || 'Failed to create inventory item',
-        500,
-        'INVENTORY_CREATE_ERROR'
-      );
-    }
-  },
-
-  /**
-   * Update inventory item
-   * @param {number} medicationId
-   * @param {Object} data - {stock, price, batchNumber, expiryDate}
-   * @returns {Promise<Object>}
-   */
-  updateInventoryItem: async (medicationId, data) => {
-    try {
-      const token = getPharmacyToken();
-      if (!token) {
-        throw new APIError('Authentication required', 401, 'UNAUTHORIZED');
-      }
-
-      const response = await apiRequest(
-        `pharmacy-inventory-update-${medicationId}-${Date.now()}-${token.substring(0, 20)}`,
+        `pharmacy-inventory-upsert-${medicationId}-${Date.now()}-${token.substring(0, 20)}`,
         `${API_BASE_URL}/api/pharmacy/medications/${medicationId}`,
         {
           method: 'PATCH',
@@ -553,11 +529,93 @@ updateOrCreateInventoryItem: async (medicationId, data) => {
     } catch (error) {
       if (error instanceof APIError) throw error;
       throw new APIError(
-        error.message || 'Failed to update inventory item',
+        error.message || 'Failed to update inventory',
         500,
-        'INVENTORY_UPDATE_ERROR'
+        'INVENTORY_UPSERT_ERROR'
       );
     }
+  })());
+},
+
+
+
+
+
+  /**
+   * Create new inventory item
+   * @param {Object} data - {medicationId, stock, price, batchNumber, expiryDate}
+   * @returns {Promise<Object>}
+   */
+  createInventoryItem: async (data) => {
+    return withAuthHandling((async () => {
+      try {
+        const token = getPharmacyToken();
+        if (!token) {
+          throw new APIError('Authentication required', 401, 'UNAUTHORIZED');
+        }
+
+        const response = await apiRequest(
+          `pharmacy-inventory-create-${Date.now()}-${token.substring(0, 20)}`,
+          `${API_BASE_URL}/api/pharmacy/medications`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+          }
+        );
+
+        return response;
+      } catch (error) {
+        if (error instanceof APIError) throw error;
+        throw new APIError(
+          error.message || 'Failed to create inventory item',
+          500,
+          'INVENTORY_CREATE_ERROR'
+        );
+      }
+    })());
+  },
+
+  /**
+   * Update inventory item
+   * @param {number} medicationId
+   * @param {Object} data - {stock, price, batchNumber, expiryDate}
+   * @returns {Promise<Object>}
+   */
+  updateInventoryItem: async (medicationId, data) => {
+    return withAuthHandling((async () => {
+      try {
+        const token = getPharmacyToken();
+        if (!token) {
+          throw new APIError('Authentication required', 401, 'UNAUTHORIZED');
+        }
+
+        const response = await apiRequest(
+          `pharmacy-inventory-update-${medicationId}-${Date.now()}-${token.substring(0, 20)}`,
+          `${API_BASE_URL}/api/pharmacy/medications/${medicationId}`,
+          {
+            method: 'PATCH',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+          }
+        );
+
+        return response;
+      } catch (error) {
+        if (error instanceof APIError) throw error;
+        throw new APIError(
+          error.message || 'Failed to update inventory item',
+          500,
+          'INVENTORY_UPDATE_ERROR'
+        );
+      }
+    })());
   },
 
   /**
@@ -566,33 +624,35 @@ updateOrCreateInventoryItem: async (medicationId, data) => {
    * @returns {Promise<Object>}
    */
   deleteInventoryItem: async (medicationId) => {
-    try {
-      const token = getPharmacyToken();
-      if (!token) {
-        throw new APIError('Authentication required', 401, 'UNAUTHORIZED');
-      }
-
-      const response = await apiRequest(
-        `pharmacy-inventory-delete-${medicationId}-${Date.now()}-${token.substring(0, 20)}`,
-        `${API_BASE_URL}/api/pharmacy/medications/${medicationId}`,
-        {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
+    return withAuthHandling((async () => {
+      try {
+        const token = getPharmacyToken();
+        if (!token) {
+          throw new APIError('Authentication required', 401, 'UNAUTHORIZED');
         }
-      );
 
-      return response;
-    } catch (error) {
-      if (error instanceof APIError) throw error;
-      throw new APIError(
-        error.message || 'Failed to delete inventory item',
-        500,
-        'INVENTORY_DELETE_ERROR'
-      );
-    }
+        const response = await apiRequest(
+          `pharmacy-inventory-delete-${medicationId}-${Date.now()}-${token.substring(0, 20)}`,
+          `${API_BASE_URL}/api/pharmacy/medications/${medicationId}`,
+          {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+
+        return response;
+      } catch (error) {
+        if (error instanceof APIError) throw error;
+        throw new APIError(
+          error.message || 'Failed to delete inventory item',
+          500,
+          'INVENTORY_DELETE_ERROR'
+        );
+      }
+    })());
   },
 
   /**
@@ -601,41 +661,43 @@ updateOrCreateInventoryItem: async (medicationId, data) => {
    * @returns {Promise<Array>}
    */
   searchMedications: async (query) => {
-    try {
-      const token = getPharmacyToken();
-      if (!token) {
-        throw new APIError('Authentication required', 401, 'UNAUTHORIZED');
-      }
-
-      const response = await apiRequest(
-        `pharmacy-med-search-${query}-${token.substring(0, 20)}`,
-        `${API_BASE_URL}/api/medication-suggestions?q=${encodeURIComponent(query)}`,
-        {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
+    return withAuthHandling((async () => {
+      try {
+        const token = getPharmacyToken();
+        if (!token) {
+          throw new APIError('Authentication required', 401, 'UNAUTHORIZED');
         }
-      );
 
-      const medications = Array.isArray(response) ? response : (response.suggestions || response.medications || []);
-      
-      return {
-        data: {
-          result: {
-            medications: medications
+        const response = await apiRequest(
+          `pharmacy-med-search-${query}-${token.substring(0, 20)}`,
+          `${API_BASE_URL}/api/medication-suggestions?q=${encodeURIComponent(query)}`,
+          {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
           }
-        }
-      };
-    } catch (error) {
-      if (error instanceof APIError) throw error;
-      throw new APIError(
-        error.message || 'Failed to search medications',
-        500,
-        'MEDICATION_SEARCH_ERROR'
-      );
-    }
+        );
+
+        const medications = Array.isArray(response) ? response : (response.suggestions || response.medications || []);
+        
+        return {
+          data: {
+            result: {
+              medications: medications
+            }
+          }
+        };
+      } catch (error) {
+        if (error instanceof APIError) throw error;
+        throw new APIError(
+          error.message || 'Failed to search medications',
+          500,
+          'MEDICATION_SEARCH_ERROR'
+        );
+      }
+    })());
   },
 };
 

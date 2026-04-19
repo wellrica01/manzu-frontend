@@ -15,7 +15,7 @@ import Select from 'react-select';
 import Image from 'next/image';
 import { toast } from 'sonner';
 
-// âœ… Import the API client
+// Import the API client
 import { pharmacyAuthAPI, setPharmacyToken } from '@/app/pharmacy/pharmacyApiClient';
 import { APIError } from '@/lib/apiClient';
 
@@ -29,12 +29,12 @@ const formSchema = z.object({
     state: z.string().min(1, 'State is required'),
     lga: z.string().min(1, 'LGA is required'),
     latitude: z.number()
-      .min(4, 'Latitude must be within Nigeria (4Â°N to 14Â°N)')
-      .max(14, 'Latitude must be within Nigeria (4Â°N to 14Â°N)'),
+      .min(4, 'Latitude must be within Nigeria (4°N to 14°N)')
+      .max(14, 'Latitude must be within Nigeria (4°N to 14°N)'),
     
     longitude: z.number()
-      .min(3, 'Longitude must be within Nigeria (3Â°E to 15Â°E)')
-      .max(15, 'Longitude must be within Nigeria (3Â°E to 15Â°E)'),
+      .min(3, 'Longitude must be within Nigeria (3°E to 15°E)')
+      .max(15, 'Longitude must be within Nigeria (3°E to 15°E)'),
     locationAccuracy: z.number().optional(),
     phone: z.string().regex(/^(\+234|0)[789]\d{9}$/, 'Invalid Nigerian phone number (e.g., 08012345678)'),
     licenseNumber: z.string().min(5, 'License number must be at least 5 characters'),
@@ -108,19 +108,19 @@ const handleCaptureLocation = async () => {
     
     // Success toast based on quality
     if (location.quality === 'excellent') {
-      toast.success('🎯 Perfect Location Captured!', {
+      toast.success('Perfect Location Captured!', {
         description: `Accuracy: ±${location.accuracy}m from ${location.sampleCount} samples.`,
       });
     } else if (location.quality === 'good') {
-      toast.success('✅ Excellent Location Captured!', {
+      toast.success('Excellent Location Captured!', {
         description: `Accuracy: ±${location.accuracy}m. Very suitable for registration.`,
       });
     } else if (location.quality === 'acceptable') {
-      toast.success('✓ Good Location Captured', {
+      toast.success('Good Location Captured', {
         description: `Accuracy: ±${location.accuracy}m. Acceptable for registration.`,
       });
     } else if (location.quality === 'usable') {
-      toast.warning('⚠️ Low Accuracy', {
+      toast.warning('Low Accuracy', {
         description: `Accuracy: ±${location.accuracy}m. Consider recapturing outdoors.`,
       });
     }
@@ -241,7 +241,6 @@ const handlePinPaste = (e) => {
       setIsSubmitting(false);
     }
   };
-
 
 
   // Custom select styles
@@ -574,7 +573,7 @@ const handlePinPaste = (e) => {
                   <Button
                     type="button"
                     variant="ghost"
-                    onClick={() => router.push('/pharmacy-login')}
+                    onClick={() => router.push('/pharmacy/login')}
                     className="h-12 text-base font-medium text-[#225F91] hover:text-[#1ABA7F] hover:bg-green-50"
                   >
                     <LogIn className="h-5 w-5 mr-2" />

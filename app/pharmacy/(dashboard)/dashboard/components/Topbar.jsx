@@ -100,7 +100,7 @@ if (isMobile) {
             <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
               <div className="p-2">
                 <button
-                  onClick={() => router.push('/pharmacy/profile')}
+                  onClick={() => router.push('/profile')}
                   className="flex items-center gap-2 w-full px-3 py-2 text-left hover:bg-gray-100 rounded-md transition-colors"
                 >
                   <User className="w-4 h-4 text-gray-500" />

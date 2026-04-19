@@ -7,7 +7,7 @@ import {
   XCircle, Calendar as CalendarIcon, Upload
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { formatOperatingHours, getOperatingHoursTextColor } from '../../../lib/pharmacyUtils';
+import { formatOperatingHours, getOperatingHoursTextColor } from '../../../../lib/pharmacyUtils';
 
 
 const DAYS_OF_WEEK = [

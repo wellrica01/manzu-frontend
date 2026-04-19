@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -12,7 +12,7 @@ import { LogIn, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import { toast } from 'sonner';
 
-// ✅ Import the API client
+// Import the API client
 import { pharmacyAuthAPI, setPharmacyToken } from '@/app/pharmacy/pharmacyApiClient';
 import { APIError } from '@/lib/apiClient';
 
@@ -25,7 +25,7 @@ const loginSchema = z.object({
 
 export default function PharmacyLogin() {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [pinValues, setPinValues] = useState(['', '', '', '', '', '']);
+  const [pinValues, setPinValues] = useState(Array(6).fill(''));
   const pinInputRefs = useRef([]);
   const router = useRouter();
 
@@ -36,6 +36,15 @@ export default function PharmacyLogin() {
       pin: '',
     },
   });
+
+  // Check for auth error message on mount (e.g., from expired session)
+  useEffect(() => {
+    const authErrorMessage = sessionStorage.getItem('authErrorMessage');
+    if (authErrorMessage) {
+      toast.error(authErrorMessage);
+      sessionStorage.removeItem('authErrorMessage');
+    }
+  }, []);
 
   // Handle PIN input changes
   const handlePinChange = (index, value) => {
@@ -197,7 +206,7 @@ export default function PharmacyLogin() {
                 <Button
                   type="button"
                   variant="ghost"
-                  onClick={() => router.push('/pharmacy-register')}
+                  onClick={() => router.push('/pharmacy/register')}
                   className="w-full text-sm sm:text-base text-[#225F91] hover:text-[#1ABA7F]"
                 >
                   Don't have an account? Register

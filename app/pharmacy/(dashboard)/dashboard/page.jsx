@@ -24,6 +24,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import PayoutSummaryWidget from './components/PayoutSummaryWidget';
+import { pharmacyInventoryAPI } from '@/app/pharmacy/pharmacyApiClient';
 
 const brandBlue = "#225F91";
 const brandGreen = "#1ABA7F";
@@ -165,6 +166,14 @@ export default function PharmacyDashboard() {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/pharmacy/dashboard`, {
           headers: { 'Authorization': `Bearer ${token}` },
         });
+        
+        // Handle auth errors
+        if (res.status === 401) {
+          localStorage.removeItem('pharmacyToken');
+          sessionStorage.setItem('authErrorMessage', 'Your session has expired. Please log in again.');
+          window.location.href = '/pharmacy/login';
+          return;
+        }
         
         if (!res.ok) throw new Error('Failed to load dashboard data');
         

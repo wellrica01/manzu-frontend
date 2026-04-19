@@ -219,27 +219,27 @@ export function PharmacyGPSCaptureUI({ gpsCapture, onCapture, onClear }) {
               <div className="text-[10px] sm:text-xs">
                 {quality === 'excellent' && (
                   <p className="text-green-700 bg-green-100 px-2 py-1 rounded">
-                    🎯 Perfect accuracy
+                    Perfect accuracy
                   </p>
                 )}
                 {quality === 'good' && (
                   <p className="text-blue-700 bg-blue-100 px-2 py-1 rounded">
-                    ✅ Very good accuracy
+                    Very good accuracy
                   </p>
                 )}
                 {quality === 'acceptable' && (
                   <p className="text-yellow-700 bg-yellow-100 px-2 py-1 rounded">
-                    ⚠️ Consider recapturing outdoors
+                    Consider recapturing outdoors
                   </p>
                 )}
                 {quality === 'usable' && (
                   <p className="text-orange-700 bg-orange-100 px-2 py-1 rounded">
-                    ⚠️ Recapture outdoors recommended
+                    Recapture outdoors recommended
                   </p>
                 )}
                 {quality === 'poor' && (
                   <p className="text-red-700 bg-red-100 px-2 py-1 rounded">
-                    ❌ Please recapture outdoors
+                    Please recapture outdoors
                   </p>
                 )}
               </div>
@@ -316,9 +316,9 @@ export function PharmacyGPSCaptureUI({ gpsCapture, onCapture, onClear }) {
       )}
 
       <FormDescription className="text-[10px] sm:text-xs text-gray-600 space-y-1">
-        <span className="block">📍 High-precision GPS capture</span>
-        <span className="block hidden sm:inline">⚡ Best results: Move outdoors with clear sky view</span>
-        <span className="block sm:hidden">⚡ Move outdoors for best results</span>
+        <span className="block">High-precision GPS capture</span>
+        <span className="block hidden sm:inline">Best results: Move outdoors with clear sky view</span>
+        <span className="block sm:hidden">Move outdoors for best results</span>
       </FormDescription>
     </div>
   );

@@ -4,55 +4,77 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { 
   Home, Package, ClipboardList, BarChart2, User, LogOut, 
-  ChevronLeft, X, Pill, Receipt, CreditCard 
+  ChevronLeft, X, Pill, CreditCard 
 } from 'lucide-react';
 
+// Updated: Removed the hardcoded /pharmacy prefix.
+// The middleware handles the internal routing.
 const navItems = [
-  { href: '/pharmacy/dashboard', label: 'Dashboard', icon: Home },
-  { href: '/pharmacy/pos/new-sale', label: 'Point of Sale', icon: CreditCard },
-  { href: '/pharmacy/inventory', label: 'Inventory', icon: Package },
-  { href: '/pharmacy/orders', label: 'Orders', icon: ClipboardList },
-  { href: '/pharmacy/pos/sales-history/', label: 'Sales History', icon: Package },
-  { href: '/pharmacy/analytics', label: 'Analytics', icon: BarChart2 },
-  { href: '/pharmacy/payment', label: 'Payment', icon: CreditCard  },
-  { href: '/pharmacy/profile', label: 'Profile', icon: User },
+  { href: '/dashboard', label: 'Dashboard', icon: Home },
+  { href: '/pos/new-sale', label: 'Point of Sale', icon: CreditCard },
+  { href: '/inventory', label: 'Inventory', icon: Package },
+  { href: '/orders', label: 'Orders', icon: ClipboardList },
+  { href: '/pos/sales-history', label: 'Sales History', icon: Package },
+  { href: '/analytics', label: 'Analytics', icon: BarChart2 },
+  { href: '/payment', label: 'Payment', icon: CreditCard },
+  { href: '/profile', label: 'Profile', icon: User },
 ];
 
 export default function SidebarNav({ isCollapsed, onToggle, isMobile, isOpen, onClose }) {
   const pathname = usePathname();
   const router = useRouter();
 
-  const handleLogout = () => {
-    localStorage.removeItem('pharmacyToken');
-    router.push('/pharmacy/login');
+  /**
+   * IMPORTANT FOR SUBDOMAINS:
+   * We normalize the pathname. If we are on localhost/pharmacy/inventory, 
+   * we treat it as /inventory so the active state matches our navItems.
+   */
+  const getNormalizedPath = () => {
+    if (pathname.startsWith('/pharmacy')) {
+      return pathname.replace('/pharmacy', '') || '/dashboard';
+    }
+    return pathname;
   };
 
-  const NavItem = ({ href, label, icon: Icon, onClick }) => (
-    <Link
-      href={href}
-      onClick={onClick}
-      className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all duration-200 group relative ${
-        pathname.startsWith(href)
-          ? 'bg-gradient-to-r from-[#1ABA7F]/20 to-[#1ABA7F]/10 text-[#225F91] shadow-sm border-l-4 border-[#1ABA7F]'
-          : 'text-gray-600 hover:bg-gradient-to-r hover:from-[#1ABA7F]/10 hover:to-transparent hover:text-[#1ABA7F] hover:shadow-sm'
-      } ${isCollapsed ? 'justify-center' : ''}`}
-      title={isCollapsed ? label : undefined}
-    >
-      <Icon className={`flex-shrink-0 transition-all duration-200 ${
-        pathname.startsWith(href) ? 'w-5 h-5 text-[#1ABA7F]' : 'w-5 h-5 group-hover:scale-110'
-      }`} />
-      {!isCollapsed && (
-        <span className="truncate transition-opacity duration-200">{label}</span>
-      )}
-      
-      {/* Tooltip for collapsed state */}
-      {isCollapsed && (
-        <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
-          {label}
-        </div>
-      )}
-    </Link>
-  );
+  const activePath = getNormalizedPath();
+
+  const handleLogout = () => {
+    localStorage.removeItem('pharmacyToken');
+    // Redirects to the login page on the current host
+    router.push('/login');
+  };
+
+  const NavItem = ({ href, label, icon: Icon, onClick }) => {
+    // Check if item is active by matching normalized path
+    const isActive = activePath === href || (href !== '/' && activePath.startsWith(href));
+
+    return (
+      <Link
+        href={href}
+        onClick={onClick}
+        className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all duration-200 group relative ${
+          isActive
+            ? 'bg-gradient-to-r from-[#1ABA7F]/20 to-[#1ABA7F]/10 text-[#225F91] shadow-sm border-l-4 border-[#1ABA7F]'
+            : 'text-gray-600 hover:bg-gradient-to-r hover:from-[#1ABA7F]/10 hover:to-transparent hover:text-[#1ABA7F] hover:shadow-sm'
+        } ${isCollapsed ? 'justify-center' : ''}`}
+        title={isCollapsed ? label : undefined}
+      >
+        <Icon className={`flex-shrink-0 transition-all duration-200 ${
+          isActive ? 'w-5 h-5 text-[#1ABA7F]' : 'w-5 h-5 group-hover:scale-110'
+        }`} />
+        {!isCollapsed && (
+          <span className="truncate transition-opacity duration-200">{label}</span>
+        )}
+        
+        {/* Tooltip for collapsed state */}
+        {isCollapsed && (
+          <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+            {label}
+          </div>
+        )}
+      </Link>
+    );
+  };
 
   return (
     <>
@@ -91,7 +113,6 @@ export default function SidebarNav({ isCollapsed, onToggle, isMobile, isOpen, on
             </div>
           )}
           
-          {/* Mobile close button */}
           {isMobile && (
             <button
               onClick={onClose}
@@ -102,13 +123,10 @@ export default function SidebarNav({ isCollapsed, onToggle, isMobile, isOpen, on
             </button>
           )}
           
-          {/* Desktop toggle button */}
           {!isMobile && (
             <button
               onClick={onToggle}
               className={`p-2 hover:bg-gray-100 rounded-lg transition-all duration-200 ${isCollapsed ? 'absolute -right-3 top-6 bg-white shadow-md border' : ''}`}
-              title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-              aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
               <ChevronLeft className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${isCollapsed ? 'rotate-180' : ''}`} />
             </button>
@@ -133,8 +151,6 @@ export default function SidebarNav({ isCollapsed, onToggle, isMobile, isOpen, on
             className={`flex items-center gap-3 px-4 py-3 w-full rounded-lg bg-gradient-to-r from-[#225F91] to-[#1A4971] text-white font-semibold hover:from-[#1A4971] hover:to-[#225F91] transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105 ${
               isCollapsed ? 'justify-center' : ''
             }`}
-            title={isCollapsed ? 'Logout' : undefined}
-            aria-label="Logout"
           >
             <LogOut className="w-5 h-5 flex-shrink-0" />
             {!isCollapsed && <span>Logout</span>}
@@ -142,7 +158,7 @@ export default function SidebarNav({ isCollapsed, onToggle, isMobile, isOpen, on
           
           {!isCollapsed && (
             <p className="text-xs text-gray-400 text-center mt-3">
-              © 2025 Manzu Pharmacy
+              © 2026 Manzu Pharmacy
             </p>
           )}
         </div>
