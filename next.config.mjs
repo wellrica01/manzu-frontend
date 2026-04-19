@@ -68,10 +68,6 @@ const nextConfig = {
   poweredByHeader: false,
   trailingSlash: false,
 
-  eslint: {
-    dirs: ["pages", "components", "lib", "hooks", "utils"],
-  },
-
   typescript: {
     // ignoreBuildErrors: false,
   },
