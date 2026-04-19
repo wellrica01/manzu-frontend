@@ -19,7 +19,7 @@ function handlePharmacyAuthError(error) {
     sessionStorage.setItem('authErrorMessage', message);
     
     // Redirect to login page
-    window.location.href = '/pharmacy/login';
+    window.location.href = '/login';
   }
 }
 
