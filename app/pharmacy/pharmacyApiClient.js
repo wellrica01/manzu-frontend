@@ -160,9 +160,10 @@ export const pharmacyAuthAPI = {
   },
 
   /**
-   * Verify current token validity
+   * Get current user + pharmacy from the server.
+   * Note: /api/auth/verify was never implemented; the real endpoint is /api/auth/me (G1).
    * @param {string} token - JWT token
-   * @returns {Promise<{valid: boolean, user: Object, pharmacy: Object}>}
+   * @returns {Promise<{user: Object, pharmacy: Object}>}
    */
   verifyToken: async (token) => {
     try {
@@ -171,8 +172,8 @@ export const pharmacyAuthAPI = {
       }
 
       const response = await apiRequest(
-        `pharmacy-verify-${token.substring(0, 20)}`, // Use partial token for cache key
-        `${API_BASE_URL}/api/auth/verify`,
+        `pharmacy-me-${token.substring(0, 20)}`,
+        `${API_BASE_URL}/api/auth/me`,
         {
           method: 'GET',
           headers: {
